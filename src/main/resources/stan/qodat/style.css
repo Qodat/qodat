@@ -1,0 +1,459 @@
+
+#playControls * {
+    -fx-content-display: graphic-only;
+}
+#playControls > * > Pane {
+    -fx-background-color: #2b2b2b, #717171;
+    -fx-background-insets: 1 0 -1 0, 0;
+}
+.content {
+    -fx-background-radius: 0 ;
+}
+#playBtn,
+#loopBtn {
+    -fx-background-color: transparent;
+}
+
+#playControls > #startBtn > Pane {
+    -fx-shape: "M27.05,532h-0.782c-0.333,0-0.602,0.273-0.602,0.61v14.659c0,0.338,0.269,0.61,0.602,0.61h0.782c0.332,0,0.602-0.272,0.602-0.61V532.61C27.652,532.273,27.382,532,27.05,532zM38.9,532l-9.263,7.94l9.263,7.939V532z";
+}
+
+#playControls > #rwBtn > Pane {
+    -fx-shape: "M64.866,531.999l-8.818,7.965l8.818,7.964v-6.796l7.301,6.796v-15.929l-7.301,6.797V531.999z";
+}
+
+#playControls > #playBtn:selected > Pane {
+    -fx-shape: "M20.716,531.999c-0.665,0-1.204,0.542-1.204,1.212v13.328c0,0.671,0.539,1.213,1.204,1.213h2.188c0.665,0,1.203-0.542,1.203-1.213v-13.328c0-0.67-0.538-1.212-1.203-1.212H20.716zM10.87,531.999c-0.665,0-1.204,0.542-1.204,1.212v13.328c0,0.671,0.539,1.213,1.204,1.213h2.188c0.665,0,1.203-0.542,1.203-1.213v-13.328c0-0.67-0.539-1.212-1.203-1.212H10.87z";
+}
+
+#playControls > #playBtn > Pane {
+    -fx-shape: "M0,531.999l8.667,8L0,548V531.999z";
+}
+
+#playControls > #ffBtn > Pane {
+    -fx-shape: "M82.09,532v6.606L74.833,532v15.832l7.257-6.606v6.606l8.576-7.916L82.09,532z";
+}
+
+#playControls > #endBtn > Pane {
+    -fx-shape: "M52.525,532c-0.333,0-0.602,0.273-0.602,0.611v14.669c0,0.337,0.27,0.611,0.602,0.611h0.782c0.333,0,0.602-0.274,0.602-0.611v-14.669c0-0.338-0.27-0.611-0.602-0.611H52.525zM40.667,532v15.892l9.27-7.946L40.667,532z";
+}
+
+.tool-bar #loopBtn Pane {
+    -fx-shape: "M103.31,539.442v-2.544h-6.487c-0.907,0-1.646,0.738-1.646,1.646v1.637l-2.512,2.526v-4.163c0-2.296,1.861-4.157,4.157-4.157h6.487v-2.392l4.034,3.724L103.31,539.442z M92.753,544.033l4.034,3.725v-2.393h6.487c2.296,0,4.157-1.861,4.157-4.157v-4.163l-2.512,2.526v1.637c0,0.907-0.738,1.646-1.646,1.646h-6.487v-2.544L92.753,544.033z";
+}
+
+.timeline-display {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 6 4 6;
+}
+
+.timeline-display .background {
+    -fx-background-color: #313335, #323232;
+    -fx-background-insets: 1 0 -1 0, 0;
+    -fx-background-radius: 6, 6;
+    -fx-effect: innershadow(gaussian, rgba(57, 130, 145, 0.73), 5, 0, 0, 2);
+}
+
+.timeline-display Text {
+    -fx-fill: #64dbfb;
+}
+
+.timeline-display .bar {
+    -fx-border-color: #398291;
+}
+
+.timeline-display .progress {
+    -fx-background-color: #95fbf6;
+}
+
+/*
+  Icon credits: <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/"             title="Flaticon">www.flaticon.com</a> is licensed by <a href="http://creativecommons.org/licenses/by/3.0/"             title="Creative Commons BY 3.0" target="_blank">CC 3.0 BY</a></div>
+ */
+.eye-toggle-button {
+    -fx-graphic: url('images/hide_model.png');
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+}
+
+.eye-toggle-button:selected {
+    -fx-graphic: url('images/show_model.png');
+}
+.lock-toggle-button {
+    -fx-graphic: url('images/unlocked.png');
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: transparent;
+}
+
+.lock-toggle-button:selected {
+    -fx-graphic: url('images/lock.png');
+}
+.root {
+    -fx-accent: #398291;
+    -fx-shadow-highlight-color: rgb(214, 214, 214);
+    -fx-focus-color: #95fbf6;
+}
+
+.menu-item:hover {
+    -fx-background-color: #398291;
+}
+
+.split-pane,
+.titled-pane,
+.scroll-bar,
+.menu-bar,
+.tool-bar,
+.progress-bar,
+.accordion,
+.grid-pane,
+.tree-view,
+#bottom,
+#bottom-group {
+    -fx-background-color: #3C3F41;
+}
+
+.list-view {
+    -fx-background-color: #3C3F41;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-opacity: 0;
+    -fx-padding: 0;
+}
+
+
+.tab {
+    -fx-background-insets: 0;
+    -fx-focus-color: transparent;
+    -fx-accent: transparent;
+}
+
+.tab-pane .tab:hover {
+    -fx-background-color: rgb(49, 52, 54);
+}
+
+.tab-pane .tab:selected {
+    -fx-background-color: rgb(44, 46, 47);
+}
+
+.tab-pane .tab {
+    -fx-background-radius: 0;
+    -fx-background-color: #3C3F41;
+}
+
+.tab .tab-label {
+    -fx-padding: 0 0 0 0;
+    -fx-alignment: CENTER;
+    -fx-text-fill: #828282;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+}
+
+.tab:selected .tab-label {
+    -fx-alignment: CENTER;
+    -fx-text-fill: rgb(214, 214, 214);
+}
+
+/*.tab-pane {*/
+/*    -fx-max-width: 28px;*/
+/*    -fx-padding: -7 -6 0 0;*/
+/*    -fx-background-insets: 0;*/
+/*    -fx-background-radius: 0;*/
+/*    -fx-border-radius: 0px 0px 0px 0px;*/
+/*    -fx-border-color: rgb(50, 50, 50) transparent;*/
+/*    -fx-background-color: rgb(60, 63, 65);*/
+/*}*/
+
+.progress-bar .bar {
+    -fx-background-color: rgb(100, 219, 251);
+}
+
+.progress-bar > .track {
+    -fx-background-insets: 0;
+    -fx-background-color: rgb(43, 43, 43);
+    -fx-text-box-border: rgba(60, 63, 65, 1.0);
+    -fx-control-inner-background: rgb(43, 43, 43);
+    -fx-border-radius: 1px;
+    -fx-border-color: rgb(50, 50, 50) transparent transparent transparent;
+}
+
+.accordion,
+#apa,
+.menu-item {
+    -fx-background-color: rgb(81, 81, 83);
+}
+
+.context-menu {
+    -fx-background-color: rgba(60, 63, 65, 1.0);
+    -fx-background-insets: 0;
+    -fx-background-radius: 0 0 0 0, 0 0 0 0, 0 0 0 0;
+    -fx-padding: 0;
+}
+
+.split-pane > .split-pane-divider {
+    -fx-background-color: rgba(60, 63, 65, 1.0);
+}
+
+#bottom {
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: rgb(70, 70, 70);
+}
+#bottom-group {
+    -fx-border-width: 1 0 0 0;
+    -fx-border-color: rgb(50, 50, 50);
+}
+.menu-bar {
+    -fx-border-color: rgb(50, 50, 50) transparent rgb(50, 50, 50) rgb(50, 50, 50);
+}
+
+.tool-bar {
+    -fx-border-color: rgb(50, 50, 50) rgb(50, 50, 50) rgb(50, 50, 50) transparent;
+}
+.viewer-titled-pane,
+.viewer-box {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+.tab-pane {
+    -fx-border-width: 1 0 0 1;
+    -fx-border-color: rgb(50, 50, 50);
+}
+.split-viewer-pane {
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: rgb(50, 50, 50);
+}
+.tab-header-area {
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgb(50, 50, 50);
+}
+
+.accordion {
+    -fx-border-width: 0 0 0 1;
+    -fx-border-color: transparent transparent transparent rgb(50, 50, 50);
+    /*-fx-border-color: transparent rgb(50, 50, 50) transparent transparent;*/
+}
+
+.project-explorer-pane{
+    -fx-border-width: 0 1 0 0 !important;
+    -fx-border-color: transparent rgb(50, 50, 50) transparent transparent !important;
+}
+.project-explorer-pane-2
+{
+    -fx-border-width: 0 1 0 1 !important;
+    -fx-border-color: rgb(50, 50, 50) !important;
+}
+
+.titled-pane {
+    -fx-border-width: 0 1 0 0;
+    -fx-border-color: transparent;
+}
+
+#topFrame {
+    -fx-background-color: rgb(12, 12, 12);
+}
+
+.tree-cell,
+.list-cell {
+    -fx-background-color: rgba(60, 63, 65, 0.9);
+}
+.tree-cell:hover,
+.list-cell:hover {
+    -fx-background-color: rgba(60, 63, 65, 0.5);
+}
+
+.tree-view .tree-cell:selected,
+.list-view .list-cell:selected {
+    -fx-background-color: rgb(33, 66, 131);
+}
+
+.text-field {
+    -fx-background-color: rgb(69, 73, 74);
+}
+
+.combo-box,
+.combo-box-base {
+    -fx-background-insets: 0;
+    -fx-text-fill: rgb(214, 214, 214);
+    -fx-background-color: rgb(60, 63, 65);
+}
+
+.combo-box .cell {
+    -fx-text-fill: rgb(214, 214, 214);
+}
+
+.combo-box .cell:hover {
+    -fx-background-color: rgb(49, 52, 54);
+}
+
+.button,
+.check-box,
+.text-field,
+.label,
+.tab {
+    -fx-text-fill: rgb(214, 214, 214);
+}
+
+.scroll-bar:horizontal .thumb,
+.scroll-bar:vertical .thumb {
+    -fx-background-color: derive(#4D4C4F, 10.0%);
+    -fx-background-insets: 2.0, 0.0, 0.0;
+    -fx-background-radius: 2.0em;
+}
+
+.scroll-bar:horizontal .thumb:hover,
+.scroll-bar:vertical .thumb:hover {
+    -fx-background-color: derive(black, 90.0%);
+    -fx-background-insets: 2.0, 0.0, 0.0;
+    -fx-background-radius: 2.0em;
+}
+
+.scroll-bar:vertical .increment-button,
+.scroll-bar:vertical .decrement-button,
+.scroll-bar:horizontal .increment-button,
+.scroll-bar:horizontal .decrement-button {
+    -fx-background-color: transparent;
+}
+
+.corner {
+    -fx-background-color: transparent;
+}
+
+.titled-pane > .title {
+    -fx-background-color: rgb(60, 63, 65);
+    -fx-text-fill: rgb(214, 214, 214);
+}
+
+.titled-pane > .title > .text {
+    -fx-fill: WHITE;
+}
+
+.titled-pane > .title > .arrow-button .arrow {
+    -fx-background-color: rgb(214, 214, 214);
+}
+
+.button,
+.list-cell,
+.check-box .box {
+    -fx-background-color: rgba(60, 63, 65, 1.0);
+}
+
+.button:hover {
+    -fx-background-color: rgba(60, 63, 65, 0.5);
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #95fbf6;
+}
+
+.split-pane {
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+}
+
+#profiles-box {
+    -fx-background-color: rgb(43, 43, 43);
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.split-pane:horizontal > .split-pane-divider,
+.split-pane:vertical > .split-pane-divider {
+    -fx-padding: 0px;
+    -fx-min-width: 1px;
+    -fx-background-insets: 0;
+    -fx-background-color: rgb(43, 43, 43);
+}
+.toggle-tab {
+    -fx-border-color: transparent;
+    -fx-background-radius: 0;
+    -fx-background-color: #3C3F41;
+    -fx-alignment: CENTER;
+    -fx-text-fill: #828282;
+    -fx-font-size: 12px;
+    -fx-border-width: 0;
+}
+.window-label{
+    -fx-text-fill: #828282;
+    -fx-font-size: 12px;
+    -fx-border-color: rgb(50, 50, 50);
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 4px;
+}
+
+.toggle-tab:hover {
+    -fx-background-color: rgb(49, 52, 54);
+}
+
+.toggle-tab:selected {
+    -fx-background-color: rgb(44, 46, 47);
+    -fx-text-fill: rgb(214, 214, 214);
+}
+.toggle-tab-pane {
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: rgb(60, 63, 65);
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+#frame-list,
+#models-list {
+    -fx-spacing: 0;
+    -fx-padding: 0;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+}
+#models-list {
+    -fx-background-color: rgb(60, 63, 65);
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+#frame-list {
+    -fx-background-color: rgb(60, 63, 65);
+    -fx-border-color: rgb(50, 50, 50);
+    -fx-border-width: 0 0 1 0
+}
+
+.border-bottom,
+.border-right,
+.border-left,
+#right-group,
+#left-group {
+    -fx-padding: 0;
+    -fx-background-radius: 0;
+    -fx-background-color: #3C3F41;
+    -fx-border-color: rgb(50, 50, 50);
+}
+.border-bottom {-fx-border-width:0 0 0 0;}
+.border-right {-fx-border-width: 1 1 0 0;}
+.border-left {-fx-border-width: 0 1 0 0;}
+#left-group {-fx-border-width: 0 1 0 1}
+#right-group {-fx-border-width: 0 1 0 1}
+
+.anchored {
+    -fx-background-color: #3C3F41;
+    -fx-border-color: rgb(50, 50, 50);
+}
+.accordion {
+    -fx-border-width: 0;
+}
+
+.accordion,
+.plugins-pane {
+    -fx-border-width: 0 0 0 1
+}
+
+#profiles-pane {
+    -fx-border-width: 10 !important;
+}

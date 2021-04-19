@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+
+<?import java.net.URL?>
+<SplitPane
+        xmlns="http://javafx.com/javafx"
+        xmlns:fx="http://javafx.com/fxml"
+        fx:controller="stan.qodat.scene.controller.ModelController">
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
+    <items>
+        <VBox prefHeight="355.0" prefWidth="220.0" styleClass="viewer-box">
+            <children>
+                <ListView id="models-list" fx:id="modelListView" prefHeight="330.0" prefWidth="220.0">
+                    <contextMenu>
+                        <ContextMenu>
+                            <items>
+                                <MenuItem fx:id="setLabel" mnemonicParsing="false" text="Set label"/>
+                            </items>
+                        </ContextMenu>
+                    </contextMenu>
+                </ListView>
+                <TextField fx:id="searchModelField" prefHeight="27.0" prefWidth="220.0" promptText="Search model"/>
+            </children>
+        </VBox>
+    </items>
+</SplitPane>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.VBox?>
+<?import java.net.URL?>
+<SplitPane orientation="VERTICAL"
+           xmlns="http://javafx.com/javafx"
+           xmlns:fx="http://javafx.com/fxml"
+           fx:controller="stan.qodat.scene.controller.AnimationController">
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
+    <items>
+        <VBox prefHeight="355.0" prefWidth="220.0">
+            <children>
+                <ListView fx:id="animationsListView" prefHeight="330.0" prefWidth="220.0"/>
+                <TextField fx:id="searchAnimationsList" prefHeight="27.0" prefWidth="220.0"
+                           promptText="Search animation"/>
+            </children>
+        </VBox>
+    </items>
+</SplitPane>

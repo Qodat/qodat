@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox id="root"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="stan.qodat.scene.controller.TimeLineController">
+    <stylesheets>
+        <URL value="@style.css" />
+    </stylesheets>
+   <HBox fx:id="timeLineBox">
+      <children>
+          <ListView id="frame-list" fx:id="frameList" orientation="HORIZONTAL" prefHeight="50.0">
+            <cursor>
+               <Cursor fx:constant="CROSSHAIR" />
+            </cursor>
+         </ListView>
+         <ListView fx:id="transformsList" prefHeight="100.0" />
+      </children>
+   </HBox>
+</VBox>
