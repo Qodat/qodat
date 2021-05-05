@@ -29,13 +29,19 @@ abstract class SceneController(name: String)
 
     fun addTabSelectedListener(){
         getViewNode().addEventHandler(SelectedTabChangeEvent.EVENT_TYPE) {
-            if (it.selected) {
-                val oldContext = SubScene3D.contextProperty.get()
-                oldContext?.getController()?.onSwitch(this)
-                SubScene3D.contextProperty.set(sceneContext)
-            } else if (!it.otherSelected)
-                SubScene3D.contextProperty.set(null)
+            if (!SubScene3D.lockContextProperty.value) {
+                if (it.selected)
+                    selectThisContext()
+                else if (!it.otherSelected)
+                    SubScene3D.contextProperty.set(null)
+            }
         }
+    }
+
+    internal fun selectThisContext() {
+        val oldContext = SubScene3D.contextProperty.get()
+        oldContext?.getController()?.onSwitch(this)
+        SubScene3D.contextProperty.set(sceneContext)
     }
 
     abstract fun onSwitch(other: SceneController)

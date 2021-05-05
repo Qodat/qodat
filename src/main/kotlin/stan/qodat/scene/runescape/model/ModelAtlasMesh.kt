@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.model
 
+import fxyz3d.geometry.Point3F
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.paint.Material
@@ -30,6 +31,10 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
     val materialProperty = SimpleObjectProperty<Material>()
+
+    private var densityFunction: (Point3F) -> Double = {0.0}
+    private var min = 0.0
+    private var max = 1.0
 
     init {
         visibleProperty.setAndBind(model.visibleProperty)
@@ -100,6 +105,7 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
                     vertexIndex2, texIndex,
                     vertexIndex3, texIndex
             )
+            // (1 shl (definition.getFacePriorities()?.get(face)?.toInt()?:definition.getPriority().toInt()))
             faceSmoothingGroups.addAll(0)
         }
     }

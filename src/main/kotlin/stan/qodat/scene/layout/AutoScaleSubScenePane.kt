@@ -40,7 +40,7 @@ class AutoScaleSubScenePane(
             onSubSceneChanged()
         }
         setOnMousePressed {
-            if (it.isControlDown) {
+            if (it.isPrimaryButtonDown && it.isControlDown) {
                 if (!children.contains(selectionHandler.selectionRectangle))
                     children.add(selectionHandler.selectionRectangle)
                 selectionHandler.setMousePosition(it.x, it.y)
@@ -56,7 +56,7 @@ class AutoScaleSubScenePane(
         setOnMouseReleased {
             if (children.contains(selectionHandler.selectionRectangle))
                 children.remove(selectionHandler.selectionRectangle)
-            if (it.isControlDown) {
+            if (it.isPrimaryButtonDown && it.isControlDown) {
                 /**
                  * TODO: FIX THIS
                  */
@@ -83,7 +83,7 @@ class AutoScaleSubScenePane(
             }
         }
         setOnMouseDragged {
-            if (it.isControlDown) {
+            if (it.isPrimaryButtonDown && it.isControlDown) {
                 selectionHandler.onMouseDragged(it.x, it.y)
                 it.consume()
             }

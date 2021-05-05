@@ -81,7 +81,8 @@
 .eye-toggle-button:selected {
     -fx-graphic: url('images/show_model.png');
 }
-.lock-toggle-button {
+.lock-toggle-button,
+.lock-scene-context-toggle {
     -fx-graphic: url('images/unlocked.png');
     -fx-border-color: transparent;
     -fx-border-width: 0;
@@ -89,9 +90,16 @@
     -fx-background-color: transparent;
 }
 
-.lock-toggle-button:selected {
+.lock-toggle-button:selected,
+.lock-scene-context-toggle:selected {
     -fx-graphic: url('images/lock.png');
 }
+
+.scene-group {
+    -fx-border-width: 0 0 1 0;
+    -fx-border-color: rgb(50, 50, 50);
+}
+
 .root {
     -fx-accent: #398291;
     -fx-shadow-highlight-color: rgb(214, 214, 214);
@@ -293,6 +301,10 @@
 .combo-box .cell:hover {
     -fx-background-color: rgb(49, 52, 54);
 }
+.lock-scene-context-combo {
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
 
 .button,
 .check-box,
@@ -382,14 +394,30 @@
     -fx-font-size: 12px;
     -fx-border-width: 0;
 }
-.window-label{
+.scene-context-box {
+    -fx-background-radius: 0;
+    -fx-background-color: #3C3F41;
+    -fx-alignment: CENTER;
+    -fx-text-fill: #828282;
+    -fx-font-size: 12px;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
+}
+.window-label,
+.scene-label {
     -fx-text-fill: #828282;
     -fx-font-size: 12px;
     -fx-border-color: rgb(50, 50, 50);
     -fx-border-width: 0 0 1 0;
     -fx-padding: 4px;
 }
-
+.scene-label {
+    -fx-border-width: 0;
+    -fx-padding: 6px 0 0 4px;
+}
+.hbox-float-right {
+    -fx-alignment: CENTER_RIGHT;
+}
 .toggle-tab:hover {
     -fx-background-color: rgb(49, 52, 54);
 }
@@ -457,3 +485,4 @@
 #profiles-pane {
     -fx-border-width: 10 !important;
 }
+

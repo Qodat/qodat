@@ -87,4 +87,8 @@ abstract class SceneContext(name: String) : SceneNodeProvider {
     abstract fun getController() : SceneController
 
     override fun getSceneNode() = group
+
+    override fun toString(): String {
+        return group.id
+    }
 }

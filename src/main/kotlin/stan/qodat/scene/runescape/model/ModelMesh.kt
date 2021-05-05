@@ -32,6 +32,7 @@ abstract class ModelMesh : TriangleMesh(), ModelSkin {
      */
     fun addVertex(vertex: Int, vertexX: Int, vertexY: Int, vertexZ: Int) = vertexMap.getOrPut(vertex) {
         val onset = points.size() / 3
+
         points.addAll(vertexX.toFloat(), vertexY.toFloat(), vertexZ.toFloat())
         onset
     }

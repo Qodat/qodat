@@ -14,6 +14,7 @@ import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.util.RSModelLoader
+import stan.qodat.util.createNpcAnimsJsonDir
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -36,7 +37,6 @@ object OldschoolCache : Cache("Oldschool") {
     private val framemapIndex: Index
     private val frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
     private val frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
-    private val models = HashMap<Int, ModelDefinition>()
 
     init {
         store.load()
@@ -59,7 +59,7 @@ object OldschoolCache : Cache("Oldschool") {
     override fun getNPCs(): Array<NPCDefinition> {
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
         if (!npcAnimsDir.exists()){
-            println("Did not find npc_anims dir")
+            println("Did not find npc_anims dir, creating...")
             return emptyArray()
         }
 
@@ -76,6 +76,7 @@ object OldschoolCache : Cache("Oldschool") {
             val npc = npcsByName[name]?:continue
             val animsReader = file.bufferedReader()
             val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
+            animsReader.close()
             animatedNpcs.add(object : NPCDefinition {
                 override val name: String
                     get() = npc.name

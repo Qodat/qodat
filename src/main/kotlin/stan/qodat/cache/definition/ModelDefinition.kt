@@ -21,12 +21,13 @@ interface ModelDefinition {
     fun getFaceVertexIndices1() : IntArray
     fun getFaceVertexIndices2() : IntArray
     fun getFaceVertexIndices3() : IntArray
-    fun getFaceSkins() : IntArray
+    fun getFaceSkins() : IntArray?
     fun getFaceGroups() : Array<IntArray>?
     fun getFaceColors() : ShortArray
     fun getFaceAlphas() : ByteArray?
-    fun getFacePriorities() : ByteArray
-    fun getFaceTypes() : ByteArray
+    fun getFacePriorities() : ByteArray?
+    fun getFaceTypes() : ByteArray?
+    fun getPriority() : Byte
 
     fun getTextureConfigCount() : Int
     fun getTextureRenderTypes() : ByteArray?

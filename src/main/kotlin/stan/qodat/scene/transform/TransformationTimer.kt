@@ -4,12 +4,14 @@ import javafx.animation.Animation
 import javafx.animation.KeyFrame
 import javafx.animation.KeyValue
 import javafx.animation.Timeline
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
+import javafx.scene.Node
 import javafx.util.Duration
 import stan.qodat.Qodat
 import stan.qodat.util.FrameRateMeasurer
@@ -29,6 +31,11 @@ open class TransformationTimer<R : Transformer<*>> {
     private val frameRateMeasurer = FrameRateMeasurer()
 
     /**
+     * Represents a timeline composed of frames, where each frame is a [Transformable].
+     */
+    private val timeline = Timeline()
+
+    /**
      * Holds a string representing the frame-rate of this timer.
      */
     val frameRateProperty = SimpleStringProperty()
@@ -38,9 +45,19 @@ open class TransformationTimer<R : Transformer<*>> {
      */
     val transformerProperty = SimpleObjectProperty<R>()
 
+    /**
+     * Should the [timeline] start or continue playing if a new [transformer][R] is loaded in [transformerProperty].
+     */
+    val autoPlayOnChange = SimpleBooleanProperty(true)
+
+    /**
+     * Contains all [frames][Transformable].
+     */
     val transformableList = FXCollections.observableArrayList<Transformable>()
 
-    private val timeline = Timeline()
+    /**
+     * Holds the frame currently being shown.
+     */
     val frameIndexProperty = SimpleIntegerProperty()
 
     private val onFrameChangeEvent = EventHandler<ActionEvent> {
@@ -75,14 +92,13 @@ open class TransformationTimer<R : Transformer<*>> {
 
     init {
         timeline.cycleCount = Timeline.INDEFINITE
+
         transformerProperty.addListener { _, _, animation ->
 
-            val wasPlaying = timeline.status == Animation.Status.RUNNING
-            if (wasPlaying) {
-                Qodat.mainController.playBtn.selectedProperty().set(false)
-                timeline.stop()
-            }
+            Qodat.mainController.playBtn.selectedProperty().set(false)
 
+            val wasPlaying = timeline.status == Animation.Status.RUNNING
+            timeline.stop()
             timeline.keyFrames.clear()
 
             if (animation == null)
@@ -97,7 +113,7 @@ open class TransformationTimer<R : Transformer<*>> {
                 duration = duration.add(frame.getDuration())
             }
 
-            if (wasPlaying) {
+            if (wasPlaying || autoPlayOnChange.get()) {
                 Qodat.mainController.playBtn.selectedProperty().set(true)
                 timeline.play()
             }

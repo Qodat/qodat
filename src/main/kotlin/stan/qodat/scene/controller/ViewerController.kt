@@ -27,6 +27,7 @@ import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.entity.Object
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.configureSearchFilter
+import stan.qodat.util.createNpcAnimsJsonDir
 import java.net.URL
 import java.util.*
 
@@ -75,11 +76,25 @@ class ViewerController : SceneController("viewer-scene") {
         configureNpcList()
 
         Properties.cache.addListener { _, _, newValue ->
-            Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
+            val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
+            if (!npcAnimsDir.exists()){
+                println("Did not find npc_anims dir, creating...")
+                npcAnimsDir.mkdir()
+                val task = createNpcAnimsJsonDir(OldschoolCache.store, OldschoolCache.npcManager)
+                task.setOnSucceeded {
+                    Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
+                }
+                Qodat.mainController.executeBackgroundTasks(task)
+            } else
+                Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
         }
     }
 
     override fun onSwitch(other: SceneController) {
+        if (other is MainController) {
+//            for (model in sceneContext.getModels())
+//                other.sceneContext.addNode(model)
+        }
         if (other is EditorController) {
             // TODO
         }
@@ -138,6 +153,7 @@ class ViewerController : SceneController("viewer-scene") {
 
     private fun createNPCLoadTask(cache: Cache) = object : Task<Void?>() {
         override fun call(): Void? {
+
             val npcDefinitions = OldschoolCache.getNPCs()
             val npcs = ArrayList<NPC>()
             for ((i, definition) in npcDefinitions.withIndex()) {
@@ -146,7 +162,7 @@ class ViewerController : SceneController("viewer-scene") {
                         val npc = NPC(cache, definition)
                         npcs.add(npc)
                     }
-                    val progress = (100.0 * i.div(npcDefinitions.size))
+                    val progress = (100.0 * i.toFloat().div(npcDefinitions.size))
                     updateProgress(progress, 100.0)
                     updateMessage("Loading npc (${i + 1} / ${npcDefinitions.size})")
                 } catch (e: java.lang.Exception) {

@@ -4,6 +4,7 @@ import javafx.application.Application
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
+import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
@@ -38,6 +39,7 @@ class Qodat : Application() {
         Properties.cache.set(OldschoolCache)
 
         primaryStage.title = "Qodat"
+        primaryStage.icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))
         primaryStage.scene = Scene(root, Properties.sceneInitialWidth.get(), Properties.sceneInitialHeight.get()).also {
             Properties.sceneInitialWidth.bind(it.widthProperty())
             Properties.sceneInitialHeight.bind(it.heightProperty())

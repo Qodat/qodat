@@ -488,6 +488,10 @@ public class RS2ModelDefinition implements ModelDefinition
 		this.priority = priority;
 	}
 
+	@Override
+	public byte getPriority() {
+		return priority;
+	}
 
 	@Override
 	public String toString() {

@@ -1,5 +1,7 @@
 package stan.qodat.scene.runescape.model
 
+import fxyz3d.geometry.Point3F
+import javafx.geometry.Point3D
 import stan.qodat.cache.definition.ModelDefinition
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.TransformationType
@@ -269,6 +271,25 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         modelDefinition.getFaceVertexIndices1()[face],
         modelDefinition.getFaceVertexIndices2()[face],
         modelDefinition.getFaceVertexIndices3()[face])
+
+    fun getTextureVertices(face: Int) = Triple(
+        modelDefinition.getTextureTriangleVertexIndices1()!![face].toInt(),
+        modelDefinition.getTextureTriangleVertexIndices2()!![face].toInt(),
+        modelDefinition.getTextureTriangleVertexIndices3()!![face].toInt())
+
+    fun getPoints(face: Int) = getVertices(face).let { (v1, v2, v3) ->
+        Triple(
+            Point3F(getX(v1).toFloat(), getY(v1).toFloat(), getZ(v1).toFloat()),
+            Point3F(getX(v2).toFloat(), getY(v2).toFloat(), getZ(v2).toFloat()),
+            Point3F(getX(v3).toFloat(), getY(v3).toFloat(), getZ(v3).toFloat()))
+    }
+
+    fun getCenterPoint(face: Int) = getPoints(face).let { (p1, p2, p3) ->
+        Point3D(
+            (p1.x+p2.x+p3.x).div(3),
+            (p1.y+p2.y+p3.y).div(3),
+            (p1.z+p2.z+p3.z).div(3))
+    }
 
     fun getX(vertex: Int) = getPointXValues()[vertex]
     fun getY(vertex: Int) = getPointYValues()[vertex]

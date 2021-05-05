@@ -6,7 +6,13 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane fx:id="mainPane" prefHeight="600.0" prefWidth="900.0" xmlns="http://javafx.com/javafx/11.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.MainController">
+<?import javafx.scene.shape.Box?>
+<BorderPane fx:id="mainPane"
+            prefHeight="600.0"
+            prefWidth="900.0"
+            xmlns="https://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="stan.qodat.scene.controller.MainController">
     <stylesheets>
         <URL value="@style.css" />
     </stylesheets>
@@ -37,7 +43,15 @@
                                 </VBox>
                                 <VBox styleClass="border-right">
                                     <children>
-                                        <Label fx:id="sceneLabel" maxWidth="Infinity" prefHeight="17.0" prefWidth="4000" styleClass="window-label" text="Scene" />
+                                        <StackPane fx:id="sceneGroup" styleClass="scene-group">
+                                            <HBox fx:id="sceneHBox" maxWidth="Infinity" prefWidth="4000">
+                                                <Label fx:id="sceneLabel" prefWidth="150" styleClass="scene-label" text="Scene" />
+                                                <HBox styleClass="hbox-float-right" HBox.hgrow="ALWAYS" BorderPane.alignment="CENTER_RIGHT">
+                                                    <ToggleButton fx:id="lockSceneContextButton" maxWidth="20" styleClass="lock-scene-context-toggle"/>
+                                                    <ComboBox fx:id="sceneContextBox" prefWidth="200" styleClass="lock-scene-context-combo" />
+                                                </HBox>
+                                            </HBox>
+                                        </StackPane>
                                         <TreeView id="models-list" fx:id="sceneTreeView">
                                         </TreeView>
                                     </children>

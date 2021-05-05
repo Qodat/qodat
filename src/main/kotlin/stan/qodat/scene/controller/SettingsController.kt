@@ -5,7 +5,9 @@ import javafx.fxml.Initializable
 import javafx.scene.SceneAntialiasing
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ColorPicker
+import javafx.scene.control.TitledPane
 import stan.qodat.Properties
+import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
@@ -18,6 +20,7 @@ import java.util.*
  */
 class SettingsController : Initializable {
 
+    @FXML lateinit var root: TitledPane
     @FXML lateinit var showAxisCheckBox : CheckBox
     @FXML lateinit var msaaCheckBox: CheckBox
     @FXML lateinit var fpsCheckBox: CheckBox

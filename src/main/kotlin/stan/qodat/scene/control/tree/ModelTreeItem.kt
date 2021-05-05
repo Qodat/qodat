@@ -39,12 +39,15 @@ class ModelTreeItem(
 
         value = label
         graphic = text
-
-        val visibleBox = CheckBox("visible").also {
-            it.selectedProperty().setAndBind(model.visibleProperty, biDirectional = true)
-        }
-        val visibilityItem = TreeItem<Node>(visibleBox)
-        children.add(visibilityItem)
+        children.add(TreeItem(CheckBox("shading").apply {
+            selectedProperty().setAndBind(model.shadingProperty, biDirectional = true)
+        }))
+        children.add(TreeItem(CheckBox("show priorities").apply {
+            selectedProperty().setAndBind(model.displayFacePriorityLabelsProperty, biDirectional = true)
+        }))
+        children.add(TreeItem(CheckBox("visible").apply {
+            selectedProperty().setAndBind(model.visibleProperty, biDirectional = true)
+        }))
 
         val drawModeValues = FXCollections.observableArrayList(*DrawMode.values())
         val drawModeBox = ComboBox(drawModeValues)

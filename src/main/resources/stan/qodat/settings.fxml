@@ -1,22 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.CheckBox?>
-<?import javafx.scene.control.ColorPicker?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Slider?>
-<?import javafx.scene.control.TitledPane?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
-<?import javafx.scene.layout.VBox?>
-
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <TitledPane
+        fx:id="root"
         text="Settings"
-        xmlns="http://javafx.com/javafx"
+        xmlns="https://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
         fx:controller="stan.qodat.scene.controller.SettingsController">
     <content>
@@ -28,15 +18,15 @@
                             <children>
                                 <Label text="Show Axis:" GridPane.columnIndex="0" GridPane.rowIndex="0" />
                                 <CheckBox fx:id="showAxisCheckBox" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="0" />
-                                <Label text="MSAA Antialiasing:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
-                                <CheckBox id="msaaCheckBox" fx:id="msaaCheckBox" mnemonicParsing="false" selected="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
-                                <Label text="Background Color" GridPane.columnIndex="0" GridPane.rowIndex="4" />
-                                <ColorPicker fx:id="backgroundColorPicker" GridPane.columnIndex="1" GridPane.rowIndex="4" />
-                                <Region maxHeight="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="5" />
                                 <Label layoutX="18.0" layoutY="15.0" text="Show FPS:" GridPane.rowIndex="1" />
                                 <CheckBox fx:id="fpsCheckBox" layoutX="139.0" layoutY="15.0" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="1" />
-                        <Label text="Inverse Camera:" GridPane.rowIndex="3" />
-                        <CheckBox fx:id="invertCameraCheckBox" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                <Label text="MSAA Antialiasing:" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                <CheckBox id="msaaCheckBox" fx:id="msaaCheckBox" mnemonicParsing="false" selected="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                <Region maxHeight="1.7976931348623157E308" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <Label text="Inverse Camera:"  GridPane.columnIndex="0" GridPane.rowIndex="3" />
+                                <CheckBox fx:id="invertCameraCheckBox" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
+                                <Label text="Background Color" GridPane.columnIndex="0" GridPane.rowIndex="4" />
+                                <ColorPicker fx:id="backgroundColorPicker" GridPane.columnIndex="1" GridPane.rowIndex="4" />
                             </children>
                             <columnConstraints>
                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="127.0" minWidth="10.0" prefWidth="121.0" />

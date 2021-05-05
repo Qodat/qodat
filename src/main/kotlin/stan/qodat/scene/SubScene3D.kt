@@ -1,5 +1,6 @@
 package stan.qodat.scene
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.EventHandler
 import javafx.scene.AmbientLight
@@ -36,7 +37,10 @@ object SubScene3D : AbstractSubScene() {
 
     val cameraHandler = CameraHandler()
 
+    val lockContextProperty = SimpleBooleanProperty(true)
     val contextProperty = SimpleObjectProperty<SceneContext>()
+
+    var lastContext : SceneContext? = null
 
     /**
      * Sequences animations for Rune-Scape models.

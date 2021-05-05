@@ -7,21 +7,27 @@ import javafx.beans.value.ChangeListener
 import javafx.concurrent.Task
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.fxml.Initializable
+import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.*
+import javafx.scene.paint.Color
 import javafx.stage.DirectoryChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.event.SelectedTabChangeEvent
+import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.layout.AutoScaleSubScenePane
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.util.bind
+import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
+import javax.swing.text.html.ImageView
 
 /**
  * TODO: add documentation
@@ -29,7 +35,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class MainController : Initializable {
+class MainController : SceneController("main-scene") {
 
     @FXML lateinit var filesModelListView: ListView<Model>
     @FXML lateinit var sceneTreeView: TreeView<Node>
@@ -61,13 +67,24 @@ class MainController : Initializable {
     @FXML lateinit var playBtn: ToggleButton
     @FXML lateinit var loopBtn: ToggleButton
     @FXML lateinit var bottomBox: VBox
+    @FXML lateinit var sceneHBox: HBox
     @FXML lateinit var sceneLabel: Label
+    @FXML lateinit var lockSceneContextButton: ToggleButton
+    @FXML lateinit var sceneContextBox: ComboBox<SceneContext>
 
     private val rightTabContents = SimpleObjectProperty<Node?>()
     private val leftTabContents = SimpleObjectProperty<Node?>()
     private val bottomTabContents = SimpleObjectProperty<Node>()
 
     lateinit var viewerController: ViewerController
+
+    override fun onSwitch(other: SceneController) {
+        if (other is ViewerController) {
+            println("do")
+        }
+    }
+
+    override fun getViewNode() = mainPanes
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
@@ -94,6 +111,17 @@ class MainController : Initializable {
         val navigationBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("navigation.fxml"))
         val timeLineBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("timeline.fxml"))
 
+        sceneContextBox.items.addAll(
+            sceneContext,
+            viewerController.sceneContext)
+        sceneContextBox.tooltip = Tooltip("Select scene context")
+        sceneContextBox.bind(SubScene3D.contextProperty)
+
+        viewerController.selectThisContext()
+
+        lockSceneContextButton.tooltip = Tooltip("Lock scene context")
+        lockSceneContextButton.selectedProperty().setAndBind(SubScene3D.lockContextProperty, biDirectional = true)
+
         rightViewerTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, viewerPane))
         rightMainTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, mainPanes))
         leftFilesTab.selectedProperty().addListener(createSelectTabListener(leftTabContents, leftTab))
@@ -107,13 +135,14 @@ class MainController : Initializable {
         configurePlayControls()
     }
 
+
     /**
      * Contains the 3D scene and navigation controller box.
      */
     private fun configureCenterPane(navigationBox: VBox) {
         SubScene3D.overlayGroup.children.add(navigationBox)
         val subScenePane = AutoScaleSubScenePane(parentWidthProperty = splitPlane.widthProperty())
-//        subScenePane.overlayGroup.children.add(SubScene3D.overlayGroup)
+        subScenePane.overlayMiscGroup.children.add(SubScene3D.overlayGroup)
         subScenePane.subSceneProperty.setAndBind(SubScene3D.subSceneProperty)
         splitPlane.items.remove(canvasPlaceHolder)
         splitPlane.items.add(1, subScenePane)
@@ -199,11 +228,9 @@ class MainController : Initializable {
                 tabContents.set(null)
 
             node.fireEvent(
-                    SelectedTabChangeEvent(
-                            selected = newValue,
-                            otherSelected = otherSelected
-                    )
-            )
+                SelectedTabChangeEvent(
+                    selected = newValue,
+                    otherSelected = otherSelected))
         }
     }
 

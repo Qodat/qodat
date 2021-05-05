@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.*?>
 
 <VBox id="root"
-      xmlns="http://javafx.com/javafx"
+      xmlns="https://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="stan.qodat.scene.controller.TimeLineController">
     <stylesheets>

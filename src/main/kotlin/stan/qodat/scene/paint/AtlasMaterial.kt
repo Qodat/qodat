@@ -1,10 +1,13 @@
 package stan.qodat.scene.paint
 
+import fxyz3d.geometry.Face3
+import fxyz3d.geometry.Point3F
 import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.ColorPicker
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
+import java.util.stream.IntStream
 
 /**
  * This class represents a [PhongMaterial] with its

@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.entity
 
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Group
 import javafx.scene.Node
@@ -7,6 +8,7 @@ import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.EntityDefinition
+import stan.qodat.cache.impl.oldschool.RSModelDefinitionBuilder
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.ViewNodeProvider
 import stan.qodat.scene.control.tree.EntityTreeItem
@@ -32,16 +34,25 @@ abstract class Entity<D : EntityDefinition>(
     private lateinit var treeItem: EntityTreeItem
 
     val labelProperty = SimpleStringProperty(definition.name)
+    val mergeModelProperty = SimpleBooleanProperty(true)
 
     override fun getName() = labelProperty.get()
 
     fun getModels(): Array<Model> {
         if (!this::models.isInitialized){
-            models = definition.modelIds.map {
-                val modelDefinition = cache.getModel(it)
-                Model("$it", modelDefinition)
+            val definitions = definition.modelIds.map {
+                cache.getModel(it)
             }.toTypedArray()
-
+            models = if (definitions.size > 1 && mergeModelProperty.get()) {
+                val multiModelName = "models_${definitions.joinToString {
+                    it.getName() + "_"
+                }}"
+                arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build()))
+            } else
+                definition.modelIds.map {
+                    val modelDefinition = cache.getModel(it)
+                    Model("$it", modelDefinition)
+                }.toTypedArray()
         }
         return models
     }

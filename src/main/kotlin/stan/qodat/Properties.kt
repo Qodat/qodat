@@ -53,6 +53,8 @@ object Properties {
 
     val showFPS = SimpleBooleanProperty(true)
 
+    val showPriorityLabels = SimpleBooleanProperty(false)
+
     val xAxisMaterial = SimpleObjectProperty(DEFAULT_X_AXIS_MATERIAL)
     val yAxisMaterial = SimpleObjectProperty(DEFAULT_Y_AXIS_MATERIAL)
     val zAxisMaterial = SimpleObjectProperty(DEFAULT_Z_AXIS_MATERIAL)
@@ -78,7 +80,7 @@ object Properties {
     val cameraMinZoom = SimpleDoubleProperty(0.0)
 
     val cache = SimpleObjectProperty<Cache>()
-    val osrsCachePath = SimpleObjectProperty(Paths.get("caches/oldschool_cj"))
+    val osrsCachePath = SimpleObjectProperty(Paths.get("caches/oldschool"))
 
     fun bind(sessionManager: SessionManager) {
 

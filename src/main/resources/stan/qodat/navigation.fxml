@@ -41,7 +41,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 <VBox id="controller"
       alignment="CENTER_RIGHT"
       spacing="10.0"
-      xmlns="http://javafx.com/javafx"
+      xmlns="https://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="stan.qodat.scene.controller.NavigationController">
   <padding>

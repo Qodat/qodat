@@ -7,6 +7,7 @@ import javafx.beans.value.ObservableValue
 import javafx.collections.transformation.FilteredList
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.control.ComboBox
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.paint.Material
@@ -99,4 +100,13 @@ fun<P, O : Property<P>> O.setAndBind(newProperty: O, biDirectional: Boolean = fa
         bindBidirectional(newProperty)
     else
         bind(newProperty)
+}
+
+fun<T, P : Property<T>> ComboBox<T>.bind(property: P) {
+    selectionModel.selectedItemProperty().onInvalidation {
+        property.value = value
+    }
+    property.onInvalidation {
+        selectionModel.select(value)
+    }
 }

@@ -60,9 +60,6 @@ class CameraHandler(
 
     val mouseEventHandler = EventHandler<MouseEvent> {
 
-        if (it.isControlDown)
-            return@EventHandler
-
         lastMouseX = if (firstEvent) it.sceneX else mouseX
         lastMouseY = if (firstEvent) it.sceneY else mouseY
         mouseX = it.sceneX
@@ -81,14 +78,24 @@ class CameraHandler(
 
         when {
             it.isPrimaryButtonDown -> {
+                if (it.isControlDown)
+                    return@EventHandler
                 if (Properties.cameraInvert.get())
                     cameraTransformGroup.yRotate.angle += mouseDeltaX.times(cameraSpeed.times(2))
                 else
                     cameraTransformGroup.yRotate.angle -= mouseDeltaX.times(cameraSpeed.times(2))
                 cameraTransformGroup.xRotate.angle -= mouseDeltaY.times(cameraSpeed.times(2))
+                it.consume()
             }
-            it.isSecondaryButtonDown ->
-                position.z += (mouseDeltaX + mouseDeltaY).times(cameraSpeed).times(20)
+            it.isSecondaryButtonDown -> {
+                if (it.isControlDown) {
+                    cameraTransformGroup.translate.x += mouseDeltaX.times(cameraSpeed).times(30)
+                    cameraTransformGroup.translate.y += mouseDeltaY.times(cameraSpeed).times(30)
+                } else {
+                    position.z += (mouseDeltaX + mouseDeltaY).times(cameraSpeed).times(20)
+                }
+                it.consume()
+            }
         }
     }
 

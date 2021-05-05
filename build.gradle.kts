@@ -1,13 +1,15 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-//    application
-    java
-    kotlin("jvm") version "1.4.0"
+
+    kotlin("jvm") version "1.4.32"
+    application
 //    id("org.openjfx.javafxplugin") version "0.0.9"
+//    id("org.beryx.jlink") version "2.22.0"
 }
-group = "me.31619"
-version = "1.0-SNAPSHOT"
+
+group = "stan.qodat"
+version = "0.0.2"
 
 repositories {
     maven(url = "https://jitpack.io")
@@ -16,16 +18,15 @@ repositories {
 }
 
 dependencies {
-    implementation(group = "com.github.runelite.runelite", name = "cache", version = "runelite-parent-1.5.2.1")
+    implementation(group = "com.github.runelite.runelite", name = "cache", version = "runelite-parent-1.6.39") {
+        exclude(group = "com.google.common")
+    }
+    implementation("org.orbisgis:poly2tri-core:0.1.2")
     testImplementation(kotlin("test-junit"))
 }
 
-//application {
-//    mainClassName = "stan.qodat.Qodat"
-//}
-
 //javafx {
-//    version = "11"
+//    version = JavaVersion.VERSION_11.toString()
 //    modules(
 //        "javafx.base",
 //        "javafx.controls",
@@ -39,6 +40,37 @@ sourceSets {
         java.srcDir("src/main/kotlin")
     }
 }
+application {
+    mainModule.set("stan.qodat")
+    mainClass.set("stan.qodat.Qodat")
+}
+//jlink{
+//    launcher {
+//        name = "Qodat $version"
+//    }
+//    mergedModule {
+//        excludeUses("com.google.common.base.PatternCompiler")
+//    }
+//    imageZip.set(project.file("${project.buildDir}/image-zip/qodat-$version.zip"))
+//}
+
+//
+//java {
+//    sourceCompatibility = JavaVersion.VERSION_11
+//    targetCompatibility = JavaVersion.VERSION_11
+//}
+
+tasks.withType<Jar> {
+    manifest {
+        attributes("Main-Class" to "stan.qodat.Qodat")
+    }
+    from(sourceSets.main.get().output)
+    dependsOn(configurations.runtimeClasspath)
+    from({
+        configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
+    })
+}
+
 tasks.withType<KotlinCompile> {
-    kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.jvmTarget = JavaVersion.VERSION_1_8.toString()
 }
