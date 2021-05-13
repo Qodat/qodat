@@ -9,7 +9,7 @@ import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
-import stan.qodat.scene.control.TreeItemEditContextMenu
+import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
@@ -41,12 +41,12 @@ class TransformTreeItem(
         label.textProperty().setAndBind(transform.labelProperty)
 
         val contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
-            TreeItemEditContextMenu(
+            TreeItemListContextMenu(
                 list = frame.transformationList,
                 rootItem = transformsItem,
                 selectionModel = selectionModel,
                 transformer = { type, transform ->
-                    if (type == TreeItemEditContextMenu.Type.COPY)
+                    if (type == TreeItemListContextMenu.CreateActionType.DUPLICATE)
                         transform.clone()
                     else
                         Transformation("New")

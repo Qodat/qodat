@@ -1,15 +1,12 @@
 package stan.qodat.scene.control
 
-import javafx.event.EventHandler
-import javafx.scene.input.DragEvent
-import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
 import kotlin.math.abs
 import kotlin.math.min
 
 /**
- * TODO: add documentation
+ * Handles a selection rectangle that can be created by holding down CTRL and dragging inside the scene.
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   30/01/2021

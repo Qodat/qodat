@@ -8,7 +8,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
-import stan.qodat.scene.control.TreeItemEditContextMenu
+import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
@@ -104,7 +104,7 @@ class AnimationTreeItem(
     }
 
     companion object {
-        val transformsContextMenuMap = HashMap<AnimationFrame, TreeItemEditContextMenu<Transformation>>()
+        val transformsContextMenuMap = HashMap<AnimationFrame, TreeItemListContextMenu<Transformation>>()
     }
 
 }
