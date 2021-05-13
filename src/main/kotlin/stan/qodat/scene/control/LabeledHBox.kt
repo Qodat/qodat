@@ -17,9 +17,9 @@ class LabeledHBox(
     alignment: Pos = Pos.CENTER_LEFT
 ) : HBox(spacing) {
 
+    val label = Label()
     init {
         this.alignment = alignment
-        val label = Label()
         label.textProperty().bind(textProperty)
         children.add(label)
     }

@@ -26,6 +26,7 @@ class Qodat : Application() {
 
     override fun start(primaryStage: Stage) {
 
+        stage = primaryStage
         propertiesManager.loadFromFile()
 
         Properties.bind(propertiesManager)
@@ -78,6 +79,8 @@ class Qodat : Application() {
          * The main FXML controller.
          */
         lateinit var mainController : MainController
+
+        lateinit var stage: Stage
 
         /**
          * Starting point of the application.

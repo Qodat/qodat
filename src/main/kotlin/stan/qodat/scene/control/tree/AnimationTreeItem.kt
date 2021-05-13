@@ -66,13 +66,13 @@ class AnimationTreeItem(
     private fun loadFrames(){
         val frames = animation.getFrameList()
         for (frame in frames) {
-            val frameItem = TreeItem<Node>(HBox(5.0).apply {
-                alignment = Pos.CENTER_LEFT
-                checkBox(frame.enabledProperty, biDirectional = true)
-                label(frame.getName())
-            })
-            framesMap[frameItem] = frame
-            children.add(frameItem)
+            treeItem {
+                hBox {
+                    checkBox(frame.enabledProperty, biDirectional = true)
+                    label(frame.getName())
+                }
+                framesMap[this] = frame
+            }
         }
     }
 

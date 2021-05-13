@@ -1,13 +1,19 @@
 package stan.qodat.scene.controller
 
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.geometry.Pos
 import javafx.scene.Group
+import javafx.scene.SnapshotParameters
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.Tooltip
+import javafx.scene.input.ClipboardContent
+import javafx.scene.input.DataFormat
+import javafx.scene.input.TransferMode
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.shape.Sphere
@@ -18,9 +24,14 @@ import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.util.FrameTimeUtil
+import stan.qodat.util.getAnimationsView
 import stan.qodat.util.onIndexSelected
+import java.io.File
+import java.io.FileOutputStream
 import java.net.URL
+import java.nio.file.Paths
 import java.util.*
+import javax.imageio.ImageIO
 
 /**
  * TODO: add documentation
@@ -44,6 +55,31 @@ class TimeLineController : Initializable {
 
         timeLineBox.children.removeAll(transformsList)
 
+        frameList.apply {
+            setOnDragDetected {
+                val dragboard = startDragAndDrop(TransferMode.COPY)
+                val clipboardContent = ClipboardContent()
+                val files = selectionModel.selectedIndices.map {
+                    animationPlayer.jumpToFrame(it)
+                    val snapshotParameters = SnapshotParameters().apply { fill = Color.TRANSPARENT }
+                    val snapShot = SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)
+                    val image = SwingFXUtils.fromFXImage(snapShot, null)
+                    val out = File("$it.png")
+                    ImageIO.write(image, "png", out)
+                    out
+                }
+                clipboardContent.putFiles(files)
+                dragboard.setContent(clipboardContent)
+                it.consume()
+            }
+            setOnDragExited {
+                it.consume()
+            }
+            setOnDragDone {
+                it.consume()
+            }
+        }
+        frameList.selectionModel.selectionMode = SelectionMode.MULTIPLE
         frameList.onIndexSelected {
             if (this >= 0) {
                 if (this != animationPlayer.frameIndexProperty.get()) {

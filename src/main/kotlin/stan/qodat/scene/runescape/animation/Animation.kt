@@ -4,18 +4,32 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
+import javafx.embed.swing.SwingFXUtils
 import javafx.scene.Node
+import javafx.scene.SnapshotParameters
+import javafx.scene.control.ContextMenu
 import javafx.scene.layout.HBox
-import stan.qodat.cache.definition.AnimationDefinition
+import javafx.scene.paint.Color
+import stan.gifencoder.*
+import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
+import stan.qodat.cache.definition.AnimationDefinition
+import stan.qodat.javafx.menu
+import stan.qodat.javafx.menuItem
 import stan.qodat.scene.SubScene3D
-import stan.qodat.util.ViewNodeProvider
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.scene.transform.Transformer
 import stan.qodat.util.Searchable
+import stan.qodat.util.ViewNodeProvider
+import stan.qodat.util.getAnimationsView
+import java.io.FileOutputStream
 import java.io.UnsupportedEncodingException
+import java.nio.file.Paths
+import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
+
 
 /**
  * Represents a [Transformer] for [Model] objects.
@@ -83,8 +97,47 @@ class Animation(
     override fun getName() = labelProperty.get()
 
     override fun getViewNode(): Node {
-        if (!this::viewBox.isInitialized)
-            viewBox = LabeledHBox(labelProperty)
+        if (!this::viewBox.isInitialized) {
+            viewBox = LabeledHBox(labelProperty).apply {
+                label.contextMenu = ContextMenu().apply {
+                    menu("export") {
+                        menuItem("GIF") {
+                            val animation = Qodat.getAnimationsView().selectionModel.selectedItem
+                            if (animation != null) {
+                                val scene = SubScene3D.subSceneProperty.get()
+                                val animationPlayer = SubScene3D.animationPlayer
+                                val out = FileOutputStream("${animation.getName()}.gif")
+                                val options = ImageOptions()
+                                val encoder = GifEncoder(out, scene.width.toInt(), scene.height.toInt(), 0)
+                                for ((index, frame) in animation.frames.withIndex()) {
+                                    animationPlayer.jumpToFrame(index)
+                                    val snapshotParameters = SnapshotParameters().apply { fill = Color.BLACK }
+                                    val snapShot =
+                                        SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)!!
+                                    val reader = snapShot.pixelReader
+                                    val colors = Array(snapShot.height.toInt()) { y ->
+                                        Array(snapShot.width.toInt()) { x ->
+                                            val color = reader.getColor(x, y)
+                                            stan.gifencoder.Color(color.red, color.green, color.blue)
+                                        }
+                                    }
+                                    val duration = frame.getDuration()
+                                    val gifImage = Image.fromColors(colors)
+                                    options.setDelay(duration.toMillis().toLong(), TimeUnit.MILLISECONDS)
+                                    options.setTransparencyColor(stan.gifencoder.Color.BLACK.rgbInt)
+                                    options.setDisposalMethod(DisposalMethod.DO_NOT_DISPOSE)
+//                                    options.setColorQuantizer(KMeansQuantizer.INSTANCE)
+                                    encoder.addImage(gifImage, options)
+                                }
+                                encoder.finishEncoding()
+                                out.flush()
+                                out.close()
+                            }
+                        }
+                    }
+                }
+            }
+        }
         return viewBox
     }
 
