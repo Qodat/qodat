@@ -2,6 +2,7 @@ package stan.qodat.scene.controller
 
 import javafx.application.Platform
 import javafx.collections.FXCollections
+import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.concurrent.Task
 import javafx.fxml.FXML
@@ -26,75 +27,82 @@ import kotlin.collections.ArrayList
 import javafx.scene.control.ListCell
 import javafx.util.Callback
 
-
 /**
- * TODO: add documentation
+ * Represents a FXML controller for a filterable list of animations.
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
 class AnimationController : Initializable {
 
+    /**
+     * A [ListView] containing all [filteredAnimations].
+     */
     @FXML lateinit var animationsListView: ListView<Animation>
-    @FXML lateinit var searchAnimationsList: TextField
 
-    val animations = FXCollections.observableArrayList<Animation>()
+    /**
+     * A [TextField] in which users can filter the [animations][Animation] contained in the [animationsListView].
+     * This is used to set the predicate of [filteredAnimations].
+     */
+    @FXML lateinit var searchTextField: TextField
+
+    /**
+     * A [FilteredList] of [animations][Animation]. This list is backed by [animations].
+     */
     lateinit var filteredAnimations: FilteredList<Animation>
 
+    /**
+     * An [ObservableList] of all the [animations][Animation] present in the loaded [Cache].
+     */
+    val animations: ObservableList<Animation> = FXCollections.observableArrayList()
+
     override fun initialize(location: URL?, resources: ResourceBundle?) {
-
-        VBox.setVgrow(animationsListView, Priority.ALWAYS)
-
         filteredAnimations = FilteredList(animations) { true }
-
-        animationsListView.cellFactory = Callback<ListView<Animation>, ListCell<Animation>> {
-            object : ListCell<Animation>() {
-                override fun updateItem(item: Animation?, empty: Boolean) {
-                    super.updateItem(item, empty)
-                    graphic = if (empty || item == null)
-                        null
-                    else
-                        item.getViewNode()
-                }
+        animationsListView.apply {
+            VBox.setVgrow(this, Priority.ALWAYS)
+            cellFactory = createCellFactory()
+            items = filteredAnimations
+            disableProperty().setAndBind(Properties.disableAnimationsView)
+            onItemSelected { old, new ->
+                if (new == null && old != null)
+                    SubScene3D.animationPlayer.transformerProperty.set(null)
+                else if(new != null)
+                    SubScene3D.animationPlayer.transformerProperty.set(new)
             }
         }
-        animationsListView.disableProperty().setAndBind(Properties.disableAnimationsView)
-        animationsListView.items = filteredAnimations
-        animationsListView.onItemSelected { old, new ->
-            if (new == null && old != null)
-                SubScene3D.animationPlayer.transformerProperty.set(null)
-            else if(new != null)
-                SubScene3D.animationPlayer.transformerProperty.set(new)
+        searchTextField.apply {
+            disableProperty().setAndBind(Properties.disableAnimationsView)
+            configureSearchFilter(filteredAnimations)
         }
-
-        searchAnimationsList.disableProperty().setAndBind(Properties.disableAnimationsView)
-        searchAnimationsList.configureSearchFilter(filteredAnimations)
-
         Properties.cache.addListener { _, _, newValue ->
-            Qodat.mainController.executeBackgroundTasks(createSequenceLoadTask(newValue))
+            Qodat.mainController.executeBackgroundTasks(createLoadAnimationsTask(newValue))
         }
     }
 
-    private fun createSequenceLoadTask(cache: Cache) = object : Task<Void?>() {
+    private fun createCellFactory() = Callback<ListView<Animation>, ListCell<Animation>> {
+        object : ListCell<Animation>() {
+            override fun updateItem(item: Animation?, empty: Boolean) {
+                super.updateItem(item, empty)
+                graphic = if (empty || item == null) null else item.getViewNode()
+            }
+        }
+    }
+
+    private fun createLoadAnimationsTask(cache: Cache) = object : Task<Void?>() {
         override fun call(): Void? {
             val animationDefinitions = OldschoolCacheRuneLite.getAnimationDefinitions()
             val animations = ArrayList<Animation>()
             for ((i, definition) in animationDefinitions.withIndex()) {
                 try {
-                    if (definition.frameHashes.isNotEmpty()) {
-                        val animation = Animation("$i", definition, cache)
-                        animations.add(animation)
-                    }
-                    val progress = (100.0 * i.div(animationDefinitions.size))
-                    updateProgress(progress, 100.0)
+                    if (definition.frameHashes.isNotEmpty())
+                        animations += Animation("$i", definition, cache)
+                    updateProgress((100.0 * i.div(animationDefinitions.size)), 100.0)
                     updateMessage("Loading animation (${i + 1} / ${animationDefinitions.size})")
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
             }
-            Platform.runLater {
-                this@AnimationController.animations.setAll(animations)
-            }
+            Platform.runLater { this@AnimationController.animations.setAll(animations) }
             return null
         }
     }

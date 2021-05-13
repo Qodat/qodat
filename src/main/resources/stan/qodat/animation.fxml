@@ -16,7 +16,7 @@
         <VBox prefHeight="355.0" prefWidth="220.0">
             <children>
                 <ListView fx:id="animationsListView" prefHeight="330.0" prefWidth="220.0"/>
-                <TextField fx:id="searchAnimationsList" prefHeight="27.0" prefWidth="220.0"
+                <TextField fx:id="searchTextField" prefHeight="27.0" prefWidth="220.0"
                            promptText="Search animation"/>
             </children>
         </VBox>
