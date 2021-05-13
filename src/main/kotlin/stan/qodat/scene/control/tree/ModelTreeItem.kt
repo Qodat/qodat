@@ -1,13 +1,12 @@
 package stan.qodat.scene.control.tree
 
-import javafx.collections.FXCollections
 import javafx.scene.Node
-import javafx.scene.control.*
+import javafx.scene.control.MultipleSelectionModel
+import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.shape.DrawMode
-import javafx.scene.text.Text
+import stan.qodat.javafx.*
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.setAndBind
 
 /**
  * TODO: add documentation
@@ -21,68 +20,29 @@ class ModelTreeItem(
 ) : TreeItem<Node>() {
 
     init {
-
-        selectionModel.selectedItemProperty().addListener { _, oldValue, newValue ->
-            if (newValue == this)
-                model.selectedProperty.set(true)
-            else if (oldValue == this)
-                model.selectedProperty.set(false)
-        }
-
-        val text = Text("MODEL").also {
-            it.fill = Color.web("#FFC66D")
-        }
-
-        val label = Label().also {
-            it.textProperty().setAndBind(model.labelProperty)
-        }
-
-        value = label
-        graphic = text
-        children.add(TreeItem(CheckBox("shading").apply {
-            selectedProperty().setAndBind(model.shadingProperty, biDirectional = true)
-        }))
-        children.add(TreeItem(CheckBox("show priorities").apply {
-            selectedProperty().setAndBind(model.displayFacePriorityLabelsProperty, biDirectional = true)
-        }))
-        children.add(TreeItem(CheckBox("visible").apply {
-            selectedProperty().setAndBind(model.visibleProperty, biDirectional = true)
-        }))
-
-        val drawModeValues = FXCollections.observableArrayList(*DrawMode.values())
-        val drawModeBox = ComboBox(drawModeValues)
-        drawModeBox.promptText = "Select draw mode"
-        drawModeBox.selectionModel.select(model.drawModeProperty.get())
-        drawModeBox.selectionModel.selectedItemProperty().addListener { _, _, newValue ->
-            if (model.drawModeProperty.get() != newValue)
-                model.drawModeProperty.set(newValue)
-        }
-        model.drawModeProperty.addListener { _, _, newValue ->
-            if (drawModeBox.selectionModel.selectedItem != newValue)
-                drawModeBox.selectionModel.select(newValue)
-        }
-        val drawModeItem = TreeItem<Node>(drawModeBox)
-        children.add(drawModeItem)
-
-        
+        text("MODEL", Color.web("#FFC66D"))
+        label(model.labelProperty)
+        treeItem { checkBox("shading", model.shadingProperty, biDirectional = true) }
+        treeItem { checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true) }
+        treeItem { checkBox("visible", model.visibleProperty, biDirectional = true) }
+        treeItem { comboBox("Select draw mode", DrawMode.values(), model.drawModeProperty, biDirectional = true) }
         val vertexGroups = model.getVertexGroups()
         if (vertexGroups.isNotEmpty()){
-            val vertexGroupsItem = TreeItem<Node>(Label("Vertex Groups"))
-            children.add(vertexGroupsItem)
-            for ((index, vertexGroup) in vertexGroups.withIndex()){
-                val vertexGroupItem = VertexGroupTreeItem(model, index, vertexGroup, selectionModel)
-                vertexGroupsItem.children.add(vertexGroupItem)
+            treeItem("Vertex Groups") {
+                for ((index, vertexGroup) in vertexGroups.withIndex())
+                    children += VertexGroupTreeItem(model, index, vertexGroup, selectionModel)
             }
         }
-
         val faceGroups = model.getFaceGroups()
         if (faceGroups.isNotEmpty()){
-            val faceGroupsItem = TreeItem<Node>(Label("Face Groups"))
-            children.add(faceGroupsItem)
-            for ((index, faceGroup) in faceGroups.withIndex()){
-                val faceGroupItem = FaceGroupTreeItem(model, index, faceGroup, selectionModel)
-                faceGroupsItem.children.add(faceGroupItem)
+            treeItem("Face Groups") {
+                for ((index, faceGroup) in faceGroups.withIndex())
+                    children += FaceGroupTreeItem(model, index, faceGroup, selectionModel)
             }
+        }
+        selectionModel.onSelected { oldValue, newValue ->
+            if (newValue == this) model.selectedProperty.set(true)
+            else if (oldValue == this) model.selectedProperty.set(false)
         }
     }
 }

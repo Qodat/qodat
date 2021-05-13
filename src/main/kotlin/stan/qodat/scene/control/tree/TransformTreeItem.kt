@@ -1,14 +1,12 @@
 package stan.qodat.scene.control.tree
 
-import javafx.collections.FXCollections
-import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.control.*
-import javafx.scene.layout.HBox
-import javafx.scene.layout.VBox
+import javafx.scene.control.MultipleSelectionModel
+import javafx.scene.control.TreeItem
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
+import stan.qodat.javafx.*
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
@@ -16,7 +14,6 @@ import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.ModelFaceMesh
 import stan.qodat.util.BABY_BLUE
-import stan.qodat.util.setAndBind
 
 class TransformTreeItem(
     private val entity: Entity<*>,
@@ -29,66 +26,41 @@ class TransformTreeItem(
     private lateinit var selectionMesh: Group
 
     init {
-
-        val controlBox = HBox(5.0)
-        controlBox.alignment = Pos.CENTER_LEFT
-
-        val disableBox = CheckBox()
-        disableBox.selectedProperty().setAndBind(transform.enabledProperty, biDirectional = true)
-        controlBox.children.add(disableBox)
-
-        val label = Label()
-        label.textProperty().setAndBind(transform.labelProperty)
-
-        val contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
-            TreeItemListContextMenu(
-                list = frame.transformationList,
-                rootItem = transformsItem,
-                selectionModel = selectionModel,
-                transformer = { type, transform ->
-                    if (type == TreeItemListContextMenu.CreateActionType.DUPLICATE)
-                        transform.clone()
-                    else
-                        Transformation("New")
+        hBox {
+            checkBox(transform.enabledProperty, biDirectional = true)
+            label(transform.labelProperty) {
+                contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
+                    TreeItemListContextMenu(
+                        list = frame.transformationList,
+                        rootItem = transformsItem,
+                        selectionModel = selectionModel,
+                        itemCreator = { type, transform ->
+                            if (type == TreeItemListContextMenu.CreateActionType.DUPLICATE)
+                                transform.clone()
+                            else
+                                Transformation("New")
+                        }
+                    )
                 }
-            )
+            }
         }
-        label.contextMenu = contextMenu
-        controlBox.children.add(label)
-
-        val controlBox2 = VBox(5.0)
-        controlBox2.alignment = Pos.CENTER_LEFT
-        val transformTypeList = FXCollections.observableArrayList(*TransformationType.values())
-        val typeBox = ComboBox(transformTypeList)
-        typeBox.selectionModel.select(transform.typeProperty.get())
-        transform.typeProperty.bind(typeBox.selectionModel.selectedItemProperty())
-        controlBox2.children.add(typeBox)
-
-        val transformControlItem = TreeItem<Node>(controlBox2)
-        transformControlItem.isExpanded = true
-        children.add(transformControlItem)
-
-        valueProperty().set(controlBox)
-
-        selectionModel.selectedItemProperty().addListener { _, oldValue, newValue ->
+        treeItem {
+            isExpanded = true
+            vBox {
+                comboBox("", TransformationType.values(), transform.typeProperty)
+            }
+        }
+        selectionModel.onSelected { oldValue, newValue ->
             if (newValue == this) {
-                if (oldValue !is TransformTreeItem) {
-                    entity.getModels().forEach {
-                        it.drawModeProperty.set(DrawMode.LINE)
-                    }
-                }
-                entity.getSceneNode().children.addAll(
-                    getSelectionMesh()
-                )
+                if (oldValue !is TransformTreeItem)
+                    for (model in entity.getModels())
+                        model.drawModeProperty.set(DrawMode.LINE)
+                entity.getSceneNode().children.addAll(getSelectionMesh())
             } else if (oldValue == this) {
-                if (newValue !is TransformTreeItem) {
-                    entity.getModels().forEach {
-                        it.drawModeProperty.set(DrawMode.FILL)
-                    }
-                }
-                entity.getSceneNode().children.removeAll(
-                    getSelectionMesh()
-                )
+                if (newValue !is TransformTreeItem)
+                    for (model in entity.getModels())
+                        model.drawModeProperty.set(DrawMode.FILL)
+                entity.getSceneNode().children.removeAll(getSelectionMesh())
             }
         }
     }

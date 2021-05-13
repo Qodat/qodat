@@ -4,24 +4,22 @@ import javafx.beans.Observable
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.Property
 import javafx.beans.value.ObservableValue
+import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
-import javafx.scene.Group
-import javafx.scene.Node
 import javafx.scene.control.ComboBox
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.paint.Material
 import javafx.scene.shape.Shape3D
 import stan.qodat.Qodat
-import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.shape.PolygonMeshView
-
-fun Qodat.Companion.getAnimation(id: Int) : Animation? {
-    return mainController.viewerController.animationController.animations.find {
-        it.getName() == "$id"
-    }
-}
+fun Qodat.Companion.getAnimations() : ObservableList<Animation> =
+    mainController.viewerController.animationController.animations
+fun Qodat.Companion.getAnimationsView() : ListView<Animation> =
+    mainController.viewerController.animationController.animationsListView
+fun Qodat.Companion.getAnimation(id: Int) =
+    getAnimations().find { it.getName() == "$id" }
 
 //fun Qodat.Companion.addTo3DScene(node: Node) {
 //    SubScene3D.contextProperty.get().getController().getSceneNode().children.add(node)

@@ -3,16 +3,19 @@ package stan.qodat.scene.control.tree
 import javafx.collections.ObservableList
 import javafx.geometry.Pos
 import javafx.scene.Node
+import javafx.scene.control.Tooltip
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
+import stan.qodat.Qodat
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.entity.Entity
+import stan.qodat.util.getAnimationsView
 
 /**
  * Represents a [TreeItem] for the provided [animation].
@@ -29,25 +32,24 @@ class AnimationTreeItem(
     private val framesMap = HashMap<TreeItem<Node>, AnimationFrame>()
 
     init {
-        setGraphic("ANIMATION", Color.web("#FFC66D"))
-        setValue(animation.labelProperty)
+        text("ANIMATION", Color.web("#FFC66D"))
+        label(animation.labelProperty) {
+            tooltip = Tooltip("Click to play animation")
+            setOnMouseClicked {
+                Qodat.getAnimationsView().apply {
+                    scrollTo(animation)
+                    selectionModel.select(animation)
+                }
+            }
+        }
         onExpanded {
             if (this) {
                 transformsContextMenuMap.clear()
                 for (frameItem in children) {
                     val frame = framesMap[frameItem]?:continue
-                    val transforms = frame.transformationList?.apply {
-                        onChange {
-                            frameItem.children.clear()
-                            for ((index, transform) in withIndex()) {
-                                val transformControlItem =
-                                    TransformTreeItem(entity, frame, transform, frameItem, treeView.selectionModel)
-                                frameItem.children.add(index, transformControlItem)
-                            }
-                        }
-                    }?:continue
-                    for ((index, transform) in transforms.withIndex())
-                        frameItem.children.add(index, TransformTreeItem(entity, frame, transform, frameItem, treeView.selectionModel))
+                    val transforms = frame.transformationList?:continue
+                    transforms.onChange { resetTransformTreeItems(transforms, frameItem, entity, frame, treeView) }
+                    resetTransformTreeItems(transforms, frameItem, entity, frame, treeView)
                 }
             }
         }
@@ -72,6 +74,20 @@ class AnimationTreeItem(
             framesMap[frameItem] = frame
             children.add(frameItem)
         }
+    }
+
+    private fun resetTransformTreeItems(
+        list: ObservableList<Transformation>,
+        frameItem: TreeItem<Node>,
+        entity: Entity<*>,
+        frame: AnimationFrame,
+        treeView: TreeView<Node>
+    ) {
+        frameItem.children.clear()
+        for ((index, transform) in list.withIndex())
+            frameItem.children.add(
+                index,
+                TransformTreeItem(entity, frame, transform, frameItem, treeView.selectionModel))
     }
 
     companion object {

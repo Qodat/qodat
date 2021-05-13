@@ -1,22 +1,20 @@
 package stan.qodat.scene.control.tree
 
-import javafx.collections.FXCollections
 import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.control.*
-import javafx.scene.layout.HBox
+import javafx.scene.control.MultipleSelectionModel
+import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
-import javafx.scene.text.Text
+import stan.qodat.javafx.*
 import stan.qodat.scene.runescape.animation.AnimationSkeleton
 import stan.qodat.scene.runescape.animation.TransformationGroup
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.model.ModelFaceMesh
-import stan.qodat.util.setAndBind
 
 /**
  * TODO: add documentation
@@ -35,55 +33,22 @@ class SkeletonTreeItem(
     private val groupSelectionMeshGroups = HashMap<TransformationGroup, Group>()
 
     init {
-        val text = Text("SKELETON").also {
-            it.fill = Color.web("#FFC66D")
+        text("SKELETON", Color.web("#FFC66D"))
+        label(skeleton.labelProperty)
+        for (group in skeleton.getTransformationGroups()) {
+            treeItem {
+                text("CONTROL_GROUP", Color.web("#FFC66D"))
+                label(group.labelProperty)
+                for (index in group.groupIndices){
+                    treeItem {
+                        hBox {
+                            label("group[$index]")
+                            comboBox("", TransformationType.values(), group.typeProperty, biDirectional = true)
+                        }
+                    }
+                }
+            }
         }
-        val label = Label().also {
-            it.textProperty().setAndBind(skeleton.labelProperty)
-        }
-
-        value = label
-        graphic = text
-
-        for (group in skeleton.getTransformationGroups())
-            children.add(createGroupTreeItem(group))
-    }
-
-    fun createGroupTreeItem(transformationGroup: TransformationGroup) : TreeItem<Node> {
-        val groupTreeItem = TreeItem<Node>()
-        val text = Text("CONTROL_GROUP").also {
-            it.fill = Color.web("#FFC66D")
-        }
-        val label = Label().also {
-            it.textProperty().setAndBind(transformationGroup.labelProperty)
-        }
-        groupTreeItem.value = label
-        groupTreeItem.graphic = text
-
-        selectionModel.selectedItemProperty().addListener { _, oldValue, newValue ->
-//            if (newValue == groupTreeItem)
-//                Qodat.addTo3DScene(getSelectionMesh(transformationGroup))
-//            else if (oldValue == groupTreeItem)
-//                Qodat.removeFrom3DScene(getSelectionMesh(transformationGroup))
-        }
-
-        for (group in transformationGroup.groupIndices){
-
-            val box = HBox()
-            box.alignment = Pos.CENTER_LEFT
-
-            box.children.add(Label("group[$group]"))
-            val transformTypeList = FXCollections.observableArrayList(*TransformationType.values())
-            val typeBox = ComboBox(transformTypeList)
-            typeBox.selectionModel.select(transformationGroup.typeProperty.get())
-            transformationGroup.typeProperty.bind(typeBox.selectionModel.selectedItemProperty())
-            box.children.add(typeBox)
-
-            val entry = TreeItem<Node>(box)
-            groupTreeItem.children.add(entry)
-        }
-
-        return groupTreeItem
     }
 
     private fun getSelectionMesh(transformationGroup: TransformationGroup) : Group {
