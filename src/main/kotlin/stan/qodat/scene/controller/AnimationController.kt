@@ -13,7 +13,7 @@ import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
-import stan.qodat.cache.impl.oldschool.OldschoolCache
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.util.configureSearchFilter
@@ -22,9 +22,7 @@ import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
 import kotlin.collections.ArrayList
-import javafx.beans.property.SimpleStringProperty
 
-import javafx.beans.value.ObservableValue
 import javafx.scene.control.ListCell
 import javafx.util.Callback
 
@@ -79,7 +77,7 @@ class AnimationController : Initializable {
 
     private fun createSequenceLoadTask(cache: Cache) = object : Task<Void?>() {
         override fun call(): Void? {
-            val animationDefinitions = OldschoolCache.getAnimationDefinitions()
+            val animationDefinitions = OldschoolCacheRuneLite.getAnimationDefinitions()
             val animations = ArrayList<Animation>()
             for ((i, definition) in animationDefinitions.withIndex()) {
                 try {

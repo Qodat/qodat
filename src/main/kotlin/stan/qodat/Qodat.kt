@@ -8,7 +8,7 @@ import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import stan.qodat.cache.impl.oldschool.OldschoolCache
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.MainController
 import stan.qodat.util.Action
@@ -36,7 +36,7 @@ class Qodat : Application() {
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
-        Properties.cache.set(OldschoolCache)
+        Properties.cache.set(OldschoolCacheRuneLite)
 
         primaryStage.title = "Qodat"
         primaryStage.icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))

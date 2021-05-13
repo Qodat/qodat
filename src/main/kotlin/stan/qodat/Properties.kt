@@ -80,7 +80,7 @@ object Properties {
     val cameraMinZoom = SimpleDoubleProperty(0.0)
 
     val cache = SimpleObjectProperty<Cache>()
-    val osrsCachePath = SimpleObjectProperty(Paths.get("caches/oldschool"))
+    val osrsCachePath = SimpleObjectProperty(Paths.get("caches/LIVE"))
 
     fun bind(sessionManager: SessionManager) {
 

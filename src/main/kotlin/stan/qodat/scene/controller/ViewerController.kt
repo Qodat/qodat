@@ -17,7 +17,7 @@ import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
-import stan.qodat.cache.impl.oldschool.OldschoolCache
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.scene.SubScene3D
@@ -80,7 +80,7 @@ class ViewerController : SceneController("viewer-scene") {
             if (!npcAnimsDir.exists()){
                 println("Did not find npc_anims dir, creating...")
                 npcAnimsDir.mkdir()
-                val task = createNpcAnimsJsonDir(OldschoolCache.store, OldschoolCache.npcManager)
+                val task = createNpcAnimsJsonDir(OldschoolCacheRuneLite.store, OldschoolCacheRuneLite.npcManager)
                 task.setOnSucceeded {
                     Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
                 }
@@ -124,8 +124,10 @@ class ViewerController : SceneController("viewer-scene") {
         if (node is SceneNodeProvider)
             sceneContext.addNode(node)
 
-        if (node is AnimatedEntity<*>)
-            animationController.filteredAnimations.setPredicate { node.getAnimations().contains(it) }
+        if (node is AnimatedEntity<*>) {
+            val animationNames = node.getAnimations().map { it.getName() }
+            animationController.filteredAnimations.setPredicate { animationNames.contains(it.getName()) }
+        }
 
         if (node is Transformable)
             SubScene3D.animationPlayer.transformableList.add(node)
@@ -154,7 +156,7 @@ class ViewerController : SceneController("viewer-scene") {
     private fun createNPCLoadTask(cache: Cache) = object : Task<Void?>() {
         override fun call(): Void? {
 
-            val npcDefinitions = OldschoolCache.getNPCs()
+            val npcDefinitions = OldschoolCacheRuneLite.getNPCs()
             val npcs = ArrayList<NPC>()
             for ((i, definition) in npcDefinitions.withIndex()) {
                 try {

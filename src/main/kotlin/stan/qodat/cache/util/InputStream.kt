@@ -189,6 +189,48 @@ class InputStream(buffer: ByteArray) : InputStream() {
         return readUnsignedByte()
     }
 
+    fun skipString(){
+        readString()
+    }
+
+    fun skipByteArray(){
+        val length = readUnsignedByte()
+        skip(length)
+    }
+
+    fun skipShortArray(){
+        val length = readUnsignedByte()
+        skip(length * 2)
+    }
+
+    fun readIntArray(lengthType: Type, elementType: Type, lengthIncrease: Int = 0) : IntArray {
+        val length = lengthType.read(this)
+        return IntArray(length + lengthIncrease) {
+            elementType.read(this)
+        }
+    }
+
+    @ExperimentalStdlibApi
+    fun readUnsignedShortArrayPair() : Pair<IntArray, IntArray> {
+        val length = readUnsignedByte()
+        val array1 = IntArray(length)
+        val array2 = IntArray(length)
+        for (i in 0 until length){
+            array1[i] = readUnsignedShort()
+            array2[i] = readUnsignedShort()
+        }
+        return array1 to array2
+    }
+
+    fun readIntArray(){
+        val length = readUnsignedByte()
+        skip(length * 4)
+    }
+
+    fun skipIntArray(){
+        val length = readUnsignedByte()
+        skip(length * 4)
+    }
     companion object {
         private val CHARACTERS = charArrayOf(
             '\u20ac', '\u0000', '\u201a', '\u0192', '\u201e', '\u2026',
@@ -198,6 +240,25 @@ class InputStream(buffer: ByteArray) : InputStream() {
             '\u02dc', '\u2122', '\u0161', '\u203a', '\u0153', '\u0000',
             '\u017e', '\u0178'
         )
-    }
+        enum class Type {
+            U_BYTE {
+                override fun read(stream: stan.qodat.cache.util.InputStream): Int {
+                    return stream.readUnsignedByte()
+                }
+            },
+            U_SHORT {
+                override fun read(stream: stan.qodat.cache.util.InputStream): Int {
+                    return stream.readUnsignedShort()
+                }
+            },
+            INT_24BIT {
+                override fun read(stream: stan.qodat.cache.util.InputStream): Int {
+                    return stream.read24BitInt()
+                }
+            };
 
+            abstract fun read(stream: stan.qodat.cache.util.InputStream) : Int
+
+        }
+    }
 }

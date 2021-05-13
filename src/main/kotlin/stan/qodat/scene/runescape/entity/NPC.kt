@@ -3,7 +3,7 @@ package stan.qodat.scene.runescape.entity
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.cache.definition.NPCDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCache
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import java.io.UnsupportedEncodingException
 
 /**
@@ -13,7 +13,7 @@ import java.io.UnsupportedEncodingException
  * @since   28/01/2021
  */
 class NPC(
-    cache: Cache = OldschoolCache,
+    cache: Cache = OldschoolCacheRuneLite,
     private val definition: NPCDefinition
 ) : AnimatedEntity<NPCDefinition>(cache, definition), CacheEncoder {
 

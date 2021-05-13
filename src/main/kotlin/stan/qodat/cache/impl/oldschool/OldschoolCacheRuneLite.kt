@@ -25,7 +25,7 @@ import kotlin.collections.HashMap
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   29/01/2021
  */
-object OldschoolCache : Cache("Oldschool") {
+object OldschoolCacheRuneLite : Cache("LIVE") {
 
     internal var store = Store(Properties.osrsCachePath.get().toFile())
 
@@ -184,7 +184,7 @@ object OldschoolCache : Cache("Oldschool") {
                         get() = transformGroup
                 }
             }.toMap()
-        }[frameArchiveFileId]!!
+        }[frameArchiveFileId]
     }
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition {
