@@ -8,7 +8,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
 import stan.qodat.cache.Cache
-import stan.qodat.util.SessionManager
+import stan.qodat.util.PropertiesManager
 import java.nio.file.Paths
 
 /**
@@ -82,7 +82,7 @@ object Properties {
     val cache = SimpleObjectProperty<Cache>()
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/LIVE"))
 
-    fun bind(sessionManager: SessionManager) {
+    fun bind(sessionManager: PropertiesManager) {
 
         sessionManager.bind("anti-aliasing", antialiasing) {
             if (it == SceneAntialiasing.BALANCED.toString())

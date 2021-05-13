@@ -3,13 +3,13 @@ package stan.qodat.util
 import java.util.*
 
 /**
- * TODO: add documentation
+ * Cache [actions][Action] that can be undone by pressing CTRL-Z or redone by pressing SHIFT-CTRL-Z.
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   23/09/2019
  * @version 1.0
  */
-class ActionCache {
+object ActionCache {
 
     private val future = ArrayDeque<Action>()
     private val history = ArrayDeque<Action>()
@@ -40,5 +40,4 @@ class ActionCache {
         history.addLast(action)
         action.action()
     }
-
 }

@@ -3,8 +3,11 @@ package stan.qodat.scene.control
 import javafx.collections.ObservableList
 import javafx.scene.control.*
 import stan.qodat.Qodat
+import stan.qodat.javafx.menu
+import stan.qodat.javafx.menuItem
 import stan.qodat.scene.control.TreeItemListContextMenu.CreateActionType.*
 import stan.qodat.util.Action
+import stan.qodat.util.ActionCache
 import stan.qodat.util.onInvalidation
 
 /**
@@ -40,34 +43,20 @@ class TreeItemListContextMenu<E>(
     }
 
     init {
-        items.addAll(
-            Menu("Add").apply {
-                items.addAll(
-                    MenuItem("Before").apply {
-                        setOnAction { Qodat.addAction(createInsertAction(NEW, offset = 0)) }
-                    },
-                    MenuItem("After").apply {
-                        setOnAction { Qodat.addAction(createInsertAction(NEW, offset = +1)) }
-                    }
-                )
-                selectionModel.selectedItems.onInvalidation {
-                    this@apply.disableProperty().set(selectionModel.selectedItems.size > 1)
-                }
-            },
-            Menu("Duplicate").apply {
-                items.addAll(
-                    MenuItem("Before").apply {
-                        setOnAction { Qodat.addAction(createInsertAction(DUPLICATE, offset = 0)) }
-                    },
-                    MenuItem("After").apply {
-                        setOnAction { Qodat.addAction(createInsertAction(DUPLICATE, offset = +1)) }
-                    }
-                )
-            },
-            MenuItem("Delete").apply {
-                setOnAction { Qodat.addAction(createDeleteAction()) }
+        menu("Add") {
+            menuItem("Before") { ActionCache.cache(createInsertAction(NEW, offset = 0)) }
+            menuItem("After") { ActionCache.cache(createInsertAction(NEW, offset = 1)) }
+            selectionModel.selectedItems.onInvalidation {
+                this@menu.disableProperty().set(selectionModel.selectedItems.size > 1)
             }
-        )
+        }
+        menu("Duplicate") {
+            menuItem("Before") { ActionCache.cache(createInsertAction(DUPLICATE, offset = 0)) }
+            menuItem("After") { ActionCache.cache(createInsertAction(DUPLICATE, offset = 1)) }
+        }
+        menu("Delete") {
+            setOnAction { ActionCache.cache(createDeleteAction()) }
+        }
     }
 
     private fun createInsertAction(type: CreateActionType, offset: Int) = object  : Action {

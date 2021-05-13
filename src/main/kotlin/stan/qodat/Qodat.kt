@@ -11,9 +11,9 @@ import javafx.stage.StageStyle
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.MainController
-import stan.qodat.util.Action
 import stan.qodat.util.ActionCache
-import stan.qodat.util.SessionManager
+import stan.qodat.util.PropertiesManager
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 /**
@@ -26,9 +26,9 @@ class Qodat : Application() {
 
     override fun start(primaryStage: Stage) {
 
-        sessionManager.loadFromFile()
+        propertiesManager.loadFromFile()
 
-        Properties.bind(sessionManager)
+        Properties.bind(propertiesManager)
 
         SubScene3D.init()
 
@@ -38,45 +38,53 @@ class Qodat : Application() {
 
         Properties.cache.set(OldschoolCacheRuneLite)
 
-        primaryStage.title = "Qodat"
-        primaryStage.icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))
-        primaryStage.scene = Scene(root, Properties.sceneInitialWidth.get(), Properties.sceneInitialHeight.get()).also {
-            Properties.sceneInitialWidth.bind(it.widthProperty())
-            Properties.sceneInitialHeight.bind(it.heightProperty())
-        }
-        primaryStage.scene.setOnKeyPressed {
-            if(it.code == KeyCode.Z && it.isControlDown){
-                if(it.isShiftDown)
-                    actionCache.redoLast()
-                else
-                    actionCache.undoLast()
-                it.consume()
+        primaryStage.apply {
+            title = "Qodat"
+            icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))
+            scene = Scene(root, Properties.sceneInitialWidth.get(), Properties.sceneInitialHeight.get()).apply {
+                Properties.sceneInitialWidth.bind(widthProperty())
+                Properties.sceneInitialHeight.bind(heightProperty())
+                setOnKeyPressed {
+                    if(it.code == KeyCode.Z && it.isControlDown){
+                        if(it.isShiftDown)
+                            ActionCache.redoLast()
+                        else
+                            ActionCache.undoLast()
+                        it.consume()
+                    }
+                }
             }
-        }
-        primaryStage.initStyle(StageStyle.DECORATED)
-        primaryStage.show()
-        primaryStage.setOnCloseRequest {
-            sessionManager.saveToFile()
+            initStyle(StageStyle.DECORATED)
+            show()
+            setOnCloseRequest {
+                propertiesManager.saveToFile()
+            }
         }
     }
 
     companion object {
 
-        private val sessionManager = SessionManager()
+        /**
+         * Handles the serialisation of [Properties].
+         */
+        private val propertiesManager = PropertiesManager()
 
-        private val actionCache = ActionCache()
+        /**
+         * Used to offload tasks to a different single-thread.
+         */
+        val executor: ExecutorService = Executors.newSingleThreadExecutor()
 
-        val executor = Executors.newSingleThreadExecutor()
-
+        /**
+         * The main FXML controller.
+         */
         lateinit var mainController : MainController
 
+        /**
+         * Starting point of the application.
+         */
         @JvmStatic
         fun main(args: Array<String>) {
             launch(Qodat::class.java, *args)
-        }
-
-        fun addAction(action: Action) {
-            actionCache.cache(action)
         }
     }
 }
