@@ -12,16 +12,17 @@ group = "stan.qodat"
 version = "0.0.2"
 
 repositories {
-    maven(url = "https://jitpack.io")
+    maven(url = "https://repo.runelite.net")
     mavenCentral()
     jcenter()
 }
 
 dependencies {
-    implementation(group = "com.github.runelite.runelite", name = "cache", version = "runelite-parent-1.6.39") {
+    implementation(group = "net.runelite", name = "cache", version = "1.7.7") {
         exclude(group = "com.google.common")
     }
     implementation("org.orbisgis:poly2tri-core:0.1.2")
+    implementation("com.displee:rs-cache-library:6.8")
     testImplementation(kotlin("test-junit"))
 }
 
