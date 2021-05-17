@@ -10,9 +10,9 @@ import kotlin.math.min
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   22/01/2021
  */
-class ObservableFaceArrayArrayImpl(private var size: Int = 0) :
-    ObservableArrayBase<ObservableFaceArrayArray>(),
-    ObservableFaceArrayArray
+class Observable2DIntArrayImpl(private var size: Int = 0) :
+    ObservableArrayBase<Observable2DIntArray>(),
+    Observable2DIntArray
 {
     constructor(array: Array<IntArray>) : this() {
         setAllInternal(array, 0, array.size)

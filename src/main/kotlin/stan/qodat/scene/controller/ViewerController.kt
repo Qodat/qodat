@@ -109,6 +109,7 @@ class ViewerController : SceneController("viewer-scene") {
             sceneContext.removeNode(node)
 
         if (node is AnimatedEntity<*>) {
+            Properties.selectedNpcName.set("")
             animationController.filteredAnimations.setPredicate { true }
             SubScene3D.animationPlayer.transformerProperty.set(null)
         }
@@ -125,6 +126,7 @@ class ViewerController : SceneController("viewer-scene") {
             sceneContext.addNode(node)
 
         if (node is AnimatedEntity<*>) {
+            Properties.selectedNpcName.set(node.getName())
             val animationNames = node.getAnimations().map { it.getName() }
             animationController.filteredAnimations.setPredicate { animationNames.contains(it.getName()) }
         }
@@ -171,8 +173,26 @@ class ViewerController : SceneController("viewer-scene") {
                     e.printStackTrace()
                 }
             }
+
+            val lastSelectedNpcName = Properties.selectedNpcName.get()?:""
+            val npcToSelect = if (lastSelectedNpcName.isBlank())
+                null
+            else
+                npcs.find { lastSelectedNpcName == it.getName() }
+
+            val lastSelectedAnimationName = Properties.selectedAnimationName.get()?:""
+            val animationToSelect = if (lastSelectedAnimationName.isBlank())
+                null
+            else
+                animationController.animations.find { lastSelectedAnimationName == it.getName() }
+
             Platform.runLater {
                 this@ViewerController.npcs.setAll(npcs)
+                Qodat.mainController.postCacheLoading()
+                if (npcToSelect != null)
+                    npcList.selectionModel.select(npcToSelect)
+                if (animationToSelect != null)
+                    animationController.animationsListView.selectionModel.select(animationToSelect)
             }
             return null
         }

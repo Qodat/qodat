@@ -27,6 +27,8 @@
                                 <CheckBox fx:id="invertCameraCheckBox" mnemonicParsing="false" GridPane.columnIndex="1" GridPane.rowIndex="3" />
                                 <Label text="Background Color" GridPane.columnIndex="0" GridPane.rowIndex="4" />
                                 <ColorPicker fx:id="backgroundColorPicker" GridPane.columnIndex="1" GridPane.rowIndex="4" />
+                                <Label text="Ambient Light" GridPane.columnIndex="0" GridPane.rowIndex="5" />
+                                <ColorPicker fx:id="ambientLightColorPicker" GridPane.columnIndex="1" GridPane.rowIndex="5" />
                             </children>
                             <columnConstraints>
                                 <ColumnConstraints hgrow="SOMETIMES" maxWidth="127.0" minWidth="10.0" prefWidth="121.0" />

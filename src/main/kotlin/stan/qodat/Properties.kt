@@ -1,8 +1,6 @@
 package stan.qodat
 
-import javafx.beans.property.SimpleBooleanProperty
-import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.*
 import javafx.scene.SceneAntialiasing
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -32,28 +30,24 @@ object Properties {
         it.specularColor = Color.BLUE
     }
 
-    val disableAnimationsView = SimpleBooleanProperty(false)
-
     val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
 
     /**
      * Should MSAA anti-aliasing be used in render engine?
      */
     val antialiasing = SimpleObjectProperty(SceneAntialiasing.BALANCED)
-
     val ambientLightColor = SimpleObjectProperty(Color.WHITE)
 
-
+    val disableAnimationsView = SimpleBooleanProperty(false)
     val depthBuffer = SimpleBooleanProperty(true)
-
     /**
      * Should an [AxisView] object be placed inside the [Scene3D]?
      */
     val showAxis = SimpleBooleanProperty(true)
-
     val showFPS = SimpleBooleanProperty(true)
-
     val showPriorityLabels = SimpleBooleanProperty(false)
+    val showFramesTab = SimpleBooleanProperty(false)
+    val expandSettings = SimpleBooleanProperty(true)
 
     val xAxisMaterial = SimpleObjectProperty(DEFAULT_X_AXIS_MATERIAL)
     val yAxisMaterial = SimpleObjectProperty(DEFAULT_Y_AXIS_MATERIAL)
@@ -82,6 +76,9 @@ object Properties {
     val cache = SimpleObjectProperty<Cache>()
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/LIVE"))
 
+    val selectedNpcName = SimpleStringProperty()
+    val selectedAnimationName = SimpleStringProperty()
+
     fun bind(sessionManager: PropertiesManager) {
 
         sessionManager.bind("anti-aliasing", antialiasing) {
@@ -90,11 +87,17 @@ object Properties {
             else
                 SceneAntialiasing.DISABLED
         }
+        sessionManager.bindString("last-selected-npc-name", selectedNpcName)
+        sessionManager.bindString("last-selected-animation-name", selectedAnimationName)
 
         sessionManager.bindColor("ambient-light-color", ambientLightColor)
         sessionManager.bindColor("background-color", subSceneBackgroundColor)
 
         sessionManager.bindBoolean("depth-buffer", depthBuffer)
+        sessionManager.bindBoolean("show-axis", showAxis)
+        sessionManager.bindBoolean("show-fps", showFPS)
+        sessionManager.bindBoolean("show-frames-tab", showFramesTab)
+        sessionManager.bindBoolean("expand-settings", expandSettings)
 
         sessionManager.bindBoolean("camera-inverse", cameraInvert)
         sessionManager.bindDouble("camera-speed", cameraSpeed)

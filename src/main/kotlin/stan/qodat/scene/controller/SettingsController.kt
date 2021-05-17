@@ -26,6 +26,7 @@ class SettingsController : Initializable {
     @FXML lateinit var fpsCheckBox: CheckBox
     @FXML lateinit var invertCameraCheckBox: CheckBox
     @FXML lateinit var backgroundColorPicker: ColorPicker
+    @FXML lateinit var ambientLightColorPicker: ColorPicker
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         msaaCheckBox.selectedProperty().set(Properties.antialiasing.get() == SceneAntialiasing.BALANCED)
@@ -39,5 +40,6 @@ class SettingsController : Initializable {
         fpsCheckBox.selectedProperty().setAndBind(Properties.showFPS, true)
         invertCameraCheckBox.selectedProperty().setAndBind(Properties.cameraInvert, true)
         backgroundColorPicker.valueProperty().setAndBind(Properties.subSceneBackgroundColor, true)
+        ambientLightColorPicker.valueProperty().setAndBind(Properties.ambientLightColor, true)
     }
 }

@@ -64,10 +64,13 @@ class AnimationController : Initializable {
             items = filteredAnimations
             disableProperty().setAndBind(Properties.disableAnimationsView)
             onItemSelected { old, new ->
-                if (new == null && old != null)
+                if (new == null && old != null) {
+                    Properties.selectedAnimationName.set("")
                     SubScene3D.animationPlayer.transformerProperty.set(null)
-                else if(new != null)
+                } else if(new != null) {
+                    Properties.selectedAnimationName.set(new.getName())
                     SubScene3D.animationPlayer.transformerProperty.set(new)
+                }
             }
         }
         searchTextField.apply {
@@ -102,7 +105,10 @@ class AnimationController : Initializable {
                     e.printStackTrace()
                 }
             }
-            Platform.runLater { this@AnimationController.animations.setAll(animations) }
+
+            Platform.runLater {
+                this@AnimationController.animations.setAll(animations)
+            }
             return null
         }
     }

@@ -76,6 +76,7 @@ class MainController : SceneController("main-scene") {
     private val leftTabContents = SimpleObjectProperty<Node?>()
     private val bottomTabContents = SimpleObjectProperty<Node>()
 
+    lateinit var settingsController: SettingsController
     lateinit var viewerController: ViewerController
 
     override fun onSwitch(other: SceneController) {
@@ -100,7 +101,9 @@ class MainController : SceneController("main-scene") {
         VBox.setVgrow(sceneTreeView, Priority.ALWAYS)
         VBox.setVgrow(filesModelListView, Priority.ALWAYS)
 
-        val settingsPane = FXMLLoader.load<TitledPane>(Qodat::class.java.getResource("settings.fxml"))
+        val settingsLoader = FXMLLoader(Qodat::class.java.getResource("settings.fxml"))
+        val settingsPane = settingsLoader.load<TitledPane>()
+        settingsController = settingsLoader.getController()
         mainPanes.panes.add(settingsPane)
 
         val viewerLoader = FXMLLoader(Qodat::class.java.getResource("viewer.fxml"))
@@ -133,6 +136,11 @@ class MainController : SceneController("main-scene") {
         configureRightPane()
 
         configurePlayControls()
+    }
+
+    fun postCacheLoading() {
+        bottomFramesTab.selectedProperty().setAndBind(Properties.showFramesTab, biDirectional = true)
+        settingsController.root.expandedProperty().setAndBind(Properties.expandSettings, biDirectional = true)
     }
 
 
@@ -295,8 +303,8 @@ class MainController : SceneController("main-scene") {
                     progressLabel.textProperty().bind(task.messageProperty())
                     progressBar.progressProperty().bind(task.progressProperty())
                 }
+                task.run()
             }
-            Qodat.executor.submit(task)
         }
         Qodat.executor.submit {
             PlatformImpl.runAndWait {

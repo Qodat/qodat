@@ -8,6 +8,7 @@ import javafx.scene.CacheHint
 import javafx.scene.Group
 import javafx.scene.SubScene
 import javafx.scene.input.DragEvent
+import javafx.scene.layout.Region
 import stan.qodat.Properties
 import stan.qodat.scene.control.CameraHandler
 import stan.qodat.scene.runescape.animation.AnimationPlayer
@@ -15,6 +16,7 @@ import stan.qodat.scene.shape.AxisView
 import stan.qodat.scene.transform.AutoScalingGroup
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
+import java.util.*
 
 /**
  * TODO: add documentation
@@ -39,8 +41,6 @@ object SubScene3D : AbstractSubScene() {
 
     val lockContextProperty = SimpleBooleanProperty(true)
     val contextProperty = SimpleObjectProperty<SceneContext>()
-
-    var lastContext : SceneContext? = null
 
     /**
      * Sequences animations for Rune-Scape models.

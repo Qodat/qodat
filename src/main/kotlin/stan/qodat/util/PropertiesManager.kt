@@ -75,4 +75,7 @@ class PropertiesManager(
 
     fun bindInt(key: String, property: IntegerProperty) = bind(key, property)
     { java.lang.Integer.parseInt(it) }
+
+    fun bindString(key: String, property: StringProperty) = bind(key, property)
+    { it }
 }
