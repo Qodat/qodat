@@ -29,24 +29,14 @@
 
 package fxyz3d.shapes.primitives;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
 import fxyz3d.geometry.Face3;
 import fxyz3d.geometry.Point3F;
+import fxyz3d.scene.paint.ColorPalette;
 import fxyz3d.scene.paint.Palette;
 import fxyz3d.shapes.primitives.helper.MeshHelper;
+import fxyz3d.shapes.primitives.helper.TriangleMeshHelper;
 import javafx.beans.binding.StringBinding;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
-import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.*;
 import javafx.geometry.Bounds;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MeshView;
@@ -55,10 +45,15 @@ import javafx.scene.shape.TriangleMesh;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
-import fxyz3d.shapes.primitives.helper.TriangleMeshHelper;
 import javafx.util.Callback;
 
-import static fxyz3d.scene.paint.Palette.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 import static fxyz3d.shapes.primitives.helper.TriangleMeshHelper.*;
 
 /**
@@ -178,7 +173,7 @@ public abstract class TexturedMesh extends MeshView implements TextureMode {
     public void setTextureModeVertices3D(ColorPalette palette, Function<Point3F, Number> dens) {
         helper.setTextureType(TextureType.COLORED_VERTICES_3D);
         setColorPalette(palette);
-        createPalette(palette.getNumColors());
+        createPalette(palette.getNumColors(), true);
         setDensity(dens);
         helper.setDensity(dens);
         setTextureType(helper.getTextureType());
@@ -403,9 +398,11 @@ public abstract class TexturedMesh extends MeshView implements TextureMode {
     public DoubleProperty maxGlobalProperty() {
         return maxGlobal;
     }
-
     private void createPalette(int colors) {
-        helper.createPalette(colors, false, colorPalette.get());
+        createPalette(colors, false);
+    }
+    private void createPalette(int colors, boolean save) {
+        helper.createPalette(colors, save, colorPalette.get());
         helper.getMaterialWithPalette();
     }
 
@@ -552,7 +549,7 @@ public abstract class TexturedMesh extends MeshView implements TextureMode {
         return mh;
     }
 
-    protected TriangleMesh createMesh(MeshHelper mh) {
+    public TriangleMesh createMesh(MeshHelper mh) {
         float[] points0=mh.getPoints();
         float[] f = mh.getF();
         listVertices.clear();
@@ -565,7 +562,7 @@ public abstract class TexturedMesh extends MeshView implements TextureMode {
         int[] faces0 = mh.getFaces();
         listFaces.clear();
         listFaces.addAll(IntStream.range(0, faces0.length/6)
-                .mapToObj(i -> new Face3(faces0[6*i+0], faces0[6*i+2], faces0[6*i+4]))
+                .mapToObj(i -> new Face3(faces0[6 * i], faces0[6*i+2], faces0[6*i+4]))
                 .collect(Collectors.toList()));
 
         listTextures.clear();

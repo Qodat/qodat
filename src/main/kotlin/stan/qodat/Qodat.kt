@@ -73,7 +73,7 @@ class Qodat : Application() {
         /**
          * Used to offload tasks to a different single-thread.
          */
-        val executor: ExecutorService = Executors.newSingleThreadExecutor()
+        val executor: ExecutorService = Executors.newSingleThreadScheduledExecutor()
 
         /**
          * The main FXML controller.

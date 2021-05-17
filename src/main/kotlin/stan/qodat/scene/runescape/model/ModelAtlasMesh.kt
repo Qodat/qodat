@@ -117,7 +117,7 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
         val atlas = AtlasMaterial()
         val faceIterator = (0 until definition.getFaceCount())
         atlas.setColors(faceIterator.map {
-            ModelUtil.rs2hsbToColor(
+            ModelUtil.hsbToColor(
                     definition.getFaceColors()[it],
                     definition.getFaceAlphas()?.get(it))
         }.toTypedArray())

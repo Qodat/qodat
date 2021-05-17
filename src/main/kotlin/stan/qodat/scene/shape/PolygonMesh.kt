@@ -1,7 +1,7 @@
 package stan.qodat.scene.shape
 
 import javafx.collections.FXCollections
-import stan.qodat.collections.ObservableFaceArrayArrayImpl
+import stan.qodat.collections.Observable2DIntArrayImpl
 import stan.qodat.util.onInvalidation
 
 /**
@@ -19,7 +19,7 @@ class PolygonMesh(
     val points = FXCollections.observableFloatArray(*points)
     val texCoordinates = FXCollections.observableFloatArray(*texCoords)
     val faceSmoothingGroups = FXCollections.observableIntegerArray()
-    val faces = ObservableFaceArrayArrayImpl(faces)
+    val faces = Observable2DIntArrayImpl(faces)
 
     private var numberOfEdgesInFaces : Int
 

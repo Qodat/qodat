@@ -29,8 +29,8 @@
 package fxyz3d.shapes.primitives
 
 import fxyz3d.geometry.Point3F
+import fxyz3d.scene.paint.ColorPalette
 import fxyz3d.scene.paint.Palette
-import javafx.geometry.Point3D
 import javafx.scene.paint.Color
 import java.util.function.Function
 
@@ -45,12 +45,12 @@ interface TextureMode {
     fun setTextureModeNone(color: Color, image: String)
     fun setTextureModeImage(image: String)
     fun setTextureModeVertices3D(colors: Int, dens: Function<Point3F, Number>)
-    fun setTextureModeVertices3D(palette: Palette.ColorPalette, dens: Function<Point3F, Number>)
+    fun setTextureModeVertices3D(palette: ColorPalette, dens: Function<Point3F, Number>)
     fun setTextureModeVertices3D(colors: Int, dens: Function<Point3F, Number>, min: Double, max: Double)
     fun setTextureModeVertices1D(colors: Int, function: Function<Number, Number>)
-    fun setTextureModeVertices1D(palette: Palette.ColorPalette, function: Function<Number, Number>)
+    fun setTextureModeVertices1D(palette: ColorPalette, function: Function<Number, Number>)
     fun setTextureModeVertices1D(colors: Int, function: Function<Number, Number>, min: Double, max: Double)
     fun setTextureModeFaces(colors: Int)
-    fun setTextureModeFaces(palette: Palette.ColorPalette)
+    fun setTextureModeFaces(palette: ColorPalette)
     fun setTextureOpacity(value: Double)
 }

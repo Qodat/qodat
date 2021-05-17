@@ -49,25 +49,11 @@ import javax.imageio.ImageIO
  * @author Stan van der Bend
  * @author jpereda
  */
-public class Palette @JvmOverloads constructor(
+class Palette @JvmOverloads constructor(
     val numColors: Int = DEFAULT_NUMCOLORS,
     val colorPalette: ColorPalette? = DEFAULT_COLOR_PALETTE,
     private val opacity: Double = DEFAULT_OPACITY
 ) {
-
-    interface ColorPalette {
-        fun getNumColors(): Int
-        fun getColor(i: Int): Color
-        val linearGradient: LinearGradient?
-            get() {
-                val stops: MutableList<Stop> = ArrayList()
-                for (i in 0..5) {
-                    val p = i.toDouble() / 5.0
-                    stops.add(Stop(p, getColor((p * getNumColors()).toInt())))
-                }
-                return LinearGradient(0.0, 1.0, 0.0, 0.0, true, CycleMethod.NO_CYCLE, stops)
-            }
-    }
 
     class ListColorPalette(private val colors: MutableList<Color>?) : ColorPalette {
         constructor(vararg colors: Color?) : this(ArrayList<Color>(Arrays.asList<Color>(*colors))) {}
@@ -108,8 +94,7 @@ public class Palette @JvmOverloads constructor(
         }
     }
 
-    class FunctionColorPalette(private val numColors: Int, private val function: Function<Double, Color>?) :
-        ColorPalette {
+    class FunctionColorPalette(private val numColors: Int, private val function: Function<Double, Color>?) : ColorPalette {
         override fun getColor(i: Int): Color {
             return function?.apply(i.toDouble() / numColors.toDouble()) ?: Color.BLACK
         }
@@ -130,10 +115,13 @@ public class Palette @JvmOverloads constructor(
         if (colorPalette == null || colorPalette.getNumColors() < 1) {
             return null
         }
+        width = colorPalette.getNumColors()
+        height = 1
 
         // try to create a square image
-        width = Math.sqrt(colorPalette.getNumColors().toDouble()).toInt()
-        height = Math.ceil(numColors.toDouble() / width.toDouble()).toInt()
+//        width = Math.sqrt(colorPalette.getNumColors().toDouble()).toInt()
+//        height = Math.ceil(numColors.toDouble() / width.toDouble()).toInt()
+
         paletteImage = WritableImage(width, height)
         val pw = (paletteImage as WritableImage).pixelWriter
         val count = AtomicInteger()
@@ -161,7 +149,7 @@ public class Palette @JvmOverloads constructor(
         )
     }
 
-    private fun saveImage() {
+    fun saveImage() {
         try {
             // save
             ImageIO.write(SwingFXUtils.fromFXImage(paletteImage, null), "png", File("palette_$numColors.png"))
@@ -182,6 +170,6 @@ public class Palette @JvmOverloads constructor(
         private const val DEFAULT_NUMCOLORS = 1530 // 39x40 palette image
         @JvmStatic
         val DEFAULT_COLOR_PALETTE: ColorPalette =
-            FunctionColorPalette(DEFAULT_NUMCOLORS) { d: Double -> Color.hsb(360.0 * d, 1.0, 1.0, DEFAULT_OPACITY) }
+            FunctionColorPalette(DEFAULT_NUMCOLORS) { Color.hsb(360.0 * it, 1.0, 1.0, DEFAULT_OPACITY) }
     }
 }

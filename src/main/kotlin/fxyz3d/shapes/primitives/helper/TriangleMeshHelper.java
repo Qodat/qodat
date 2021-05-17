@@ -38,8 +38,8 @@ import java.util.stream.IntStream;
 import fxyz3d.collections.FloatCollector;
 import fxyz3d.geometry.Face3;
 import fxyz3d.geometry.Point3F;
+import fxyz3d.scene.paint.ColorPalette;
 import fxyz3d.scene.paint.Palette;
-import fxyz3d.scene.paint.Palette.ColorPalette;
 import fxyz3d.tools.NormalMap;
 import javafx.geometry.Point3D;
 import javafx.scene.image.Image;
@@ -199,7 +199,10 @@ public class TriangleMeshHelper {
         }
         return IntStream.range(0,colors).boxed()
                 .flatMapToDouble(palette::getTextureLocation)
-                .collect(()->new FloatCollector(2*colors), FloatCollector::add, FloatCollector::join)
+                .collect(()->
+                        new FloatCollector(2*colors),
+                        FloatCollector::add,
+                        FloatCollector::join)
                 .toArray();
     }
 

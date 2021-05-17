@@ -116,7 +116,7 @@ class ModelFaceMeshGroup(private val model: Model) : ModelSkin {
         return MutableList<Material>(definition.getFaceCount()) {
             definition.getFaceColors()[it].let { color ->
                 colorMap.getOrPut(color) {
-                    PhongMaterial(ModelUtil.rs2hsbToColor(color, definition.getFaceAlphas()?.get(it)))
+                    PhongMaterial(ModelUtil.hsbToColor(color, definition.getFaceAlphas()?.get(it)))
                 }
             }
         }

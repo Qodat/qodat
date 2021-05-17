@@ -10,16 +10,17 @@ import javafx.scene.paint.Color
  * @version 1.0
  */
 object ModelUtil {
+    fun hsbToColor(hsb: Short, alpha: Byte?) = ModelUtil.hsbToColor(hsb.toInt(), alpha)
 
-    fun rs2hsbToColor(hsb: Short, alpha: Byte?): Color {
+    fun hsbToColor(hsb: Int, alpha: Byte?): Color {
 
         var transparency = alpha?.toInt()
         if(transparency == null || transparency <= 0)
             transparency = 255
 
-        val hue = hsb.toInt() shr 10 and 0x3f
-        val sat = hsb.toInt() shr 7 and 0x07
-        val bri = hsb.toInt() and 0x7f
+        val hue = hsb shr 10 and 0x3f
+        val sat = hsb shr 7 and 0x07
+        val bri = hsb and 0x7f
         val awtCol = java.awt.Color.getHSBColor(hue.toFloat() / 63, sat.toFloat() / 7, bri.toFloat() / 127)
         val r = awtCol.red / 255.0
         val g = awtCol.green / 255.0

@@ -173,7 +173,7 @@ class Model(label: String,
     private fun buildModelSkin() {
         modelSkin = when (buildTypeProperty.get()!!) {
             ModelMeshBuildType.ATLAS -> ModelAtlasMesh(this)
-            ModelMeshBuildType.TEXTURED_ATLAS -> ModelTexturedMesh(this)
+            ModelMeshBuildType.TEXTURED_ATLAS -> ModelTexturedMesh(this, modelSkin as ModelAtlasMesh)
             ModelMeshBuildType.SKELETON_ATLAS -> ModelSkeletonMesh(this)
             ModelMeshBuildType.MESH_PER_FACE -> ModelFaceMeshGroup(this)
         }
