@@ -14,7 +14,7 @@ import java.io.UnsupportedEncodingException
  */
 class NPC(
     cache: Cache = OldschoolCacheRuneLite,
-    private val definition: NPCDefinition
+    definition: NPCDefinition
 ) : AnimatedEntity<NPCDefinition>(cache, definition), CacheEncoder {
 
     override fun encode(format: Cache) {

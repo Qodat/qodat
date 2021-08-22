@@ -1,5 +1,8 @@
 package stan.qodat.cache.definition
 
+import net.runelite.cache.models.FaceNormal
+import net.runelite.cache.models.VertexNormal
+
 /**
  * TODO: add documentation
  *
@@ -16,6 +19,7 @@ interface ModelDefinition {
     fun getVertexPositionsZ() : IntArray
     fun getVertexSkins() : IntArray
     fun getVertexGroups() : Array<IntArray>?
+    fun getVertexNormals() : Array<VertexNormal>
 
     fun getFaceCount() : Int
     fun getFaceVertexIndices1() : IntArray
@@ -27,6 +31,7 @@ interface ModelDefinition {
     fun getFaceAlphas() : ByteArray?
     fun getFacePriorities() : ByteArray?
     fun getFaceTypes() : ByteArray?
+    fun getFaceNormals() : Array<FaceNormal>
     fun getPriority() : Byte
 
     fun getTextureConfigCount() : Int
@@ -42,4 +47,5 @@ interface ModelDefinition {
 
     fun computeAnimationTables()
     fun computeTextureUVCoordinates()
+    fun computeNormals()
 }

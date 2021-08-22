@@ -49,7 +49,7 @@ class Model(label: String,
     val visibleProperty = SimpleBooleanProperty(true)
     val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
     val cullFaceProperty = SimpleObjectProperty(CullFace.NONE)
-    val buildTypeProperty = SimpleObjectProperty(ModelMeshBuildType.SKELETON_ATLAS)
+    val buildTypeProperty = SimpleObjectProperty(ModelMeshBuildType.ATLAS)
     val displayFacePriorityLabelsProperty = SimpleBooleanProperty(false)
     val shadingProperty = SimpleBooleanProperty(false)
 

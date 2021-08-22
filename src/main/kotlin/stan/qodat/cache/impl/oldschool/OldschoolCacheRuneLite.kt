@@ -14,10 +14,6 @@ import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.util.RSModelLoader
-import stan.qodat.util.createNpcAnimsJsonDir
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 /**
  * TODO: add documentation
@@ -32,6 +28,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     var npcManager: NpcManager
     private var itemManager: ItemManager
     private var objectManager: ObjectManager
+    var textureManager: TextureManager
 
     private val frameIndex: Index
     private val framemapIndex: Index
@@ -46,6 +43,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         npcManager.load()
         itemManager = ItemManager(store)
         objectManager = ObjectManager(store)
+        textureManager = TextureManager(store)
     }
 
     private val gson = GsonBuilder().create()

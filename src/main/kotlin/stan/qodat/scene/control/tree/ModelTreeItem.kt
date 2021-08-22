@@ -26,6 +26,8 @@ class ModelTreeItem(
         treeItem { checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true) }
         treeItem { checkBox("visible", model.visibleProperty, biDirectional = true) }
         treeItem { comboBox("Select draw mode", DrawMode.values(), model.drawModeProperty, biDirectional = true) }
+        treeItem { label("vertexCount = ${model.modelDefinition.getVertexCount()}") }
+        treeItem { label("faceCount = ${model.modelDefinition.getFaceCount()}") }
         val vertexGroups = model.getVertexGroups()
         if (vertexGroups.isNotEmpty()){
             treeItem("Vertex Groups") {

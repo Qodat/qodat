@@ -1,13 +1,20 @@
 package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
-import javafx.scene.control.*
+import javafx.scene.control.SelectionMode
+import javafx.scene.control.TreeItem
+import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
+import stan.qodat.cache.definition.save.ObjExporter
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.javafx.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.ModelFaceMesh
 import stan.qodat.scene.runescape.model.ModelMeshBuildType
+import java.io.File
+import java.io.FileWriter
+import java.io.PrintWriter
 
 /**
  * TODO: add documentation
@@ -37,6 +44,23 @@ class EntityTreeItem(
                 if (newValue == this){
                     for (model in entity.getModels())
                         model.buildTypeProperty.set(ModelMeshBuildType.MESH_PER_FACE)
+                }
+            }
+        }
+        treeItem {
+            button("Export") {
+                for ((i, model) in entity.getModels().withIndex()) {
+                    val name = "${entity.getName()}_$i"
+                    val exporter = ObjExporter(model.modelDefinition)
+                    PrintWriter(FileWriter(File("$name.obj"))).use { objWriter ->
+                        PrintWriter(FileWriter(File("$name.mtl"))).use { mtlWriter ->
+                            exporter.export(
+                                name,
+                                objWriter,
+                                mtlWriter
+                            )
+                        }
+                    }
                 }
             }
         }

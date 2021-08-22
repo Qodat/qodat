@@ -87,7 +87,7 @@ class ModelTexturedMesh(private val model: Model, private val atlas: ModelAtlasM
         meshHelper.faces = faces
 
         val pointColorIndexMap = HashMap<Vertex, Int>()
-        var x = 0
+        var idx = 0
         val colors = arrayOfNulls<Color>(definition.getFaceCount() * 3)
         for (face in 0 until definition.getFaceCount()) {
 
@@ -97,19 +97,19 @@ class ModelTexturedMesh(private val model: Model, private val atlas: ModelAtlasM
             val v2 = Vertex(p2.first, p2.second, p2.third, face)
             val v3 = Vertex(p3.first, p3.second, p3.third, face)
             if (type == RENDER_SHADED_TRIANGLE) {
-                pointColorIndexMap[v1] = x
-                colors[x++] = ModelUtil.hsbToColor(colors1[face], null)
-                pointColorIndexMap[v2] = x
-                colors[x++] = ModelUtil.hsbToColor(colors2[face], null)
-                pointColorIndexMap[v3] = x
-                colors[x++] = ModelUtil.hsbToColor(colors3[face], null)
+                pointColorIndexMap[v1] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors1[face], null)
+                pointColorIndexMap[v2] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors2[face], null)
+                pointColorIndexMap[v3] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors3[face], null)
             } else if (type == RENDER_FLAT_TRIANGLE) {
-                pointColorIndexMap[v1] = x
-                colors[x++] = ModelUtil.hsbToColor(colors1[face], null)
-                pointColorIndexMap[v2] = x
-                colors[x++] = ModelUtil.hsbToColor(colors1[face], null)
-                pointColorIndexMap[v3] = x
-                colors[x++] = ModelUtil.hsbToColor(colors1[face], null)
+                pointColorIndexMap[v1] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors1[face], null)
+                pointColorIndexMap[v2] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors1[face], null)
+                pointColorIndexMap[v3] = idx
+                colors[idx++] = ModelUtil.hsbToColor(colors1[face], null)
             }
         }
         // Face3{p0=41, p1=50, p2=51}

@@ -10,12 +10,16 @@ import javafx.fxml.FXMLLoader
 import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.*
+import javafx.scene.input.TransferMode
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.stage.DirectoryChooser
+import net.runelite.cache.definitions.ModelDefinition
 import stan.qodat.Properties
 import stan.qodat.Qodat
+import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.event.SelectedTabChangeEvent
+import stan.qodat.javafx.onChange
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.LockButton
@@ -24,6 +28,7 @@ import stan.qodat.scene.layout.AutoScaleSubScenePane
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.bind
 import stan.qodat.util.onInvalidation
+import stan.qodat.util.onItemSelected
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
@@ -80,9 +85,7 @@ class MainController : SceneController("main-scene") {
     lateinit var viewerController: ViewerController
 
     override fun onSwitch(other: SceneController) {
-        if (other is ViewerController) {
-            println("do")
-        }
+
     }
 
     override fun getViewNode() = mainPanes
@@ -135,7 +138,32 @@ class MainController : SceneController("main-scene") {
         configureLeftPane()
         configureRightPane()
 
+        configureModelList()
         configurePlayControls()
+    }
+
+    fun configureModelList() {
+        filesModelListView.setOnDragOver {
+            if (it.dragboard.hasFiles())
+                it.acceptTransferModes(*TransferMode.COPY_OR_MOVE)
+            it.consume()
+        }
+        filesModelListView.setOnDragDropped {
+            it.dragboard.run {
+                if (hasFiles()) {
+                    val models = files.map { file -> Model(file.name, RSModelLoader().load(0, file.readBytes())) }
+                    filesModelListView.items.addAll(models)
+                    it.isDropCompleted = true
+                }
+                it.consume()
+            }
+        }
+        filesModelListView.selectionModel.selectedItems.onChange {
+            while (next()) {
+                removed.forEach { sceneContext.removeNode(it) }
+                addedSubList.forEach { sceneContext.addNode(it) }
+            }
+        }
     }
 
     fun postCacheLoading() {

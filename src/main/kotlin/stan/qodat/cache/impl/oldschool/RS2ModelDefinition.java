@@ -24,6 +24,8 @@
  */
 package stan.qodat.cache.impl.oldschool;
 
+import net.runelite.cache.models.FaceNormal;
+import net.runelite.cache.models.VertexNormal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import stan.qodat.cache.definition.ModelDefinition;
@@ -40,6 +42,7 @@ public class RS2ModelDefinition implements ModelDefinition
 	private int[] vertexPositionsX;
 	private int[] vertexPositionsY;
 	private int[] vertexPositionsZ;
+	public transient VertexNormal[] vertexNormals;
 
 	private int faceCount;
 	private int[] faceVertexIndices1;
@@ -49,6 +52,7 @@ public class RS2ModelDefinition implements ModelDefinition
 	private short[] faceColors;
 	private byte[] faceRenderPriorities;
 	private byte[] faceRenderTypes;
+	public transient FaceNormal[] faceNormals;
 
 	private int textureConfigCount;
 	private short[] textureTriangleVertexIndices1;
@@ -260,7 +264,101 @@ public class RS2ModelDefinition implements ModelDefinition
 			}
 		}
 	}
+	public void computeNormals()
+	{
+		if (this.vertexNormals != null)
+		{
+			return;
+		}
 
+		this.vertexNormals = new VertexNormal[this.vertexCount];
+
+		int var1;
+		for (var1 = 0; var1 < this.vertexCount; ++var1)
+		{
+			this.vertexNormals[var1] = new VertexNormal();
+		}
+
+		for (var1 = 0; var1 < this.faceCount; ++var1)
+		{
+			int vertexA = this.faceVertexIndices1[var1];
+			int vertexB = this.faceVertexIndices2[var1];
+			int vertexC = this.faceVertexIndices3[var1];
+
+			int xA = this.vertexPositionsX[vertexB] - this.vertexPositionsX[vertexA];
+			int yA = this.vertexPositionsY[vertexB] - this.vertexPositionsY[vertexA];
+			int zA = this.vertexPositionsZ[vertexB] - this.vertexPositionsZ[vertexA];
+
+			int xB = this.vertexPositionsX[vertexC] - this.vertexPositionsX[vertexA];
+			int yB = this.vertexPositionsY[vertexC] - this.vertexPositionsY[vertexA];
+			int zB = this.vertexPositionsZ[vertexC] - this.vertexPositionsZ[vertexA];
+
+			// Compute cross product
+			int var11 = yA * zB - yB * zA;
+			int var12 = zA * xB - zB * xA;
+			int var13 = xA * yB - xB * yA;
+
+			while (var11 > 8192 || var12 > 8192 || var13 > 8192 || var11 < -8192 || var12 < -8192 || var13 < -8192)
+			{
+				var11 >>= 1;
+				var12 >>= 1;
+				var13 >>= 1;
+			}
+
+			int length = (int) Math.sqrt((double) (var11 * var11 + var12 * var12 + var13 * var13));
+			if (length <= 0)
+			{
+				length = 1;
+			}
+
+			var11 = var11 * 256 / length;
+			var12 = var12 * 256 / length;
+			var13 = var13 * 256 / length;
+
+			byte var15;
+			if (this.faceRenderTypes == null)
+			{
+				var15 = 0;
+			}
+			else
+			{
+				var15 = this.faceRenderTypes[var1];
+			}
+
+			if (var15 == 0)
+			{
+				VertexNormal var16 = this.vertexNormals[vertexA];
+				var16.x += var11;
+				var16.y += var12;
+				var16.z += var13;
+				++var16.magnitude;
+
+				var16 = this.vertexNormals[vertexB];
+				var16.x += var11;
+				var16.y += var12;
+				var16.z += var13;
+				++var16.magnitude;
+
+				var16 = this.vertexNormals[vertexC];
+				var16.x += var11;
+				var16.y += var12;
+				var16.z += var13;
+				++var16.magnitude;
+			}
+			else if (var15 == 1)
+			{
+				if (this.faceNormals == null)
+				{
+					this.faceNormals = new FaceNormal[this.faceCount];
+				}
+
+				FaceNormal var17 = this.faceNormals[var1] = new FaceNormal();
+				var17.x = var11;
+				var17.y = var12;
+				var17.z = var13;
+			}
+		}
+	}
 	public void setId(int id) {
 		this.id = id;
 	}
@@ -507,5 +605,17 @@ public class RS2ModelDefinition implements ModelDefinition
 	@Override
 	public String getName() {
 		return Integer.toString(id);
+	}
+
+	@NotNull
+	@Override
+	public VertexNormal[] getVertexNormals() {
+		return vertexNormals;
+	}
+
+	@NotNull
+	@Override
+	public FaceNormal[] getFaceNormals() {
+		return faceNormals;
 	}
 }

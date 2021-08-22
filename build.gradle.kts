@@ -1,11 +1,9 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-
+//    id("org.openjfx.javafxplugin") version "0.0.10"
     kotlin("jvm") version "1.4.32"
     application
-//    id("org.openjfx.javafxplugin") version "0.0.9"
-//    id("org.beryx.jlink") version "2.22.0"
 }
 
 group = "stan.qodat"
@@ -13,19 +11,27 @@ version = "0.0.3"
 
 repositories {
     maven(url = "https://repo.runelite.net")
+    maven(url = "https://jitpack.io")
     mavenCentral()
     jcenter()
 }
 
 dependencies {
-    implementation(group = "net.runelite", name = "cache", version = "1.7.7") {
+    implementation(group = "net.runelite", name = "cache", version = "1.7.9") {
         exclude(group = "com.google.common")
     }
+//    implementation("no.tornado:tornadofx:1.7.19")
+//    implementation("com.github.kotlin-graphics:gln:v0.5.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
     implementation("com.displee:rs-cache-library:6.8")
+//    implementation("com.github.kotlin-graphics:gln:v0.5.2")
     testImplementation(kotlin("test-junit"))
 }
-
+//javafx {
+//    version = "14"
+//    modules("javafx.controls", "javafx.fxml")
+//    configuration = "compileOnly"
+//}
 //javafx {
 //    version = JavaVersion.VERSION_11.toString()
 //    modules(
