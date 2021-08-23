@@ -8,6 +8,8 @@ import stan.qodat.cache.definition.ItemDefinition
 import stan.qodat.util.ViewNodeProvider
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.util.SceneNodeProvider
+import stan.qodat.util.Searchable
 import java.io.UnsupportedEncodingException
 
 /**
@@ -16,18 +18,8 @@ import java.io.UnsupportedEncodingException
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class Item(definition: ItemDefinition)
-    : ViewNodeProvider, CacheEncoder {
-
-    private lateinit var viewBox : HBox
-
-    val nameProperty = SimpleStringProperty(definition.name)
-
-    override fun getViewNode(): Node {
-        if (!this::viewBox.isInitialized)
-            viewBox = LabeledHBox(nameProperty)
-        return viewBox
-    }
+class Item(cache: Cache, definition: ItemDefinition)
+    : Entity<ItemDefinition>(cache, definition), CacheEncoder {
 
     override fun encode(format: Cache) {
         throw UnsupportedEncodingException()

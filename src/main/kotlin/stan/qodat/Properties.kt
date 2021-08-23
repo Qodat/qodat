@@ -77,6 +77,7 @@ object Properties {
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/LIVE"))
 
     val selectedNpcName = SimpleStringProperty()
+    val selectedItemName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
 
     fun bind(sessionManager: PropertiesManager) {
@@ -88,6 +89,7 @@ object Properties {
                 SceneAntialiasing.DISABLED
         }
         sessionManager.bindString("last-selected-npc-name", selectedNpcName)
+        sessionManager.bindString("last-selected-item-name", selectedItemName)
         sessionManager.bindString("last-selected-animation-name", selectedAnimationName)
 
         sessionManager.bindColor("ambient-light-color", ambientLightColor)

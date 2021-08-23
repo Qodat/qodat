@@ -42,6 +42,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         npcManager = NpcManager(store)
         npcManager.load()
         itemManager = ItemManager(store)
+        itemManager.load()
         objectManager = ObjectManager(store)
         textureManager = TextureManager(store)
     }

@@ -18,14 +18,14 @@ import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.scene.runescape.entity.AnimatedEntity
-import stan.qodat.util.SceneNodeProvider
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.ViewNodeListView
+import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Item
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.entity.Object
 import stan.qodat.scene.transform.Transformable
+import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.createNpcAnimsJsonDir
 import java.net.URL
@@ -49,7 +49,7 @@ class ViewerController : SceneController("viewer-scene") {
     @FXML lateinit var searchObjectField: TextField
 
     private val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
-    private val itemWrappers: ObservableList<Item> = FXCollections.observableArrayList()
+    private val items: ObservableList<Item> = FXCollections.observableArrayList()
     private val objectWrappers: ObservableList<Object> = FXCollections.observableArrayList()
 
     lateinit var animationController: AnimationController
@@ -74,20 +74,30 @@ class ViewerController : SceneController("viewer-scene") {
         }
 
         configureNpcList()
+        configureItemList()
 
         Properties.cache.addListener { _, _, newValue ->
-            val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
-            if (!npcAnimsDir.exists()){
-                println("Did not find npc_anims dir, creating...")
-                npcAnimsDir.mkdir()
-                val task = createNpcAnimsJsonDir(OldschoolCacheRuneLite.store, OldschoolCacheRuneLite.npcManager)
-                task.setOnSucceeded {
-                    Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
-                }
-                Qodat.mainController.executeBackgroundTasks(task)
-            } else
-                Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
+            loadNpcs(newValue)
+            loadItems(newValue)
         }
+    }
+
+    private fun loadItems(newValue: Cache) {
+        Qodat.mainController.executeBackgroundTasks(createItemsLoadTask(newValue))
+    }
+
+    private fun loadNpcs(newValue: Cache) {
+        val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
+        if (!npcAnimsDir.exists()) {
+            println("Did not find npc_anims dir, creating...")
+            npcAnimsDir.mkdir()
+            val task = createNpcAnimsJsonDir(OldschoolCacheRuneLite.store, OldschoolCacheRuneLite.npcManager)
+            task.setOnSucceeded {
+                Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
+            }
+            Qodat.mainController.executeBackgroundTasks(task)
+        } else
+            Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(newValue))
     }
 
     override fun onSwitch(other: SceneController) {
@@ -134,6 +144,16 @@ class ViewerController : SceneController("viewer-scene") {
         if (node is Transformable)
             SubScene3D.animationPlayer.transformableList.add(node)
     }
+    private fun configureItemList() {
+        val filteredItems = FilteredList(items) { true }
+        searchItemField.configureSearchFilter(filteredItems)
+        val sortedITEMs = SortedList(filteredItems)
+        sortedITEMs.comparator = Comparator.comparing { it.getName() }
+        itemList.items = sortedITEMs
+        itemList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
+        itemList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
+        handleEmptySearchField(searchItemField)
+    }
 
     private fun configureNpcList() {
         val filteredNPCs = FilteredList(npcs) { true }
@@ -158,7 +178,7 @@ class ViewerController : SceneController("viewer-scene") {
     private fun createNPCLoadTask(cache: Cache) = object : Task<Void?>() {
         override fun call(): Void? {
 
-            val npcDefinitions = OldschoolCacheRuneLite.getNPCs()
+            val npcDefinitions = cache.getNPCs()
             val npcs = ArrayList<NPC>()
             for ((i, definition) in npcDefinitions.withIndex()) {
                 try {
@@ -193,6 +213,40 @@ class ViewerController : SceneController("viewer-scene") {
                     npcList.selectionModel.select(npcToSelect)
                 if (animationToSelect != null)
                     animationController.animationsListView.selectionModel.select(animationToSelect)
+            }
+            return null
+        }
+    }
+    private fun createItemsLoadTask(cache: Cache) = object : Task<Void?>() {
+        override fun call(): Void? {
+
+            val itemDefinitions = cache.getItems()
+            val items = ArrayList<Item>()
+            for ((i, definition) in itemDefinitions.withIndex()) {
+                try {
+                    if (definition.modelIds.isNotEmpty()) {
+                        val item = Item(cache, definition)
+                        items.add(item)
+                    }
+                    val progress = (100.0 * i.toFloat().div(itemDefinitions.size))
+                    updateProgress(progress, 100.0)
+                    updateMessage("Loading npc (${i + 1} / ${itemDefinitions.size})")
+                } catch (e: java.lang.Exception) {
+                    e.printStackTrace()
+                }
+            }
+
+            val lastSelectedItemName = Properties.selectedItemName.get()?:""
+            val itemToSelect = if (lastSelectedItemName.isBlank())
+                null
+            else
+                items.find { lastSelectedItemName == it.getName() }
+
+            Platform.runLater {
+                this@ViewerController.items.setAll(items)
+                Qodat.mainController.postCacheLoading()
+                if (itemToSelect != null)
+                    itemList.selectionModel.select(itemToSelect)
             }
             return null
         }

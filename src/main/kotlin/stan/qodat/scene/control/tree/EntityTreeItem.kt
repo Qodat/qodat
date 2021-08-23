@@ -29,7 +29,7 @@ class EntityTreeItem(
 
     init {
         label(entity.getName())
-        text("NPC", Color.web("#FFC66D"))
+        text(entity.javaClass.simpleName, Color.web("#FFC66D"))
         val selectionModel = treeView.selectionModel.apply {
             selectionMode = SelectionMode.MULTIPLE
             onSelected { oldValue, newValue ->
