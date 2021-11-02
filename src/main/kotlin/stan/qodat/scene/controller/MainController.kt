@@ -13,6 +13,9 @@ import javafx.scene.control.*
 import javafx.scene.input.TransferMode
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
+import javafx.scene.text.Font
+import javafx.scene.text.FontWeight
+import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
 import net.runelite.cache.definitions.ModelDefinition
 import stan.qodat.Properties
@@ -318,17 +321,27 @@ class MainController : SceneController("main-scene") {
 
     fun executeBackgroundTasks(vararg tasks: Task<*>) {
         val stackPane = StackPane()
-        val progressLabel = Label()
+        val progressLabel = Text()
+        progressLabel.fill = Color.rgb(100, 100, 100)
         val progressBar = ProgressBar()
         stackPane.children.addAll(progressBar, progressLabel)
-        if (originalRightNode is HBox)
-            stackPane.prefHeightProperty().bind((originalRightNode as HBox).heightProperty())
+        val original = originalRightNode
+        if (original is HBox) {
+            stackPane.prefHeightProperty().bind(original.heightProperty())
+            stackPane.maxHeight = original.height
+            progressLabel.minWidth(original.width)
+            progressLabel.maxHeight(original.height)
+        }
+
         progressBar.prefWidthProperty().bind(mainPane.widthProperty())
+
         for (task in tasks) {
             Qodat.executor.submit {
                 PlatformImpl.runAndWait {
                     mainPane.bottom = stackPane
+                    progressLabel.textProperty().unbind()
                     progressLabel.textProperty().bind(task.messageProperty())
+                    progressBar.progressProperty().unbind()
                     progressBar.progressProperty().bind(task.progressProperty())
                 }
                 task.run()

@@ -1,6 +1,8 @@
 package stan.qodat.scene.controller
 
+import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
+import javafx.beans.property.StringProperty
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -17,19 +19,20 @@ import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
+import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.ViewNodeListView
-import stan.qodat.scene.runescape.entity.AnimatedEntity
-import stan.qodat.scene.runescape.entity.Item
-import stan.qodat.scene.runescape.entity.NPC
-import stan.qodat.scene.runescape.entity.Object
+import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.SceneNodeProvider
+import stan.qodat.util.Searchable
 import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.createNpcAnimsJsonDir
 import java.net.URL
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Stream
 
 /**
  * TODO: add documentation
@@ -144,6 +147,7 @@ class ViewerController : SceneController("viewer-scene") {
         if (node is Transformable)
             SubScene3D.animationPlayer.transformableList.add(node)
     }
+
     private fun configureItemList() {
         val filteredItems = FilteredList(items) { true }
         searchItemField.configureSearchFilter(filteredItems)
@@ -175,80 +179,66 @@ class ViewerController : SceneController("viewer-scene") {
         }
     }
 
-    private fun createNPCLoadTask(cache: Cache) = object : Task<Void?>() {
-        override fun call(): Void? {
-
-            val npcDefinitions = cache.getNPCs()
-            val npcs = ArrayList<NPC>()
-            for ((i, definition) in npcDefinitions.withIndex()) {
-                try {
-                    if (definition.modelIds.isNotEmpty()) {
-                        val npc = NPC(cache, definition)
-                        npcs.add(npc)
-                    }
-                    val progress = (100.0 * i.toFloat().div(npcDefinitions.size))
-                    updateProgress(progress, 100.0)
-                    updateMessage("Loading npc (${i + 1} / ${npcDefinitions.size})")
-                } catch (e: java.lang.Exception) {
-                    e.printStackTrace()
-                }
-            }
-
-            val lastSelectedNpcName = Properties.selectedNpcName.get()?:""
-            val npcToSelect = if (lastSelectedNpcName.isBlank())
-                null
-            else
-                npcs.find { lastSelectedNpcName == it.getName() }
-
-            val lastSelectedAnimationName = Properties.selectedAnimationName.get()?:""
-            val animationToSelect = if (lastSelectedAnimationName.isBlank())
-                null
-            else
-                animationController.animations.find { lastSelectedAnimationName == it.getName() }
-
-            Platform.runLater {
-                this@ViewerController.npcs.setAll(npcs)
-                Qodat.mainController.postCacheLoading()
-                if (npcToSelect != null)
-                    npcList.selectionModel.select(npcToSelect)
-                if (animationToSelect != null)
-                    animationController.animationsListView.selectionModel.select(animationToSelect)
-            }
-            return null
+    private fun createNPCLoadTask(cache: Cache) = createLoadTask(cache.getNPCs(), mapper = {NPC(cache, this)}) {
+        val npcToSelect = lastSelectedEntity(Properties.selectedNpcName)
+        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedNpcName)
+        Platform.runLater {
+            this@ViewerController.npcs.setAll(this)
+            Qodat.mainController.postCacheLoading()
+            if (npcToSelect != null)
+                npcList.selectionModel.select(npcToSelect)
+            if (animationToSelect != null)
+                animationController.animationsListView.selectionModel.select(animationToSelect)
         }
     }
-    private fun createItemsLoadTask(cache: Cache) = object : Task<Void?>() {
-        override fun call(): Void? {
 
-            val itemDefinitions = cache.getItems()
-            val items = ArrayList<Item>()
-            for ((i, definition) in itemDefinitions.withIndex()) {
-                try {
-                    if (definition.modelIds.isNotEmpty()) {
-                        val item = Item(cache, definition)
-                        items.add(item)
+    private fun createItemsLoadTask(cache: Cache) = createLoadTask(
+        definitions = cache.getItems(),
+        mapper = { Item(cache, this) })
+    {
+        val itemToSelect = lastSelectedEntity(Properties.selectedItemName)
+        Platform.runLater {
+            this@ViewerController.items.setAll(this)
+            Qodat.mainController.postCacheLoading()
+            if (itemToSelect != null)
+                itemList.selectionModel.select(itemToSelect)
+        }
+    }
+
+    private fun<T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty) : T? {
+        val lastSelectedName = stringProperty.get()?:""
+        return if (lastSelectedName.isBlank())
+            null
+        else
+            find { lastSelectedName == it.getName() }
+    }
+
+    private inline fun<D : EntityDefinition, reified T : Entity<D>> createLoadTask(
+        definitions: Array<D>,
+        crossinline mapper: D.() -> T,
+        crossinline onLoaded: List<T>.() -> Unit
+    ) : Task<Unit> {
+        val progressCounter = AtomicInteger()
+        val total = definitions.size
+        val updateFrequency = total / 500
+        val name = T::class.simpleName
+        return object : Task<Unit>() {
+            override fun call() {
+                val values = Stream.of(*definitions).parallel().map {
+                    val count = progressCounter.incrementAndGet()
+                    if (count % updateFrequency == 0) {
+                        PlatformImpl.runLater {
+                            updateProgress(count.toLong(), total.toLong())
+                            updateMessage("Loading $name ($count / $total)")
+                        }
                     }
-                    val progress = (100.0 * i.toFloat().div(itemDefinitions.size))
-                    updateProgress(progress, 100.0)
-                    updateMessage("Loading npc (${i + 1} / ${itemDefinitions.size})")
-                } catch (e: java.lang.Exception) {
-                    e.printStackTrace()
-                }
+                    if (it.modelIds.isNotEmpty())
+                        mapper(it)
+                    else
+                        null
+                }.toArray { arrayOfNulls<T>(it) }.filterNotNull()
+                onLoaded(values)
             }
-
-            val lastSelectedItemName = Properties.selectedItemName.get()?:""
-            val itemToSelect = if (lastSelectedItemName.isBlank())
-                null
-            else
-                items.find { lastSelectedItemName == it.getName() }
-
-            Platform.runLater {
-                this@ViewerController.items.setAll(items)
-                Qodat.mainController.postCacheLoading()
-                if (itemToSelect != null)
-                    itemList.selectionModel.select(itemToSelect)
-            }
-            return null
         }
     }
 }
