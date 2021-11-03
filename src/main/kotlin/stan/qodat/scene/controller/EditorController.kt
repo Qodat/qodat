@@ -1,5 +1,6 @@
 package stan.qodat.scene.controller
 
+import javafx.collections.FXCollections
 import javafx.fxml.FXML
 import javafx.scene.control.*
 import javafx.scene.layout.GridPane
@@ -36,12 +37,21 @@ class EditorController : EntityController("editor-scene") {
                 isResizable = true
 
                 val nameField = TextField()
+
+                val models = FXCollections.observableArrayList<Model>()
+
                 val modelList = ViewNodeListView<Model>().apply {
+                    items = models
                     enableDragAndDrop(
                         fromFile = { Model.fromFile(this) },
+                        onDropFrom = {
+                            for ((_, model) in it)
+                                models.add(model)
+                        },
                         supportedExtensions = Model.supportedExtensions
                     )
                 }
+
                 val animationList = ListView<Animation>().apply {
                     cellFactory = Animation.createCellFactory()
                 }
@@ -57,13 +67,15 @@ class EditorController : EntityController("editor-scene") {
                     if (newValue != oldValue && newValue.isNotBlank()) {
                         val npc = npcMap[newValue]
                         if (npc != null) {
-                            modelList.items.setAll(*npc.getModels())
+                            models.setAll(*npc.getModels())
                             animationList.items.setAll(*npc.getAnimations())
                         }
                     }
                 }
                 dialogPane.apply {
                     content = GridPane().apply {
+
+                        vgap = 10.0
 
                         add(Label("Name"), 1, 1)
                         add(nameField, 2, 1)

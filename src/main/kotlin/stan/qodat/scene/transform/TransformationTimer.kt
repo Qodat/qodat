@@ -66,6 +66,7 @@ open class TransformationTimer<R : Transformer<*>> {
         }
         val transformer = transformerProperty.get() ?: return@EventHandler
         transformer.setFrame(frameIndexProperty.get())
+//        println(transformableList)
         transformer.update(transformableList)
     }
 

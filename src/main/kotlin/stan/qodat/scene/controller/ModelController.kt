@@ -7,29 +7,37 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
+import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.scene.SnapshotParameters
 import javafx.scene.control.ListView
 import javafx.scene.control.MenuItem
 import javafx.scene.control.TextField
+import javafx.scene.image.WritableImage
+import javafx.scene.input.TransferMode
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import stan.qodat.Properties
+import stan.qodat.Qodat
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.Searchable
+import stan.qodat.util.ViewNodeProvider
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.onItemSelected
 import java.io.File
 import java.net.URL
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds
-import java.nio.file.WatchKey
+import java.nio.file.*
 import java.util.*
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
+import javax.imageio.ImageIO
 
 /**
  * TODO: add documentation
@@ -42,6 +50,9 @@ class ModelController : Initializable {
     @FXML private lateinit var modelListView: ViewNodeListView<Model>
     @FXML private lateinit var searchModelField: TextField
     @FXML private lateinit var setLabel: MenuItem
+
+    private var syncPath = SimpleObjectProperty<Path>()
+    private var ignorePaths = ConcurrentLinkedDeque<Path>()
 
     val models: ObservableList<Model> = FXCollections.observableArrayList()
     lateinit var filteredModels: FilteredList<Model>
@@ -68,7 +79,36 @@ class ModelController : Initializable {
         sceneContextProperty.set(sceneContext)
     }
 
+    fun enableDragAndDrop(){
+        modelListView.enableDragAndDrop(
+            toFile = { QodatCache.encode(this) }, // currently only support json
+            fromFile = { Model.fromFile(this) },
+            onDropFrom = {
+                val syncPath = syncPath.get()
+                 if (syncPath != null) {
+                     for ((file, _) in it) {
+                         val savePath = syncPath.resolve(file.name)
+                         file.copyTo(savePath.toFile())
+                     }
+                 } else {
+                     for ((_, model) in it)
+                         models.add(model)
+                 }
+            },
+            imageProvider = {
+                getSceneNode().snapshot(
+                    SnapshotParameters().apply { fill = Color.TRANSPARENT },
+                    null
+                )
+            },
+            supportedExtensions = Model.supportedExtensions
+        )
+    }
+
     fun syncWith(pathProperty: ObjectProperty<Path>) {
+
+        syncPath.bind(pathProperty)
+
         val currentPath = pathProperty.get()
         for (file in currentPath.toFile().listFiles()) {
             models.add(Model.fromFile(file))
@@ -81,6 +121,7 @@ class ModelController : Initializable {
     }
 
     private fun syncWithDirectory(path: Path) : WatchKey {
+
         val watchService = FileSystems.getDefault().newWatchService()
 
         val pathKey = path.register(
@@ -93,35 +134,56 @@ class ModelController : Initializable {
             SensitivityWatchEventModifier.HIGH
         )
 
-        Thread {
-            while(true) {
-                val watchKey = watchService.poll()?:continue
-                for (event in watchKey.pollEvents()) {
-                    val context = event.context()
-                    if (context is Path) {
-                        val file = path.resolve(context).toFile()
-                        val name = file.nameWithoutExtension
-                        PlatformImpl.runAndWait {
-                            when (event.kind()) {
-                                StandardWatchEventKinds.ENTRY_DELETE -> models.removeIf { it.getName() == name }
-                                StandardWatchEventKinds.ENTRY_CREATE -> models.add(Model.fromFile(file))
-                                StandardWatchEventKinds.ENTRY_MODIFY -> {
-                                    models.removeIf { it.getName() == name }
-                                    models.add(Model.fromFile(file))
+        if (watchThread?.isAlive != true) {
+            watchThread = Thread {
+                while (true) {
+                    var stop: Boolean
+                    if (Qodat.shutDown) {
+                        stop = true
+                    } else {
+                        val watchKey = watchService.poll() ?: continue
+                        for (event in watchKey.pollEvents()) {
+                            val context = event.context()
+                            if (context is Path) {
+                                val file = path.resolve(context).toFile()
+                                val name = file.nameWithoutExtension
+                                PlatformImpl.runAndWait {
+                                    when (event.kind()) {
+                                        StandardWatchEventKinds.ENTRY_DELETE -> {
+                                            models.removeIf { it.getName() == name }
+                                        }
+                                        StandardWatchEventKinds.ENTRY_CREATE -> {
+                                            models.removeIf { it.getName() == name }
+                                            models.add(Model.fromFile(file))
+                                        }
+                                        StandardWatchEventKinds.ENTRY_MODIFY -> {
+                                            models.removeIf { it.getName() == name }
+                                            models.add(Model.fromFile(file))
+                                        }
+                                    }
                                 }
                             }
                         }
+                        stop = !watchKey.reset()
+                        if (stop)
+                            watchKey.cancel()
+                    }
+
+                    if (stop) {
+                        watchService.close()
+                        break
                     }
                 }
-
-                if (!watchKey.reset()) {
-                    watchKey.cancel()
-                    watchService.close()
-                    break
-                }
+            }.also {
+                it.start()
             }
-        }.start()
+        }
+
 
         return pathKey
+    }
+
+    companion object {
+        var watchThread: Thread? = null
     }
 }

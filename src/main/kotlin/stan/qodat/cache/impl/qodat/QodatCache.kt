@@ -18,6 +18,7 @@ object QodatCache : Cache("qodat") {
 
     val json = Json {
         prettyPrint = true
+        ignoreUnknownKeys = true
     }
 
     private val npcs: MutableList<QodatNpcDefinition>

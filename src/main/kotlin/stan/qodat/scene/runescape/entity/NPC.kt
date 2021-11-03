@@ -23,4 +23,8 @@ class NPC(
     override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
     }
+
+    override fun toString(): String {
+        return getName()
+    }
 }

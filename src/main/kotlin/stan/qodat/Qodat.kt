@@ -13,6 +13,7 @@ import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.MainController
+import stan.qodat.scene.controller.ModelController
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
 import java.util.concurrent.ExecutorService
@@ -62,11 +63,16 @@ class Qodat : Application() {
             show()
             setOnCloseRequest {
                 propertiesManager.saveToFile()
+                shutDown = true
+                executor.shutdown()
+                ModelController.watchThread?.interrupt()
             }
         }
     }
 
     companion object {
+
+        var shutDown = false
 
         /**
          * Handles the serialisation of [Properties].

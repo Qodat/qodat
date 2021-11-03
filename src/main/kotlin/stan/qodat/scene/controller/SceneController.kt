@@ -1,6 +1,7 @@
 package stan.qodat.scene.controller
 
 import javafx.fxml.Initializable
+import stan.qodat.Properties
 import stan.qodat.event.SelectedTabChangeEvent
 import stan.qodat.scene.SceneContext
 import stan.qodat.util.SceneNodeProvider
@@ -14,7 +15,7 @@ import stan.qodat.util.setAndBind
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   31/01/2021
  */
-abstract class SceneController(name: String)
+abstract class SceneController(val name: String)
     : Initializable, SceneNodeProvider, ViewNodeProvider {
 
     internal val sceneContext = object : SceneContext(name) {
@@ -29,7 +30,7 @@ abstract class SceneController(name: String)
 
     fun addTabSelectedListener(){
         getViewNode().addEventHandler(SelectedTabChangeEvent.EVENT_TYPE) {
-            if (!SubScene3D.lockContextProperty.value) {
+            if (!Properties.lockScene.value) {
                 if (it.selected)
                     selectThisContext()
                 else if (!it.otherSelected)

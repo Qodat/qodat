@@ -16,7 +16,7 @@ import stan.qodat.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   31/01/2021
  */
-abstract class SceneContext(name: String) : SceneNodeProvider {
+abstract class SceneContext(val name: String) : SceneNodeProvider {
 
     /**
      * Group holding all scene nodes in this context.

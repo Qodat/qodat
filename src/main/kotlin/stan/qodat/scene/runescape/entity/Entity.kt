@@ -34,7 +34,7 @@ abstract class Entity<D : EntityDefinition>(
     private lateinit var treeItem: EntityTreeItem
 
     val labelProperty = SimpleStringProperty(definition.name)
-    val mergeModelProperty = SimpleBooleanProperty(false)
+    val mergeModelProperty = SimpleBooleanProperty(true)
 
     override fun getName() = labelProperty.get()
 

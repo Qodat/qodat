@@ -64,7 +64,11 @@ data class QodatModelDefinition(
     private val faceVertexIndices2: IntArray,
     private val faceVertexIndices3: IntArray,
     private val faceSkins: IntArray?,
-    private val faceColor: ShortArray
+    private val faceAlphas: ByteArray?,
+    private val facePriorities: ByteArray?,
+    private val faceTypes: ByteArray?,
+    private val priority: Byte = 10.toByte(),
+    private val faceColors: ShortArray
 ) : ModelDefinition {
 
     @Transient
@@ -78,20 +82,20 @@ data class QodatModelDefinition(
     override fun getVertexPositionsY() = vertexPositionsY
     override fun getVertexPositionsZ() = vertexPositionsZ
     override fun getVertexSkins() = vertexSkins
-    override fun getVertexGroups() = null
+    override fun getVertexGroups() = vertexGroups
     override fun getVertexNormals() = emptyArray<VertexNormal>()
     override fun getFaceCount() = faceCount
     override fun getFaceVertexIndices1() = faceVertexIndices1
     override fun getFaceVertexIndices2() = faceVertexIndices2
     override fun getFaceVertexIndices3() = faceVertexIndices3
     override fun getFaceSkins() = faceSkins
-    override fun getFaceGroups() = null
-    override fun getFaceColors() = faceColor
-    override fun getFaceAlphas() = null
-    override fun getFacePriorities() = null
-    override fun getFaceTypes() = null
+    override fun getFaceGroups() = faceGroups
+    override fun getFaceColors() = faceColors
+    override fun getFaceAlphas() = faceAlphas
+    override fun getFacePriorities() = facePriorities
+    override fun getFaceTypes() = faceTypes
     override fun getFaceNormals() = emptyArray<FaceNormal>()
-    override fun getPriority() = 10.toByte()
+    override fun getPriority() = priority
     override fun getTextureConfigCount() = 0
     override fun getTextureRenderTypes() = null
     override fun getFaceTextures() = null
@@ -163,18 +167,22 @@ data class QodatModelDefinition(
 
     companion object {
         fun create(modelDefinition: ModelDefinition) = QodatModelDefinition(
-            modelDefinition.getName(),
-            modelDefinition.getVertexCount(),
-            modelDefinition.getVertexPositionsX(),
-            modelDefinition.getVertexPositionsY(),
-            modelDefinition.getVertexPositionsZ(),
-            modelDefinition.getVertexSkins(),
-            modelDefinition.getFaceCount(),
-            modelDefinition.getFaceVertexIndices1(),
-            modelDefinition.getFaceVertexIndices2(),
-            modelDefinition.getFaceVertexIndices3(),
-            modelDefinition.getFaceSkins(),
-            modelDefinition.getFaceColors()
+            name = modelDefinition.getName(),
+            vertexCount = modelDefinition.getVertexCount(),
+            vertexPositionsX = modelDefinition.getVertexPositionsX(),
+            vertexPositionsY = modelDefinition.getVertexPositionsY(),
+            vertexPositionsZ = modelDefinition.getVertexPositionsZ(),
+            vertexSkins = modelDefinition.getVertexSkins(),
+            faceCount = modelDefinition.getFaceCount(),
+            faceVertexIndices1 = modelDefinition.getFaceVertexIndices1(),
+            faceVertexIndices2 = modelDefinition.getFaceVertexIndices2(),
+            faceVertexIndices3 = modelDefinition.getFaceVertexIndices3(),
+            faceSkins = modelDefinition.getFaceSkins(),
+            faceAlphas = modelDefinition.getFaceAlphas(),
+            facePriorities = modelDefinition.getFacePriorities(),
+            faceTypes = modelDefinition.getFaceTypes(),
+            priority = modelDefinition.getPriority(),
+            faceColors = modelDefinition.getFaceColors()
         )
     }
 }

@@ -39,7 +39,6 @@ object SubScene3D : AbstractSubScene() {
 
     val cameraHandler = CameraHandler()
 
-    val lockContextProperty = SimpleBooleanProperty(true)
     val contextProperty = SimpleObjectProperty<SceneContext>()
 
     /**
@@ -61,6 +60,7 @@ object SubScene3D : AbstractSubScene() {
                 scalingGroup.children.remove(oldValue.getSceneNode())
             if (newValue != null)
                 scalingGroup.children.add(newValue.getSceneNode())
+            Properties.selectedScene.set(newValue?.name)
         }
 
         Properties.antialiasing.onInvalidation {

@@ -4,18 +4,13 @@ import javafx.event.Event
 import javafx.event.EventType
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
+import javafx.scene.image.Image
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.util.Callback
-import stan.qodat.util.Searchable
 import stan.qodat.util.ViewNodeProvider
 import java.io.File
-import java.nio.file.FileSystems
-import java.nio.file.Path
-import java.nio.file.StandardWatchEventKinds
-import java.nio.file.WatchKey
-import java.util.concurrent.TimeUnit
 
 /**
  * Represents a [ListView] containing [nodes][N].
@@ -57,14 +52,16 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
                 fireEvent(SelectedEvent(newValue))
         }
     }
-
     fun enableDragAndDrop(
         toFile:(N.() -> File)? = null,
         fromFile: (File.() -> N)? = null,
+        onDropFrom: (List<Pair<File, N>>) -> Unit,
+        imageProvider: (N.() -> Image)? = null,
         vararg supportedExtensions: String
     ){
         if (fromFile != null) {
             setOnDragOver {
+
                 val db = it.dragboard
                 if (db.hasFiles())
                     it.acceptTransferModes(*TransferMode.COPY_OR_MOVE)
@@ -73,10 +70,10 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             setOnDragDropped {
                 val db = it.dragboard
                 if (db.hasFiles()) {
-                    val newModels = db.files
-                        .filter { supportedExtensions.contains(it.extension) }
-                        .map(fromFile)
-                    items.addAll(newModels)
+                    val newEntries = db.files
+                        .filter { file -> supportedExtensions.contains(file.extension) }
+                        .mapNotNull { file -> file to fromFile(file) }
+                    onDropFrom(newEntries)
                     it.isDropCompleted = true
                 }
                 it.consume()
@@ -85,7 +82,14 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
         if (toFile != null) {
             setOnDragDetected {
                 val db = startDragAndDrop(*TransferMode.COPY_OR_MOVE)
-                val files = selectionModel.selectedItems.map(toFile)
+                val selected = selectionModel.selectedItems
+                val files = selected.map(toFile)
+                val image = if (selected.isNotEmpty())
+                    imageProvider?.invoke(selected.first())
+                else
+                    null
+                if (image != null)
+                    filesToCopyClipboard.putImage(image)
                 filesToCopyClipboard.putFiles(files)
                 db.setContent(filesToCopyClipboard)
                 it.consume()
@@ -95,7 +99,6 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             }
         }
     }
-
     class UnselectedEvent(val viewNodeProvider: ViewNodeProvider) : Event(UNSELECTED_EVENT_TYPE)
     class SelectedEvent(val viewNodeProvider: ViewNodeProvider) : Event(SELECTED_EVENT_TYPE)
 

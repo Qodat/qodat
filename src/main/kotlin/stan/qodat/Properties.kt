@@ -84,6 +84,12 @@ object Properties {
     val selectedItemName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
 
+    val selectedRightTab = SimpleStringProperty()
+    val selectedLeftTab = SimpleStringProperty()
+    val selectedBottomTab = SimpleStringProperty()
+    val selectedScene = SimpleStringProperty()
+    val lockScene = SimpleBooleanProperty(false)
+
     fun bind(sessionManager: PropertiesManager) {
 
         sessionManager.bind("anti-aliasing", antialiasing) {
@@ -95,6 +101,10 @@ object Properties {
         sessionManager.bindString("last-selected-npc-name", selectedNpcName)
         sessionManager.bindString("last-selected-item-name", selectedItemName)
         sessionManager.bindString("last-selected-animation-name", selectedAnimationName)
+        sessionManager.bindString("last-selected-right-tab", selectedRightTab)
+        sessionManager.bindString("last-selected-left-tab", selectedLeftTab)
+        sessionManager.bindString("last-selected-bottom-tab", selectedBottomTab)
+        sessionManager.bindString("last-selected-scene", selectedScene)
 
         sessionManager.bindColor("ambient-light-color", ambientLightColor)
         sessionManager.bindColor("background-color", subSceneBackgroundColor)
@@ -104,6 +114,7 @@ object Properties {
         sessionManager.bindBoolean("show-fps", showFPS)
         sessionManager.bindBoolean("show-frames-tab", showFramesTab)
         sessionManager.bindBoolean("expand-settings", expandSettings)
+        sessionManager.bindBoolean("lock-scene", lockScene)
 
         sessionManager.bindBoolean("camera-inverse", cameraInvert)
         sessionManager.bindDouble("camera-speed", cameraSpeed)

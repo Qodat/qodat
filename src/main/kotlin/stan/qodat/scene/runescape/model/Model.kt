@@ -200,7 +200,21 @@ class Model(label: String,
 
 
     companion object {
+
         val supportedExtensions = arrayOf("model", "dat", "json")
+
+        fun toFile(file: File) : Model {
+            val definition = when (file.extension) {
+                "json" -> {
+                    QodatCache.json.decodeFromStream<QodatModelDefinition>(file.inputStream())
+                }
+                else -> {
+                    // TODO: support gzip, mqo
+                    RSModelLoader().load(file.nameWithoutExtension, file.readBytes())
+                }
+            }
+            return Model(definition.getName(), definition)
+        }
 
         fun fromFile(file: File) : Model {
             val definition = when (file.extension) {

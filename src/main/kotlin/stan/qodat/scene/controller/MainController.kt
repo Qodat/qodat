@@ -4,6 +4,7 @@ import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.beans.value.ChangeListener
 import javafx.concurrent.Task
 import javafx.fxml.FXML
@@ -71,6 +72,7 @@ class MainController : SceneController("main-scene") {
     @FXML lateinit var sceneLabel: Label
     @FXML lateinit var lockSceneContextButton: ToggleButton
     @FXML lateinit var sceneContextBox: ComboBox<SceneContext>
+    @FXML lateinit var progressSpace: HBox
 
     private val rightTabContents = SimpleObjectProperty<Node?>()
     private val leftTabContents = SimpleObjectProperty<Node?>()
@@ -98,11 +100,13 @@ class MainController : SceneController("main-scene") {
         sceneTreeView.root.isExpanded = true
 
         VBox.setVgrow(sceneTreeView, Priority.ALWAYS)
+        VBox.setVgrow(modelsContainer, Priority.ALWAYS)
 
         val mainModelsLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
         val mainModelsView = mainModelsLoader.load<SplitPane>()
         mainModelsLoader.getController<ModelController>().apply {
             bind(sceneContext)
+            enableDragAndDrop()
             syncWith(Properties.mainModelFilesPath)
         }
         modelsContainer.children.add(mainModelsView)
@@ -118,34 +122,22 @@ class MainController : SceneController("main-scene") {
         viewerController = viewerLoader.getController()
         viewerController.addTabSelectedListener()
 
-
         val editorLoader = FXMLLoader(Qodat::class.java.getResource("editor.fxml"))
         val editorPane = editorLoader.load<SplitPane>() // same as viewNode from controller
         editorController = editorLoader.getController()
         editorController.addTabSelectedListener()
 
-
         val navigationBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("navigation.fxml"))
         val timeLineBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("timeline.fxml"))
 
-        sceneContextBox.items.addAll(
-            sceneContext,
-            viewerController.sceneContext,
-            editorController.sceneContext)
+        rightEditorTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, editorPane)
+        rightViewerTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, viewerPane)
+        rightMainTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, mainPanes)
 
-        sceneContextBox.tooltip = Tooltip("Select scene context")
-        sceneContextBox.bind(SubScene3D.contextProperty)
+        leftFilesTab.createSelectTabListener(Properties.selectedLeftTab, leftTabContents, leftTab)
+        bottomFramesTab.createSelectTabListener(Properties.selectedBottomTab, bottomTabContents, timeLineBox)
 
-        viewerController.selectThisContext()
-
-        lockSceneContextButton.tooltip = Tooltip("Lock scene context")
-        lockSceneContextButton.selectedProperty().setAndBind(SubScene3D.lockContextProperty, biDirectional = true)
-
-        rightEditorTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, editorPane))
-        rightViewerTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, viewerPane))
-        rightMainTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, mainPanes))
-        leftFilesTab.selectedProperty().addListener(createSelectTabListener(leftTabContents, leftTab))
-        bottomFramesTab.selectedProperty().addListener(createSelectTabListener(bottomTabContents, timeLineBox))
+        configureScene()
 
         configureCenterPane(navigationBox)
         configureBottomTab()
@@ -153,6 +145,35 @@ class MainController : SceneController("main-scene") {
         configureRightPane()
 
         configurePlayControls()
+
+        val wasLocked = Properties.lockScene.get()
+        Properties.lockScene.set(true)
+        when (Properties.selectedScene.get()) {
+            viewerController.name -> viewerController.selectThisContext()
+            editorController.name -> editorController.selectThisContext()
+            else -> selectThisContext()
+        }
+        when (Properties.selectedRightTab.get()) {
+            rightEditorTab.id -> rightEditorTab.selectedProperty().set(true)
+            rightViewerTab.id -> rightViewerTab.selectedProperty().set(true)
+            rightMainTab.id -> rightMainTab.selectedProperty().set(true)
+        }
+        Properties.lockScene.set(wasLocked)
+    }
+
+    private fun configureScene() {
+
+        sceneContextBox.items.addAll(
+            sceneContext,
+            viewerController.sceneContext,
+            editorController.sceneContext
+        )
+
+        sceneContextBox.tooltip = Tooltip("Select scene context")
+        sceneContextBox.bind(SubScene3D.contextProperty)
+
+        lockSceneContextButton.tooltip = Tooltip("Lock scene context")
+        lockSceneContextButton.selectedProperty().setAndBind(Properties.lockScene, biDirectional = true)
     }
 
     fun postCacheLoading() {
@@ -242,7 +263,11 @@ class MainController : SceneController("main-scene") {
         }
     }
 
-    private fun createSelectTabListener(tabContents: ObjectProperty<Node?>, node: Node): ChangeListener<Boolean> {
+    private fun ToggleButton.createSelectTabListener(selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node) {
+        selectedProperty().addListener(createSelectTabListener(id, selectProperty, tabContents, node))
+    }
+
+    private fun createSelectTabListener(id: String, selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node): ChangeListener<Boolean> {
         return ChangeListener { _, oldValue, newValue ->
 
             val otherSelected = tabContents.value != node && tabContents.value != null
@@ -251,6 +276,8 @@ class MainController : SceneController("main-scene") {
                 tabContents.set(node)
             else if(!otherSelected)
                 tabContents.set(null)
+
+            selectProperty.set(id)
 
             node.fireEvent(
                 SelectedTabChangeEvent(
@@ -332,7 +359,7 @@ class MainController : SceneController("main-scene") {
             }
             Qodat.executor.submit {
                 PlatformImpl.runAndWait {
-                    mainPane.bottom = stackPane
+                    progressSpace.children.setAll(stackPane)
                     progressLabel.textProperty().unbind()
                     progressLabel.textProperty().bind(task.messageProperty())
                     progressBar.progressProperty().unbind()
@@ -345,7 +372,7 @@ class MainController : SceneController("main-scene") {
         }
         Qodat.executor.submit {
             PlatformImpl.runAndWait {
-                mainPane.bottom = originalRightNode
+                progressSpace.children.clear()
             }
         }
     }
