@@ -79,6 +79,7 @@ object Properties {
     val qodatCachePath = SimpleObjectProperty(Paths.get("caches/qodat"))
 
     val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
+    val exportsPath = SimpleObjectProperty(Paths.get("exports"))
 
     val selectedNpcName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()
