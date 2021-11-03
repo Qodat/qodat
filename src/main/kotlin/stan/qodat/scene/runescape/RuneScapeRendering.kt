@@ -121,7 +121,8 @@ fun ModelDefinition.calculateFaceColors(brightnessOffset: Int, shadowModifier: I
         faceColors1[face] = applyLighting(
             type = type,
             color = getColor(face),
-            brightness = brightnessOffset + (sizeX * d1 + sizeY * d2 + sizeZ * d3) / (shadow + shadow / 2))
+            brightness = brightnessOffset + (sizeX * d1 + sizeY * d2 + sizeZ * d3) / (shadow + shadow / 2)
+        )
     }
     if (shade)
         doShading(normals, faceColors1, faceColors2, faceColors3, brightnessOffset, shadow, sizeX, sizeY, sizeZ)

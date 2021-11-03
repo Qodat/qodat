@@ -34,7 +34,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
                     val index = listCell.index
                     if (selectionModel.selectedIndices.contains(index)) {
                         selectionModel.clearSelection(index)
-                        fireEvent(UnselectedEvent(listCell.item))
+                        fireEvent(UnselectedEvent(listCell.item, false))
                     } else
                         selectionModel.select(index)
                     event.consume()
@@ -47,7 +47,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
              * TODO: add multi-select support?
              */
             if (oldValue != null)
-                fireEvent(UnselectedEvent(oldValue))
+                fireEvent(UnselectedEvent(oldValue, newValue != null))
             if (newValue != null)
                 fireEvent(SelectedEvent(newValue))
         }
@@ -99,7 +99,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             }
         }
     }
-    class UnselectedEvent(val viewNodeProvider: ViewNodeProvider) : Event(UNSELECTED_EVENT_TYPE)
+    class UnselectedEvent(val viewNodeProvider: ViewNodeProvider, val hasNewValue: Boolean) : Event(UNSELECTED_EVENT_TYPE)
     class SelectedEvent(val viewNodeProvider: ViewNodeProvider) : Event(SELECTED_EVENT_TYPE)
 
     companion object {

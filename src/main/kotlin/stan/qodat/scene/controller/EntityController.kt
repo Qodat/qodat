@@ -106,8 +106,11 @@ abstract class EntityController(name: String) : SceneController(name) {
             sceneContext.removeNode(node)
 
         if (node is AnimatedEntity<*>) {
-            Properties.selectedNpcName.set("")
-            animationController.filteredAnimations.setPredicate { true }
+            if (!event.hasNewValue) {
+                Properties.selectedNpcName.set("")
+                animationController.animationsListView.items = animationController.filteredAnimations
+                animationController.filteredAnimations.setPredicate { true }
+            }
             SubScene3D.animationPlayer.transformerProperty.set(null)
         }
 
@@ -124,10 +127,7 @@ abstract class EntityController(name: String) : SceneController(name) {
 
         if (node is AnimatedEntity<*>) {
             Properties.selectedNpcName.set(node.getName())
-            val animationNames = node.getAnimations().map { it.getName() }
-            animationController.filteredAnimations.setPredicate {
-                animationNames.contains(it.getName())
-            }
+            animationController.animationsListView.items = FXCollections.observableArrayList(*node.getAnimations())
             modelController.models.setAll(*node.getModels())
         }
 

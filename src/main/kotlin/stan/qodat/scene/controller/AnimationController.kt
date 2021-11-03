@@ -12,6 +12,7 @@ import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.AnimatedEntityDefinition
+import stan.qodat.javafx.onChange
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.util.configureSearchFilter
@@ -49,7 +50,20 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
      */
     val animations: ObservableList<Animation> = FXCollections.observableArrayList()
 
+    private val animationMap = FXCollections.observableHashMap<String, Animation>()
+
     override fun initialize(location: URL?, resources: ResourceBundle?) {
+
+        animations.onChange {
+            while(next()) {
+                if (wasAdded()) {
+                    for (i in from until to){
+                        val anim = list[i]
+                        animationMap[anim.getName()] = anim
+                    }
+                }
+            }
+        }
         filteredAnimations = FilteredList(animations) { true }
         animationsListView.apply {
             VBox.setVgrow(this, Priority.ALWAYS)
@@ -76,7 +90,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {
         return p1.animationIds
-            .mapNotNull { animations.find { animation -> animation.getName() == it } }
+            .mapNotNull { animationMap[it] }
             .toTypedArray()
     }
 }
