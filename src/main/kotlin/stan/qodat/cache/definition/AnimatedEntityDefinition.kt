@@ -8,6 +8,6 @@ package stan.qodat.cache.definition
  */
 interface AnimatedEntityDefinition : EntityDefinition {
 
-    val animationIds: IntArray
+    val animationIds: Array<String>
 
 }

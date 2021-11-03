@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import stan.qodat.scene.control.ViewNodeListView?>
+
+<SplitPane fx:id="root" dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.EditorController">
+   <stylesheets>
+      <URL value="@style.css" />
+   </stylesheets>
+   <items>
+      <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
+      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+         <tabs>
+            <Tab text="NPC">
+               <content>
+                  <VBox>
+                     <children>
+                        <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0" />
+                        <HBox alignment="BOTTOM_LEFT">
+                           <children>
+                              <Button fx:id="addNpcButton" contentDisplay="CENTER" styleClass="add-button" text="+" />
+                              <TextField fx:id="searchNpcField" alignment="CENTER" promptText="Search NPC" HBox.hgrow="ALWAYS" />
+                           </children>
+                        </HBox>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            <Tab text="Object">
+               <content>
+                  <VBox>
+                     <children>
+                        <ViewNodeListView fx:id="objectList" prefHeight="220.0" prefWidth="220.0" />
+                        <TextField fx:id="searchObjectField" promptText="Search object" />
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            <Tab text="Item">
+               <content>
+                  <VBox>
+                     <children>
+                        <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0" />
+                        <TextField fx:id="searchItemField" promptText="Search item" />
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
+   </items>
+</SplitPane>

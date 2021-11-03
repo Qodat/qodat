@@ -1,41 +1,32 @@
 package stan.qodat.scene.controller
 
 import com.sun.javafx.application.PlatformImpl
+import javafx.application.Platform
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ChangeListener
 import javafx.concurrent.Task
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.geometry.Insets
 import javafx.scene.Node
 import javafx.scene.control.*
-import javafx.scene.input.TransferMode
+import javafx.scene.control.Alert.AlertType
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
-import javafx.scene.text.Font
-import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
-import net.runelite.cache.definitions.ModelDefinition
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.event.SelectedTabChangeEvent
-import stan.qodat.javafx.onChange
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.layout.AutoScaleSubScenePane
-import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.bind
-import stan.qodat.util.onInvalidation
-import stan.qodat.util.onItemSelected
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
-import javax.swing.text.html.ImageView
+
 
 /**
  * TODO: add documentation
@@ -45,7 +36,8 @@ import javax.swing.text.html.ImageView
  */
 class MainController : SceneController("main-scene") {
 
-    @FXML lateinit var filesModelListView: ListView<Model>
+//    @FXML lateinit var filesModelListView: ListView<Model>
+    @FXML lateinit var modelsContainer: VBox
     @FXML lateinit var sceneTreeView: TreeView<Node>
     @FXML lateinit var leftFilesTab: ToggleButton
     @FXML lateinit var rightMainTab: ToggleButton
@@ -86,6 +78,7 @@ class MainController : SceneController("main-scene") {
 
     lateinit var settingsController: SettingsController
     lateinit var viewerController: ViewerController
+    lateinit var editorController: EditorController
 
     override fun onSwitch(other: SceneController) {
 
@@ -105,7 +98,15 @@ class MainController : SceneController("main-scene") {
         sceneTreeView.root.isExpanded = true
 
         VBox.setVgrow(sceneTreeView, Priority.ALWAYS)
-        VBox.setVgrow(filesModelListView, Priority.ALWAYS)
+
+        val mainModelsLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
+        val mainModelsView = mainModelsLoader.load<SplitPane>()
+        mainModelsLoader.getController<ModelController>().apply {
+            bind(sceneContext)
+            syncWith(Properties.mainModelFilesPath)
+        }
+        modelsContainer.children.add(mainModelsView)
+        addTabSelectedListener()
 
         val settingsLoader = FXMLLoader(Qodat::class.java.getResource("settings.fxml"))
         val settingsPane = settingsLoader.load<TitledPane>()
@@ -117,12 +118,21 @@ class MainController : SceneController("main-scene") {
         viewerController = viewerLoader.getController()
         viewerController.addTabSelectedListener()
 
+
+        val editorLoader = FXMLLoader(Qodat::class.java.getResource("editor.fxml"))
+        val editorPane = editorLoader.load<SplitPane>() // same as viewNode from controller
+        editorController = editorLoader.getController()
+        editorController.addTabSelectedListener()
+
+
         val navigationBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("navigation.fxml"))
         val timeLineBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("timeline.fxml"))
 
         sceneContextBox.items.addAll(
             sceneContext,
-            viewerController.sceneContext)
+            viewerController.sceneContext,
+            editorController.sceneContext)
+
         sceneContextBox.tooltip = Tooltip("Select scene context")
         sceneContextBox.bind(SubScene3D.contextProperty)
 
@@ -131,6 +141,7 @@ class MainController : SceneController("main-scene") {
         lockSceneContextButton.tooltip = Tooltip("Lock scene context")
         lockSceneContextButton.selectedProperty().setAndBind(SubScene3D.lockContextProperty, biDirectional = true)
 
+        rightEditorTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, editorPane))
         rightViewerTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, viewerPane))
         rightMainTab.selectedProperty().addListener(createSelectTabListener(rightTabContents, mainPanes))
         leftFilesTab.selectedProperty().addListener(createSelectTabListener(leftTabContents, leftTab))
@@ -141,32 +152,7 @@ class MainController : SceneController("main-scene") {
         configureLeftPane()
         configureRightPane()
 
-        configureModelList()
         configurePlayControls()
-    }
-
-    fun configureModelList() {
-        filesModelListView.setOnDragOver {
-            if (it.dragboard.hasFiles())
-                it.acceptTransferModes(*TransferMode.COPY_OR_MOVE)
-            it.consume()
-        }
-        filesModelListView.setOnDragDropped {
-            it.dragboard.run {
-                if (hasFiles()) {
-                    val models = files.map { file -> Model(file.name, RSModelLoader().load(0, file.readBytes())) }
-                    filesModelListView.items.addAll(models)
-                    it.isDropCompleted = true
-                }
-                it.consume()
-            }
-        }
-        filesModelListView.selectionModel.selectedItems.onChange {
-            while (next()) {
-                removed.forEach { sceneContext.removeNode(it) }
-                addedSubList.forEach { sceneContext.addNode(it) }
-            }
-        }
     }
 
     fun postCacheLoading() {
@@ -336,6 +322,14 @@ class MainController : SceneController("main-scene") {
         progressBar.prefWidthProperty().bind(mainPane.widthProperty())
 
         for (task in tasks) {
+            println("Running task ${task.title}")
+            task.setOnFailed {
+                Platform.runLater {
+                    task.exception.printStackTrace()
+                    val dialog = Alert(AlertType.ERROR, "Error", ButtonType.OK)
+                    dialog.show()
+                }
+            }
             Qodat.executor.submit {
                 PlatformImpl.runAndWait {
                     mainPane.bottom = stackPane
@@ -345,7 +339,9 @@ class MainController : SceneController("main-scene") {
                     progressBar.progressProperty().bind(task.progressProperty())
                 }
                 task.run()
+
             }
+
         }
         Qodat.executor.submit {
             PlatformImpl.runAndWait {

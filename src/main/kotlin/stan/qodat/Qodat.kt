@@ -8,7 +8,9 @@ import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import kotlinx.serialization.ExperimentalSerializationApi
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.MainController
 import stan.qodat.util.ActionCache
@@ -37,7 +39,8 @@ class Qodat : Application() {
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
-        Properties.cache.set(OldschoolCacheRuneLite)
+        Properties.viewerCache.set(OldschoolCacheRuneLite)
+        Properties.editorCache.set(QodatCache)
 
         primaryStage.apply {
             title = "Qodat"

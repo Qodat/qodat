@@ -73,8 +73,12 @@ object Properties {
     val cameraMaxZoom = SimpleDoubleProperty(-3000.0)
     val cameraMinZoom = SimpleDoubleProperty(0.0)
 
-    val cache = SimpleObjectProperty<Cache>()
+    val viewerCache = SimpleObjectProperty<Cache>()
+    val editorCache = SimpleObjectProperty<Cache>()
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/LIVE"))
+    val qodatCachePath = SimpleObjectProperty(Paths.get("caches/qodat"))
+
+    val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
 
     val selectedNpcName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()

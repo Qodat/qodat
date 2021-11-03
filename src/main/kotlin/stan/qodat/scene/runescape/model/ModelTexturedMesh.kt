@@ -24,7 +24,7 @@ class ModelTexturedMesh(private val model: Model, private val atlas: ModelAtlasM
         @JvmStatic
         fun main(args: Array<String>) {
             val npc = OldschoolCacheRuneLite.npcManager.npcs.find { it.name.contains("abyssal demon", true) }!!
-            val model = OldschoolCacheRuneLite.getModel(npc.models.first())
+            val model = OldschoolCacheRuneLite.getModelDefinition(npc.models.first().toString())
             model.draw(false)
         }
     }

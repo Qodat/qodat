@@ -8,6 +8,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <?import java.net.URL?>
+<?import stan.qodat.scene.control.ViewNodeListView?>
 <SplitPane
         xmlns="https://javafx.com/javafx"
         xmlns:fx="http://javafx.com/fxml"
@@ -18,7 +19,7 @@
     <items>
         <VBox prefHeight="355.0" prefWidth="220.0" styleClass="viewer-box">
             <children>
-                <ListView id="models-list" fx:id="modelListView" prefHeight="330.0" prefWidth="220.0">
+                <ViewNodeListView id="models-list" fx:id="modelListView" prefHeight="330.0" prefWidth="220.0">
                     <contextMenu>
                         <ContextMenu>
                             <items>
@@ -26,7 +27,7 @@
                             </items>
                         </ContextMenu>
                     </contextMenu>
-                </ListView>
+                </ViewNodeListView>
                 <TextField fx:id="searchModelField" prefHeight="27.0" prefWidth="220.0" promptText="Search model"/>
             </children>
         </VBox>

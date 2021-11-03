@@ -24,8 +24,8 @@ import stan.qodat.util.Searchable
  * @since   29/01/2021
  */
 abstract class Entity<D : EntityDefinition>(
-    private val cache: Cache,
-    private val definition: D
+    protected val cache: Cache,
+    val definition: D
 ) : Searchable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider{
 
     private lateinit var modelGroup: Group
@@ -34,15 +34,15 @@ abstract class Entity<D : EntityDefinition>(
     private lateinit var treeItem: EntityTreeItem
 
     val labelProperty = SimpleStringProperty(definition.name)
-    val mergeModelProperty = SimpleBooleanProperty(true)
+    val mergeModelProperty = SimpleBooleanProperty(false)
 
     override fun getName() = labelProperty.get()
 
     fun getModels(): Array<Model> {
         if (!this::models.isInitialized){
-            val definitions = definition.modelIds.map {
-                cache.getModel(it)
-            }.toTypedArray()
+
+            val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
+
             models = if (definitions.size > 1 && mergeModelProperty.get()) {
                 val multiModelName = "models_${definitions.joinToString {
                     it.getName() + "_"
@@ -50,8 +50,8 @@ abstract class Entity<D : EntityDefinition>(
                 arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build()))
             } else
                 definition.modelIds.map {
-                    val modelDefinition = cache.getModel(it)
-                    Model("$it", modelDefinition)
+                    val modelDefinition = cache.getModelDefinition(it)
+                    Model(it, modelDefinition)
                 }.toTypedArray()
         }
         return models

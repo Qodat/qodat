@@ -2,7 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 //    id("org.openjfx.javafxplugin") version "0.0.10"
-    kotlin("jvm") version "1.5.30"
+    kotlin("jvm") version "1.5.31"
+    kotlin("plugin.serialization") version "1.5.31"
     application
 }
 
@@ -22,6 +23,7 @@ dependencies {
     }
 //    implementation("no.tornado:tornadofx:1.7.19")
 //    implementation("com.github.kotlin-graphics:gln:v0.5.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
     implementation("com.displee:rs-cache-library:6.8")

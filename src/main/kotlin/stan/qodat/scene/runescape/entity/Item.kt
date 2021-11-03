@@ -10,6 +10,7 @@ import stan.qodat.cache.CacheEncoder
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.Searchable
+import java.io.File
 import java.io.UnsupportedEncodingException
 
 /**
@@ -21,7 +22,7 @@ import java.io.UnsupportedEncodingException
 class Item(cache: Cache, definition: ItemDefinition)
     : Entity<ItemDefinition>(cache, definition), CacheEncoder {
 
-    override fun encode(format: Cache) {
+    override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
     }
 }

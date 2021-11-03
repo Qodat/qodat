@@ -8,7 +8,7 @@ package stan.qodat.cache.definition
  */
 interface AnimationDefinition {
 
-    val id: Int
+    val id: String
     val frameHashes: IntArray
     val frameLengths : IntArray
 }

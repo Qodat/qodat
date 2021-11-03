@@ -13,15 +13,19 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import javafx.scene.shape.Sphere
+import kotlinx.serialization.json.decodeFromStream
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.cache.definition.ModelDefinition
+import stan.qodat.cache.impl.qodat.QodatCache
+import stan.qodat.cache.impl.qodat.QodatModelDefinition
+import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.tree.ModelTreeItem
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.util.*
-import java.io.UnsupportedEncodingException
+import java.io.File
 
 /**
  * Represents a RuneScape 3D model.
@@ -32,6 +36,7 @@ import java.io.UnsupportedEncodingException
 class Model(label: String,
             modelDefinition: ModelDefinition
 ) : ModelSkeleton(modelDefinition),
+        Searchable,
         ViewNodeProvider,
         SceneNodeProvider,
         TreeItemProvider,
@@ -149,8 +154,9 @@ class Model(label: String,
     }
 
     override fun getViewNode(): Node {
-        if (!this::viewBox.isInitialized)
+        if (!this::viewBox.isInitialized) {
             viewBox = LabeledHBox(labelProperty)
+        }
         return viewBox
     }
 
@@ -186,7 +192,27 @@ class Model(label: String,
         return treeItem
     }
 
-    override fun encode(format: Cache) {
-        throw UnsupportedEncodingException()
+    override fun encode(format: Cache) : File {
+        return format.encode(this)
+    }
+
+    override fun getName() = labelProperty.get()
+
+
+    companion object {
+        val supportedExtensions = arrayOf("model", "dat", "json")
+
+        fun fromFile(file: File) : Model {
+            val definition = when (file.extension) {
+                "json" -> {
+                    QodatCache.json.decodeFromStream<QodatModelDefinition>(file.inputStream())
+                }
+                else -> {
+                    // TODO: support gzip, mqo
+                    RSModelLoader().load(file.nameWithoutExtension, file.readBytes())
+                }
+            }
+            return Model(definition.getName(), definition)
+        }
     }
 }

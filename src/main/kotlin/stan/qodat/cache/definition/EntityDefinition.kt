@@ -9,5 +9,5 @@ package stan.qodat.cache.definition
 interface EntityDefinition {
 
     val name: String
-    val modelIds: IntArray
+    val modelIds: Array<String>
 }

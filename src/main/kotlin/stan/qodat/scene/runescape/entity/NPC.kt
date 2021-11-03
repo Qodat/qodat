@@ -4,6 +4,8 @@ import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.cache.definition.NPCDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.scene.runescape.animation.Animation
+import java.io.File
 import java.io.UnsupportedEncodingException
 
 /**
@@ -14,10 +16,11 @@ import java.io.UnsupportedEncodingException
  */
 class NPC(
     cache: Cache = OldschoolCacheRuneLite,
-    definition: NPCDefinition
-) : AnimatedEntity<NPCDefinition>(cache, definition), CacheEncoder {
+    definition: NPCDefinition,
+    animationProvider: NPCDefinition.() -> Array<Animation>
+) : AnimatedEntity<NPCDefinition>(cache, definition, animationProvider), CacheEncoder {
 
-    override fun encode(format: Cache) {
+    override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
     }
 }

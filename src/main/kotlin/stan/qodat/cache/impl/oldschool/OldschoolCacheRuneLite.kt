@@ -35,6 +35,9 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     private val frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
     private val frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
 
+    private lateinit var animations : Array<AnimationDefinition>
+
+
     init {
         store.load()
         frameIndex = store.getIndex(IndexType.FRAMES)
@@ -49,10 +52,23 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     private val gson = GsonBuilder().create()
     private val intArrayType = object: TypeToken<IntArray>() {}.type
-    override fun getModel(id: Int): ModelDefinition {
+
+    fun getModelData(id: String) : ByteArray {
+        val modelId = id.toIntOrNull()?:throw IllegalArgumentException("Model id must be int-convertable $id")
         val modelIndex = store.getIndex(IndexType.MODELS)
-        val archive = modelIndex.getArchive(id)
+        val archive = modelIndex.getArchive(modelId)
+        return archive.decompress(store.storage.loadArchive(archive))
+    }
+
+    override fun getModelDefinition(id: String): ModelDefinition {
+        val modelId = id.toIntOrNull()?:throw IllegalArgumentException("Model id must be int-convertable $id")
+        val modelIndex = store.getIndex(IndexType.MODELS)
+        val archive = modelIndex.getArchive(modelId)
         return RSModelLoader().load(id, archive.decompress(store.storage.loadArchive(archive)))
+    }
+
+    override fun getAnimation(id: String): AnimationDefinition {
+        return animations.find { it.id == id }!!
     }
 
     override fun getNPCs(): Array<NPCDefinition> {
@@ -79,10 +95,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             animatedNpcs.add(object : NPCDefinition {
                 override val name: String
                     get() = npc.name
-                override val modelIds: IntArray
-                    get() = npc.models
-                override val animationIds: IntArray
-                    get() = anims
+                override val modelIds: Array<String>
+                    get() = npc.models.map { it.toString() }.toTypedArray()
+                override val animationIds: Array<String>
+                    get() = anims.map { it.toString() }.toTypedArray()
             })
         }
         return animatedNpcs.toTypedArray()
@@ -93,13 +109,13 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             object : ObjectDefinition {
                 override val name: String
                     get() = it.name
-                override val modelIds: IntArray
-                    get() = it.objectModels?:IntArray(0)
-                override val animationIds: IntArray
+                override val modelIds: Array<String>
+                    get() = it.objectModels?.map { it.toString() }?.toTypedArray()?: emptyArray()
+                override val animationIds: Array<String>
                     get() = if (it.animationID == -1)
-                        IntArray(0)
+                        emptyArray()
                     else
-                        IntArray(it.animationID)
+                        arrayOf(it.animationID.toString())
             }
         }.toTypedArray()
     }
@@ -109,31 +125,34 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             object : ItemDefinition {
                 override val name: String
                     get() = it.name
-                override val modelIds: IntArray
-                    get() = IntArray(it.inventoryModel)
+                override val modelIds: Array<String>
+                    get() = arrayOf(it.inventoryModel.toString())
             }
         }.toTypedArray()
     }
 
     override fun getAnimationDefinitions(): Array<AnimationDefinition> {
-        val storage = store.storage
-        val index = store.getIndex(IndexType.CONFIGS)
+        if (!this::animations.isInitialized) {
+            val storage = store.storage
+            val index = store.getIndex(IndexType.CONFIGS)
 
-        val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
-        val seqArchiveData = storage.loadArchive(seqArchive)
-        val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
+            val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
+            val seqArchiveData = storage.loadArchive(seqArchive)
+            val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
 
-        return seqArchiveFiles.files.map {
-            val sequence = SequenceLoader().load(it.fileId, it.contents)!!
-            return@map object : AnimationDefinition {
-                override val id: Int
-                    get() = it.fileId
-                override val frameHashes: IntArray
-                    get() = sequence.frameIDs?: IntArray(0)
-                override val frameLengths: IntArray
-                    get() = sequence.frameLenghts?: IntArray(0)
-            }
-        }.toTypedArray()
+            animations = seqArchiveFiles.files.map {
+                val sequence = SequenceLoader().load(it.fileId, it.contents)!!
+                return@map object : AnimationDefinition {
+                    override val id: String
+                        get() = it.fileId.toString()
+                    override val frameHashes: IntArray
+                        get() = sequence.frameIDs?: IntArray(0)
+                    override val frameLengths: IntArray
+                        get() = sequence.frameLenghts?: IntArray(0)
+                }
+            }.toTypedArray()
+        }
+        return animations
     }
 
     override fun getFrameDefinition(frameHash: Int): AnimationFrameDefinition? {
@@ -190,11 +209,11 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         return getFrameDefinition(frameHash)!!.transformationGroup
     }
 
-    private fun getFileId(hexString: String): Int {
+    internal fun getFileId(hexString: String): Int {
         return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
     }
 
-    private fun getFrameId(hexString: String): Int {
+    internal fun getFrameId(hexString: String): Int {
         return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
     }
 

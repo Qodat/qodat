@@ -1,5 +1,6 @@
 package stan.qodat.cache
 
+import java.io.File
 import java.io.UnsupportedEncodingException
 
 /**
@@ -11,5 +12,5 @@ import java.io.UnsupportedEncodingException
 interface CacheEncoder {
 
     @Throws(UnsupportedEncodingException::class)
-    fun encode(format: Cache)
+    fun encode(format: Cache) : File
 }

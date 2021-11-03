@@ -35,7 +35,7 @@ import stan.qodat.cache.definition.ModelDefinition;
  */
 public class RS2ModelDefinition implements ModelDefinition
 {
-	private int id;
+	private String id;
 
 	private int format = 0;
 	private int vertexCount = 0;
@@ -359,7 +359,7 @@ public class RS2ModelDefinition implements ModelDefinition
 			}
 		}
 	}
-	public void setId(int id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 
@@ -604,7 +604,7 @@ public class RS2ModelDefinition implements ModelDefinition
 	@NotNull
 	@Override
 	public String getName() {
-		return Integer.toString(id);
+		return id;
 	}
 
 	@NotNull

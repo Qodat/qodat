@@ -17,7 +17,7 @@ class RSModelLoader {
 
     private val logger = Logger.getLogger(RSModelLoader::class.java.simpleName)
 
-    fun load(modelId: Int, data: ByteArray) =
+    fun load(modelId: String, data: ByteArray) =
         when {
             isRS3(data) -> {
                 try {
@@ -45,11 +45,11 @@ class RSModelLoader {
             }
             else -> loadLowRev(modelId, data)
         }
-    private fun loadRS3(modelId: Int, data: ByteArray): ModelDefinition {
+    private fun loadRS3(modelId: String, data: ByteArray): ModelDefinition {
         TODO("Not yet implemented")
     }
 
-    private fun loadHighRev(modelId: Int, data: ByteArray): ModelDefinition {
+    private fun loadHighRev(modelId: String, data: ByteArray): ModelDefinition {
 
         val input1 = InputStream(data)
         val input2 = InputStream(data)
@@ -302,7 +302,7 @@ class RSModelLoader {
     }
 
     fun loadMidRev(
-        modelId: Int,
+        modelId: String,
         vertexCount: Int,
         faceCount: Int,
         textureConfigCount: Int,
@@ -498,7 +498,7 @@ class RSModelLoader {
 
         return definition
     }
-    private fun loadLowRev(modelId: Int, data: ByteArray): ModelDefinition {
+    private fun loadLowRev(modelId: String, data: ByteArray): ModelDefinition {
 
         val input1 = InputStream(data)
         val input2 = InputStream(data)

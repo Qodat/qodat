@@ -1,13 +1,11 @@
 package stan.qodat.scene.runescape.entity
 
-import stan.qodat.Qodat
-import stan.qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.cache.Cache
+import stan.qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.AnimationSkeleton
 import stan.qodat.scene.transform.Transformable
-import stan.qodat.util.getAnimation
 
 /**
  * TODO: add documentation
@@ -17,7 +15,8 @@ import stan.qodat.util.getAnimation
  */
 open class AnimatedEntity<D : AnimatedEntityDefinition>(
     cache: Cache,
-    private val definition: D
+    definition: D,
+    private val animationProvider: D.() -> Array<Animation>
 ) : Entity<D>(cache, definition), Transformable {
 
     private lateinit var animations: Array<Animation>
@@ -39,12 +38,8 @@ open class AnimatedEntity<D : AnimatedEntityDefinition>(
     }
 
     fun getAnimations(): Array<Animation> {
-        if (!this::animations.isInitialized) {
-            animations = definition.animationIds
-                .map { Qodat.getAnimation(it) }
-                .filterNotNull()
-                .toTypedArray()
-        }
+        if (!this::animations.isInitialized)
+            animations = animationProvider.invoke(definition)
         return animations
     }
 

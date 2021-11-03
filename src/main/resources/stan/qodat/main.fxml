@@ -23,22 +23,22 @@
                     <children>
                         <SplitPane fx:id="filesWindow" dividerPositions="0.75" orientation="VERTICAL">
                             <items>
-                                <VBox styleClass="border-left">
+                                <VBox fx:id="modelsContainer" styleClass="border-left">
                                     <children>
-                                        <Label maxWidth="Infinity" prefHeight="17.0" prefWidth="4000" styleClass="window-label" text="Explorer" />
-                                        <ListView id="models-list" fx:id="filesModelListView" prefHeight="520.0">
-                                            <contextMenu>
-                                                <ContextMenu>
-                                                    <items>
-                                                        <MenuItem fx:id="removeModelMenuItem" mnemonicParsing="false" text="Remove" />
-                                                        <MenuItem fx:id="revertModelMenuItem" mnemonicParsing="false" text="Revert" />
-                                                        <MenuItem fx:id="exportModelMenuItem" mnemonicParsing="false" text="Export" />
-                                                        <MenuItem fx:id="openInExplorer" mnemonicParsing="false" onAction="#openModelInExplorer" text="Open in explorer" />
-                                                    </items>
-                                                </ContextMenu>
-                                            </contextMenu>
-                                        </ListView>
-                                        <TextField fx:id="searchModelsList" prefHeight="25.0" promptText="Search model" />
+<!--                                        <Label maxWidth="Infinity" prefHeight="17.0" prefWidth="4000" styleClass="window-label" text="Explorer" />-->
+<!--                                        <ListView id="models-list" fx:id="filesModelListView" prefHeight="520.0">-->
+<!--                                            <contextMenu>-->
+<!--                                                <ContextMenu>-->
+<!--                                                    <items>-->
+<!--                                                        <MenuItem fx:id="removeModelMenuItem" mnemonicParsing="false" text="Remove" />-->
+<!--                                                        <MenuItem fx:id="revertModelMenuItem" mnemonicParsing="false" text="Revert" />-->
+<!--                                                        <MenuItem fx:id="exportModelMenuItem" mnemonicParsing="false" text="Export" />-->
+<!--                                                        <MenuItem fx:id="openInExplorer" mnemonicParsing="false" onAction="#openModelInExplorer" text="Open in explorer" />-->
+<!--                                                    </items>-->
+<!--                                                </ContextMenu>-->
+<!--                                            </contextMenu>-->
+<!--                                        </ListView>-->
+<!--                                        <TextField fx:id="searchModelsList" prefHeight="25.0" promptText="Search model" />-->
                                     </children>
                                 </VBox>
                                 <VBox styleClass="border-right">

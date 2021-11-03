@@ -1,7 +1,5 @@
 package stan.qodat.cache.definition
 
-import stan.qodat.cache.definition.AnimatedEntityDefinition
-
 /**
  * TODO: add documentation
  *

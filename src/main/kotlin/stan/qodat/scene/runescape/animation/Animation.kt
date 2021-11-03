@@ -8,8 +8,11 @@ import javafx.embed.swing.SwingFXUtils
 import javafx.scene.Node
 import javafx.scene.SnapshotParameters
 import javafx.scene.control.ContextMenu
+import javafx.scene.control.ListCell
+import javafx.scene.control.ListView
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
+import javafx.util.Callback
 import stan.gifencoder.*
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
@@ -24,6 +27,7 @@ import stan.qodat.scene.transform.Transformer
 import stan.qodat.util.Searchable
 import stan.qodat.util.ViewNodeProvider
 import stan.qodat.util.getAnimationsView
+import java.io.File
 import java.io.FileOutputStream
 import java.io.UnsupportedEncodingException
 import java.nio.file.Paths
@@ -141,7 +145,18 @@ class Animation(
         return viewBox
     }
 
-    override fun encode(format: Cache) {
+    override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
+    }
+
+    companion object {
+        fun createCellFactory() = Callback<ListView<Animation>, ListCell<Animation>> {
+            object : ListCell<Animation>() {
+                override fun updateItem(item: Animation?, empty: Boolean) {
+                    super.updateItem(item, empty)
+                    graphic = if (empty || item == null) null else item.getViewNode()
+                }
+            }
+        }
     }
 }
