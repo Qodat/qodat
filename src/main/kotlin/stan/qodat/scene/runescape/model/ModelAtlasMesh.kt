@@ -117,10 +117,25 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
         val atlas = AtlasMaterial()
         val faceIterator = (0 until definition.getFaceCount())
         atlas.setColors(faceIterator.map {
+
             ModelUtil.hsbToColor(
-                    definition.getFaceColors()[it],
+                getColor(definition, it),
                     definition.getFaceAlphas()?.get(it))
         }.toTypedArray())
         return atlas
+    }
+
+    private fun getColor(definition: ModelDefinition, it: Int): Short {
+        var color = definition.getFaceColors()[it]
+        val findColor = model.findColor
+        val replaceColor = model.replaceColor
+        if (findColor != null && replaceColor != null) {
+            assert(findColor.size == replaceColor.size)
+            for (i in 0 until findColor.size){
+                if (findColor[i] == color)
+                    color = replaceColor[i]
+            }
+        }
+        return color
     }
 }

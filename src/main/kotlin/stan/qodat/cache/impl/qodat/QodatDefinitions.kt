@@ -11,6 +11,8 @@ data class QodatNpcDefinition(
     override val name: String,
     override val modelIds: Array<String>,
     override val animationIds: Array<String>,
+    override val findColor: ShortArray? = null,
+    override val replaceColor: ShortArray? = null,
 ) : NPCDefinition
 
 @Serializable
@@ -18,12 +20,16 @@ data class QodatObjectDefinition(
     override val name: String,
     override val modelIds: Array<String>,
     override val animationIds: Array<String>,
+    override val findColor: ShortArray? = null,
+    override val replaceColor: ShortArray? = null,
 ) : ObjectDefinition
 
 @Serializable
 data class QodatItemDefinition(
     override val name: String,
     override val modelIds: Array<String>,
+    override val findColor: ShortArray? = null,
+    override val replaceColor: ShortArray? = null,
 ) : ItemDefinition
 
 @Serializable

@@ -48,7 +48,7 @@ abstract class Entity<D : EntityDefinition>(
                 val multiModelName = "models_${definitions.joinToString {
                     it.getName() + "_"
                 }}"
-                arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build()))
+                arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build(), definition.findColor, definition.replaceColor))
             } else
                 createDistinctModels()
         }
@@ -62,7 +62,7 @@ abstract class Entity<D : EntityDefinition>(
 
     private fun createDistinctModels() = definition.modelIds.map {
         val modelDefinition = cache.getModelDefinition(it)
-        Model(it, modelDefinition)
+        Model(it, modelDefinition, definition.findColor, definition.replaceColor)
     }.toTypedArray()
 
     override fun getViewNode(): Node {

@@ -94,12 +94,11 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
             animsReader.close()
             animatedNpcs.add(object : NPCDefinition {
-                override val name: String
-                    get() = npc.name
-                override val modelIds: Array<String>
-                    get() = npc.models.map { it.toString() }.toTypedArray()
-                override val animationIds: Array<String>
-                    get() = anims.map { it.toString() }.toTypedArray()
+                override val name = npc.name
+                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                override val animationIds = anims.map { it.toString() }.toTypedArray()
+                override val findColor = npc.recolorToFind
+                override val replaceColor = npc.recolorToReplace
             })
         }
         return animatedNpcs.toTypedArray()
@@ -108,15 +107,14 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getObjects(): Array<ObjectDefinition> {
         return objectManager.objects.map {
             object : ObjectDefinition {
-                override val name: String
-                    get() = it.name
-                override val modelIds: Array<String>
-                    get() = it.objectModels?.map { it.toString() }?.toTypedArray()?: emptyArray()
-                override val animationIds: Array<String>
-                    get() = if (it.animationID == -1)
-                        emptyArray()
-                    else
-                        arrayOf(it.animationID.toString())
+                override val name = it.name
+                override val modelIds = it.objectModels?.map { it.toString() }?.toTypedArray()?: emptyArray()
+                override val animationIds = if (it.animationID == -1)
+                    emptyArray()
+                else
+                    arrayOf(it.animationID.toString())
+                override val findColor = it.recolorToFind
+                override val replaceColor = it.recolorToReplace
             }
         }.toTypedArray()
     }
@@ -124,10 +122,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getItems(): Array<ItemDefinition> {
         return itemManager.items.map {
             object : ItemDefinition {
-                override val name: String
-                    get() = it.name
-                override val modelIds: Array<String>
-                    get() = arrayOf(it.inventoryModel.toString())
+                override val name = it.name
+                override val modelIds = arrayOf(it.inventoryModel.toString())
+                override val findColor = it.colorFind
+                override val replaceColor = it.colorReplace
             }
         }.toTypedArray()
     }

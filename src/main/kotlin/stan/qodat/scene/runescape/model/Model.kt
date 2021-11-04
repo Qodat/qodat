@@ -34,7 +34,9 @@ import java.io.File
  * @since   28/01/2021
  */
 class Model(label: String,
-            modelDefinition: ModelDefinition
+            modelDefinition: ModelDefinition,
+            internal val findColor: ShortArray? = null,
+            internal val replaceColor: ShortArray? = null
 ) : ModelSkeleton(modelDefinition),
         Searchable,
         ViewNodeProvider,

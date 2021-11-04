@@ -10,4 +10,7 @@ interface EntityDefinition {
 
     val name: String
     val modelIds: Array<String>
+
+    val findColor: ShortArray?
+    val replaceColor: ShortArray?
 }
