@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "stan.qodat"
-version = "0.0.3"
+version = "0.0.4"
 
 repositories {
     maven(url = "https://repo.runelite.net")
@@ -53,7 +53,7 @@ sourceSets {
     }
 }
 application {
-    mainModule.set("stan.qodat")
+//    mainModule.set("stan.qodat")
     mainClass.set("stan.qodat.Qodat")
 }
 //jlink{
