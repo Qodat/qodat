@@ -67,7 +67,7 @@ class EditorController : EntityController("editor-scene") {
                     if (newValue != oldValue && newValue.isNotBlank()) {
                         val npc = npcMap[newValue]
                         if (npc != null) {
-                            models.setAll(*npc.getModels())
+                            models.setAll(*npc.getDistinctModels())
                             animationList.items.setAll(*npc.getAnimations())
                         }
                     }

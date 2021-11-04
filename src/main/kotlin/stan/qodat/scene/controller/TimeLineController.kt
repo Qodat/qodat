@@ -18,6 +18,7 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.shape.Sphere
 import javafx.util.Callback
+import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.AnimationFrame
@@ -32,6 +33,7 @@ import java.net.URL
 import java.nio.file.Paths
 import java.util.*
 import javax.imageio.ImageIO
+import kotlin.io.path.exists
 
 /**
  * TODO: add documentation
@@ -64,7 +66,13 @@ class TimeLineController : Initializable {
                     val snapshotParameters = SnapshotParameters().apply { fill = Color.TRANSPARENT }
                     val snapShot = SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)
                     val image = SwingFXUtils.fromFXImage(snapShot, null)
-                    val out = File.createTempFile(frameIndex.toString(), ".png")
+                    val name = Properties.selectedNpcName.get()+"_" +Properties.selectedAnimationName.get()+"_"+ frameIndex.toString()
+                    val out = Properties.exportsPath.get().resolve("png").resolve("$name.png").toFile().apply {
+                        if (!parentFile.exists())
+                            parentFile.mkdir()
+                        if (!exists())
+                            createNewFile()
+                    }
                     ImageIO.write(image, "png", out)
                     out
                 }

@@ -109,11 +109,16 @@ class ModelController : Initializable {
 
         syncPath.bind(pathProperty)
 
-        val currentPath = pathProperty.get()
-        for (file in currentPath.toFile().listFiles()) {
-            models.add(Model.fromFile(file))
+        val currentPath = pathProperty.get().toFile().apply {
+            if (!exists())
+                mkdir()
         }
-        var pathKey = syncWithDirectory(currentPath)
+        val files = currentPath.listFiles()
+        if (files != null) {
+            for (file in files)
+                models.add(Model.fromFile(file))
+        }
+        var pathKey = syncWithDirectory(currentPath.toPath())
         pathProperty.onInvalidation {
             pathKey.cancel()
             pathKey = syncWithDirectory(get())

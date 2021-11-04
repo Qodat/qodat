@@ -8,7 +8,6 @@ import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.cache.impl.qodat.QodatCache.loadModels
 import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
@@ -55,7 +54,16 @@ object QodatCache : Cache("qodat") {
 
     override fun encode(any: Any): File {
         if (any is Model) {
-            val file = File.createTempFile(any.getName(), ".json")
+            val saveDir = Properties.exportsPath.get().resolve("model").resolve("json").toFile().apply {
+                if (!parentFile.exists())
+                    parentFile.mkdir()
+                if (!exists())
+                    mkdir()
+            }
+            val file = saveDir.resolve("${any.getName()}.json").apply {
+                if (!exists())
+                    createNewFile()
+            }
             encodeModel(file, getQodatModelDefinition(any))
             return file
         }
@@ -128,6 +136,7 @@ object QodatCache : Cache("qodat") {
     private inline fun<reified T> File.loadDefinitions(directoryName: String) = resolve(directoryName)
         .listFiles()
         ?.filterNotNull()
+        ?.filter { it.extension == "json" }
         ?.map { json.decodeFromStream<T>(it.inputStream()) }
         ?.toMutableList()
         ?: mutableListOf()
