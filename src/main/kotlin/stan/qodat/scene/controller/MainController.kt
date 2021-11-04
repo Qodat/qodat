@@ -37,7 +37,6 @@ import java.util.*
  */
 class MainController : SceneController("main-scene") {
 
-//    @FXML lateinit var filesModelListView: ListView<Model>
     @FXML lateinit var modelsContainer: VBox
     @FXML lateinit var sceneTreeView: TreeView<Node>
     @FXML lateinit var leftFilesTab: ToggleButton
@@ -54,10 +53,6 @@ class MainController : SceneController("main-scene") {
     @FXML lateinit var searchModelsList: TextField
     @FXML lateinit var menuBar: MenuBar
     @FXML lateinit var recentPathsMenu: Menu
-    @FXML lateinit var removeModelMenuItem: MenuItem
-    @FXML lateinit var revertModelMenuItem: MenuItem
-    @FXML lateinit var exportModelMenuItem: MenuItem
-    @FXML lateinit var openInExplorer: MenuItem
     @FXML lateinit var leftTab: HBox
     @FXML lateinit var filesWindow: SplitPane
     @FXML lateinit var playControls: HBox

@@ -27,198 +27,144 @@
     </stylesheets>
     <center>
         <SplitPane fx:id="splitPlane" dividerPositions="0.5, 0.5" BorderPane.alignment="CENTER">
-            <items>
-                <HBox fx:id="leftTab">
-                    <children>
-                        <SplitPane fx:id="filesWindow" dividerPositions="0.75" orientation="VERTICAL">
-                            <items>
-                                <VBox fx:id="modelsContainer" styleClass="border-left">
-                                    <children>
-<!--                                        <Label maxWidth="Infinity" prefHeight="17.0" prefWidth="4000" styleClass="window-label" text="Explorer" />-->
-<!--                                        <ListView id="models-list" fx:id="filesModelListView" prefHeight="520.0">-->
-<!--                                            <contextMenu>-->
-<!--                                                <ContextMenu>-->
-<!--                                                    <items>-->
-<!--                                                        <MenuItem fx:id="removeModelMenuItem" mnemonicParsing="false" text="Remove" />-->
-<!--                                                        <MenuItem fx:id="revertModelMenuItem" mnemonicParsing="false" text="Revert" />-->
-<!--                                                        <MenuItem fx:id="exportModelMenuItem" mnemonicParsing="false" text="Export" />-->
-<!--                                                        <MenuItem fx:id="openInExplorer" mnemonicParsing="false" onAction="#openModelInExplorer" text="Open in explorer" />-->
-<!--                                                    </items>-->
-<!--                                                </ContextMenu>-->
-<!--                                            </contextMenu>-->
-<!--                                        </ListView>-->
-<!--                                        <TextField fx:id="searchModelsList" prefHeight="25.0" promptText="Search model" />-->
-                                    </children>
-                                </VBox>
-                                <VBox styleClass="border-right">
-                                    <children>
-                                        <StackPane fx:id="sceneGroup" styleClass="scene-group">
-                                            <HBox fx:id="sceneHBox" maxWidth="Infinity" prefWidth="4000">
-                                                <Label fx:id="sceneLabel" prefWidth="150" styleClass="scene-label" text="Scene" />
-                                                <HBox styleClass="hbox-float-right" BorderPane.alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
-                                                    <ToggleButton fx:id="lockSceneContextButton" maxWidth="20" styleClass="lock-scene-context-toggle" />
-                                                    <ComboBox fx:id="sceneContextBox" prefWidth="200" styleClass="lock-scene-context-combo" />
-                                                </HBox>
-                                            </HBox>
-                                        </StackPane>
-                                        <TreeView id="models-list" fx:id="sceneTreeView">
-                                        </TreeView>
-                                    </children>
-                                </VBox>
-                            </items>
-                        </SplitPane>
-                    </children>
-                </HBox>
-                <Pane fx:id="canvasPlaceHolder" />
-                <Accordion id="main-panel" fx:id="mainPanes">
-                    <panes>
-                    </panes>
-                </Accordion>
-            </items>
+            <HBox fx:id="leftTab">
+                <SplitPane fx:id="filesWindow" dividerPositions="0.75" orientation="VERTICAL">
+                    <VBox fx:id="modelsContainer" styleClass="border-left"/>
+                    <VBox styleClass="border-right">
+                        <StackPane styleClass="scene-group">
+                            <HBox fx:id="sceneHBox" maxWidth="Infinity" prefWidth="4000">
+                                <Label fx:id="sceneLabel" prefWidth="150" styleClass="scene-label"
+                                       text="Scene"/>
+                                <HBox styleClass="hbox-float-right" BorderPane.alignment="CENTER_RIGHT"
+                                      HBox.hgrow="ALWAYS">
+                                    <ToggleButton fx:id="lockSceneContextButton" maxWidth="20"
+                                                  styleClass="lock-scene-context-toggle"/>
+                                    <ComboBox fx:id="sceneContextBox" prefWidth="200"
+                                              styleClass="lock-scene-context-combo"/>
+                                </HBox>
+                            </HBox>
+                        </StackPane>
+                        <TreeView id="models-list" fx:id="sceneTreeView"/>
+                    </VBox>
+                </SplitPane>
+            </HBox>
+            <Pane fx:id="canvasPlaceHolder"/>
+            <Accordion id="main-panel" fx:id="mainPanes">
+                <panes>
+                </panes>
+            </Accordion>
         </SplitPane>
     </center>
     <top>
         <VBox BorderPane.alignment="CENTER">
-            <children>
-                <HBox prefHeight="30.0" prefWidth="900.0">
-                    <children>
-                        <MenuBar fx:id="menuBar" prefHeight="30.0" HBox.hgrow="ALWAYS">
-                            <menus>
-                                <Menu mnemonicParsing="false" text="File">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" onAction="#loadModels" text="Load models" />
-                                        <Menu mnemonicParsing="false" text="Set load path">
-                                            <items>
-                                                <MenuItem mnemonicParsing="false" onAction="#setLoadPath" text="Set load path" />
-                                                <Menu fx:id="recentPathsMenu" mnemonicParsing="false" text="Recent paths" />
-                                            </items>
-                                        </Menu>
-                                        <MenuItem mnemonicParsing="false" onAction="#setSavePath" text="Set save path" />
-                              <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Set cache path" />
-                                    </items>
-                                </Menu>
-                                <Menu mnemonicParsing="false" text="Edit">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" onAction="#clearModels" text="Clear models" />
-                                    </items>
-                                </Menu>
-                                <Menu mnemonicParsing="false" text="Help">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" text="About" />
-                                    </items>
-                                </Menu>
-                            </menus>
-                        </MenuBar>
-                        <ToolBar maxHeight="30.0">
-                            <items>
-                                <HBox id="playControls" fx:id="playControls" alignment="CENTER_RIGHT" prefHeight="17.0">
-                                    <children>
-                                        <Button fx:id="startBtn" mnemonicParsing="false" prefHeight="14.0" text="|&lt;">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </Button>
-                                        <Button fx:id="rwBtn" mnemonicParsing="false" prefHeight="14.0" text="&lt;&lt;">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </Button>
-                                        <ToggleButton fx:id="playBtn" mnemonicParsing="false" prefHeight="14.0" text="&gt;">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </ToggleButton>
-                                        <Button fx:id="ffBtn" mnemonicParsing="false" text="&gt;&gt;">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </Button>
-                                        <Button fx:id="endBtn" mnemonicParsing="false" prefHeight="14.0" text="&gt;|">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </Button>
-                                        <ToggleButton fx:id="loopBtn" mnemonicParsing="false" prefHeight="14.0" selected="true" text="R">
-                                            <graphic>
-                                                <Pane prefHeight="13.0" prefWidth="13.0" />
-                                            </graphic>
-                                        </ToggleButton>
-                                    </children>
-                                    <padding>
-                                        <Insets right="22.0" />
-                                    </padding>
-                                </HBox>
-                            </items>
-                        </ToolBar>
-                    </children>
-                </HBox>
-            </children>
+            <HBox prefHeight="30.0" prefWidth="900.0">
+                <MenuBar fx:id="menuBar" prefHeight="30.0" HBox.hgrow="ALWAYS">
+                    <Menu mnemonicParsing="false" text="File">
+                        <MenuItem mnemonicParsing="false" onAction="#loadModels" text="Load models"/>
+                        <Menu mnemonicParsing="false" text="Set load path">
+                            <MenuItem mnemonicParsing="false" onAction="#setLoadPath" text="Set load path"/>
+                            <Menu fx:id="recentPathsMenu" mnemonicParsing="false" text="Recent paths"/>
+                        </Menu>
+                        <MenuItem mnemonicParsing="false" onAction="#setSavePath" text="Set save path"/>
+                        <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Set cache path"/>
+                    </Menu>
+                    <Menu mnemonicParsing="false" text="Edit">
+                        <MenuItem mnemonicParsing="false" onAction="#clearModels" text="Clear models"/>
+                    </Menu>
+                    <Menu mnemonicParsing="false" text="Help">
+                        <MenuItem mnemonicParsing="false" text="About"/>
+                    </Menu>
+                </MenuBar>
+                <ToolBar maxHeight="30.0">
+                    <HBox id="playControls" fx:id="playControls" alignment="CENTER_RIGHT" prefHeight="17.0">
+                        <padding>
+                            <Insets right="22.0"/>
+                        </padding>
+                        <Button fx:id="startBtn" mnemonicParsing="false" prefHeight="14.0" text="|&lt;">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="rwBtn" mnemonicParsing="false" prefHeight="14.0" text="&lt;&lt;">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </Button>
+                        <ToggleButton fx:id="playBtn" mnemonicParsing="false" prefHeight="14.0" text="&gt;">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </ToggleButton>
+                        <Button fx:id="ffBtn" mnemonicParsing="false" text="&gt;&gt;">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </Button>
+                        <Button fx:id="endBtn" mnemonicParsing="false" prefHeight="14.0" text="&gt;|">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </Button>
+                        <ToggleButton fx:id="loopBtn" mnemonicParsing="false" prefHeight="14.0"
+                                      selected="true" text="R">
+                            <graphic>
+                                <Pane prefHeight="13.0" prefWidth="13.0"/>
+                            </graphic>
+                        </ToggleButton>
+                    </HBox>
+                </ToolBar>
+            </HBox>
         </VBox>
     </top>
     <bottom>
         <VBox id="bottom-group" fx:id="bottomBox">
-            <children>
-                <HBox>
-                    <VBox.margin>
-                        <Insets left="25.0" />
-                    </VBox.margin>
-                    <children>
-                        <Group>
-                            <fx:define>
-                                <ToggleGroup fx:id="bottomGroup" />
-                            </fx:define>
-                            <children>
-                                <ToolBar styleClass="toggle-tab-pane">
-                                    <items>
-                                        <ToggleButton fx:id="bottomFramesTab" focusTraversable="false" styleClass="toggle-tab" text="Frames" toggleGroup="${bottomGroup}" />
-                                    </items>
-                                </ToolBar>
-                            </children>
-                        </Group>
-                    </children>
-                </HBox>
-                <HBox id="bottom" fx:id="progressSpace" alignment="CENTER" prefHeight="20.0">
-                    <children>
-                        <Label fx:id="infoLabel" />
-                    </children>
-                </HBox>
-            </children>
+            <HBox>
+                <VBox.margin>
+                    <Insets left="25.0"/>
+                </VBox.margin>
+                <Group>
+                    <fx:define>
+                        <ToggleGroup fx:id="bottomGroup"/>
+                    </fx:define>
+                    <ToolBar styleClass="toggle-tab-pane">
+                        <ToggleButton fx:id="bottomFramesTab" focusTraversable="false"
+                                      styleClass="toggle-tab" text="Frames" toggleGroup="${bottomGroup}"/>
+                    </ToolBar>
+                </Group>
+            </HBox>
+            <HBox id="bottom" fx:id="progressSpace" alignment="CENTER" prefHeight="20.0">
+                <Label fx:id="infoLabel"/>
+            </HBox>
         </VBox>
     </bottom>
     <right>
         <VBox id="right-group">
-            <children>
-                <Group>
-                    <fx:define>
-                        <ToggleGroup fx:id="rightGroup" />
-                    </fx:define>
-                    <ToolBar rotate="90.0" styleClass="toggle-tab-pane">
-                        <ToggleButton fx:id="rightMainTab" focusTraversable="false" selected="true" styleClass="toggle-tab" text="Main" toggleGroup="${rightGroup}" />
-                        <ToggleButton fx:id="rightViewerTab" focusTraversable="false" styleClass="toggle-tab" text="Viewer" toggleGroup="${rightGroup}" />
-                        <ToggleButton fx:id="rightEditorTab" focusTraversable="false" styleClass="toggle-tab" text="Editor" toggleGroup="${rightGroup}" />
-                        <ToggleButton fx:id="rightPluginsTab" focusTraversable="false" styleClass="toggle-tab" text="Plugins" toggleGroup="${rightGroup}" />
-                    </ToolBar>
-                </Group>
-            </children>
+            <Group>
+                <fx:define>
+                    <ToggleGroup fx:id="rightGroup"/>
+                </fx:define>
+                <ToolBar rotate="90.0" styleClass="toggle-tab-pane">
+                    <ToggleButton fx:id="rightMainTab" focusTraversable="false" selected="true" styleClass="toggle-tab"
+                                  text="Main" toggleGroup="${rightGroup}"/>
+                    <ToggleButton fx:id="rightViewerTab" focusTraversable="false" styleClass="toggle-tab" text="Viewer"
+                                  toggleGroup="${rightGroup}"/>
+                    <ToggleButton fx:id="rightEditorTab" focusTraversable="false" styleClass="toggle-tab" text="Editor"
+                                  toggleGroup="${rightGroup}"/>
+                    <ToggleButton fx:id="rightPluginsTab" focusTraversable="false" styleClass="toggle-tab"
+                                  text="Plugins" toggleGroup="${rightGroup}"/>
+                </ToolBar>
+            </Group>
         </VBox>
     </right>
     <left>
         <VBox id="left-group" BorderPane.alignment="CENTER">
-            <children>
-                <Group>
-                    <fx:define>
-                        <ToggleGroup fx:id="leftGroup" />
-                    </fx:define>
-                    <children>
-                        <ToolBar rotate="90.0" styleClass="toggle-tab-pane">
-                            <items>
-                                <ToggleButton fx:id="leftFilesTab" focusTraversable="false" prefWidth="42.0" selected="true" styleClass="toggle-tab" text="Files" toggleGroup="${leftGroup}" />
-                            </items>
-                        </ToolBar>
-                    </children>
-                </Group>
-            </children>
+            <fx:define>
+                <ToggleGroup fx:id="leftGroup"/>
+            </fx:define>
+            <ToolBar rotate="90.0" styleClass="toggle-tab-pane">
+                <ToggleButton fx:id="leftFilesTab" focusTraversable="false" prefWidth="42.0" selected="true"
+                              styleClass="toggle-tab" text="Files" toggleGroup="${leftGroup}"/>
+            </ToolBar>
         </VBox>
     </left>
-
 </BorderPane>
