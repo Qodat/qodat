@@ -136,7 +136,7 @@ class CacheAssetLoader(
                             updateMessage("Loading $name ($count / $total)")
                         }
                     }
-                    if (it.modelIds.isNotEmpty())
+                    if (it.name.isNotBlank() && it.name != "null" && it.modelIds.isNotEmpty())
                         mapper(it)
                     else
                         null
