@@ -152,7 +152,7 @@ class Palette @JvmOverloads constructor(
     fun saveImage() {
         try {
             // save
-            ImageIO.write(SwingFXUtils.fromFXImage(paletteImage, null), "png", File("palette_$numColors.png"))
+//            ImageIO.write(SwingFXUtils.fromFXImage(paletteImage, null), "png", File("palette_$numColors.png"))
         } catch (ex: IOException) {
             println("Error saving image")
         }
