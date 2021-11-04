@@ -1,17 +1,18 @@
 package stan.qodat.util
 
 import com.google.gson.GsonBuilder
+import com.sun.javafx.application.PlatformImpl
 import javafx.concurrent.Task
 import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
-import net.runelite.cache.definitions.SequenceDefinition
-import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.fs.ArchiveFiles
 import net.runelite.cache.fs.Store
 import stan.qodat.Properties
 import java.io.FileWriter
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 
 /**
  * TODO: add documentation
@@ -21,41 +22,35 @@ import java.io.FileWriter
  * @version 1.0
  */
 
-private var animFramemaps = HashMap<Int, HashSet<Int>>()
 private val gson = GsonBuilder().setPrettyPrinting().create()
-
 
 fun createNpcAnimsJsonDir(
     store: Store,
     npcManager: NpcManager
 ) = object : Task<Void?>() {
     override fun call(): Void? {
-        val count = npcManager.npcs.size
         val map = HashMap<Int, ArchiveFiles>()
-
-        run {
-            val storage = store.storage
-            val index = store.getIndex(IndexType.CONFIGS)
-            val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
-            val archiveData = storage.loadArchive(seqArchive)
-            val files = seqArchive.getFiles(archiveData)
-            val frameIndex = store.getIndex(IndexType.FRAMES)
-            val framemapIndex = store.getIndex(IndexType.FRAMEMAPS)
+        val storage = store.storage
+        val index = store.getIndex(IndexType.CONFIGS)
+        val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
+        val archiveData = storage.loadArchive(seqArchive)
+        val files = seqArchive.getFiles(archiveData)
+        val frameIndex = store.getIndex(IndexType.FRAMES)
+        val animationFiles = files.files
+        val animations = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader()
-
-            val animationFiles = files.files
-            val animations = HashMap<Int, SequenceDefinition>()
-
-            for (file in animationFiles) {
-                val anim = loader.load(file.fileId, file.contents)
-                animations[anim.id] = anim
-                anim.frameIDs?.forEach {
-                    val hexString = Integer.toHexString(it)
-
-                    if (hexString.length < 6) {
-                        println("Could not parse frame[$it] in anim[${anim.id}]")
-                        return@forEach
-                    }
+            val anim = loader.load(file.fileId, file.contents)
+            PlatformImpl.runLater {
+                val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
+                updateProgress(progress, 100.0)
+                updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
+            }
+            val frames: Set<Int> =  anim.frameIDs?.map {
+                val hexString = Integer.toHexString(it)
+                if (hexString.length < 6) {
+                    println("Could not parse frame[$it] in anim[${anim.id}]")
+                    null
+                } else {
                     val frameArchiveId = decodeArchiveId(hexString)
                     val frameArchiveFileId = decodeArchiveFileId(hexString)
 
@@ -67,37 +62,33 @@ fun createNpcAnimsJsonDir(
                     val frameContents = frameFile.contents
 
                     val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
-                    val frameMapArchive = framemapIndex.getArchive(frameMapArchiveId)
-                    val frameMapContents = frameMapArchive.decompress(storage.loadArchive(frameMapArchive))
-                    val frameMapDefinition = FramemapLoader().load(frameMapArchive.archiveId, frameMapContents)
-
-
-                    animFramemaps.putIfAbsent(anim.id, HashSet())
-                    animFramemaps[anim.id]!!.add(frameMapDefinition.id)
+                    frameMapArchiveId
                 }
-                val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
-                updateProgress(progress, 100.0)
-                updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
-            }
-        }
+            }?.filterNotNull()?.toSet()?: emptySet()
+            (anim.id to frames)
+        }.collect(Collectors.toList()).toMap()
 
         updateMessage("Loaded all animation mappings!")
 
 
-        val parsedNames = HashSet<String>()
-        val npcs = npcManager.npcs
-        for ((i, npc) in npcs.withIndex()) {
+        val total = npcManager.npcs.size
+        val counter = AtomicInteger(0)
+        npcManager.npcs.parallelStream().forEach { npc ->
+            val animationRef = intArrayOf(
+                npc.walkingAnimation,
+                npc.standingAnimation,
+                npc.rotateLeftAnimation,
+                npc.rotateRightAnimation,
+                npc.rotate90LeftAnimation,
+                npc.rotate90RightAnimation,
+                npc.rotate180Animation
+            ).filter { it > 0 }
 
-            if (npc.walkingAnimation > 0) {
+            if (animationRef.isNotEmpty()) {
 
-                if (parsedNames.contains(npc.name))
-                    continue
+                val referenceFrames = animationRef.flatMap { animations[it]!! }.toSet()
 
-                parsedNames.add(npc.name)
-
-                val referenceFrames = animFramemaps[npc.walkingAnimation] ?: continue
-
-                val matches = animFramemaps.filter { entry ->
+                val matches = animations.filter { entry ->
                     entry.value.any {
                         referenceFrames.any { reference ->
                             reference == it
@@ -117,9 +108,12 @@ fun createNpcAnimsJsonDir(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                val progress = (100.0 * i.toFloat().div(npcs.size))
-                updateProgress(progress, 100.0)
-                updateMessage("Parsed npc (${i + 1} / ${npcs.size}})")
+                PlatformImpl.runLater {
+                    val i = counter.incrementAndGet()
+                    val progress = (100.0 * i.toFloat().div(total))
+                    updateProgress(progress, 100.0)
+                    updateMessage("Parsed npc ($i / $total})")
+                }
             }
         }
         return null
