@@ -4,18 +4,19 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.control.Label
 import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
+import javafx.scene.text.Text
+import javafx.scene.text.TextFlow
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.RSModelDefinitionBuilder
-import stan.qodat.util.SceneNodeProvider
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.javafx.text
 import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.TreeItemProvider
-import stan.qodat.util.Searchable
+import stan.qodat.util.*
 
 /**
  * TODO: add documentation
@@ -49,13 +50,20 @@ abstract class Entity<D : EntityDefinition>(
                 }}"
                 arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build()))
             } else
-                definition.modelIds.map {
-                    val modelDefinition = cache.getModelDefinition(it)
-                    Model(it, modelDefinition)
-                }.toTypedArray()
+                createDistinctModels()
         }
         return models
     }
+
+    fun getDistinctModels() = if(!mergeModelProperty.get() || definition.modelIds.size == 1)
+        getModels()
+    else
+        createDistinctModels()
+
+    private fun createDistinctModels() = definition.modelIds.map {
+        val modelDefinition = cache.getModelDefinition(it)
+        Model(it, modelDefinition)
+    }.toTypedArray()
 
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized)
