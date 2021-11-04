@@ -59,12 +59,12 @@ class TimeLineController : Initializable {
             setOnDragDetected {
                 val dragboard = startDragAndDrop(TransferMode.COPY)
                 val clipboardContent = ClipboardContent()
-                val files = selectionModel.selectedIndices.map {
-                    animationPlayer.jumpToFrame(it)
+                val files = selectionModel.selectedIndices.map { frameIndex ->
+                    animationPlayer.jumpToFrame(frameIndex)
                     val snapshotParameters = SnapshotParameters().apply { fill = Color.TRANSPARENT }
                     val snapShot = SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)
                     val image = SwingFXUtils.fromFXImage(snapShot, null)
-                    val out = File("$it.png")
+                    val out = File.createTempFile(frameIndex.toString(), ".png")
                     ImageIO.write(image, "png", out)
                     out
                 }

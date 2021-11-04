@@ -27,10 +27,10 @@ class AnimationToGifTask(
 
         updateMessage("Generating GIF for Animation $animationName")
 
-        val snapshots = mutableMapOf<Duration, WritableImage>()
+        val snapshots = mutableListOf<Pair<Duration, WritableImage>>()
         PlatformImpl.runAndWait {
             val totalFrames = aniamtionFrames.size
-            snapshots.putAll(aniamtionFrames.mapIndexed { index, frame ->
+            snapshots.addAll(aniamtionFrames.mapIndexed { index, frame ->
                 animationPlayer.jumpToFrame(index)
                 val snapshotParameters = SnapshotParameters().apply { fill = javafx.scene.paint.Color.BLACK }
                 val image = scene.snapshot(snapshotParameters, null)!!

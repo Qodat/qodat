@@ -8,9 +8,12 @@ import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.qodat.QodatCache.loadModels
+import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
+import java.io.UnsupportedEncodingException
 import kotlin.io.path.outputStream
 
 @ExperimentalSerializationApi
@@ -132,7 +135,13 @@ object QodatCache : Cache("qodat") {
     private fun File.loadModels(directoryName: String) = resolve(directoryName)
         .listFiles()
         ?.filterNotNull()
-        ?.map { json.decodeFromStream<QodatModelDefinition>(it.inputStream()) }
+        ?.map {
+            when (it.extension) {
+                "json" -> json.decodeFromStream(it.inputStream())
+                "model", "dat" -> QodatModelDefinition.create(RSModelLoader().load(it.name, it.readBytes()))
+                else -> throw UnsupportedEncodingException("Can only read .json, .model, .dat files.")
+            }
+        }
         ?.associateBy { it.getName() }
         ?.toMutableMap()
         ?: mutableMapOf()

@@ -18,7 +18,7 @@ repositories {
 }
 
 dependencies {
-    implementation(group = "net.runelite", name = "cache", version = "1.7.9") {
+    implementation(group = "net.runelite", name = "cache", version = "1.8.0") {
         exclude(group = "com.google.common")
     }
 //    implementation("no.tornado:tornadofx:1.7.19")
