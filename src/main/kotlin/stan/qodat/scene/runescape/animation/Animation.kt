@@ -10,7 +10,8 @@ import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
 import javafx.scene.layout.HBox
 import javafx.util.Callback
-import stan.gifencoder.*
+import stan.export.gif.*
+import stan.export.mp4.AnimationToMp4Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
@@ -100,6 +101,14 @@ class Animation(
                     menu("export") {
                         menuItem("GIF") {
                             Qodat.mainController.executeBackgroundTasks(AnimationToGifTask(
+                                exportPath = Properties.exportsPath.get(),
+                                scene = SubScene3D.subSceneProperty.get(),
+                                animationPlayer = SubScene3D.animationPlayer,
+                                animation = this@Animation
+                            ))
+                        }
+                        menuItem("mp4") {
+                            Qodat.mainController.executeBackgroundTasks(AnimationToMp4Task(
                                 exportPath = Properties.exportsPath.get(),
                                 scene = SubScene3D.subSceneProperty.get(),
                                 animationPlayer = SubScene3D.animationPlayer,

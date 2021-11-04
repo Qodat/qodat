@@ -23,6 +23,8 @@ dependencies {
     }
 //    implementation("no.tornado:tornadofx:1.7.19")
 //    implementation("com.github.kotlin-graphics:gln:v0.5.2")
+    implementation("org.jcodec:jcodec:0.2.5")
+    implementation("org.jcodec:jcodec-javase:0.2.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.5.2")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
