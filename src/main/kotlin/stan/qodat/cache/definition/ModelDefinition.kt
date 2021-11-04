@@ -17,7 +17,7 @@ interface ModelDefinition {
     fun getVertexPositionsX() : IntArray
     fun getVertexPositionsY() : IntArray
     fun getVertexPositionsZ() : IntArray
-    fun getVertexSkins() : IntArray
+    fun getVertexSkins() : IntArray?
     fun getVertexGroups() : Array<IntArray>?
     fun getVertexNormals() : Array<VertexNormal>
 

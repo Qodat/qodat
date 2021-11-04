@@ -27,7 +27,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     var npcManager: NpcManager
     private var itemManager: ItemManager
-    private var objectManager: ObjectManager
+    var objectManager: ObjectManager
     var textureManager: TextureManager
 
     private val frameIndex: Index
@@ -47,6 +47,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         itemManager = ItemManager(store)
         itemManager.load()
         objectManager = ObjectManager(store)
+        objectManager.load()
         textureManager = TextureManager(store)
     }
 

@@ -93,7 +93,9 @@ class RSModelDefinitionBuilder(vararg modelDefinitions: ModelDefinition) {
         vertexPositionsX[vertexIdx] = x
         vertexPositionsY[vertexIdx] = y
         vertexPositionsZ[vertexIdx] = z
-        vertexSkins[vertexIdx] = model.getVertexSkins()[localVertexIdx]
+        val skins = model.getVertexSkins()
+        if (skins != null)
+            vertexSkins[vertexIdx] = skins[localVertexIdx]
         return vertexIdx++
     }
 

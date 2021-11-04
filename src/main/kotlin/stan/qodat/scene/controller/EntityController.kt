@@ -57,7 +57,7 @@ abstract class EntityController(name: String) : SceneController(name) {
 
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
     protected val items: ObservableList<Item> = FXCollections.observableArrayList()
-    private val objectWrappers: ObservableList<Object> = FXCollections.observableArrayList()
+    private val objects: ObservableList<Object> = FXCollections.observableArrayList()
 
     lateinit var animationController: AnimationController
     private lateinit var modelController: ModelController
@@ -112,12 +112,14 @@ abstract class EntityController(name: String) : SceneController(name) {
         }
 
         configureNpcList()
+        configureObjectList()
         configureItemList()
 
         cacheProperty().addListener { _, _, newValue ->
-            val loader = CacheAssetLoader(newValue, npcs, items, itemList, npcList, animationController)
+            val loader = CacheAssetLoader(newValue, npcs, objects, items, itemList, objectList, npcList, animationController)
             loader.loadAnimations()
             loader.loadNpcs()
+            loader.loadObjects()
             loader.loadItems()
         }
     }
@@ -185,7 +187,16 @@ abstract class EntityController(name: String) : SceneController(name) {
         itemList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
         handleEmptySearchField(searchItemField)
     }
-
+    private fun configureObjectList() {
+        val filteredObjects = FilteredList(objects) { true }
+        searchObjectField.configureSearchFilter(filteredObjects)
+        val sortedObjects = SortedList(filteredObjects)
+        sortedObjects.comparator = Comparator.comparing { it.getName() }
+        objectList.items = sortedObjects
+        objectList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
+        objectList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
+        handleEmptySearchField(searchObjectField)
+    }
     private fun configureNpcList() {
         val filteredNPCs = FilteredList(npcs) { true }
         searchNpcField.configureSearchFilter(filteredNPCs)

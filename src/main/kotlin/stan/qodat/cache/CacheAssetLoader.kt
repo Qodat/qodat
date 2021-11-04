@@ -11,21 +11,24 @@ import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.controller.AnimationController
-import stan.qodat.scene.controller.ModelController
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.entity.Item
 import stan.qodat.scene.runescape.entity.NPC
+import stan.qodat.scene.runescape.entity.Object
 import stan.qodat.util.Searchable
 import stan.qodat.util.createNpcAnimsJsonDir
+import stan.qodat.util.createObjectAnimsJsonDir
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 
 class CacheAssetLoader(
     private val cache: Cache,
     private val npcs: ObservableList<NPC>,
+    private val objects: ObservableList<Object>,
     private val items: ObservableList<Item>,
     private val itemList: ViewNodeListView<Item>,
+    private val objectList: ViewNodeListView<Object>,
     private val npcList: ViewNodeListView<NPC>,
     private val animationController: AnimationController
 ) {
@@ -38,13 +41,36 @@ class CacheAssetLoader(
         Qodat.mainController.executeBackgroundTasks(createItemsLoadTask(cache))
     }
 
+    fun loadObjects() {
+        if (cache is OldschoolCacheRuneLite) {
+            val objectAnimsDir = Properties.osrsCachePath.get().resolve("object_anims").toFile()
+            if (!objectAnimsDir.exists()) {
+                println("Did not find object_anims dir, creating...")
+                objectAnimsDir.mkdir()
+                val task = createObjectAnimsJsonDir(
+                    store = OldschoolCacheRuneLite.store,
+                    objectManager = OldschoolCacheRuneLite.objectManager
+                )
+                task.setOnSucceeded {
+                    Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache))
+                }
+                Qodat.mainController.executeBackgroundTasks(task)
+                return
+            }
+        }
+        Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache))
+    }
+
     fun loadNpcs() {
         if (cache is OldschoolCacheRuneLite) {
             val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
             if (!npcAnimsDir.exists()) {
                 println("Did not find npc_anims dir, creating...")
                 npcAnimsDir.mkdir()
-                val task = createNpcAnimsJsonDir(OldschoolCacheRuneLite.store, OldschoolCacheRuneLite.npcManager)
+                val task = createNpcAnimsJsonDir(
+                    store = OldschoolCacheRuneLite.store,
+                    npcManager = OldschoolCacheRuneLite.npcManager
+                )
                 task.setOnSucceeded {
                     Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache))
                 }
@@ -76,13 +102,27 @@ class CacheAssetLoader(
             return null
         }
     }
-
+    private fun createObjectLoadTask(cache: Cache) = createLoadTask(
+        definitions = cache.getObjects(),
+        mapper = { Object(cache, this, animationController) }
+    ) {
+        val objectToSelect = lastSelectedEntity(Properties.selectedObjectName)
+        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
+        Platform.runLater {
+            objects.setAll(this)
+            Qodat.mainController.postCacheLoading()
+            if (objectToSelect != null)
+                objectList.selectionModel.select(objectToSelect)
+            if (animationToSelect != null)
+                animationController.animationsListView.selectionModel.select(animationToSelect)
+        }
+    }
     private fun createNPCLoadTask(cache: Cache) = createLoadTask(
         definitions = cache.getNPCs(),
         mapper = { NPC(cache, this, animationController) }
     ) {
         val npcToSelect = lastSelectedEntity(Properties.selectedNpcName)
-        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedNpcName)
+        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
         Platform.runLater {
             npcs.setAll(this)
             Qodat.mainController.postCacheLoading()
@@ -141,6 +181,7 @@ class CacheAssetLoader(
                     else
                         null
                 }.toArray { arrayOfNulls<T>(it) }.filterNotNull()
+                println("Loaded ${values.size} $name")
                 onLoaded(values)
             }
         }

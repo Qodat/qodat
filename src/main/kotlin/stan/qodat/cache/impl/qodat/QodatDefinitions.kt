@@ -58,7 +58,7 @@ data class QodatModelDefinition(
     private val vertexPositionsX: IntArray,
     private val vertexPositionsY: IntArray,
     private val vertexPositionsZ: IntArray,
-    private val vertexSkins: IntArray,
+    private val vertexSkins: IntArray?,
     private val faceCount: Int,
     private val faceVertexIndices1: IntArray,
     private val faceVertexIndices2: IntArray,
@@ -111,7 +111,7 @@ data class QodatModelDefinition(
         var groupCounts : IntArray
         var numGroups : Int
 
-        if (vertexSkins.isNotEmpty()){
+        if (vertexSkins != null){
 
             groupCounts = IntArray(256)
             numGroups = 0
