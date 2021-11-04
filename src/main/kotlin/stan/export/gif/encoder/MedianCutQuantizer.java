@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stan.gifencoder;
-
-import stan.gifencoder.ArbitraryComparator;
+package stan.export.gif.encoder;
 
 import java.util.*;
 

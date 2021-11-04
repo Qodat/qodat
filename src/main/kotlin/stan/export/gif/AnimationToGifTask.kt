@@ -1,4 +1,4 @@
-package stan.gifencoder
+package stan.export.gif
 
 import com.sun.javafx.application.PlatformImpl
 import javafx.concurrent.Task
@@ -6,6 +6,7 @@ import javafx.scene.SnapshotParameters
 import javafx.scene.SubScene
 import javafx.scene.image.WritableImage
 import javafx.util.Duration
+import stan.export.gif.encoder.*
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.io.FileOutputStream
@@ -47,7 +48,8 @@ class AnimationToGifTask(
 
         val out = FileOutputStream(path)
         val options = ImageOptions()
-        val encoder = GifEncoder(out, scene.width.toInt(), scene.height.toInt(), 0)
+        val encoder =
+            GifEncoder(out, scene.width.toInt(), scene.height.toInt(), 0)
 
         val total = snapshots.size
         var count = 0

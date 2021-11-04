@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stan.gifencoder;
+package stan.export.gif.encoder;
 
 import java.util.Set;
 
-public interface ColorQuantizer {
+public interface Ditherer {
   /**
-   * Quantize the given set of colors, returning a set no larger than {@code maxColors}.
+   * Dither the given image, producing a new image which only contains colors from the given color
+   * set.
    *
-   * <p>The intent is to pick a set of colors which are representative of the original color set,
-   * but no specific guarantees are made.
-   *
-   * @param originalColors the colors in the original image
-   * @param maxColorCount the maximum number of colors to allow
-   * @return a quantized collection of colors no larger than {@code maxColors}
+   * @param image the original, unquantized image
+   * @param newColors the quantized set of colors to be used in the new image
+   * @param transColor color that is transparent and shouldn't be dithered with
+   * @return a new image containing only of colors from {@code newColors}
    */
-  Set<Color> quantize(Multiset<Color> originalColors, int maxColorCount);
+  Image dither(Image image, Set<Color> newColors, Color transColor);
 }

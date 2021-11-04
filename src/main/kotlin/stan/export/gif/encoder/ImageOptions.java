@@ -13,12 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stan.gifencoder;
-
-import stan.gifencoder.ColorQuantizer;
-import stan.gifencoder.DisposalMethod;
-import stan.gifencoder.FloydSteinbergDitherer;
-import stan.gifencoder.MedianCutQuantizer;
+package stan.export.gif.encoder;
 
 import java.util.concurrent.TimeUnit;
 

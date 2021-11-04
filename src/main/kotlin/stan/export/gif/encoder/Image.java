@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stan.gifencoder;
-
-import stan.gifencoder.HashMultiset;
-import stan.gifencoder.Multiset;
+package stan.export.gif.encoder;
 
 /**
  * An immutable grid of pixel colors.

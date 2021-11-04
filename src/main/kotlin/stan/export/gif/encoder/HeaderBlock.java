@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stan.gifencoder;
+package stan.export.gif.encoder;
 
-import java.util.Set;
+import java.io.IOException;
+import java.io.OutputStream;
 
-public interface Ditherer {
-  /**
-   * Dither the given image, producing a new image which only contains colors from the given color
-   * set.
-   *
-   * @param image the original, unquantized image
-   * @param newColors the quantized set of colors to be used in the new image
-   * @param transColor color that is transparent and shouldn't be dithered with
-   * @return a new image containing only of colors from {@code newColors}
-   */
-  Image dither(Image image, Set<Color> newColors, Color transColor);
+final class HeaderBlock {
+  private HeaderBlock() {
+  }
+
+  static void write(OutputStream outputStream) throws IOException {
+    Streams.writeAsciiString(outputStream, "GIF");
+    Streams.writeAsciiString(outputStream, "89a");
+  }
 }
