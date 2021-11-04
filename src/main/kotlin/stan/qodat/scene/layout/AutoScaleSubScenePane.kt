@@ -6,10 +6,8 @@ import javafx.geometry.Bounds
 import javafx.scene.Group
 import javafx.scene.SubScene
 import javafx.scene.layout.Pane
-import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.shape.Rectangle
-import org.w3c.dom.css.Rect
 import stan.qodat.Qodat
 import stan.qodat.scene.control.SelectionHandler
 import stan.qodat.scene.SubScene3D
@@ -29,7 +27,8 @@ class AutoScaleSubScenePane(
     parentWidthProperty: ReadOnlyDoubleProperty
 ) : Pane() {
 
-    val overlayMiscGroup = Group()
+    val rightOverlayGroup = Group()
+    val leftOverlayGroup = Group()
     val subSceneProperty = SimpleObjectProperty<SubScene>()
     val selectionHandler = SelectionHandler()
 
@@ -65,7 +64,6 @@ class AutoScaleSubScenePane(
                 val selectionBounds = selection.boundsInParent
 
                 val context = SubScene3D.contextProperty.get()
-                overlayMiscGroup.children.clear()
                 context.getModels().forEach { model ->
                     for (mesh in model.collectMeshes()){
                         val meshView = mesh.getSceneNode()
@@ -93,7 +91,7 @@ class AutoScaleSubScenePane(
     private fun onSubSceneChanged(){
         val subScene = subSceneProperty.get()?:return
         setPrefSize(subScene.width, subScene.height)
-        children.setAll(subScene, overlayMiscGroup)
+        children.setAll(subScene, rightOverlayGroup, leftOverlayGroup)
     }
 
     override fun layoutChildren() {
@@ -102,8 +100,12 @@ class AutoScaleSubScenePane(
             subScene.width = width
             subScene.height = height
         }
-        val nodeWidth = snapSize(overlayMiscGroup.prefWidth(-1.0))
-        val nodeHeight = snapSize(overlayMiscGroup.prefHeight(-1.0))
-        overlayMiscGroup.resizeRelocate(width - nodeWidth, 0.0, nodeWidth, nodeHeight)
+        val rightNodeWidth = snapSize(rightOverlayGroup.prefWidth(-1.0))
+        val rightNodeHeight = snapSize(rightOverlayGroup.prefHeight(-1.0))
+        rightOverlayGroup.resizeRelocate(width - rightNodeWidth, 0.0, rightNodeWidth, rightNodeHeight)
+
+        val leftNodeWidth = snapSize(leftOverlayGroup.prefWidth(-1.0))
+        val leftNodeHeight = snapSize(leftOverlayGroup.prefHeight(-1.0))
+        leftOverlayGroup.resizeRelocate(0.0, 0.0, leftNodeWidth, leftNodeHeight)
     }
 }

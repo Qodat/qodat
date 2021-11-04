@@ -16,7 +16,7 @@
    </stylesheets>
    <items>
       <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
-      <TabPane prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+      <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
          <tabs>
             <Tab text="NPC">
                <content>

@@ -1,17 +1,22 @@
 package stan.qodat.util
 
 import javafx.beans.Observable
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.Property
+import javafx.beans.property.*
+import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
-import javafx.scene.control.ComboBox
-import javafx.scene.control.ListView
-import javafx.scene.control.TextField
+import javafx.geometry.Orientation
+import javafx.scene.Node
+import javafx.scene.control.*
+import javafx.scene.layout.Region
 import javafx.scene.paint.Material
+import javafx.scene.shape.Circle
 import javafx.scene.shape.Shape3D
+import stan.qodat.Properties
 import stan.qodat.Qodat
+import stan.qodat.event.SelectedTabChangeEvent
+import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.shape.PolygonMeshView
 
@@ -106,5 +111,60 @@ fun<T, P : Property<T>> ComboBox<T>.bind(property: P) {
     }
     property.onInvalidation {
         selectionModel.select(value)
+    }
+}
+
+/**
+ * @param size either width or height depending on orientation.
+ */
+fun SplitPane.createDragSpace(
+    property: DoubleProperty,
+    dividerIndex: IntegerProperty,
+    size: Int = 5,
+    styleClass: String? = "drag-space"
+) : Node {
+    val region = Region().apply {
+        if (styleClass != null)
+            this.styleClass.add(styleClass)
+        if (orientation == Orientation.HORIZONTAL) {
+            maxWidth = size.toDouble()
+            minWidth = maxWidth
+            prefHeight = Double.POSITIVE_INFINITY
+        } else {
+            maxHeight = size.toDouble()
+            minHeight = maxHeight
+            prefWidth = Double.POSITIVE_INFINITY
+        }
+    }
+    SplitSceneDividerDragRegion(
+        splitPane = this,
+        node = region,
+        dividerIndex = dividerIndex,
+        positionProperty = property,
+    )
+    return region
+}
+
+fun ToggleButton.createSelectTabListener(selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node) {
+    selectedProperty().addListener(createSelectTabListener(id, selectProperty, tabContents, node))
+}
+
+fun createSelectTabListener(id: String, selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node): ChangeListener<Boolean> {
+    return ChangeListener { _, oldValue, newValue ->
+
+        val otherSelected = tabContents.value != node && tabContents.value != null
+
+        if (!oldValue && newValue)
+            tabContents.set(node)
+        else if(!otherSelected)
+            tabContents.set(null)
+
+        selectProperty.set(id)
+
+        node.fireEvent(
+            SelectedTabChangeEvent(
+                selected = newValue,
+                otherSelected = otherSelected)
+        )
     }
 }

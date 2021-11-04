@@ -56,6 +56,8 @@ object Properties {
     val gridPlaneMaterial = SimpleObjectProperty(PhongMaterial(Color.AQUAMARINE))
 
     val sceneDividerPosition = SimpleDoubleProperty(0.3)
+    val viewerDivider1Position = SimpleDoubleProperty(0.5)
+    val viewerDivider2Position = SimpleDoubleProperty(0.5)
     val centerDivider1Position = SimpleDoubleProperty(0.3)
     val centerDivider2Position = SimpleDoubleProperty(0.9)
 
@@ -132,5 +134,7 @@ object Properties {
         sessionManager.bindDouble("split-pane-divider-1-position", centerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-2-position", centerDivider2Position)
         sessionManager.bindDouble("split-pane-divider-3-position", sceneDividerPosition)
+        sessionManager.bindDouble("split-pane-divider-4-position", viewerDivider1Position)
+        sessionManager.bindDouble("split-pane-divider-5-position", viewerDivider2Position)
     }
 }

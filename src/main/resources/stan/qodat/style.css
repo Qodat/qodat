@@ -119,6 +119,7 @@
 .accordion,
 .grid-pane,
 .tree-view,
+.viewer-box,
 #bottom,
 #bottom-group {
     -fx-background-color: #3C3F41;
@@ -221,7 +222,7 @@
 .tool-bar {
     -fx-border-color: rgb(50, 50, 50) rgb(50, 50, 50) rgb(50, 50, 50) transparent;
 }
-.viewer-titled-pane,
+
 .viewer-box {
     -fx-padding: 0;
     -fx-background-insets: 0;
@@ -285,6 +286,18 @@
 
 .text-field {
     -fx-background-color: rgb(69, 73, 74);
+    -fx-background-radius: 0;
+}
+
+.drag-space:hover,
+.drag-space:dragging {
+    -fx-background-color: rgb(69, 73, 74);
+}
+.dark-drag-space {
+    -fx-background-color: #3C3F41;
+}
+.dark-drag-space:dragging {
+    -fx-background-color: rgb(50, 50, 50);
 }
 
 .combo-box,
@@ -458,6 +471,7 @@
 }
 
 .border-bottom,
+.border-top-right,
 .border-right,
 .border-left,
 #right-group,
@@ -468,8 +482,10 @@
     -fx-border-color: rgb(50, 50, 50);
 }
 .border-bottom {-fx-border-width:0 0 0 0;}
-.border-right {-fx-border-width: 1 1 0 0;}
-.border-left {-fx-border-width: 0 1 0 0;}
+.border-top-right {-fx-border-width: 1 1 0 0;}
+.border-right {-fx-border-width: 0 1 0 0;}
+.border-left {-fx-border-width: 0 0 0 1;}
+
 #left-group {-fx-border-width: 0 1 0 1}
 #right-group {-fx-border-width: 0 1 0 1}
 

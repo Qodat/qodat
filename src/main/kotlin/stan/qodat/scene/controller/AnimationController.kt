@@ -8,6 +8,7 @@ import javafx.fxml.Initializable
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
+import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.cache.Cache

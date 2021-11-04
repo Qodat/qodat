@@ -1,6 +1,9 @@
 package stan.qodat.scene.controller
 
+import javafx.beans.binding.Bindings
 import javafx.beans.property.ObjectProperty
+import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -10,7 +13,9 @@ import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.control.SplitPane
+import javafx.scene.control.TabPane
 import javafx.scene.control.TextField
+import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import stan.qodat.Properties
@@ -18,6 +23,8 @@ import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Item
@@ -26,6 +33,7 @@ import stan.qodat.scene.runescape.entity.Object
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.configureSearchFilter
+import stan.qodat.util.createDragSpace
 import java.net.URL
 import java.util.*
 
@@ -38,6 +46,7 @@ import java.util.*
 abstract class EntityController(name: String) : SceneController(name) {
 
     @FXML lateinit var root: SplitPane
+    @FXML lateinit var tabPane: TabPane
     @FXML lateinit var animationModelsSplitPane: SplitPane
     @FXML lateinit var itemList: ViewNodeListView<Item>
     @FXML lateinit var npcList: ViewNodeListView<NPC>
@@ -59,14 +68,45 @@ abstract class EntityController(name: String) : SceneController(name) {
         VBox.setVgrow(npcList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
 
+        SplitSceneDividerDragRegion(
+            splitPane = root,
+            node = tabPane,
+            dividerIndex = SimpleIntegerProperty(0),
+            positionProperty = Properties.viewerDivider1Position,
+            relativeBounds = RelativeBounds(Placement.TOP_RIGHT,
+                widthProperty = Bindings.subtract(tabPane.widthProperty(), 130.0), // 130 is roughly
+                                                                                        // the size of the 3 tabs
+                heightProperty = SimpleDoubleProperty(25.0)
+            )
+        )
+
         try {
+
             val animationLoader = FXMLLoader(Qodat::class.java.getResource("animation.fxml"))
-            animationModelsSplitPane.items.add(animationLoader.load())
+            val animationView = animationLoader.load<VBox>()
+            animationView.styleClass.add("border-right")
             animationController = animationLoader.getController()
 
             val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
-            animationModelsSplitPane.items.add(modelLoader.load())
+            val modelView = modelLoader.load<VBox>()
+//            modelView.styleClass.add("border-left")
             modelController = modelLoader.getController()
+
+            val containerWithDragSpace = HBox()
+            HBox.setHgrow(animationView, Priority.ALWAYS)
+
+            containerWithDragSpace.children.add(animationView)
+            animationModelsSplitPane.items.add(containerWithDragSpace)
+            animationModelsSplitPane.items.add(modelView)
+            val dragSpace = animationModelsSplitPane
+                .createDragSpace(
+                    Properties.viewerDivider2Position,
+                    SimpleIntegerProperty(0),
+                    size = 1,
+                    styleClass = "dark-drag-space"
+                )
+            containerWithDragSpace.children.add(dragSpace)
+
         } catch (e: Exception) {
             e.printStackTrace()
         }
