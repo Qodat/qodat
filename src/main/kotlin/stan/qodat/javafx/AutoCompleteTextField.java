@@ -1,9 +1,5 @@
 package stan.qodat.javafx;
 
-import com.sun.deploy.util.StringUtils;
-import io.netty.util.internal.StringUtil;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.CustomMenuItem;
@@ -29,7 +25,7 @@ public class AutoCompleteTextField extends TextField {
     /**
      * The popup used to select an entry.
      */
-    private ContextMenu entriesPopup;
+    private final ContextMenu entriesPopup;
 
     /**
      * Construct a new AutoCompleteTextField.
@@ -71,12 +67,9 @@ public class AutoCompleteTextField extends TextField {
             final String result = searchResult.get(i);
             Label entryLabel = new Label(result);
             CustomMenuItem item = new CustomMenuItem(entryLabel, true);
-            item.setOnAction(new EventHandler<ActionEvent>() {
-                @Override
-                public void handle(ActionEvent actionEvent) {
-                    setText(result);
-                    entriesPopup.hide();
-                }
+            item.setOnAction(actionEvent -> {
+                setText(result);
+                entriesPopup.hide();
             });
             menuItems.add(item);
         }
