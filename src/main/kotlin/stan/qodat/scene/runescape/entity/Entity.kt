@@ -41,16 +41,19 @@ abstract class Entity<D : EntityDefinition>(
 
     fun getModels(): Array<Model> {
         if (!this::models.isInitialized){
+            try {
+                val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
 
-            val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
+                models = if (definitions.size > 1 && mergeModelProperty.get()) {
+                    val multiModelName = "models_${definitions.joinToString {
+                        it.getName() + "_"
+                    }}"
+                    arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build(), definition.findColor, definition.replaceColor))
+                } else
+                    createDistinctModels()
+            } catch (e: Exception) {
 
-            models = if (definitions.size > 1 && mergeModelProperty.get()) {
-                val multiModelName = "models_${definitions.joinToString {
-                    it.getName() + "_"
-                }}"
-                arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build(), definition.findColor, definition.replaceColor))
-            } else
-                createDistinctModels()
+            }
         }
         return models
     }

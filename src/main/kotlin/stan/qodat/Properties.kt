@@ -79,6 +79,7 @@ object Properties {
     val editorCache = SimpleObjectProperty<Cache>()
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/OS/rev200"))
     val qodatCachePath = SimpleObjectProperty(Paths.get("caches/qodat"))
+    val legacyCachePath = SimpleObjectProperty(Paths.get("caches/667"))
 
     val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
     val exportsPath = SimpleObjectProperty(Paths.get("exports"))

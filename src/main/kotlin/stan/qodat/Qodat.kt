@@ -9,6 +9,7 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.serialization.ExperimentalSerializationApi
+import stan.qodat.cache.impl.legacy.LegacyCache
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SubScene3D
@@ -40,7 +41,7 @@ class Qodat : Application() {
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
-        Properties.viewerCache.set(OldschoolCacheRuneLite)
+        Properties.viewerCache.set(LegacyCache)
         Properties.editorCache.set(QodatCache)
 
         primaryStage.apply {
