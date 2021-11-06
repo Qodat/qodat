@@ -9,6 +9,7 @@ import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
 import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
+import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.RSModelDefinitionBuilder
@@ -51,8 +52,9 @@ abstract class Entity<D : EntityDefinition>(
                     arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build(), definition.findColor, definition.replaceColor))
                 } else
                     createDistinctModels()
-            } catch (e: Exception) {
-
+            } catch (e: Throwable) {
+                Qodat.logException(e)
+                return emptyArray()
             }
         }
         return models

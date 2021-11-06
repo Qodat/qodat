@@ -34,20 +34,6 @@
                             <items>
                                 <VBox fx:id="modelsContainer" styleClass="border-right">
                                     <children>
-<!--                                        <Label maxWidth="Infinity" prefHeight="17.0" prefWidth="4000" styleClass="window-label" text="Explorer" />-->
-<!--                                        <ListView id="models-list" fx:id="filesModelListView" prefHeight="520.0">-->
-<!--                                            <contextMenu>-->
-<!--                                                <ContextMenu>-->
-<!--                                                    <items>-->
-<!--                                                        <MenuItem fx:id="removeModelMenuItem" mnemonicParsing="false" text="Remove" />-->
-<!--                                                        <MenuItem fx:id="revertModelMenuItem" mnemonicParsing="false" text="Revert" />-->
-<!--                                                        <MenuItem fx:id="exportModelMenuItem" mnemonicParsing="false" text="Export" />-->
-<!--                                                        <MenuItem fx:id="openInExplorer" mnemonicParsing="false" onAction="#openModelInExplorer" text="Open in explorer" />-->
-<!--                                                    </items>-->
-<!--                                                </ContextMenu>-->
-<!--                                            </contextMenu>-->
-<!--                                        </ListView>-->
-<!--                                        <TextField fx:id="searchModelsList" prefHeight="25.0" promptText="Search model" />-->
                                     </children>
                                 </VBox>
                                 <VBox styleClass="border-top-right">
@@ -158,26 +144,30 @@
     <bottom>
         <VBox id="bottom-group" fx:id="bottomBox">
             <children>
-                <HBox>
-                    <VBox.margin>
-                        <Insets left="25.0" />
-                    </VBox.margin>
-                    <children>
-                        <Group>
-                            <fx:define>
-                                <ToggleGroup fx:id="bottomGroup" />
-                            </fx:define>
-                            <children>
-                                <ToolBar styleClass="toggle-tab-pane">
-                                    <items>
-                                        <ToggleButton fx:id="bottomFramesTab" focusTraversable="false" styleClass="toggle-tab" text="Frames" toggleGroup="${bottomGroup}" />
-                                    </items>
-                                </ToolBar>
-                            </children>
-                        </Group>
-                    </children>
-                </HBox>
-                <HBox id="bottom" fx:id="progressSpace" alignment="CENTER"  minHeight="20.0" maxHeight="20.0">
+            <HBox>
+                <fx:define>
+                    <ToggleGroup fx:id="bottomGroup" />
+                </fx:define>
+               <children>
+                          <ToolBar styleClass="toggle-tab-pane" HBox.hgrow="ALWAYS">
+                              <items>
+                                  <ToggleButton fx:id="bottomFramesTab" focusTraversable="false" styleClass="toggle-tab" text="Frames" toggleGroup="${bottomGroup}" />
+                              </items>
+                     <HBox.margin>
+                        <Insets left="26.0" />
+                     </HBox.margin>
+                          </ToolBar>
+                  <ToolBar styleClass="toggle-tab-pane" HBox.hgrow="NEVER">
+                     <items>
+                        <ToggleButton fx:id="bottomEventLogTab" focusTraversable="false" layoutX="10.0" layoutY="10.0" styleClass="toggle-tab" text="Event log" toggleGroup="${bottomGroup}" />
+                     </items>
+                     <HBox.margin>
+                        <Insets right="26.0" />
+                     </HBox.margin>
+                  </ToolBar>
+               </children>
+            </HBox>
+                <HBox id="bottom" fx:id="progressSpace" alignment="CENTER" maxHeight="20.0" minHeight="20.0">
                     <children>
 
                     </children>

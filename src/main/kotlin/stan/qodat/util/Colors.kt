@@ -12,6 +12,8 @@ import javafx.scene.paint.Color
 val PURPLE = Color.web("#9876AA")
 val BABY_BLUE = Color.web("#6897BB")
 val DEFAULT = Color.web("#A9B7C6")
+val LOG_ERROR = Color.web("#CC666E")
+val LOG_VERBOSE = Color.web("#5394EC")
 
 /*
  * http://phrogz.net/css/distinct-colors.html

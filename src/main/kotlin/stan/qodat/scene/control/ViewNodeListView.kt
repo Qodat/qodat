@@ -25,7 +25,8 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             val listCell = object : ListCell<N>() {
                 override fun updateItem(item: N?, empty: Boolean) {
                     super.updateItem(item, empty)
-                    graphic = item?.getViewNode()
+                    if (item != null)
+                        graphic = item.getViewNode()
                 }
             }
             listCell.addEventFilter(MouseEvent.MOUSE_PRESSED) { event: MouseEvent ->

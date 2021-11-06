@@ -44,6 +44,7 @@ class MainController : SceneController("main-scene") {
     @FXML lateinit var rightEditorTab: ToggleButton
     @FXML lateinit var rightViewerTab: ToggleButton
     @FXML lateinit var bottomFramesTab: ToggleButton
+    @FXML lateinit var bottomEventLogTab: ToggleButton
     @FXML lateinit var mainPanes: Accordion
     @FXML lateinit var canvasPlaceHolder: Pane
     @FXML lateinit var splitPlane: SplitPane
@@ -74,6 +75,7 @@ class MainController : SceneController("main-scene") {
     lateinit var settingsController: SettingsController
     lateinit var viewerController: ViewerController
     lateinit var editorController: EditorController
+    lateinit var eventLogController: EventLogController
 
     private val divider1IndexProperty = SimpleIntegerProperty(0)
     private val divider2IndexProperty = SimpleIntegerProperty(1)
@@ -125,12 +127,18 @@ class MainController : SceneController("main-scene") {
 
         val timeLineBox = FXMLLoader.load<VBox>(Qodat::class.java.getResource("timeline.fxml"))
 
+        val eventLogLoader = FXMLLoader(Qodat::class.java.getResource("eventlog.fxml"))
+        val eventLogView = eventLogLoader.load<VBox>()
+        eventLogController = eventLogLoader.getController()
+
         rightEditorTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, editorPane)
         rightViewerTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, viewerPane)
         rightMainTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, mainPanes)
 
         leftFilesTab.createSelectTabListener(Properties.selectedLeftTab, leftTabContents, leftTab)
+
         bottomFramesTab.createSelectTabListener(Properties.selectedBottomTab, bottomTabContents, timeLineBox)
+        bottomEventLogTab.createSelectTabListener(Properties.selectedBottomTab, bottomTabContents, eventLogView)
 
         configureScene()
 

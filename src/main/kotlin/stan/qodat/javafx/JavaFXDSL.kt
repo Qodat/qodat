@@ -12,6 +12,7 @@ import javafx.scene.layout.HBox
 import javafx.scene.layout.Pane
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
+import javafx.scene.text.Font
 import javafx.scene.text.FontSmoothingType
 import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
@@ -105,11 +106,26 @@ fun<T> SelectionModel<T>.onSelected(onSelected: (T?, T?) -> Unit) {
 fun TextFlow.text(vararg pairs: Pair<String, Color>) {
     for ((string, color) in pairs) {
         children.add(Text(string).apply {
+            if (font != null)
+                this.font = font
             fontSmoothingType = FontSmoothingType.GRAY
             fill = color
         })
     }
 }
+
+fun TextFlow.menloText(vararg pairs: Pair<String, Color>) {
+    children.addAll(creeateMenloText(*pairs))
+}
+
+fun creeateMenloText(vararg pairs: Pair<String, Color>) =
+    pairs.map { (string, color) ->
+        Text(string).apply {
+            font = Font.font("Menlo", 13.0)
+            fontSmoothingType = FontSmoothingType.GRAY
+            fill = color
+        }
+    }
 
 private fun<E> createComboBox(text: String, values: Array<E>, bindProperty: ObjectProperty<E>, biDirectional: Boolean = false, init: ComboBox<E>.() -> Unit = {}) = ComboBox(FXCollections.observableArrayList(*values)).apply {
     promptText = text

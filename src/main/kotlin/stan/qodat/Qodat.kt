@@ -99,5 +99,13 @@ class Qodat : Application() {
         fun main(args: Array<String>) {
             launch(Qodat::class.java, *args)
         }
+
+        /**
+         * TODO: add safety checks, (are controllers initialised, are we on FX thread)
+         */
+        fun logException(e: Throwable) {
+            e.printStackTrace()
+            mainController.eventLogController.exceptions.add(e)
+        }
     }
 }

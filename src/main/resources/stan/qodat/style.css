@@ -470,7 +470,12 @@
     -fx-border-width: 0 0 1 0
 }
 
+.scroll-pane {
+    -fx-background-insets: 1;
+}
+.border-top,
 .border-bottom,
+.border-top-bottom,
 .border-top-right,
 .border-right,
 .border-left,
@@ -481,7 +486,9 @@
     -fx-background-color: #3C3F41;
     -fx-border-color: rgb(50, 50, 50);
 }
+.border-top {-fx-border-width: 1 0 0 0;}
 .border-bottom {-fx-border-width:0 0 0 0;}
+.border-top-bottom {-fx-border-width: 1 0 1 0;}
 .border-top-right {-fx-border-width: 1 1 0 0;}
 .border-right {-fx-border-width: 0 1 0 0;}
 .border-left {-fx-border-width: 0 0 0 1;}
