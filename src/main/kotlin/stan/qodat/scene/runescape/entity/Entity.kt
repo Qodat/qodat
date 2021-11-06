@@ -53,7 +53,7 @@ abstract class Entity<D : EntityDefinition>(
                 } else
                     createDistinctModels()
             } catch (e: Throwable) {
-                Qodat.logException(e)
+                Qodat.logException("Could not get entity {${getName()}}'s models", e)
                 return emptyArray()
             }
         }

@@ -51,26 +51,36 @@ class Animation(
 
     fun getSkeletons() : ObservableMap<Int, AnimationSkeleton> {
         if (!this::skeletons.isInitialized){
-            val skeletonsMap = definition.frameHashes
-                .map { cache.getAnimationSkeletonDefinition(it) }
-                .distinctBy { it.id }
-                .map { it.id to AnimationSkeleton("${it.id}", it) }
-                .toMap()
-            skeletons = FXCollections.observableMap(skeletonsMap)
+            try {
+                val skeletonsMap = definition.frameHashes
+                    .map { cache.getAnimationSkeletonDefinition(it) }
+                    .distinctBy { it.id }
+                    .map { it.id to AnimationSkeleton("${it.id}", it) }
+                    .toMap()
+                skeletons = FXCollections.observableMap(skeletonsMap)
+            } catch (e: Exception) {
+                Qodat.logException("Could not get animation {${definition.id}}'s skeletons", e)
+                return FXCollections.emptyObservableMap()
+            }
         }
         return skeletons
     }
 
     override fun getFrameList() : ObservableList<AnimationFrame> {
         if (!this::frames.isInitialized){
-            val framesArray = Array(definition.frameHashes.size) { idx ->
-                val frameDefinition = cache.getFrameDefinition(definition.frameHashes[idx])!!
-                AnimationFrame(
+            try {
+                val framesArray = Array(definition.frameHashes.size) { idx ->
+                    val frameDefinition = cache.getFrameDefinition(definition.frameHashes[idx])!!
+                    AnimationFrame(
                         name = "frame[$idx]",
                         definition = frameDefinition,
                         duration = definition.frameLengths[idx])
+                }
+                frames = FXCollections.observableArrayList(*framesArray)
+            } catch (e: Exception) {
+                Qodat.logException("Could not get animation {${definition.id}}'s frames", e)
+                return FXCollections.emptyObservableList()
             }
-            frames = FXCollections.observableArrayList(*framesArray)
         }
         return frames
     }

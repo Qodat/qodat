@@ -130,6 +130,7 @@ class MainController : SceneController("main-scene") {
         val eventLogLoader = FXMLLoader(Qodat::class.java.getResource("eventlog.fxml"))
         val eventLogView = eventLogLoader.load<VBox>()
         eventLogController = eventLogLoader.getController()
+        eventLogController.bind(bottomEventLogTab)
 
         rightEditorTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, editorPane)
         rightViewerTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, viewerPane)

@@ -13,6 +13,7 @@ import stan.qodat.cache.impl.legacy.LegacyCache
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.controller.EventLogController
 import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
 import stan.qodat.util.ActionCache
@@ -103,9 +104,11 @@ class Qodat : Application() {
         /**
          * TODO: add safety checks, (are controllers initialised, are we on FX thread)
          */
-        fun logException(e: Throwable) {
-            e.printStackTrace()
-            mainController.eventLogController.exceptions.add(e)
+        fun logException(title: String, e: Throwable) {
+            System.err.println(title + " - " + e.localizedMessage + " - \n" + e.stackTrace?.let {
+                it.copyOfRange(0, 5.coerceAtMost(it.size))
+            }?.joinToString("\n"))
+            mainController.eventLogController.add(title, e)
         }
     }
 }
