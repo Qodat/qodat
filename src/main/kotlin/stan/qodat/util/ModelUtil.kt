@@ -1,6 +1,7 @@
 package stan.qodat.util
 
 import javafx.scene.paint.Color
+import kotlin.experimental.and
 
 /**
  * TODO: add documentation
@@ -10,13 +11,13 @@ import javafx.scene.paint.Color
  * @version 1.0
  */
 object ModelUtil {
-    fun hsbToColor(hsb: Short, alpha: Byte?) = ModelUtil.hsbToColor(hsb.toInt(), alpha)
+    fun hsbToColor(hsb: Short, alpha: Byte?) = hsbToColor(hsb.toInt(), alpha)
 
     fun hsbToColor(hsb: Int, alpha: Byte?): Color {
 
-        var transparency = alpha?.toInt()
+        var transparency = alpha?.toUByte()?.toDouble()
         if(transparency == null || transparency <= 0)
-            transparency = 255
+            transparency = 255.0
 
         val hue = hsb shr 10 and 0x3f
         val sat = hsb shr 7 and 0x07

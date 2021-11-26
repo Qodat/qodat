@@ -9,15 +9,22 @@ import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.collections.transformation.SortedList
+import javafx.event.Event
 import javafx.event.EventHandler
+import javafx.event.EventType
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.scene.Node
 import javafx.scene.control.SplitPane
 import javafx.scene.control.TabPane
 import javafx.scene.control.TextField
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.actor
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
@@ -36,6 +43,7 @@ import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.createDragSpace
 import java.net.URL
 import java.util.*
+import kotlin.reflect.KFunction1
 
 /**
  * TODO: add documentation
@@ -43,7 +51,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-abstract class EntityController(name: String) : SceneController(name) {
+abstract class EntityViewController(name: String) : SceneController(name) {
 
     @FXML lateinit var root: SplitPane
     @FXML lateinit var tabPane: TabPane
@@ -149,7 +157,7 @@ abstract class EntityController(name: String) : SceneController(name) {
 
         if (node is AnimatedEntity<*>) {
             if (!event.hasNewValue) {
-                Properties.selectedNpcName.set("")
+                node.property().set("")
                 animationController.animationsListView.items = animationController.filteredAnimations
                 animationController.filteredAnimations.setPredicate { true }
             }
@@ -168,7 +176,7 @@ abstract class EntityController(name: String) : SceneController(name) {
             sceneContext.addNode(node)
 
         if (node is AnimatedEntity<*>) {
-            Properties.selectedNpcName.set(node.getName())
+            node.property().set(node.getName())
             animationController.animationsListView.items = FXCollections.observableArrayList(*node.getAnimations())
             modelController.models.setAll(*node.getModels())
         }
@@ -204,7 +212,7 @@ abstract class EntityController(name: String) : SceneController(name) {
         sortedNPCs.comparator = Comparator.comparing { it.getName() }
         npcList.items = sortedNPCs
         npcList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
-        npcList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
+        npcList.on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
         handleEmptySearchField(searchNpcField)
     }
 
@@ -216,4 +224,15 @@ abstract class EntityController(name: String) : SceneController(name) {
             }
         }
     }
+}
+
+private fun <N : Event> Node.on(
+    unselectedEventType: EventType<N>,
+    action: suspend (N) -> Unit
+) {
+    val eventActor = GlobalScope.actor<N>(Dispatchers.Main) {
+        for (event in channel) action(event) // pass event to action
+    }
+    // install a listener to offer events to this actor
+   addEventHandler(unselectedEventType, eventActor::trySend)
 }

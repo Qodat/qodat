@@ -1,5 +1,7 @@
 package stan.qodat.cache.definition
 
+import java.util.*
+
 /**
  * TODO: add documentation
  *
@@ -7,6 +9,8 @@ package stan.qodat.cache.definition
  * @since   29/01/2021
  */
 interface EntityDefinition {
+
+    fun getOptionalId(): OptionalInt = OptionalInt.empty()
 
     val name: String
     val modelIds: Array<String>

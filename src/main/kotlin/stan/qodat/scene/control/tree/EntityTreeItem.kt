@@ -48,17 +48,21 @@ class EntityTreeItem(
 //            }
 //        }
         treeItem("Models") {
-            for (model in entity.getModels())
-                children.add(model.getTreeItem(treeView))
+           this@EntityTreeItem.onExpanded {
+                for (model in entity.getModels())
+                    children.add(model.getTreeItem(treeView))
+            }
         }
         treeItem {
-            vBox {
-                children.add(Button("Export as .obj/.mtl").apply {
-                    setOnAction { Qodat.mainController.executeBackgroundTasks(createModelsExportTask(entity)) }
-                })
-                children.add(Button("Reset Models").apply {
-                    setOnAction { for (model in entity.getModels()) model.reset()}
-                })
+            this@EntityTreeItem.onExpanded {
+                vBox {
+                    children.add(Button("Export as .obj/.mtl").apply {
+                        setOnAction { Qodat.mainController.executeBackgroundTasks(createModelsExportTask(entity)) }
+                    })
+                    children.add(Button("Reset Models").apply {
+                        setOnAction { for (model in entity.getModels()) model.reset() }
+                    })
+                }
             }
         }
 

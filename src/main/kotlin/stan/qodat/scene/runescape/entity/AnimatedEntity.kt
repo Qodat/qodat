@@ -13,7 +13,7 @@ import stan.qodat.scene.transform.Transformable
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   31/01/2021
  */
-open class AnimatedEntity<D : AnimatedEntityDefinition>(
+abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
     cache: Cache,
     definition: D,
     private val animationProvider: D.() -> Array<Animation>

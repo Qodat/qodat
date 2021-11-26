@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.entity
 
+import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.cache.definition.ObjectDefinition
@@ -23,4 +24,6 @@ class Object(
     override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
     }
+
+    override fun property() = Properties.selectedObjectName
 }

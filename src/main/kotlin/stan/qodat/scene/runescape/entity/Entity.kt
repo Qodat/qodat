@@ -4,20 +4,21 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.control.Label
 import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
-import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.RSModelDefinitionBuilder
+import stan.qodat.javafx.menloText
 import stan.qodat.javafx.text
 import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.*
+import java.util.concurrent.TimeUnit
+import kotlin.system.measureNanoTime
 
 /**
  * TODO: add documentation
@@ -38,6 +39,8 @@ abstract class Entity<D : EntityDefinition>(
     val labelProperty = SimpleStringProperty(definition.name)
     val mergeModelProperty = SimpleBooleanProperty(true)
 
+    abstract fun property() : SimpleStringProperty
+
     override fun getName() = labelProperty.get()
 
     fun getModels(): Array<Model> {
@@ -49,7 +52,9 @@ abstract class Entity<D : EntityDefinition>(
                     val multiModelName = "models_${definitions.joinToString {
                         it.getName() + "_"
                     }}"
-                    arrayOf(Model(multiModelName, RSModelDefinitionBuilder(*definitions).build(), definition.findColor, definition.replaceColor))
+                    val modelDefinition = RSModelDefinitionBuilder(*definitions).build()
+                    val model = Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor)
+                    arrayOf(model)
                 } else
                     createDistinctModels()
             } catch (e: Throwable) {
@@ -71,8 +76,22 @@ abstract class Entity<D : EntityDefinition>(
     }.toTypedArray()
 
     override fun getViewNode(): Node {
-        if (!this::viewBox.isInitialized)
-            viewBox = LabeledHBox(labelProperty)
+        if (!this::viewBox.isInitialized) {
+            val optionalInt = definition.getOptionalId()
+            val box = LabeledHBox(labelProperty)
+            viewBox = if (optionalInt.isPresent)
+                HBox().apply {
+                    val id = optionalInt.asInt.toString()
+                    val length = 7 - id.length
+                    val spaces = Array(length){""} .joinToString(" ")
+                    children.add(TextFlow().apply {
+                        menloText("$id$spaces" to DEFAULT)
+                    })
+                    children.add(box)
+                }
+            else
+                box
+        }
         return viewBox
     }
 

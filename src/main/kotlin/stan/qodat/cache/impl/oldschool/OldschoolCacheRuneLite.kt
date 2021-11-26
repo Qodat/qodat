@@ -14,6 +14,9 @@ import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.util.RSModelLoader
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 /**
  * TODO: add documentation
@@ -79,27 +82,26 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             return emptyArray()
         }
 
-        val npcsByName = HashMap<String, NpcDefinition>()
+        val animatedNpcs = ArrayList<NPCDefinition>()
         for (npc in npcManager.npcs) {
             if (npc.name.isEmpty() || npc.models == null || npc.models.isEmpty())
                 continue
-            npcsByName[npc.name] = npc
-        }
-
-        val animatedNpcs = ArrayList<NPCDefinition>()
-        for (file in npcAnimsDir.listFiles()!!){
-            val name = file.nameWithoutExtension
-            val npc = npcsByName[name]?:continue
-            val animsReader = file.bufferedReader()
-            val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
-            animsReader.close()
-            animatedNpcs.add(object : NPCDefinition {
-                override val name = npc.name
-                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                override val animationIds = anims.map { it.toString() }.toTypedArray()
-                override val findColor = npc.recolorToFind
-                override val replaceColor = npc.recolorToReplace
-            })
+            try {
+                val animsFile = npcAnimsDir.resolve(npc.name+".json")
+                val animsReader = animsFile.bufferedReader()
+                val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
+                animsReader.close()
+                animatedNpcs.add(object : NPCDefinition {
+                    override fun getOptionalId() = OptionalInt.of(npc.id)
+                    override val name = npc.name
+                    override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                    override val animationIds = anims.map { it.toString() }.toTypedArray()
+                    override val findColor = npc.recolorToFind
+                    override val replaceColor = npc.recolorToReplace
+                })
+            } catch (ignored: Exception) {
+                continue
+            }
         }
         return animatedNpcs.toTypedArray()
     }
@@ -107,6 +109,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getObjects(): Array<ObjectDefinition> {
         return objectManager.objects.map {
             object : ObjectDefinition {
+                override fun getOptionalId() = OptionalInt.of(it.id)
                 override val name = it.name
                 override val modelIds = it.objectModels?.map { it.toString() }?.toTypedArray()?: emptyArray()
                 override val animationIds = if (it.animationID == -1)
@@ -122,6 +125,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getItems(): Array<ItemDefinition> {
         return itemManager.items.map {
             object : ItemDefinition {
+                override fun getOptionalId() = OptionalInt.of(it.id)
                 override val name = it.name
                 override val modelIds = arrayOf(it.inventoryModel.toString())
                 override val findColor = it.colorFind

@@ -42,8 +42,7 @@ class Qodat : Application() {
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
-        Properties.viewerCache.set(LegacyCache)
-        Properties.editorCache.set(QodatCache)
+
 
         primaryStage.apply {
             title = "Qodat"
@@ -69,6 +68,8 @@ class Qodat : Application() {
                 executor.shutdown()
                 ModelController.watchThread?.interrupt()
             }
+            Properties.viewerCache.set(OldschoolCacheRuneLite)
+            Properties.editorCache.set(QodatCache)
         }
     }
 

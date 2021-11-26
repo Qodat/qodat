@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.entity
 
+import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheEncoder
 import stan.qodat.cache.definition.NPCDefinition
@@ -24,7 +25,7 @@ class NPC(
         throw UnsupportedEncodingException()
     }
 
-    override fun toString(): String {
-        return getName()
-    }
+    override fun toString(): String = getName()
+
+    override fun property() = Properties.selectedNpcName
 }

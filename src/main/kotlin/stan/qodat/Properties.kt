@@ -6,6 +6,7 @@ import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
 import stan.qodat.cache.Cache
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.util.PropertiesManager
 import java.nio.file.Paths
 

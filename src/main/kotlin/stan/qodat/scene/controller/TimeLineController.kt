@@ -1,6 +1,7 @@
 package stan.qodat.scene.controller
 
 import javafx.beans.property.SimpleDoubleProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
@@ -24,6 +25,7 @@ import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.animation.Transformation
+import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.FrameTimeUtil
 import stan.qodat.util.getAnimationsView
 import stan.qodat.util.onIndexSelected
@@ -66,7 +68,7 @@ class TimeLineController : Initializable {
                     val snapshotParameters = SnapshotParameters().apply { fill = Color.TRANSPARENT }
                     val snapShot = SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)
                     val image = SwingFXUtils.fromFXImage(snapShot, null)
-                    val name = Properties.selectedNpcName.get()+"_" +Properties.selectedAnimationName.get()+"_"+ frameIndex.toString()
+                    val name = Properties.selectedAnimationName.get()+"_"+ frameIndex.toString()
                     val out = Properties.exportsPath.get().resolve("png").resolve("$name.png").toFile().apply {
                         if (!parentFile.exists())
                             parentFile.mkdir()

@@ -23,7 +23,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   31/01/2021
  */
-class EditorController : EntityController("editor-scene") {
+class EditorController : EntityViewController("editor-scene") {
 
     @FXML lateinit var addNpcButton: Button
 

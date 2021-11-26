@@ -1,15 +1,9 @@
 package stan.qodat.scene.runescape.entity
 
-import javafx.beans.property.SimpleStringProperty
-import javafx.scene.Node
-import javafx.scene.layout.HBox
+import stan.qodat.Properties
 import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.ItemDefinition
-import stan.qodat.util.ViewNodeProvider
 import stan.qodat.cache.CacheEncoder
-import stan.qodat.scene.control.LabeledHBox
-import stan.qodat.util.SceneNodeProvider
-import stan.qodat.util.Searchable
+import stan.qodat.cache.definition.ItemDefinition
 import java.io.File
 import java.io.UnsupportedEncodingException
 
@@ -25,4 +19,6 @@ class Item(cache: Cache, definition: ItemDefinition)
     override fun encode(format: Cache) : File {
         throw UnsupportedEncodingException()
     }
+
+    override fun property() = Properties.selectedItemName
 }
