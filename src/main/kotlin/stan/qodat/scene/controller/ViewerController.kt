@@ -1,6 +1,5 @@
 package stan.qodat.scene.controller
 
-import javafx.scene.control.ComboBox
 import stan.qodat.Properties
 
 /**

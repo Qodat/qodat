@@ -78,9 +78,9 @@ data class QodatModelDefinition(
 ) : ModelDefinition {
 
     @Transient
-    private lateinit var vertexGroups: Array<IntArray>
+    private var vertexGroups: Array<IntArray>? = null
     @Transient
-    private lateinit var faceGroups: Array<IntArray>
+    private var faceGroups: Array<IntArray>? = null
 
     override fun getName() = name
     override fun getVertexCount() = vertexCount
@@ -137,7 +137,7 @@ data class QodatModelDefinition(
 
             for (i in 0 until vertexCount) {
                 val group = vertexSkins[i]
-                vertexGroups[group][groupCounts[group]++] = i
+                vertexGroups!![group][groupCounts[group]++] = i
             }
         }
         if (faceSkins != null) {
@@ -158,7 +158,7 @@ data class QodatModelDefinition(
             }
             for (i in 0 until faceCount) {
                 val group = faceSkins[i]
-                faceGroups[group][groupCounts[group]++] = i
+                faceGroups!![group][groupCounts[group]++] = i
             }
         }
     }

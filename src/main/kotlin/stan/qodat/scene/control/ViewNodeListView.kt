@@ -56,7 +56,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
     fun enableDragAndDrop(
         toFile:(N.() -> File)? = null,
         fromFile: (File.() -> N)? = null,
-        onDropFrom: (List<Pair<File, N>>) -> Unit,
+        onDropFrom: ((List<Pair<File, N>>) -> Unit)? = null,
         imageProvider: (N.() -> Image)? = null,
         vararg supportedExtensions: String
     ){
@@ -74,7 +74,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
                     val newEntries = db.files
                         .filter { file -> supportedExtensions.contains(file.extension) }
                         .mapNotNull { file -> file to fromFile(file) }
-                    onDropFrom(newEntries)
+                    onDropFrom?.invoke(newEntries)
                     it.isDropCompleted = true
                 }
                 it.consume()

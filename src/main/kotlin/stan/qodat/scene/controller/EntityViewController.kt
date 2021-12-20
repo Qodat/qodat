@@ -15,6 +15,7 @@ import javafx.event.EventType
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
+import javafx.scene.SnapshotParameters
 import javafx.scene.control.ComboBox
 import javafx.scene.control.SplitPane
 import javafx.scene.control.TabPane
@@ -22,6 +23,7 @@ import javafx.scene.control.TextField
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
+import javafx.scene.paint.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.actor
@@ -29,11 +31,13 @@ import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheAssetLoader
+import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.entity.*
+import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.configureSearchFilter
@@ -102,6 +106,18 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             val modelView = modelLoader.load<VBox>()
 //            modelView.styleClass.add("border-left")
             modelController = modelLoader.getController()
+            modelController.modelListView.enableDragAndDrop(
+                toFile = {
+                    QodatCache.encode(this)
+                },
+                imageProvider = {
+                    getSceneNode().snapshot(
+                        SnapshotParameters().apply { fill = Color.TRANSPARENT },
+                        null
+                    )
+                },
+                supportedExtensions = Model.supportedExtensions
+            )
 
             val containerWithDragSpace = HBox()
             HBox.setHgrow(animationView, Priority.ALWAYS)

@@ -7,37 +7,25 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
-import javafx.embed.swing.SwingFXUtils
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
 import javafx.scene.SnapshotParameters
-import javafx.scene.control.ListView
 import javafx.scene.control.MenuItem
 import javafx.scene.control.TextField
-import javafx.scene.image.WritableImage
-import javafx.scene.input.TransferMode
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
-import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.SceneContext
-import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.Searchable
-import stan.qodat.util.ViewNodeProvider
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.onItemSelected
-import java.io.File
 import java.net.URL
 import java.nio.file.*
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.TimeUnit
-import javax.imageio.ImageIO
 
 /**
  * TODO: add documentation
@@ -47,7 +35,7 @@ import javax.imageio.ImageIO
  */
 class ModelController : Initializable {
 
-    @FXML private lateinit var modelListView: ViewNodeListView<Model>
+    @FXML lateinit var modelListView: ViewNodeListView<Model>
     @FXML private lateinit var searchModelField: TextField
     @FXML private lateinit var setLabel: MenuItem
 
@@ -79,7 +67,7 @@ class ModelController : Initializable {
         sceneContextProperty.set(sceneContext)
     }
 
-    fun enableDragAndDrop(){
+    fun enableDragAndDrop() {
         modelListView.enableDragAndDrop(
             toFile = { QodatCache.encode(this) }, // currently only support json
             fromFile = { Model.fromFile(this) },
