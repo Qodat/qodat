@@ -44,6 +44,8 @@ class AnimationTreeItem(
         }
         onExpanded {
             if (this) {
+                if (framesMap.isEmpty())
+                    loadFrames()
                 transformsContextMenuMap.clear()
                 for (frameItem in children) {
                     val frame = framesMap[frameItem]?:continue
@@ -57,21 +59,15 @@ class AnimationTreeItem(
 
     override fun isLeaf() = if (framesMap.isNotEmpty()) children.isEmpty() else false
 
-    override fun getChildren(): ObservableList<TreeItem<Node>> {
-        if (framesMap.isEmpty())
-            loadFrames()
-        return super.getChildren()
-    }
-
     private fun loadFrames(){
         val frames = animation.getFrameList()
         for (frame in frames) {
             treeItem {
+                framesMap[this] = frame
                 hBox {
                     checkBox(frame.enabledProperty, biDirectional = true)
                     label(frame.getName())
                 }
-                framesMap[this] = frame
             }
         }
     }

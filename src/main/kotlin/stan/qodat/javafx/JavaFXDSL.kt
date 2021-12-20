@@ -38,8 +38,8 @@ fun Pane.checkBox(bindProperty: BooleanProperty, biDirectional: Boolean = false)
 fun Pane.label(text: String) {
     children.add(Label(text))
 }
-fun Pane.label(textProperty: StringProperty) {
-    children.add(Label().apply { textProperty().setAndBind(textProperty) })
+fun Pane.label(textProperty: StringProperty, init: Label.() -> Unit = {}) {
+    children.add(Label().apply(init).apply { textProperty().setAndBind(textProperty) })
 }
 fun<E> Pane.comboBox(text: String, values: Array<E>, bindProperty: ObjectProperty<E>, biDirectional: Boolean = false, init: ComboBox<E>.() -> Unit = {}) {
     children += createComboBox(text, values, bindProperty, biDirectional, init)
@@ -73,12 +73,17 @@ fun<E> TreeItem<*>.comboBox(text: String, values: Array<E>, bindProperty: Object
     value = createComboBox(text, values, bindProperty, biDirectional, init)
 }
 
-fun TreeItem<*>.hBox(spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: HBox.() -> Unit) {
-    value = HBox(spacing).apply {
+fun TreeItem<*>.hBox(isGraphic: Boolean = false, spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: HBox.() -> Unit) {
+    val box = HBox(spacing).apply {
         this.alignment = alignment
         init()
     }
+    if (isGraphic)
+        graphic = box
+    else
+        value = box
 }
+
 fun TreeItem<*>.vBox(spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: VBox.() -> Unit) {
     value = VBox(spacing).apply {
         this.alignment = alignment

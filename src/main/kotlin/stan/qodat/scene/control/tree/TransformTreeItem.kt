@@ -26,7 +26,8 @@ class TransformTreeItem(
     private lateinit var selectionMesh: Group
 
     init {
-        hBox {
+
+        hBox(isGraphic = true){
             checkBox(transform.enabledProperty, biDirectional = true)
             label(transform.labelProperty) {
                 contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
@@ -43,11 +44,8 @@ class TransformTreeItem(
                     )
                 }
             }
-        }
-        treeItem {
-            isExpanded = true
             vBox {
-                comboBox("", TransformationType.values(), transform.typeProperty)
+                comboBox("type", TransformationType.values(), transform.typeProperty)
             }
         }
         selectionModel.onSelected { oldValue, newValue ->
