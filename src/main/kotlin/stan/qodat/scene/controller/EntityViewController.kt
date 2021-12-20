@@ -186,14 +186,21 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         if (node is SceneNodeProvider)
             sceneContext.removeNode(node)
 
-        if (node is AnimatedEntity<*>) {
+        if (node is Entity<*>) {
             if (!event.hasNewValue) {
                 node.property().set("")
-                animationController.animationsListView.items = animationController.filteredAnimations
-                animationController.filteredAnimations.setPredicate { true }
+                modelController.models.clear()
             }
-            SubScene3D.animationPlayer.transformerProperty.set(null)
+            if (node is AnimatedEntity<*>) {
+                if (!event.hasNewValue) {
+                    node.property().set("")
+                    animationController.animationsListView.items = animationController.filteredAnimations
+                    animationController.filteredAnimations.setPredicate { true }
+                }
+                SubScene3D.animationPlayer.transformerProperty.set(null)
+            }
         }
+
 
         if (node is Transformable)
             SubScene3D.animationPlayer.transformableList.remove(node)
