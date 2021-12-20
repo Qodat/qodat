@@ -4,6 +4,7 @@ import javafx.beans.binding.Bindings
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -16,10 +17,7 @@ import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.SnapshotParameters
-import javafx.scene.control.ComboBox
-import javafx.scene.control.SplitPane
-import javafx.scene.control.TabPane
-import javafx.scene.control.TextField
+import javafx.scene.control.*
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
@@ -39,10 +37,7 @@ import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.transform.Transformable
-import stan.qodat.util.SceneNodeProvider
-import stan.qodat.util.configureSearchFilter
-import stan.qodat.util.createDragSpace
-import stan.qodat.util.onInvalidation
+import stan.qodat.util.*
 import java.net.URL
 import java.util.*
 
@@ -73,9 +68,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
     protected val items: ObservableList<Item> = FXCollections.observableArrayList()
     private val objects: ObservableList<Object> = FXCollections.observableArrayList()
-
     lateinit var animationController: AnimationController
     private lateinit var modelController: ModelController
+
+    private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedNpcProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedItemProperty = SimpleObjectProperty<ViewNodeProvider>()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
@@ -94,6 +92,18 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 heightProperty = SimpleDoubleProperty(25.0)
             )
         )
+
+        tabPane.selectionModel.selectedItemProperty().addListener { observableValue, previousTab, newTab ->
+            val newNode = getNodeProperty(newTab)
+            val previousNode = getNodeProperty(previousTab)
+            if (previousNode.isNotNull.get())
+                onUnselectedEvent.handle(ViewNodeListView.UnselectedEvent(previousNode.get(),
+                    hasNewValueOfSameType = false,
+                    causedByTabSwitch = true
+                ))
+            if (newNode.isNotNull.get())
+                onSelectedEvent.handle(ViewNodeListView.SelectedEvent(newNode.get()))
+        }
 
         try {
 
@@ -163,6 +173,13 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         }
     }
 
+    private fun getNodeProperty(previousTab: Tab): ObjectProperty<ViewNodeProvider> = when (previousTab.text) {
+        "NPC" -> currentSelectedNpcProperty
+        "Object" -> currentSelectedObjectProperty
+        "Item" -> currentSelectedItemProperty
+        else -> throw Exception("Unsupported tab name ${previousTab.text}")
+    }
+
     protected abstract fun cacheProperty() : ObjectProperty<Cache>
 
     protected val cache: Cache
@@ -187,12 +204,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             sceneContext.removeNode(node)
 
         if (node is Entity<*>) {
-            if (!event.hasNewValue) {
+            if (!event.hasNewValueOfSameType) {
                 node.property().set("")
                 modelController.models.clear()
             }
             if (node is AnimatedEntity<*>) {
-                if (!event.hasNewValue) {
+                if (!event.hasNewValueOfSameType) {
                     node.property().set("")
                     animationController.animationsListView.items = animationController.filteredAnimations
                     animationController.filteredAnimations.setPredicate { true }
@@ -201,27 +218,40 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             }
         }
 
-
         if (node is Transformable)
             SubScene3D.animationPlayer.transformableList.remove(node)
+
+        if (!event.hasNewValueOfSameType && !event.causedByTabSwitch) {
+            when (node) {
+                is NPC -> currentSelectedNpcProperty.set(null)
+                is Item -> currentSelectedItemProperty.set(null)
+                is Object -> currentSelectedObjectProperty.set(null)
+            }
+        }
     }
 
     private val onSelectedEvent = EventHandler<ViewNodeListView.SelectedEvent> { event ->
 
-        val node = event.viewNodeProvider
+        val newNode = event.newValue
 
-        if (node is SceneNodeProvider)
-            sceneContext.addNode(node)
+        if (newNode is SceneNodeProvider)
+            sceneContext.addNode(newNode)
 
-        if (node is Entity<*>) {
-            node.property().set(node.getName())
-            modelController.models.setAll(*node.getModels())
-            if (node is AnimatedEntity<*>)
-                animationController.animationsListView.items = FXCollections.observableArrayList(*node.getAnimations())
+        if (newNode is Entity<*>) {
+            newNode.property().set(newNode.getName())
+            modelController.models.setAll(*newNode.getModels())
+            if (newNode is AnimatedEntity<*>)
+                animationController.animationsListView.items = FXCollections.observableArrayList(*newNode.getAnimations())
         }
 
-        if (node is Transformable)
-            SubScene3D.animationPlayer.transformableList.add(node)
+        if (newNode is Transformable)
+            SubScene3D.animationPlayer.transformableList.add(newNode)
+
+        when(newNode) {
+            is NPC -> currentSelectedNpcProperty.set(newNode)
+            is Item -> currentSelectedItemProperty.set(newNode)
+            is Object -> currentSelectedObjectProperty.set(newNode)
+        }
     }
 
     private fun configureItemList() {
