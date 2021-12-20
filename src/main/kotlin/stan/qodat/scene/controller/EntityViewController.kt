@@ -190,10 +190,11 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         if (node is SceneNodeProvider)
             sceneContext.addNode(node)
 
-        if (node is AnimatedEntity<*>) {
+        if (node is Entity<*>) {
             node.property().set(node.getName())
-            animationController.animationsListView.items = FXCollections.observableArrayList(*node.getAnimations())
             modelController.models.setAll(*node.getModels())
+            if (node is AnimatedEntity<*>)
+                animationController.animationsListView.items = FXCollections.observableArrayList(*node.getAnimations())
         }
 
         if (node is Transformable)
