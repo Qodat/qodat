@@ -4,6 +4,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import stan.qodat.scene.control.ViewNodeListView?>
 <?import java.net.URL?>
+<?import javafx.scene.layout.HBox?>
 <SplitPane
         dividerPositions="0.5"
         orientation="VERTICAL"
@@ -23,7 +24,12 @@
                   <VBox>
                      <children>
                         <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0" />
-                        <TextField fx:id="searchNpcField" promptText="Search NPC" />
+                        <HBox>
+                           <children>
+                              <ComboBox fx:id="sortMethodBox" promptText="Sort by"/>
+                              <TextField fx:id="searchNpcField" promptText="Search NPC" />
+                           </children>
+                        </HBox>
                      </children>
                   </VBox>
                </content>

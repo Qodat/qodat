@@ -6,12 +6,12 @@ import javafx.scene.Node
 import javafx.scene.control.Button
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
-import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.definition.save.ObjExporter
 import stan.qodat.javafx.*
+import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import java.io.FileWriter
 import java.io.PrintWriter
@@ -66,16 +66,18 @@ class EntityTreeItem(
             }
         }
 
-//        if (entity is AnimatedEntity<*>) {
-//            treeItem("Skeletons") {
-//                for ((_, skeleton) in entity.getSkeletons())
-//                    children.add(SkeletonTreeItem(skeleton, selectionModel, entity))
-//            }
-//            treeItem("Animations") {
-//                for (animation in entity.getAnimations())
-//                    children.add(AnimationTreeItem(animation, entity, treeView))
-//            }
-//        }
+        if (entity is AnimatedEntity<*>) {
+            this@EntityTreeItem.onExpanded {
+                treeItem("Skeletons") {
+                    for ((_, skeleton) in entity.getSkeletons())
+                        children.add(SkeletonTreeItem(skeleton, entity))
+                }
+                treeItem("Animations") {
+                    for (animation in entity.getAnimations())
+                        children.add(AnimationTreeItem(animation, entity, treeView))
+                }
+            }
+        }
     }
 
     private fun createModelsExportTask(entity: Entity<*>) = object : Task<Unit>() {

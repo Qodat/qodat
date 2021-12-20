@@ -1,9 +1,7 @@
 package stan.qodat.scene.control.tree
 
-import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -24,7 +22,6 @@ import stan.qodat.scene.runescape.model.ModelFaceMesh
  */
 class SkeletonTreeItem(
     skeleton: AnimationSkeleton,
-    private val selectionModel: MultipleSelectionModel<TreeItem<Node>>,
     private val animatedEntity: AnimatedEntity<*>
 ) : TreeItem<Node>() {
 

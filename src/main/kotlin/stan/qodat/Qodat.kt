@@ -42,8 +42,6 @@ class Qodat : Application() {
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
-
-
         primaryStage.apply {
             title = "Qodat"
             icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))

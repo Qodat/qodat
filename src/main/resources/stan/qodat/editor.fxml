@@ -10,6 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import stan.qodat.scene.control.ViewNodeListView?>
 
+<?import javafx.scene.control.ComboBox?>
 <SplitPane fx:id="root" dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.EditorController">
    <stylesheets>
       <URL value="@style.css" />
@@ -26,6 +27,7 @@
                         <HBox alignment="BOTTOM_LEFT">
                            <children>
                               <Button fx:id="addNpcButton" contentDisplay="CENTER" styleClass="add-button" text="+" />
+                              <ComboBox fx:id="sortMethodBox" promptText="Sort by"/>
                               <TextField fx:id="searchNpcField" alignment="CENTER" promptText="Search NPC" HBox.hgrow="ALWAYS" />
                            </children>
                         </HBox>

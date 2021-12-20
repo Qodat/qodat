@@ -15,10 +15,10 @@ import javafx.event.EventType
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
+import javafx.scene.control.ComboBox
 import javafx.scene.control.SplitPane
 import javafx.scene.control.TabPane
 import javafx.scene.control.TextField
-import javafx.scene.input.MouseEvent
 import javafx.scene.layout.HBox
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
@@ -33,17 +33,14 @@ import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
-import stan.qodat.scene.runescape.entity.AnimatedEntity
-import stan.qodat.scene.runescape.entity.Item
-import stan.qodat.scene.runescape.entity.NPC
-import stan.qodat.scene.runescape.entity.Object
+import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.SceneNodeProvider
 import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.createDragSpace
+import stan.qodat.util.onInvalidation
 import java.net.URL
 import java.util.*
-import kotlin.reflect.KFunction1
 
 /**
  * TODO: add documentation
@@ -62,6 +59,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     @FXML lateinit var searchItemField: TextField
     @FXML lateinit var searchNpcField: TextField
     @FXML lateinit var searchObjectField: TextField
+    @FXML lateinit var sortMethodBox: ComboBox<SortType>
+
+    enum class SortType {
+        NAME,
+        ID
+    }
 
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
     protected val items: ObservableList<Item> = FXCollections.observableArrayList()
@@ -122,6 +125,18 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         configureNpcList()
         configureObjectList()
         configureItemList()
+
+        sortMethodBox.items.addAll(SortType.values())
+        sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
+            (npcList.items as SortedList).comparator = when (get()!!){
+                SortType.NAME -> Comparator.comparing {
+                    it.getName()
+                }
+                SortType.ID -> Comparator.comparing {
+                    it.definition.name
+                }
+            }
+        }
 
         cacheProperty().addListener { _, _, newValue ->
             val loader = CacheAssetLoader(newValue, npcs, objects, items, itemList, objectList, npcList, animationController)

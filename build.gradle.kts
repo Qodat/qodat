@@ -2,8 +2,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
 //    id("org.openjfx.javafxplugin") version "0.0.10"
-    kotlin("jvm") version "1.5.31"
-    kotlin("plugin.serialization") version "1.5.31"
+    kotlin("jvm") version "1.6.0"
+    kotlin("plugin.serialization") version "1.6.0"
     application
 }
 
@@ -25,12 +25,12 @@ dependencies {
 //    implementation("com.github.kotlin-graphics:gln:v0.5.2")
     implementation("org.jcodec:jcodec:0.2.5")
     implementation("org.jcodec:jcodec-javase:0.2.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.6.0-RC")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.3.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.6.0-RC2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.6.0-RC2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.3.1")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
-    implementation("com.displee:rs-cache-library:6.8")
+    implementation("com.displee:rs-cache-library:6.8.1")
 //    implementation("com.github.kotlin-graphics:gln:v0.5.2")
     testImplementation(kotlin("test-junit"))
 }
