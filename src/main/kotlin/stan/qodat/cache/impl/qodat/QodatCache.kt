@@ -6,6 +6,7 @@ import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
+import stan.qodat.cache.EncodeResult
 import stan.qodat.cache.definition.*
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.util.RSModelLoader
@@ -52,7 +53,7 @@ object QodatCache : Cache("qodat") {
         models = qodatCacheDir.loadModels("models")
     }
 
-    override fun encode(any: Any): File {
+    override fun encode(any: Any): EncodeResult {
         if (any is Model) {
             val saveDir = Properties.exportsPath.get().resolve("model").resolve("json").toFile().apply {
                 if (!parentFile.exists())
@@ -65,7 +66,7 @@ object QodatCache : Cache("qodat") {
                     createNewFile()
             }
             encodeModel(file, getQodatModelDefinition(any))
-            return file
+            return EncodeResult(file)
         }
         return super.encode(any)
     }
@@ -131,6 +132,18 @@ object QodatCache : Cache("qodat") {
 
     override fun getFrameDefinition(frameHash: Int): AnimationFrameDefinition? {
         return OldschoolCacheRuneLite.getFrameDefinition(frameHash)
+    }
+
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
+        return emptyArray()
+    }
+
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
+        return emptyMap()
+    }
+
+    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
+        TODO("Not yet implemented")
     }
 
     private inline fun<reified T> File.loadDefinitions(directoryName: String) = resolve(directoryName)

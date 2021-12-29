@@ -4,7 +4,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
-import net.runelite.cache.definitions.NpcDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
@@ -13,6 +12,8 @@ import net.runelite.cache.fs.Store
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
 import stan.qodat.cache.definition.*
+import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.cache.util.RSModelLoader
 import java.util.*
 import kotlin.collections.ArrayList
@@ -32,6 +33,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     private var itemManager: ItemManager
     var objectManager: ObjectManager
     var textureManager: TextureManager
+    var interfaceManager: InterfaceManager
+    var spriteManager: SpriteManager
 
     private val frameIndex: Index
     private val framemapIndex: Index
@@ -39,7 +42,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     private val frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
 
     private lateinit var animations : Array<AnimationDefinition>
-
 
     init {
         store.load()
@@ -52,6 +54,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         objectManager = ObjectManager(store)
         objectManager.load()
         textureManager = TextureManager(store)
+        interfaceManager = InterfaceManager(store)
+        interfaceManager.load()
+        spriteManager = SpriteManager(store)
+        spriteManager.load()
     }
 
     private val gson = GsonBuilder().create()
@@ -206,6 +212,24 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 }
             }.toMap()
         }[frameArchiveFileId]
+    }
+
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
+        return interfaceManager
+            .getIntefaceGroup(groupId)
+            .map { RuneliteIntefaceDefinition(it) }
+            .toTypedArray()
+    }
+
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
+        return interfaceManager.interfaces
+            .flatten()
+            .map { RuneliteIntefaceDefinition(it) }
+            .groupBy { it.id.shr(16) }
+    }
+
+    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
+        return RuneliteSpriteDefinition(spriteManager.findSprite(groupId, frameId))
     }
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition {

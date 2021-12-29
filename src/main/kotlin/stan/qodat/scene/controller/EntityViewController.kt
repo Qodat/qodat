@@ -30,12 +30,14 @@ import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.qodat.QodatCache
+import stan.qodat.scene.SubScene2D
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.scene.runescape.ui.InterfaceGroup
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
@@ -55,10 +57,15 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     @FXML lateinit var itemList: ViewNodeListView<Item>
     @FXML lateinit var npcList: ViewNodeListView<NPC>
     @FXML lateinit var objectList: ViewNodeListView<Object>
+    @FXML lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
     @FXML lateinit var searchItemField: TextField
     @FXML lateinit var searchNpcField: TextField
     @FXML lateinit var searchObjectField: TextField
+    @FXML lateinit var searchInterfaceField: TextField
     @FXML lateinit var sortMethodBox: ComboBox<SortType>
+
+    lateinit var animationController: AnimationController
+    lateinit var modelController: ModelController
 
     enum class SortType {
         NAME,
@@ -66,20 +73,21 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     }
 
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
-    protected val items: ObservableList<Item> = FXCollections.observableArrayList()
-    private val objects: ObservableList<Object> = FXCollections.observableArrayList()
-    lateinit var animationController: AnimationController
-    private lateinit var modelController: ModelController
+    val items: ObservableList<Item> = FXCollections.observableArrayList()
+    val objects: ObservableList<Object> = FXCollections.observableArrayList()
+    val interfaces: ObservableList<InterfaceGroup> = FXCollections.observableArrayList()
 
-    private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedNpcProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedItemProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
         VBox.setVgrow(itemList, Priority.ALWAYS)
         VBox.setVgrow(npcList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
+        VBox.setVgrow(interfaceList, Priority.ALWAYS)
 
         SplitSceneDividerDragRegion(
             splitPane = root,
@@ -92,6 +100,11 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 heightProperty = SimpleDoubleProperty(25.0)
             )
         )
+
+        currentSelectedItemProperty.set(itemList.selectionModel.selectedItem)
+        currentSelectedNpcProperty.set(npcList.selectionModel.selectedItem)
+        currentSelectedObjectProperty.set(objectList.selectionModel.selectedItem)
+        currentSelectedInterfaceProperty.set(interfaceList.selectionModel.selectedItem)
 
         tabPane.selectionModel.selectedItemProperty().addListener { observableValue, previousTab, newTab ->
             val newNode = getNodeProperty(newTab)
@@ -118,7 +131,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             modelController = modelLoader.getController()
             modelController.modelListView.enableDragAndDrop(
                 toFile = {
-                    QodatCache.encode(this)
+                    QodatCache.encode(this).file
                 },
                 imageProvider = {
                     getSceneNode().snapshot(
@@ -151,6 +164,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         configureNpcList()
         configureObjectList()
         configureItemList()
+        configureInterfacesList()
 
         sortMethodBox.items.addAll(SortType.values())
         sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
@@ -170,6 +184,9 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             loader.loadNpcs()
             loader.loadObjects()
             loader.loadItems()
+            interfaces.setAll(newValue.getRootInterfaces().map {
+                InterfaceGroup(newValue, it.key, it.value)
+            })
         }
     }
 
@@ -177,6 +194,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         "NPC" -> currentSelectedNpcProperty
         "Object" -> currentSelectedObjectProperty
         "Item" -> currentSelectedItemProperty
+        "Interfaces" -> currentSelectedInterfaceProperty
         else -> throw Exception("Unsupported tab name ${previousTab.text}")
     }
 
@@ -284,8 +302,15 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         npcList.on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
         handleEmptySearchField(searchNpcField)
     }
-
-    private fun handleEmptySearchField(searchField: TextField) {
+    private fun configureInterfacesList() {
+        val filteredInterfaces = FilteredList(interfaces) { true }
+        searchInterfaceField.configureSearchFilter(filteredInterfaces)
+        val sortedInterfaces = SortedList(filteredInterfaces, Comparator.comparingInt { it.idProperty.get() })
+        interfaceList.items = sortedInterfaces
+        interfaceList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
+        interfaceList.on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
+    }
+    fun handleEmptySearchField(searchField: TextField) {
         searchField.textProperty().addListener { _: ObservableValue<out String?>?, oldValue: String?, newValue: String? ->
             if (newValue != null && newValue.isEmpty() && oldValue != null && !oldValue.isEmpty()) {
                 modelController.filteredModels.setPredicate { true }

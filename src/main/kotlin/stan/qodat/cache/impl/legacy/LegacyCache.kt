@@ -40,6 +40,18 @@ object LegacyCache : Cache("Legacy") {
         frameHash
     )!!
 
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
+        return emptyArray()
+    }
+
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
+        return emptyMap()
+    }
+
+    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
+        TODO("Not yet implemented")
+    }
+
     override fun getModelDefinition(id: String) = LegacyModelStorage.getModel(
         Properties.legacyCachePath.get(),
         id

@@ -69,7 +69,7 @@ class ModelController : Initializable {
 
     fun enableDragAndDrop() {
         modelListView.enableDragAndDrop(
-            toFile = { QodatCache.encode(this) }, // currently only support json
+            toFile = { QodatCache.encode(this).file }, // currently only support json
             fromFile = { Model.fromFile(this) },
             onDropFrom = {
                 val syncPath = syncPath.get()

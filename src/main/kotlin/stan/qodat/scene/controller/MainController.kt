@@ -2,6 +2,7 @@ package stan.qodat.scene.controller
 
 import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
+import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.concurrent.Task
@@ -20,10 +21,7 @@ import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.layout.AutoScaleSubScenePane
-import stan.qodat.util.bind
-import stan.qodat.util.createDragSpace
-import stan.qodat.util.createSelectTabListener
-import stan.qodat.util.setAndBind
+import stan.qodat.util.*
 import java.net.URL
 import java.util.*
 

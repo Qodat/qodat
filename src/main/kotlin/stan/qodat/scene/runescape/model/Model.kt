@@ -16,7 +16,8 @@ import javafx.scene.shape.Sphere
 import kotlinx.serialization.json.decodeFromStream
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
-import stan.qodat.cache.CacheEncoder
+import stan.qodat.cache.EncodeResult
+import stan.qodat.cache.Encoder
 import stan.qodat.cache.definition.ModelDefinition
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
@@ -42,7 +43,7 @@ class Model(label: String,
         ViewNodeProvider,
         SceneNodeProvider,
         TreeItemProvider,
-        CacheEncoder {
+        Encoder {
 
     private lateinit var sceneGroup: Group
     private lateinit var sceneNode: Node
@@ -194,7 +195,7 @@ class Model(label: String,
         return treeItem
     }
 
-    override fun encode(format: Cache) : File {
+    override fun encode(format: Cache) : EncodeResult {
         return format.encode(this)
     }
 

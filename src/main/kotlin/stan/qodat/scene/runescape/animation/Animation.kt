@@ -15,7 +15,7 @@ import stan.export.mp4.AnimationToMp4Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.Cache
-import stan.qodat.cache.CacheEncoder
+import stan.qodat.cache.Encoder
 import stan.qodat.cache.definition.AnimationDefinition
 import stan.qodat.javafx.menu
 import stan.qodat.javafx.menuItem
@@ -39,7 +39,7 @@ class Animation(
     label: String,
     private val definition: AnimationDefinition,
     private val cache: Cache
-) : Transformer<AnimationFrame>, Searchable, ViewNodeProvider, CacheEncoder {
+) : Transformer<AnimationFrame>, Searchable, ViewNodeProvider, Encoder {
 
     private lateinit var frames : ObservableList<AnimationFrame>
     private lateinit var skeletons : ObservableMap<Int, AnimationSkeleton>
@@ -110,30 +110,30 @@ class Animation(
                 label.contextMenu = ContextMenu().apply {
                     menu("export") {
                         menuItem("GIF") {
-                            Qodat.mainController.executeBackgroundTasks(AnimationToGifTask(
-                                exportPath = Properties.exportsPath.get(),
-                                scene = SubScene3D.subSceneProperty.get(),
-                                animationPlayer = SubScene3D.animationPlayer,
-                                animation = this@Animation
-                            ))
+                            Qodat.mainController.executeBackgroundTasks(
+                                AnimationToGifTask(
+                                    exportPath = Properties.exportsPath.get(),
+                                    scene = SubScene3D.subSceneProperty.get(),
+                                    animationPlayer = SubScene3D.animationPlayer,
+                                    animation = this@Animation
+                                )
+                            )
                         }
                         menuItem("mp4") {
-                            Qodat.mainController.executeBackgroundTasks(AnimationToMp4Task(
-                                exportPath = Properties.exportsPath.get(),
-                                scene = SubScene3D.subSceneProperty.get(),
-                                animationPlayer = SubScene3D.animationPlayer,
-                                animation = this@Animation
-                            ))
+                            Qodat.mainController.executeBackgroundTasks(
+                                AnimationToMp4Task(
+                                    exportPath = Properties.exportsPath.get(),
+                                    scene = SubScene3D.subSceneProperty.get(),
+                                    animationPlayer = SubScene3D.animationPlayer,
+                                    animation = this@Animation
+                                )
+                            )
                         }
                     }
                 }
             }
         }
         return viewBox
-    }
-
-    override fun encode(format: Cache) : File {
-        throw UnsupportedEncodingException()
     }
 
     companion object {

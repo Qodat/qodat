@@ -2,7 +2,8 @@ package stan.qodat.scene.runescape.entity
 
 import stan.qodat.Properties
 import stan.qodat.cache.Cache
-import stan.qodat.cache.CacheEncoder
+import stan.qodat.cache.EncodeResult
+import stan.qodat.cache.Encoder
 import stan.qodat.cache.definition.ObjectDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
@@ -19,9 +20,9 @@ class Object(
     cache: Cache = OldschoolCacheRuneLite,
     definition: ObjectDefinition,
     animationProvider: ObjectDefinition.() -> Array<Animation>
-) : AnimatedEntity<ObjectDefinition>(cache, definition, animationProvider), CacheEncoder {
+) : AnimatedEntity<ObjectDefinition>(cache, definition, animationProvider), Encoder {
 
-    override fun encode(format: Cache) : File {
+    override fun encode(format: Cache) : EncodeResult {
         throw UnsupportedEncodingException()
     }
 

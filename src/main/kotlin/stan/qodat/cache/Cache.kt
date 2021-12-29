@@ -1,19 +1,19 @@
 package stan.qodat.cache
 
 import stan.qodat.cache.definition.*
-import stan.qodat.scene.runescape.entity.NPC
-import java.io.File
 import java.io.UnsupportedEncodingException
 
 /**
- * TODO: add documentation
+ * This represents a cache plugin which can be used to define encoding/decoding operations.
+ *
+ * @param name the name of the cache
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
 abstract class Cache(val name: String) {
 
-    open fun encode(any: Any) : File {
+    open fun encode(any: Any) : EncodeResult {
         throw UnsupportedEncodingException()
     }
 
@@ -32,6 +32,12 @@ abstract class Cache(val name: String) {
     abstract fun getAnimationSkeletonDefinition(frameHash: Int) : AnimationSkeletonDefinition
 
     abstract fun getFrameDefinition(frameHash: Int) : AnimationFrameDefinition?
+
+    abstract fun getInterface(groupId: Int): Array<InterfaceDefinition>
+
+    abstract fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>>
+
+    abstract fun getSprite(groupId: Int, frameId: Int): SpriteDefinition
 
     open fun add(any: Any) {
         TODO("not implemented")

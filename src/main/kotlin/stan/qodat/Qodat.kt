@@ -1,9 +1,11 @@
 package stan.qodat
 
 import javafx.application.Application
+import javafx.beans.property.SimpleObjectProperty
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
+import javafx.scene.SubScene
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
@@ -12,6 +14,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import stan.qodat.cache.impl.legacy.LegacyCache
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
+import stan.qodat.scene.AbstractSubScene
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.EventLogController
 import stan.qodat.scene.controller.MainController
@@ -91,6 +94,8 @@ class Qodat : Application() {
         lateinit var mainController : MainController
 
         lateinit var stage: Stage
+
+        val subSceneProperty = SimpleObjectProperty<AbstractSubScene>()
 
         /**
          * Starting point of the application.
