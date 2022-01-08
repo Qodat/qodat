@@ -1,10 +1,7 @@
 package stan.qodat.scene.controller
 
 import javafx.beans.binding.Bindings
-import javafx.beans.property.ObjectProperty
-import javafx.beans.property.SimpleDoubleProperty
-import javafx.beans.property.SimpleIntegerProperty
-import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.*
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -30,7 +27,6 @@ import stan.qodat.Qodat
 import stan.qodat.cache.Cache
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.qodat.QodatCache
-import stan.qodat.scene.SubScene2D
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
@@ -42,6 +38,8 @@ import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
+import kotlin.Comparator
 
 /**
  * TODO: add documentation
@@ -82,6 +80,9 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
 
+    lateinit var onEntitySelected: (Entity<*>) -> Unit
+
+
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
         VBox.setVgrow(itemList, Priority.ALWAYS)
@@ -101,23 +102,101 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             )
         )
 
-        currentSelectedItemProperty.set(itemList.selectionModel.selectedItem)
-        currentSelectedNpcProperty.set(npcList.selectionModel.selectedItem)
-        currentSelectedObjectProperty.set(objectList.selectionModel.selectedItem)
-        currentSelectedInterfaceProperty.set(interfaceList.selectionModel.selectedItem)
+        configureTabPane()
+        configureModelAndAnimationController()
 
-        tabPane.selectionModel.selectedItemProperty().addListener { observableValue, previousTab, newTab ->
-            val newNode = getNodeProperty(newTab)
-            val previousNode = getNodeProperty(previousTab)
-            if (previousNode.isNotNull.get())
-                onUnselectedEvent.handle(ViewNodeListView.UnselectedEvent(previousNode.get(),
-                    hasNewValueOfSameType = false,
-                    causedByTabSwitch = true
-                ))
-            if (newNode.isNotNull.get())
-                onSelectedEvent.handle(ViewNodeListView.SelectedEvent(newNode.get()))
+        configureSortComboBox()
+
+        npcList.configure(npcs, searchNpcField)
+        itemList.configure(items, searchItemField)
+        objectList.configure(objects, searchObjectField)
+        interfaceList.configure(interfaces, searchInterfaceField)
+
+        cacheProperty().addListener { _, _, newValue ->
+
+            val counter = AtomicInteger(2)
+
+            CacheAssetLoader(newValue, animationController).run {
+                loadAnimations {
+                    animationController.animations.setAll(it)
+                }
+                loadNpcs {
+                    npcs.setAll(it)
+                    if (counter.decrementAndGet() == 0)
+                        loadLastSelectedAnimation()
+                    handleLastSelectedEntity(it, npcList)
+                }
+                loadObjects {
+                    objects.setAll(it)
+                    if (counter.decrementAndGet() == 0)
+                        loadLastSelectedAnimation()
+                    handleLastSelectedEntity(it, objectList)
+                }
+                loadItems {
+                    items.setAll(it)
+                    handleLastSelectedEntity(it, itemList)
+                }
+                interfaces.setAll(newValue.getRootInterfaces().map {
+                    InterfaceGroup(newValue, it.key, it.value)
+                })
+                interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
+            }
         }
+    }
 
+    private fun loadLastSelectedAnimation() {
+        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
+        animationController.animationsListView.selectionModel.select(animationToSelect)
+    }
+
+    private inline fun<reified T : Entity<*>> handleLastSelectedEntity(
+        it: List<T>,
+        view: ViewNodeListView<T>,
+    ) {
+        val selectedTabNodeProperty = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it) }
+        val selectedEntityNameProperty = when (T::class) {
+            NPC::class -> Properties.selectedNpcName
+            Item::class -> Properties.selectedItemName
+            Object::class -> Properties.selectedObjectName
+            else -> throw Exception("Unsupported entity type ${T::class}")
+        }
+        val selectedEntityProperty = when (T::class) {
+            NPC::class -> currentSelectedNpcProperty
+            Item::class -> currentSelectedItemProperty
+            Object::class -> currentSelectedObjectProperty
+            else -> throw Exception("Unsupported entity type ${T::class}")
+        }
+        val entity = it.lastSelectedEntity(selectedEntityNameProperty)
+        if (selectedTabNodeProperty == selectedEntityProperty)
+            view.selectionModel.select(entity)
+        else
+            selectedEntityProperty.set(entity)
+    }
+
+    private fun<T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty) : T? {
+        val lastSelectedName = stringProperty.get()?:""
+        return if (lastSelectedName.isBlank())
+            null
+        else
+            find { lastSelectedName == it.getName() }
+    }
+
+
+    private fun configureSortComboBox() {
+        sortMethodBox.items.addAll(SortType.values())
+        sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
+            (npcList.items as SortedList).comparator = when (get()!!) {
+                SortType.NAME -> Comparator.comparing {
+                    it.getName()
+                }
+                SortType.ID -> Comparator.comparing {
+                    it.definition.name
+                }
+            }
+        }
+    }
+
+    private fun configureModelAndAnimationController() {
         try {
 
             val animationLoader = FXMLLoader(Qodat::class.java.getResource("animation.fxml"))
@@ -127,7 +206,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
             val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
             val modelView = modelLoader.load<VBox>()
-//            modelView.styleClass.add("border-left")
+    //            modelView.styleClass.add("border-left")
             modelController = modelLoader.getController()
             modelController.modelListView.enableDragAndDrop(
                 toFile = {
@@ -160,33 +239,49 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
 
-        configureNpcList()
-        configureObjectList()
-        configureItemList()
-        configureInterfacesList()
-
-        sortMethodBox.items.addAll(SortType.values())
-        sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
-            (npcList.items as SortedList).comparator = when (get()!!){
-                SortType.NAME -> Comparator.comparing {
-                    it.getName()
-                }
-                SortType.ID -> Comparator.comparing {
-                    it.definition.name
+    private fun configureTabPane() {
+        val lastSelectedTab = tabPane.tabs.find { it.text == Properties.selectedViewerTab.get() }
+        tabPane.selectionModel.select(lastSelectedTab)
+        tabPane.selectionModel.selectedItemProperty().addListener { _, previousTab, newTab ->
+            Properties.selectedViewerTab.set(newTab?.text)
+            val newNode = getNodeProperty(newTab)
+            val previousNode = getNodeProperty(previousTab)
+            if (previousNode.isNotNull.get())
+                onUnselectedEvent.handle(
+                    ViewNodeListView.UnselectedEvent(
+                        previousNode.get(),
+                        hasNewValueOfSameType = false,
+                        causedByTabSwitch = true
+                    )
+                )
+            if (newNode.isNotNull.get()) {
+                val selectedNode = newNode.get()
+//                onSelectedEvent.handle(ViewNodeListView.SelectedEvent(selectedNode))
+                when(selectedNode) {
+                    is NPC -> npcList.run {
+                        selectionModel.clearSelection()
+                        selectionModel.select(selectedNode)
+                        scrollTo(selectedNode)
+                    }
+                    is Item -> itemList.run {
+                        selectionModel.clearSelection()
+                        selectionModel.select(selectedNode)
+                        scrollTo(selectedNode)
+                    }
+                    is Object -> objectList.run {
+                        selectionModel.clearSelection()
+                        selectionModel.select(selectedNode)
+                        scrollTo(selectedNode)
+                    }
+                    is InterfaceGroup -> interfaceList.run {
+                        selectionModel.clearSelection()
+                        selectionModel.select(selectedNode)
+                        scrollTo(selectedNode)
+                    }
                 }
             }
-        }
-
-        cacheProperty().addListener { _, _, newValue ->
-            val loader = CacheAssetLoader(newValue, npcs, objects, items, itemList, objectList, npcList, animationController)
-            loader.loadAnimations()
-            loader.loadNpcs()
-            loader.loadObjects()
-            loader.loadItems()
-            interfaces.setAll(newValue.getRootInterfaces().map {
-                InterfaceGroup(newValue, it.key, it.value)
-            })
         }
     }
 
@@ -215,6 +310,21 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     override fun getViewNode() : SplitPane = root
 
+
+    private inline fun<reified T : Searchable> ListView<T>.configure(
+        backingList: ObservableList<T>,
+        searchField: TextField? = null,
+        sortComparator: Comparator<T> = Comparator.comparing { it.getName() },
+    ) {
+        val filteredList = FilteredList(backingList) { true }
+        items = SortedList(filteredList, sortComparator)
+        on(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent::handle)
+        on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
+        if (searchField != null) {
+            searchField.configureSearchFilter(filteredList)
+            handleEmptySearchField(searchField)
+        }
+    }
     private val onUnselectedEvent = EventHandler<ViewNodeListView.UnselectedEvent> { event ->
         val node = event.viewNodeProvider
 
@@ -223,12 +333,10 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
         if (node is Entity<*>) {
             if (!event.hasNewValueOfSameType) {
-                node.property().set("")
                 modelController.models.clear()
             }
             if (node is AnimatedEntity<*>) {
                 if (!event.hasNewValueOfSameType) {
-                    node.property().set("")
                     animationController.animationsListView.items = animationController.filteredAnimations
                     animationController.filteredAnimations.setPredicate { true }
                 }
@@ -244,6 +352,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 is NPC -> currentSelectedNpcProperty.set(null)
                 is Item -> currentSelectedItemProperty.set(null)
                 is Object -> currentSelectedObjectProperty.set(null)
+                is InterfaceGroup -> currentSelectedObjectProperty.set(null)
             }
         }
     }
@@ -260,6 +369,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             modelController.models.setAll(*newNode.getModels())
             if (newNode is AnimatedEntity<*>)
                 animationController.animationsListView.items = FXCollections.observableArrayList(*newNode.getAnimations())
+            if (this::onEntitySelected.isInitialized)
+                onEntitySelected(newNode)
         }
 
         if (newNode is Transformable)
@@ -269,50 +380,13 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             is NPC -> currentSelectedNpcProperty.set(newNode)
             is Item -> currentSelectedItemProperty.set(newNode)
             is Object -> currentSelectedObjectProperty.set(newNode)
+            is InterfaceGroup -> currentSelectedInterfaceProperty.set(newNode)
         }
     }
 
-    private fun configureItemList() {
-        val filteredItems = FilteredList(items) { true }
-        searchItemField.configureSearchFilter(filteredItems)
-        val sortedITEMs = SortedList(filteredItems)
-        sortedITEMs.comparator = Comparator.comparing { it.getName() }
-        itemList.items = sortedITEMs
-        itemList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
-        itemList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
-        handleEmptySearchField(searchItemField)
-    }
-    private fun configureObjectList() {
-        val filteredObjects = FilteredList(objects) { true }
-        searchObjectField.configureSearchFilter(filteredObjects)
-        val sortedObjects = SortedList(filteredObjects)
-        sortedObjects.comparator = Comparator.comparing { it.getName() }
-        objectList.items = sortedObjects
-        objectList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
-        objectList.addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
-        handleEmptySearchField(searchObjectField)
-    }
-    private fun configureNpcList() {
-        val filteredNPCs = FilteredList(npcs) { true }
-        searchNpcField.configureSearchFilter(filteredNPCs)
-        val sortedNPCs = SortedList(filteredNPCs)
-        sortedNPCs.comparator = Comparator.comparing { it.getName() }
-        npcList.items = sortedNPCs
-        npcList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
-        npcList.on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
-        handleEmptySearchField(searchNpcField)
-    }
-    private fun configureInterfacesList() {
-        val filteredInterfaces = FilteredList(interfaces) { true }
-        searchInterfaceField.configureSearchFilter(filteredInterfaces)
-        val sortedInterfaces = SortedList(filteredInterfaces, Comparator.comparingInt { it.idProperty.get() })
-        interfaceList.items = sortedInterfaces
-        interfaceList.addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
-        interfaceList.on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
-    }
-    fun handleEmptySearchField(searchField: TextField) {
+    private fun handleEmptySearchField(searchField: TextField) {
         searchField.textProperty().addListener { _: ObservableValue<out String?>?, oldValue: String?, newValue: String? ->
-            if (newValue != null && newValue.isEmpty() && oldValue != null && !oldValue.isEmpty()) {
+            if (newValue != null && newValue.isEmpty() && oldValue != null && oldValue.isNotEmpty()) {
                 modelController.filteredModels.setPredicate { true }
                 animationController.filteredAnimations.setPredicate { true }
             }

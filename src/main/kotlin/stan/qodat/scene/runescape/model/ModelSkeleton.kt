@@ -278,11 +278,11 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         modelDefinition.getTextureTriangleVertexIndices3()!![face].toInt())
 
     fun getPoints(face: Int) = getVertices(face).let { (v1, v2, v3) ->
-        Triple(
-            Point3F(getX(v1).toFloat(), getY(v1).toFloat(), getZ(v1).toFloat()),
-            Point3F(getX(v2).toFloat(), getY(v2).toFloat(), getZ(v2).toFloat()),
-            Point3F(getX(v3).toFloat(), getY(v3).toFloat(), getZ(v3).toFloat()))
+        Triple(getPoint(v1), getPoint(v2), getPoint(v3))
     }
+
+    fun getPoint(vertex: Int) =
+        Point3F(getX(vertex).toFloat(), getY(vertex).toFloat(), getZ(vertex).toFloat())
 
     fun getCenterPoint(face: Int) = getPoints(face).let { (p1, p2, p3) ->
         Point3D(

@@ -618,4 +618,30 @@ public class RS2ModelDefinition implements ModelDefinition
 	public FaceNormal[] getFaceNormals() {
 		return faceNormals;
 	}
+
+
+	public void setFaceTextures(short[] faceTextures) {
+		this.faceTextures = faceTextures;
+	}
+
+	public void setFaceTextureConfigs(byte[] faceTextureConfigs) {
+		this.faceTextureConfigs = faceTextureConfigs;
+	}
+
+	public void setTextureRenderTypes(byte[] textureRenderTypes) {
+		this.textureRenderTypes = textureRenderTypes;
+	}
+
+	public void setTextureTriangleVertexIndices1(short[] textureTriangleVertexIndices1) {
+		this.textureTriangleVertexIndices1 = textureTriangleVertexIndices1;
+	}
+
+	public void setTextureTriangleVertexIndices2(short[] textureTriangleVertexIndices2) {
+		this.textureTriangleVertexIndices2 = textureTriangleVertexIndices2;
+	}
+
+	public void setTextureTriangleVertexIndices3(short[] textureTriangleVertexIndices3) {
+		this.textureTriangleVertexIndices3 = textureTriangleVertexIndices3;
+	}
+
 }

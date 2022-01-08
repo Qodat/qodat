@@ -52,6 +52,10 @@ object LegacyCache : Cache("Legacy") {
         TODO("Not yet implemented")
     }
 
+    override fun getTexture(id: Int): TextureDefinition {
+        TODO("Not yet implemented")
+    }
+
     override fun getModelDefinition(id: String) = LegacyModelStorage.getModel(
         Properties.legacyCachePath.get(),
         id

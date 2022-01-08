@@ -8,12 +8,10 @@ import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
-import javafx.scene.shape.Mesh
 import javafx.scene.shape.MeshView
-import stan.qodat.Properties
-import stan.qodat.util.BABY_BLUE
+import stan.qodat.scene.paint.TextureMaterial
+import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
-import java.util.function.Consumer
 
 /**
  * TODO: add documentation
@@ -25,29 +23,52 @@ import java.util.function.Consumer
 class ModelFaceMesh(val face: Int, material: Material) : ModelMesh() {
 
     private lateinit var meshView: MeshView
-    private lateinit var previousMaterial: Material
+    val previousMaterialProperty = SimpleObjectProperty<Material>()
     val visibleProperty = SimpleBooleanProperty()
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
     val materialProperty = SimpleObjectProperty(material)
-    val selectProperty = SimpleObjectProperty<Consumer<ModelFaceMesh>?>(null)
-
+    val editableProperty = SimpleObjectProperty<(EditContext.() -> Unit)?>(null)
+    private var textured = false
     private val mouseEventHandler = EventHandler<MouseEvent> {
-        if (it.eventType == MouseEvent.MOUSE_ENTERED){
-            previousMaterial = meshView.material
-            meshView.material = PhongMaterial(BABY_BLUE)
-        }
-        if (it.eventType == MouseEvent.MOUSE_EXITED)
-            meshView.material = previousMaterial
-        if (it.eventType == MouseEvent.MOUSE_CLICKED){
-            selectProperty.get()?.accept(this)
+        editableProperty.get()?.invoke(EditContext(this, it))
+    }
+
+    init {
+        materialProperty.onInvalidation {
+            if (get() is TextureMaterial) {
+
+            }
         }
     }
 
-    override fun getSceneNode() : MeshView {
+    class EditContext(val mesh: ModelFaceMesh, val mouseEvent: MouseEvent) {
+
+        val material: PhongMaterial
+            get() = mesh.materialProperty.get() as PhongMaterial
+
+        fun changeMaterial(newMaterial: Material) {
+            if (newMaterial is TextureMaterial) {
+                if (!mesh.textured){
+
+                }
+            }
+            mesh.previousMaterialProperty.set(mesh.materialProperty.get())
+            mesh.materialProperty.set(newMaterial)
+        }
+
+        fun revertMaterialChange() {
+            if (mesh.previousMaterialProperty.get() != null) {
+                mesh.materialProperty.set(mesh.previousMaterialProperty.get())
+                mesh.previousMaterialProperty.set(null)
+            }
+        }
+    }
+
+    override fun getSceneNode(): MeshView {
         if (!this::meshView.isInitialized) {
             meshView = MeshView(this)
-            selectProperty.addListener { _, oldValue, newValue ->
+            editableProperty.addListener { _, oldValue, newValue ->
                 if (oldValue != null)
                     meshView.removeEventHandler(MouseEvent.ANY, mouseEventHandler)
                 if (newValue != null)

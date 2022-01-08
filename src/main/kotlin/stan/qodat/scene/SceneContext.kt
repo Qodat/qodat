@@ -63,15 +63,23 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
     }
 
     fun addNode(nodeProvider: SceneNodeProvider) {
-        val sceneNode = nodeProvider.getSceneNode()
-        nodeProviderMap[sceneNode] = nodeProvider
-        group.children.add(sceneNode)
+        try {
+            val sceneNode = nodeProvider.getSceneNode()
+            nodeProviderMap[sceneNode] = nodeProvider
+            group.children.add(sceneNode)
+        } catch (e: Exception) {
+            Qodat.logException("Failed to add node {$nodeProvider} to scene $name", e)
+        }
     }
 
     fun removeNode(nodeProvider: SceneNodeProvider) {
-        val sceneNode = nodeProvider.getSceneNode()
-        group.children.remove(sceneNode)
-        nodeProviderMap.remove(sceneNode)
+        try {
+            val sceneNode = nodeProvider.getSceneNode()
+            group.children.remove(sceneNode)
+            nodeProviderMap.remove(sceneNode)
+        } catch (e: Exception) {
+            Qodat.logException("Failed to remove node {$nodeProvider} from scene $name", e)
+        }
     }
 
     fun getModels(): List<Model> {

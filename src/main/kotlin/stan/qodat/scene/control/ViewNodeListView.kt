@@ -2,6 +2,7 @@ package stan.qodat.scene.control
 
 import javafx.event.Event
 import javafx.event.EventType
+import javafx.scene.control.ContextMenu
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
 import javafx.scene.image.Image
@@ -12,6 +13,7 @@ import javafx.util.Callback
 import stan.qodat.util.ViewNodeProvider
 import java.io.File
 
+
 /**
  * Represents a [ListView] containing [nodes][N].
  *
@@ -20,6 +22,8 @@ import java.io.File
  */
 open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
 
+    lateinit var contextMenuBuilder: (N) -> ContextMenu
+
     init {
         cellFactory = Callback {
             val listCell = object : ListCell<N>() {
@@ -27,18 +31,27 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
                     super.updateItem(item, empty)
                     if (item != null)
                         graphic = item.getViewNode()
+                    else
+                        graphic = null
+                }
+            }
+            listCell.itemProperty().addListener { _, n, n2 ->
+                if (this@ViewNodeListView::contextMenuBuilder.isInitialized){
+                    if (n2 != null) {
+                        listCell.contextMenu = contextMenuBuilder(n2)
+                    } else
+                        listCell.contextMenu = null
                 }
             }
             listCell.addEventFilter(MouseEvent.MOUSE_PRESSED) { event: MouseEvent ->
                 if (event.isPrimaryButtonDown && !event.isSecondaryButtonDown && !listCell.isEmpty) {
-                    requestFocus()
                     val index = listCell.index
                     if (selectionModel.selectedIndices.contains(index)) {
+                        requestFocus()
                         selectionModel.clearSelection(index)
                         fireEvent(UnselectedEvent(listCell.item, false, false))
-                    } else
-                        selectionModel.select(index)
-                    event.consume()
+                        event.consume()
+                    }
                 }
             }
             return@Callback listCell

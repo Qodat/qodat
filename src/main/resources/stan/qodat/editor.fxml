@@ -11,11 +11,47 @@
 <?import stan.qodat.scene.control.ViewNodeListView?>
 
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ColorPicker?>
+<?import javafx.scene.image.ImageView?>
 <SplitPane fx:id="root" dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.EditorController">
    <stylesheets>
       <URL value="@style.css" />
    </stylesheets>
    <items>
+      <TabPane fx:id="editTabPane">
+         <tabs>
+            <Tab text="Recolor">
+               <content>
+                  <VBox>
+                     <children>
+                        <Label text="Colors"/>
+                        <ListView fx:id="colorsList">
+                        </ListView>
+                        <Label text="Brushes"/>
+                        <ColorPicker fx:id="brushColorPicker"/>
+                        <Button text="Save Changes" fx:id="saveChangesButton"/>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            <Tab text="Textures">
+               <content>
+                  <VBox>
+                     <children>
+                        <Label text="Textures"/>
+                        <Label fx:id="selectedFaceId"/>
+                        <Label fx:id="hoveredFaceId"/>
+                        <ImageView fx:id="selectedTextureImage"/>
+                        <ListView fx:id="textureList">
+                        </ListView>
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+         </tabs>
+      </TabPane>
       <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
       <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
          <tabs>

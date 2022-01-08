@@ -7,4 +7,7 @@ package stan.qodat.cache.definition
  * @since   30/01/2021
  */
 interface TextureDefinition {
+    var id: Int
+    val fileIds: IntArray
+    var pixels: IntArray
 }

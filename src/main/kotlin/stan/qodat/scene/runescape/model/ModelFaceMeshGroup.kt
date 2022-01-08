@@ -28,11 +28,13 @@ class ModelFaceMeshGroup(private val model: Model) : ModelSkin {
     val visibleProperty = SimpleBooleanProperty()
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
+    val editableProperty = SimpleObjectProperty<(ModelFaceMesh.EditContext.() -> Unit)?>(null)
 
     init {
         visibleProperty.setAndBind(model.visibleProperty)
         drawModeProperty.setAndBind(model.drawModeProperty)
         cullFaceProperty.setAndBind(model.cullFaceProperty)
+        editableProperty.setAndBind(model.editProperty)
     }
 
     override fun updatePoints(skeleton: ModelSkeleton) {
@@ -66,9 +68,10 @@ class ModelFaceMeshGroup(private val model: Model) : ModelSkin {
             val material = materials[face]
             val mesh = ModelFaceMesh(face, material)
 
-            mesh.visibleProperty.setAndBind(model.visibleProperty)
-            mesh.cullFaceProperty.setAndBind(model.cullFaceProperty)
-            mesh.drawModeProperty.setAndBind(model.drawModeProperty)
+            mesh.visibleProperty.setAndBind(visibleProperty)
+            mesh.cullFaceProperty.setAndBind(cullFaceProperty)
+            mesh.drawModeProperty.setAndBind(drawModeProperty)
+            mesh.editableProperty.setAndBind(editableProperty)
 
             val vertexIndex1 = definition.getFaceVertexIndices1()[face].let {
                 mesh.addVertex(

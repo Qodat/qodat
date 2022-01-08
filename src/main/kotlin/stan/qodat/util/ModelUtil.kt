@@ -1,7 +1,7 @@
 package stan.qodat.util
 
+import com.sun.javafx.util.Utils
 import javafx.scene.paint.Color
-import kotlin.experimental.and
 
 /**
  * TODO: add documentation
@@ -11,6 +11,19 @@ import kotlin.experimental.and
  * @version 1.0
  */
 object ModelUtil {
+
+    fun Color.encode(): Int {
+        val hsb = java.awt.Color.RGBtoHSB(
+            (red*255.0).toInt(),
+            (green*255.0).toInt(),
+            (blue*255.0).toInt(),
+            null
+        )
+        return hsb[0].times(63).toInt().shl(10) +
+                hsb[1].times(7).toInt().shl(7) +
+                hsb[2].times(127).toInt()
+    }
+
     fun hsbToColor(hsb: Short, alpha: Byte?) = hsbToColor(hsb.toInt(), alpha)
 
     fun hsbToColor(hsb: Int, alpha: Byte?): Color {
@@ -19,9 +32,9 @@ object ModelUtil {
         if(transparency == null || transparency <= 0)
             transparency = 255.0
 
-        val hue = hsb shr 10 and 0x3f
-        val sat = hsb shr 7 and 0x07
-        val bri = hsb and 0x7f
+        val hue = (hsb shr 10) and 0x3f
+        val sat = (hsb shr 7) and 0x07
+        val bri = (hsb and 0x7f)
         val awtCol = java.awt.Color.getHSBColor(hue.toFloat() / 63, sat.toFloat() / 7, bri.toFloat() / 127)
         val r = awtCol.red / 255.0
         val g = awtCol.green / 255.0

@@ -39,6 +39,8 @@ abstract class Cache(val name: String) {
 
     abstract fun getSprite(groupId: Int, frameId: Int): SpriteDefinition
 
+    abstract fun getTexture(id: Int): TextureDefinition
+
     open fun add(any: Any) {
         TODO("not implemented")
     }

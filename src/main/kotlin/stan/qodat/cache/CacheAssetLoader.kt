@@ -2,21 +2,17 @@ package stan.qodat.cache
 
 import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
-import javafx.beans.property.StringProperty
-import javafx.collections.ObservableList
 import javafx.concurrent.Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.controller.AnimationController
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.entity.Item
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.entity.Object
-import stan.qodat.util.Searchable
 import stan.qodat.util.createNpcAnimsJsonDir
 import stan.qodat.util.createObjectAnimsJsonDir
 import java.util.concurrent.atomic.AtomicInteger
@@ -24,24 +20,18 @@ import java.util.stream.Stream
 
 class CacheAssetLoader(
     private val cache: Cache,
-    private val npcs: ObservableList<NPC>,
-    private val objects: ObservableList<Object>,
-    private val items: ObservableList<Item>,
-    private val itemList: ViewNodeListView<Item>,
-    private val objectList: ViewNodeListView<Object>,
-    private val npcList: ViewNodeListView<NPC>,
     private val animationController: AnimationController
 ) {
 
-    fun loadAnimations() {
-        Qodat.mainController.executeBackgroundTasks(createLoadAnimationsTask(cache))
+    fun loadAnimations(onCompleted: (List<Animation>) -> Unit) {
+        Qodat.mainController.executeBackgroundTasks(createLoadAnimationsTask(cache, onCompleted))
     }
 
-    fun loadItems() {
-        Qodat.mainController.executeBackgroundTasks(createItemsLoadTask(cache))
+    fun loadItems(onCompleted: (List<Item>) -> Unit) {
+        Qodat.mainController.executeBackgroundTasks(createItemsLoadTask(cache, onCompleted))
     }
 
-    fun loadObjects() {
+    fun loadObjects(onCompleted: (List<Object>) -> Unit) {
         if (cache is OldschoolCacheRuneLite) {
             val objectAnimsDir = Properties.osrsCachePath.get().resolve("object_anims").toFile()
             if (!objectAnimsDir.exists()) {
@@ -52,16 +42,16 @@ class CacheAssetLoader(
                     objectManager = OldschoolCacheRuneLite.objectManager
                 )
                 task.setOnSucceeded {
-                    Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache))
+                    Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache, onCompleted))
                 }
                 Qodat.mainController.executeBackgroundTasks(task)
                 return
             }
         }
-        Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache))
+        Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache, onCompleted))
     }
 
-    fun loadNpcs() {
+    fun loadNpcs(onCompleted: (List<NPC>) -> Unit) {
         if (cache is OldschoolCacheRuneLite) {
             val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
             if (!npcAnimsDir.exists()) {
@@ -72,16 +62,16 @@ class CacheAssetLoader(
                     npcManager = OldschoolCacheRuneLite.npcManager
                 )
                 task.setOnSucceeded {
-                    Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache))
+                    Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache, onCompleted))
                 }
                 Qodat.mainController.executeBackgroundTasks(task)
                 return
             }
         }
-        Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache))
+        Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache, onCompleted))
     }
 
-    private fun createLoadAnimationsTask(cache: Cache) = object : Task<Void?>() {
+    private fun createLoadAnimationsTask(cache: Cache, onCompleted: (List<Animation>) -> Unit) = object : Task<Void?>() {
         override fun call(): Void? {
             val animationDefinitions = cache.getAnimationDefinitions()
             val animations = ArrayList<Animation>()
@@ -97,62 +87,25 @@ class CacheAssetLoader(
             }
 
             Platform.runLater {
-                animationController.animations.setAll(animations)
+                onCompleted(animations)
             }
             return null
         }
     }
-    private fun createObjectLoadTask(cache: Cache) = createLoadTask(
+    private fun createObjectLoadTask(cache: Cache, onCompleted: (List<Object>) -> Unit) = createLoadTask(
         definitions = cache.getObjects(),
         mapper = { Object(cache, this, animationController) }
-    ) {
-        val objectToSelect = lastSelectedEntity(Properties.selectedObjectName)
-        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
-        Platform.runLater {
-            objects.setAll(this)
-            Qodat.mainController.postCacheLoading()
-            if (objectToSelect != null)
-                objectList.selectionModel.select(objectToSelect)
-            if (animationToSelect != null)
-                animationController.animationsListView.selectionModel.select(animationToSelect)
-        }
-    }
-    private fun createNPCLoadTask(cache: Cache) = createLoadTask(
+    ) { Platform.runLater { onCompleted(this) } }
+
+    private fun createNPCLoadTask(cache: Cache, onCompleted: (List<NPC>) -> Unit) = createLoadTask(
         definitions = cache.getNPCs(),
         mapper = { NPC(cache, this, animationController) }
-    ) {
-        val npcToSelect = lastSelectedEntity(Properties.selectedNpcName)
-        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
-        Platform.runLater {
-            npcs.setAll(this)
-            Qodat.mainController.postCacheLoading()
-            if (npcToSelect != null)
-                npcList.selectionModel.select(npcToSelect)
-            if (animationToSelect != null)
-                animationController.animationsListView.selectionModel.select(animationToSelect)
-        }
-    }
+    ) { Platform.runLater { onCompleted(this) } }
 
-    private fun createItemsLoadTask(cache: Cache) = createLoadTask(
+    private fun createItemsLoadTask(cache: Cache, onCompleted: (List<Item>) -> Unit) = createLoadTask(
         definitions = cache.getItems(),
         mapper = { Item(cache, this) })
-    {
-        val itemToSelect = lastSelectedEntity(Properties.selectedItemName)
-        Platform.runLater {
-            items.setAll(this)
-            Qodat.mainController.postCacheLoading()
-            if (itemToSelect != null)
-                itemList.selectionModel.select(itemToSelect)
-        }
-    }
-
-    private fun<T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty) : T? {
-        val lastSelectedName = stringProperty.get()?:""
-        return if (lastSelectedName.isBlank())
-            null
-        else
-            find { lastSelectedName == it.getName() }
-    }
+    { Platform.runLater { onCompleted(this) } }
 
     private inline fun<D : EntityDefinition, reified T : Entity<D>> createLoadTask(
         definitions: Array<D>,

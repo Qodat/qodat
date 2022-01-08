@@ -298,6 +298,14 @@ class RSModelLoader {
         definition.setFaceAlphas(faceAlphas)
         definition.faceRenderPriorities = faceRenderPriorities
         definition.faceRenderTypes = faceRenderTypes
+        if (textureDefinition != null) {
+            definition.setFaceTextures(textureDefinition.textures)
+            definition.setFaceTextureConfigs(textureDefinition.coordinates)
+            definition.setTextureRenderTypes(textureDefinition.renderTypes)
+            definition.setTextureTriangleVertexIndices1(textureDefinition.triangleVertexIndices1)
+            definition.setTextureTriangleVertexIndices2(textureDefinition.triangleVertexIndices2)
+            definition.setTextureTriangleVertexIndices3(textureDefinition.triangleVertexIndices3)
+        }
         return definition
     }
 
@@ -496,6 +504,14 @@ class RSModelLoader {
         definition.faceRenderPriorities = faceRenderPriorities
         definition.faceRenderTypes = faceRenderTypes
 
+        if (textureDefinition != null) {
+            definition.setFaceTextures(textureDefinition.textures)
+            definition.setFaceTextureConfigs(textureDefinition.coordinates)
+            definition.setTextureRenderTypes(textureDefinition.renderTypes)
+            definition.setTextureTriangleVertexIndices1(textureDefinition.triangleVertexIndices1)
+            definition.setTextureTriangleVertexIndices2(textureDefinition.triangleVertexIndices2)
+            definition.setTextureTriangleVertexIndices3(textureDefinition.triangleVertexIndices3)
+        }
         return definition
     }
     private fun loadLowRev(modelId: String, data: ByteArray): ModelDefinition {
@@ -686,7 +702,14 @@ class RSModelLoader {
         definition.setFaceAlphas(faceAlphas)
         definition.faceRenderPriorities = faceRenderPriorities
         definition.faceRenderTypes = faceRenderTypes
-
+        if (textureDefinition != null) {
+            definition.setFaceTextures(textureDefinition.textures)
+            definition.setFaceTextureConfigs(textureDefinition.coordinates)
+            definition.setTextureRenderTypes(textureDefinition.renderTypes)
+            definition.setTextureTriangleVertexIndices1(textureDefinition.triangleVertexIndices1)
+            definition.setTextureTriangleVertexIndices2(textureDefinition.triangleVertexIndices2)
+            definition.setTextureTriangleVertexIndices3(textureDefinition.triangleVertexIndices3)
+        }
         return definition
     }
 

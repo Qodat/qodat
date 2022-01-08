@@ -85,10 +85,12 @@ object Properties {
     val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
     val exportsPath = SimpleObjectProperty(Paths.get("exports"))
 
+    val selectedViewerTab = SimpleStringProperty()
     val selectedNpcName = SimpleStringProperty()
     val selectedObjectName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
+    val selectedInterfaceName = SimpleStringProperty()
 
     val selectedRightTab = SimpleStringProperty()
     val selectedLeftTab = SimpleStringProperty()
@@ -108,6 +110,7 @@ object Properties {
         sessionManager.bindString("last-selected-item-name", selectedItemName)
         sessionManager.bindString("last-selected-object-name", selectedObjectName)
         sessionManager.bindString("last-selected-animation-name", selectedAnimationName)
+        sessionManager.bindString("last-selected-viewer-tab", selectedViewerTab)
         sessionManager.bindString("last-selected-right-tab", selectedRightTab)
         sessionManager.bindString("last-selected-left-tab", selectedLeftTab)
         sessionManager.bindString("last-selected-bottom-tab", selectedBottomTab)

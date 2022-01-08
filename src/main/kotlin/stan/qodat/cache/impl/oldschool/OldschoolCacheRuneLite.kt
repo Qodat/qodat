@@ -7,6 +7,7 @@ import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
+import net.runelite.cache.definitions.providers.SpriteProvider
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
 import stan.qodat.Properties
@@ -58,6 +59,20 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         interfaceManager.load()
         spriteManager = SpriteManager(store)
         spriteManager.load()
+        textureManager = TextureManager(store)
+        textureManager.load()
+    }
+
+    override fun getTexture(id: Int): TextureDefinition {
+        val def = textureManager.findTexture(id)
+        def.method2680(1.0, 128) { spriteId, frameId ->
+            spriteManager.findSprite(spriteId, frameId)
+        }
+        return object : TextureDefinition {
+            override var id: Int = def.id
+            override val fileIds: IntArray = def.fileIds!!
+            override var pixels: IntArray = def.getPixels()
+        }
     }
 
     private val gson = GsonBuilder().create()

@@ -22,5 +22,5 @@ enum class ModelMeshBuildType {
     /**
      * Creates a mesh for each triangle in the model.
      */
-    MESH_PER_FACE,
+    MESH_PER_FACE
 }

@@ -110,6 +110,11 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
         }
     }
 
+    fun rebuildAtlas(){
+        val atlasMaterial = createAtlas(model.modelDefinition)
+        materialProperty.set(atlasMaterial)
+    }
+
     /**
      * Create a new [AtlasMaterial].
      */
@@ -117,7 +122,6 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
         val atlas = AtlasMaterial()
         val faceIterator = (0 until definition.getFaceCount())
         atlas.setColors(faceIterator.map {
-
             ModelUtil.hsbToColor(
                 getColor(definition, it),
                     definition.getFaceAlphas()?.get(it))

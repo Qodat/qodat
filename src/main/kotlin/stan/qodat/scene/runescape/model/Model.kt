@@ -60,6 +60,7 @@ class Model(label: String,
     val buildTypeProperty = SimpleObjectProperty(ModelMeshBuildType.ATLAS)
     val displayFacePriorityLabelsProperty = SimpleBooleanProperty(false)
     val shadingProperty = SimpleBooleanProperty(false)
+    val editProperty = SimpleObjectProperty<(ModelFaceMesh.EditContext.() -> Unit)?>(null)
 
     init {
         buildTypeProperty.onInvalidation {
@@ -71,6 +72,10 @@ class Model(label: String,
         selectedProperty.onInvalidation { addOrRemoveSelectionBoxes(value) }
         displayFacePriorityLabelsProperty.onInvalidation { showOrHidePriorityLabels(value) }
         displayFacePriorityLabelsProperty.setAndBind(Properties.showPriorityLabels, biDirectional = true)
+        editProperty.onInvalidation {
+            buildTypeProperty.set(ModelMeshBuildType.MESH_PER_FACE)
+        }
+
     }
 
     private fun rebuildModel() {
@@ -149,6 +154,15 @@ class Model(label: String,
     fun reset(){
         copyOriginalVertexValues()
         getModelSkin().updatePoints(this)
+    }
+
+    fun recolor() {
+        when (val skin = modelSkin) {
+            is ModelAtlasMesh -> {
+                skin.rebuildAtlas()
+            }
+            else -> throw Exception("Recoloring is not supported for this skin $skin")
+        }
     }
 
     override fun animate(frame: AnimationFrame) {

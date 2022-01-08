@@ -48,4 +48,5 @@ interface ModelDefinition {
     fun computeAnimationTables()
     fun computeTextureUVCoordinates()
     fun computeNormals()
+
 }

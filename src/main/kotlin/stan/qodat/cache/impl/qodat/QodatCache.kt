@@ -71,6 +71,10 @@ object QodatCache : Cache("qodat") {
         return super.encode(any)
     }
 
+    override fun getTexture(id: Int): TextureDefinition {
+        TODO("Not yet implemented")
+    }
+
     private fun encodeModel(file: File, modelDefinition: QodatModelDefinition) {
         json.encodeToStream(modelDefinition, file.outputStream())
     }
