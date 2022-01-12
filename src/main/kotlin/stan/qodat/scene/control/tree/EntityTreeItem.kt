@@ -70,7 +70,7 @@ class EntityTreeItem(
             this@EntityTreeItem.onExpanded {
                 treeItem("Skeletons") {
                     for ((_, skeleton) in entity.getSkeletons())
-                        children.add(SkeletonTreeItem(skeleton, entity))
+                        children.add(SkeletonTreeItem(skeleton, entity, treeView.selectionModel))
                 }
                 treeItem("Animations") {
                     for (animation in entity.getAnimations())

@@ -58,6 +58,7 @@ class EditorController : EntityViewController("editor-scene") {
             for (model in entity.getModels()) {
                 model.editProperty.set {
                     when (editTabPane.selectionModel.selectedItem.text) {
+                        "Animations" -> {}
                         "Recolor" -> handleColorBrush(model)
                         "Textures" -> handleTextureBrush(model)
                     }

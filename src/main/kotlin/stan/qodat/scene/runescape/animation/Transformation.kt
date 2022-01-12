@@ -12,7 +12,7 @@ import javafx.collections.FXCollections
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class Transformation(
+open class Transformation(
     name: String,
     vertexGroupIndices: IntArray = IntArray(0),
     type: Int = -1,
@@ -20,6 +20,15 @@ class Transformation(
     deltaY: Int = 0,
     deltaZ: Int = 0
 ) {
+
+    constructor(transformation: Transformation) : this(
+        transformation.labelProperty.name,
+        transformation.groupIndices.toArray(null),
+        transformation.typeProperty.get().ordinal,
+        transformation.getDeltaX(),
+        transformation.getDeltaY(),
+        transformation.getDeltaZ()
+    )
 
     val groupIndices = FXCollections.observableIntegerArray(*vertexGroupIndices)
 
@@ -30,6 +39,7 @@ class Transformation(
     val enabledProperty = SimpleBooleanProperty(true)
     val labelProperty = SimpleStringProperty(name)
 
+    fun getName() = labelProperty.get()!!
     fun getType() = typeProperty.get()!!
     fun getDeltaX() = deltaXProperty.get()
     fun getDeltaY() = deltaYProperty.get()
@@ -45,4 +55,5 @@ class Transformation(
             deltaZ = getDeltaZ()
         )
     }
+
 }

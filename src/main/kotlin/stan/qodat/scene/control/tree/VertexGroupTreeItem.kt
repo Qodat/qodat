@@ -2,6 +2,7 @@ package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
 import javafx.scene.control.MultipleSelectionModel
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -9,10 +10,7 @@ import javafx.scene.shape.Box
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.text.TextFlow
-import stan.qodat.javafx.label
-import stan.qodat.javafx.onSelected
-import stan.qodat.javafx.text
-import stan.qodat.javafx.treeItem
+import stan.qodat.javafx.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.BABY_BLUE
 import stan.qodat.util.DEFAULT
@@ -30,6 +28,9 @@ class VertexGroupTreeItem(private val model: Model,
     init {
         text("VERTEX_GROUP", Color.web("#FFC66D"))
         label("$index (count = ${vertexIndices.size})")
+        onExpanded {
+            selectionModel.selectionMode = if (this) SelectionMode.MULTIPLE else SelectionMode.SINGLE
+        }
         if (vertexIndices.isNotEmpty()) {
             for (vertex in vertexIndices) {
                 val x = model.getX(vertex)

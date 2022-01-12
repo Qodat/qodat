@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.animation
 
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
@@ -21,13 +22,16 @@ class AnimationSkeleton(
 
     val labelProperty = SimpleStringProperty(name)
 
+
     fun getTransformationGroups(): ObservableList<TransformationGroup> {
         if (!this::transformationGroups.isInitialized){
             val list = ArrayList<TransformationGroup>()
             for ((i, groupIndices) in definition.targetVertexGroupsIndices.withIndex()){
                 val type = TransformationType.get(definition.transformationTypes[i])
                 list.add(TransformationGroup("$i", type, groupIndices))
+
             }
+
             transformationGroups = FXCollections.observableArrayList(list)
         }
         return transformationGroups

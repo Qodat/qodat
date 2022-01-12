@@ -2,6 +2,7 @@ package stan.qodat.scene.control.tree
 
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
@@ -22,7 +23,8 @@ import stan.qodat.scene.runescape.model.ModelFaceMesh
  */
 class SkeletonTreeItem(
     skeleton: AnimationSkeleton,
-    private val animatedEntity: AnimatedEntity<*>
+    private val animatedEntity: AnimatedEntity<*>,
+    selectionModel: MultipleSelectionModel<TreeItem<Node>>
 ) : TreeItem<Node>() {
 
     private val groupModelMap = HashMap<TransformationGroup, HashMap<Int, List<Model>>>()
@@ -32,6 +34,15 @@ class SkeletonTreeItem(
     init {
         text("SKELETON", Color.web("#FFC66D"))
         label(skeleton.labelProperty)
+
+//        val transformationGroupsIterator = skeleton.getTransformationGroups().iterator()
+//
+//        while (transformationGroupsIterator.hasNext()){
+//            val group = transformationGroupsIterator.next()
+//            if (group.typeProperty.get() == TransformationType.SET_OFFSET) {
+//
+//            }
+//        }
         for (group in skeleton.getTransformationGroups()) {
             treeItem {
                 text("CONTROL_GROUP", Color.web("#FFC66D"))
@@ -43,6 +54,10 @@ class SkeletonTreeItem(
                             comboBox("", TransformationType.values(), group.typeProperty, biDirectional = true)
                         }
                     }
+                }
+                selectionModel.onSelected { oldValue, newValue ->
+                    if (newValue == this) animatedEntity.getSceneNode().children.add(getSelectionMesh(group))
+                    else if (oldValue == this) animatedEntity.getSceneNode().children.remove(getSelectionMesh(group))
                 }
             }
         }

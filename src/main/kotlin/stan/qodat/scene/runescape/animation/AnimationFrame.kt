@@ -35,9 +35,11 @@ class AnimationFrame(
     val durationProperty = SimpleObjectProperty(FrameTimeUtil.frame(duration))
     val enabledProperty = SimpleBooleanProperty(true)
 
+    private val rootNodeProperty = SimpleObjectProperty<Transformation>()
+
     init {
         if (definition != null) {
-            transformationList.addAll(Array(transformationCountProperty.get()) {
+            val transformations = Array(transformationCountProperty.get()) {
                 val groupIndex = definition.transformationGroupAccessIndices[it]
                 Transformation(
                     "transform[$it]",
@@ -47,7 +49,9 @@ class AnimationFrame(
                     definition.transformationDeltaY[it],
                     definition.transformationDeltaZ[it]
                 )
-            })
+            }
+
+            transformationList.addAll(transformations)
         }
         transformationList.onInvalidation {
             transformationCountProperty.set(transformationList.size)
@@ -67,4 +71,5 @@ class AnimationFrame(
     override fun getName() = labelProperty.get()
 
     override fun toString() = getName()
+
 }
