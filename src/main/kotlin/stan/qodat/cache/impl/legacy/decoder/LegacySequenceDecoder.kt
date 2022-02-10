@@ -35,7 +35,10 @@ class LegacySequenceDecoder {
         return LegacyAnimationDefinition(
             id = id.toString(),
             frameHashes =  def.frameIDs?: IntArray(0),
-            frameLengths = def.frameLenghts?: IntArray(0)
+            frameLengths = def.frameLenghts?: IntArray(0),
+            loopOffset = def.frameStep,
+            leftHandItem = def.leftHandItem,
+            rightHandItem = def.rightHandItem
         )
     }
 

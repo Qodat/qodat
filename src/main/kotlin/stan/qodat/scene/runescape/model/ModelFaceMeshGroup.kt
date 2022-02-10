@@ -2,13 +2,14 @@ package stan.qodat.scene.runescape.model
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.definition.ModelDefinition
 import stan.qodat.util.ModelUtil
 import stan.qodat.util.setAndBind
 
@@ -29,12 +30,14 @@ class ModelFaceMeshGroup(private val model: Model) : ModelSkin {
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
     val editableProperty = SimpleObjectProperty<(ModelFaceMesh.EditContext.() -> Unit)?>(null)
+    val depthTestProperty = SimpleObjectProperty<DepthTest>()
 
     init {
         visibleProperty.setAndBind(model.visibleProperty)
         drawModeProperty.setAndBind(model.drawModeProperty)
         cullFaceProperty.setAndBind(model.cullFaceProperty)
         editableProperty.setAndBind(model.editProperty)
+        depthTestProperty.setAndBind(model.depthTestProperty)
     }
 
     override fun updatePoints(skeleton: ModelSkeleton) {
@@ -72,6 +75,7 @@ class ModelFaceMeshGroup(private val model: Model) : ModelSkin {
             mesh.cullFaceProperty.setAndBind(cullFaceProperty)
             mesh.drawModeProperty.setAndBind(drawModeProperty)
             mesh.editableProperty.setAndBind(editableProperty)
+            mesh.depthTestProperty.setAndBind(depthTestProperty)
 
             val vertexIndex1 = definition.getFaceVertexIndices1()[face].let {
                 mesh.addVertex(

@@ -1,5 +1,7 @@
 package stan.qodat.scene.transform
 
+import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.util.Duration
 
 /**
@@ -9,6 +11,8 @@ import javafx.util.Duration
  * @since   29/01/2021
  */
 interface TransformationGroup {
+
+    fun durationProperty() : SimpleObjectProperty<Duration>
 
     fun getDuration() : Duration
 }

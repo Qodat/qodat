@@ -1,7 +1,7 @@
 package stan.qodat.scene.runescape
 
-import net.runelite.cache.models.VertexNormal
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.models.VertexNormal
+import qodat.cache.definition.ModelDefinition
 import kotlin.math.absoluteValue
 import kotlin.math.sqrt
 

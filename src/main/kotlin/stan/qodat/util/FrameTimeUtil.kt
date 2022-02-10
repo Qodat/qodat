@@ -32,6 +32,7 @@
 package stan.qodat.util
 
 import javafx.util.Duration
+import kotlin.math.roundToLong
 
 object FrameTimeUtil {
 
@@ -46,22 +47,14 @@ object FrameTimeUtil {
     private const val EPSILON = 0.000001
 
     fun frame(frame: Int): Duration {
-        return Duration.seconds(frame / FPS + EPSILON)
-    }
-
-    fun frame(frame: Long): Duration {
-        return Duration.seconds(frame / FPS + EPSILON)
+        return Duration.millis((frame * 20.0) + EPSILON);
     }
 
     fun toFrame(tion: Duration): Long {
-        return Math.round(tion.toSeconds() * FPS)
+        return (tion.toMillis() / 20).roundToLong()
     }
 
     fun toFrameAsInt(tion: Duration): Int {
-        return Math.round(tion.toSeconds() * FPS).toInt()
-    }
-
-    fun toFrameAsDouble(tion: Duration): Double {
-        return tion.toSeconds() * FPS
+        return (tion.toMillis() / 20).roundToLong().toInt()
     }
 }

@@ -15,16 +15,15 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class PropertiesManager(
-    private val saveFilePath: Path = Paths.get("session.properties")
-) {
+class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/session.properties")) {
+
     private val properties = Properties()
     private lateinit var saveThread : Thread
 
-    fun loadFromFile() {
+    fun loadFromFile() : Boolean {
 
         if (!saveFilePath.toFile().exists())
-            return
+            return false
 
         try {
             properties.load(saveFilePath.toFile().reader())
@@ -32,7 +31,11 @@ class PropertiesManager(
             e.printStackTrace()
         }
 
-        if (!this::saveThread.isInitialized){
+        return true
+    }
+
+    fun startSaveThread() {
+        if (!this::saveThread.isInitialized) {
             saveThread = Thread {
                 saveToFile()
                 Thread.sleep(2500L)
@@ -43,7 +46,10 @@ class PropertiesManager(
 
     fun saveToFile() {
         try {
-            properties.store(saveFilePath.toFile().writer(), "Contains properties for the Qodat application.")
+            val saveFile = saveFilePath.toFile()
+            if (!saveFile.parentFile.exists())
+                saveFile.parentFile.mkdir()
+            properties.store(saveFile.writer(), "Contains properties for the Qodat application.")
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -64,6 +70,9 @@ class PropertiesManager(
     fun bindMaterial(key: String, property: ObjectProperty<Material>) = bind(key, property)
     { PhongMaterial() }
 
+    fun bindPath(key: String, property: ObjectProperty<Path>) = bind(key, property)
+    { Paths.get(it) }
+
     fun bindColor(key: String, property: ObjectProperty<Color>) = bind(key, property)
     { Color.valueOf(it)}
 
@@ -78,4 +87,6 @@ class PropertiesManager(
 
     fun bindString(key: String, property: StringProperty) = bind(key, property)
     { it }
+
 }
+

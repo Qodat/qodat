@@ -1,14 +1,19 @@
 package stan.qodat
 
+import javafx.beans.binding.Bindings
 import javafx.beans.property.*
 import javafx.scene.SceneAntialiasing
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
-import stan.qodat.cache.Cache
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import qodat.cache.Cache
+import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.entity.AnimatedEntity
+import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.PropertiesManager
+import stan.qodat.util.onInvalidation
 import java.nio.file.Paths
+import java.util.concurrent.Callable
 
 /**
  * TODO: add documentation
@@ -62,14 +67,14 @@ object Properties {
     val centerDivider1Position = SimpleDoubleProperty(0.3)
     val centerDivider2Position = SimpleDoubleProperty(0.9)
 
-    val subSceneBackgroundColor = SimpleObjectProperty(Color.WHITE)
+    val subSceneBackgroundColor = SimpleObjectProperty(Color.web("0x33333300"))
     val sceneInitialWidth = SimpleDoubleProperty(1080.0)
     val sceneInitialHeight = SimpleDoubleProperty(720.0)
 
     val subSceneInitialWidth = SimpleDoubleProperty(400.0)
     val subSceneInitialHeight = SimpleDoubleProperty(400.0)
 
-    val cameraInvert = SimpleBooleanProperty()
+    val cameraInvert = SimpleBooleanProperty(true)
     val cameraSpeed = SimpleDoubleProperty(0.3)
     val cameraNearClip = SimpleDoubleProperty(1.0)
     val cameraFarClip = SimpleDoubleProperty(10000.0)
@@ -78,6 +83,8 @@ object Properties {
 
     val viewerCache = SimpleObjectProperty<Cache>()
     val editorCache = SimpleObjectProperty<Cache>()
+
+    val rootPath = SimpleObjectProperty(Paths.get(""))
     val osrsCachePath = SimpleObjectProperty(Paths.get("caches/OS/rev200"))
     val qodatCachePath = SimpleObjectProperty(Paths.get("caches/qodat"))
     val legacyCachePath = SimpleObjectProperty(Paths.get("caches/667"))
@@ -91,12 +98,17 @@ object Properties {
     val selectedItemName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
     val selectedInterfaceName = SimpleStringProperty()
+    val selectedEntity = SimpleObjectProperty<Entity<*>>()
+    val selectedAnimation = SimpleObjectProperty<Animation>()
 
     val selectedRightTab = SimpleStringProperty()
     val selectedLeftTab = SimpleStringProperty()
     val selectedBottomTab = SimpleStringProperty()
     val selectedScene = SimpleStringProperty()
     val lockScene = SimpleBooleanProperty(false)
+
+    val treeItemAnimationFrameSelectedColor = SimpleObjectProperty(Color.web("#7e76aa"))
+    val treeItemAnimationFrameColor = SimpleObjectProperty(Color.web("#bba5c7"))
 
     fun bind(sessionManager: PropertiesManager) {
 
@@ -143,5 +155,11 @@ object Properties {
         sessionManager.bindDouble("split-pane-divider-3-position", sceneDividerPosition)
         sessionManager.bindDouble("split-pane-divider-4-position", viewerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-5-position", viewerDivider2Position)
+
+        sessionManager.bindPath("osrs-cache-path", osrsCachePath)
+        sessionManager.bindPath("qodat-cache-path", qodatCachePath)
+        sessionManager.bindPath("legacy-cache-path", legacyCachePath)
+        sessionManager.bindPath("main-data-path", mainModelFilesPath)
+        sessionManager.bindPath("exports-path", exportsPath)
     }
 }

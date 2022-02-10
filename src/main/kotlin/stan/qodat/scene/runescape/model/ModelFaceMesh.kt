@@ -3,6 +3,7 @@ package stan.qodat.scene.runescape.model
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.EventHandler
+import javafx.scene.DepthTest
 import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
@@ -29,6 +30,8 @@ class ModelFaceMesh(val face: Int, material: Material) : ModelMesh() {
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
     val materialProperty = SimpleObjectProperty(material)
     val editableProperty = SimpleObjectProperty<(EditContext.() -> Unit)?>(null)
+    val depthTestProperty = SimpleObjectProperty<DepthTest>()
+
     private var textured = false
     private val mouseEventHandler = EventHandler<MouseEvent> {
         editableProperty.get()?.invoke(EditContext(this, it))
@@ -74,10 +77,13 @@ class ModelFaceMesh(val face: Int, material: Material) : ModelMesh() {
                 if (newValue != null)
                     meshView.addEventHandler(MouseEvent.ANY, mouseEventHandler)
             }
+            meshView.isPickOnBounds = false
+            meshView.isMouseTransparent = true
             meshView.visibleProperty().setAndBind(visibleProperty, true)
             meshView.cullFaceProperty().setAndBind(cullFaceProperty, true)
             meshView.materialProperty().setAndBind(materialProperty, true)
             meshView.drawModeProperty().setAndBind(drawModeProperty, true)
+            meshView.depthTestProperty().setAndBind(depthTestProperty, true)
         }
         return meshView
     }

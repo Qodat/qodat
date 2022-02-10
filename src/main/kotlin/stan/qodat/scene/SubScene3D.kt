@@ -8,6 +8,7 @@ import javafx.scene.CacheHint
 import javafx.scene.Group
 import javafx.scene.SubScene
 import javafx.scene.input.DragEvent
+import javafx.scene.input.MouseEvent
 import javafx.scene.layout.Region
 import stan.qodat.Properties
 import stan.qodat.scene.control.CameraHandler
@@ -46,6 +47,8 @@ object SubScene3D : AbstractSubScene() {
      */
     val animationPlayer = AnimationPlayer()
 
+    val mouseListener = SimpleObjectProperty<EventHandler<MouseEvent>>()
+
     fun init() {
         ambientLight.colorProperty().setAndBind(Properties.ambientLightColor)
 
@@ -75,7 +78,14 @@ object SubScene3D : AbstractSubScene() {
 
     }
 
-    override val mouseEventHandler = cameraHandler.mouseEventHandler
+    override val mouseEventHandler = EventHandler<MouseEvent> {
+        if (mouseListener.get() != null){
+            mouseListener.get().handle(it)
+            if (it.isConsumed)
+                return@EventHandler
+        }
+        cameraHandler.mouseEventHandler.handle(it)
+    }
 
     override val dragEventHandler = EventHandler<DragEvent> {
     }

@@ -1,28 +1,30 @@
 package stan.qodat
 
 import javafx.application.Application
+import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
 import javafx.fxml.FXMLLoader
 import javafx.scene.Parent
 import javafx.scene.Scene
-import javafx.scene.SubScene
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
+import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import kotlinx.serialization.ExperimentalSerializationApi
-import stan.qodat.cache.impl.legacy.LegacyCache
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
+import stan.qodat.javafx.JavaFXTrayIcon
 import stan.qodat.scene.AbstractSubScene
 import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.controller.EventLogController
 import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import javax.swing.SwingUtilities
+import kotlin.io.path.exists
+import kotlin.time.ExperimentalTime
 
 /**
  * Entry point of application.
@@ -35,7 +37,7 @@ class Qodat : Application() {
     override fun start(primaryStage: Stage) {
 
         stage = primaryStage
-        propertiesManager.loadFromFile()
+        val loadedProperties = propertiesManager.loadFromFile()
 
         Properties.bind(propertiesManager)
 
@@ -47,7 +49,11 @@ class Qodat : Application() {
 
         primaryStage.apply {
             title = "Qodat"
-            icons.add(Image(Qodat::class.java.getResourceAsStream("images/icon.png")))
+            val icon = Image(Qodat::class.java.getResourceAsStream("images/icon.png"))
+            icons.add(icon)
+            SwingUtilities.invokeLater {
+                JavaFXTrayIcon.addAppToTray(this, icon)
+            }
             scene = Scene(root, Properties.sceneInitialWidth.get(), Properties.sceneInitialHeight.get()).apply {
                 Properties.sceneInitialWidth.bind(widthProperty())
                 Properties.sceneInitialHeight.bind(heightProperty())
@@ -65,12 +71,46 @@ class Qodat : Application() {
             show()
             setOnCloseRequest {
                 propertiesManager.saveToFile()
-                shutDown = true
                 executor.shutdown()
                 ModelController.watchThread?.interrupt()
+                JavaFXTrayIcon.close()
+                Platform.exit()
+            }
+            if (!loadedProperties) {
+
+                val dialog = DirectoryChooser()
+                dialog.title = "Please select the root Directory for Qodat (containing the /caches folder)"
+
+                val directory = dialog.showDialog(stage)
+                if (!directory.exists())
+                    directory.mkdirs()
+                Properties.rootPath.set(directory.toPath())
+
+                directory.resolve("caches/OS/rev200").apply {
+                    if (exists())
+                        Properties.osrsCachePath.set(toPath())
+                }
+                directory.resolve("caches/qodat").apply {
+                    if (exists())
+                        Properties.qodatCachePath.set(toPath())
+                }
+                directory.resolve("caches/667").apply {
+                    if (exists())
+                        Properties.legacyCachePath.set(toPath())
+                }
+                directory.resolve("data").apply {
+                    if (exists())
+                        Properties.mainModelFilesPath.set(toPath())
+                }
+                directory.resolve("exports").apply {
+                    if (exists())
+                        Properties.exportsPath.set(toPath())
+                }
+                propertiesManager.saveToFile()
             }
             Properties.viewerCache.set(OldschoolCacheRuneLite)
             Properties.editorCache.set(QodatCache)
+            propertiesManager.startSaveThread()
         }
     }
 
@@ -91,12 +131,11 @@ class Qodat : Application() {
         /**
          * The main FXML controller.
          */
+
         lateinit var mainController : MainController
 
         lateinit var stage: Stage
-
-        val subSceneProperty = SimpleObjectProperty<AbstractSubScene>()
-
+        
         /**
          * Starting point of the application.
          */

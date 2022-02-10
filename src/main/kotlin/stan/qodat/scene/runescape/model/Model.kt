@@ -3,6 +3,7 @@ package stan.qodat.scene.runescape.model
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
+import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.TreeItem
@@ -15,13 +16,13 @@ import javafx.scene.shape.MeshView
 import javafx.scene.shape.Sphere
 import kotlinx.serialization.json.decodeFromStream
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.EncodeResult
-import stan.qodat.cache.Encoder
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.Cache
+import qodat.cache.EncodeResult
+import qodat.cache.Encoder
+import qodat.cache.definition.ModelDefinition
+import qodat.cache.models.RSModelLoader
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
-import stan.qodat.cache.util.RSModelLoader
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.tree.ModelTreeItem
 import stan.qodat.scene.runescape.animation.AnimationFrame
@@ -43,7 +44,7 @@ class Model(label: String,
         ViewNodeProvider,
         SceneNodeProvider,
         TreeItemProvider,
-        Encoder {
+    Encoder {
 
     private lateinit var sceneGroup: Group
     private lateinit var sceneNode: Node
@@ -57,6 +58,7 @@ class Model(label: String,
     val visibleProperty = SimpleBooleanProperty(true)
     val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
     val cullFaceProperty = SimpleObjectProperty(CullFace.NONE)
+    val depthTestProperty = SimpleObjectProperty(DepthTest.ENABLE)
     val buildTypeProperty = SimpleObjectProperty(ModelMeshBuildType.ATLAS)
     val displayFacePriorityLabelsProperty = SimpleBooleanProperty(false)
     val shadingProperty = SimpleBooleanProperty(false)
@@ -182,6 +184,7 @@ class Model(label: String,
             sceneGroup = Group()
             if (!this::sceneNode.isInitialized)
                 buildModelSkin()
+            sceneGroup.transforms
             sceneGroup.children.add(sceneNode)
         }
         return sceneGroup

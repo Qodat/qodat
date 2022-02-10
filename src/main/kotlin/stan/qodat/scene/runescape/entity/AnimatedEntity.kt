@@ -1,10 +1,12 @@
 package stan.qodat.scene.runescape.entity
 
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.AnimatedEntityDefinition
+import javafx.beans.property.SimpleObjectProperty
+import qodat.cache.Cache
+import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.AnimationSkeleton
+import stan.qodat.scene.transform.GroupableTransformable
 import stan.qodat.scene.transform.Transformable
 
 /**
@@ -17,10 +19,12 @@ abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
     cache: Cache,
     definition: D,
     private val animationProvider: D.() -> Array<Animation>
-) : Entity<D>(cache, definition), Transformable {
+) : Entity<D>(cache, definition), Transformable, GroupableTransformable {
 
     private lateinit var animations: Array<Animation>
     private lateinit var skeletons: Map<Int, AnimationSkeleton>
+
+    val selectedAnimation = SimpleObjectProperty<Animation>()
 
     fun getSkeletons(): Map<Int, AnimationSkeleton> {
         if (!this::skeletons.isInitialized) {
@@ -41,6 +45,14 @@ abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
         if (!this::animations.isInitialized)
             animations = animationProvider.invoke(definition)
         return animations
+    }
+
+    override fun animate(index: Int) {
+
+        val animation = selectedAnimation.get()?:return
+        val frame = animation.getFrameList().getOrNull(index) ?:return
+
+        animate(frame)
     }
 
     override fun animate(frame: AnimationFrame) {

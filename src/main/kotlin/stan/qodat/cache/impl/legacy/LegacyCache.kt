@@ -1,8 +1,8 @@
 package stan.qodat.cache.impl.legacy
 
+import qodat.cache.definition.*
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.*
+import qodat.cache.Cache
 import stan.qodat.cache.impl.legacy.storage.*
 
 object LegacyCache : Cache("Legacy") {

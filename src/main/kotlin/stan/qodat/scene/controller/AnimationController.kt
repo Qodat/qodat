@@ -8,11 +8,10 @@ import javafx.fxml.Initializable
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
-import javafx.scene.layout.Region
 import javafx.scene.layout.VBox
+import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.AnimatedEntityDefinition
+import qodat.cache.Cache
 import stan.qodat.javafx.onChange
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.Animation
@@ -71,22 +70,13 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             cellFactory = Animation.createCellFactory()
             items = filteredAnimations
             disableProperty().setAndBind(Properties.disableAnimationsView)
-            onItemSelected { old, new ->
-                if (new == null && old != null) {
-                    Properties.selectedAnimationName.set("")
-                    SubScene3D.animationPlayer.transformerProperty.set(null)
-                } else if(new != null) {
-                    Properties.selectedAnimationName.set(new.getName())
-                    SubScene3D.animationPlayer.transformerProperty.set(new)
-                }
-            }
+
         }
         searchTextField.apply {
             disableProperty().setAndBind(Properties.disableAnimationsView)
             configureSearchFilter(filteredAnimations)
         }
     }
-
 
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {

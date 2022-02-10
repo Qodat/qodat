@@ -3,11 +3,12 @@ package stan.qodat.scene.runescape.model
 import fxyz3d.geometry.Point3F
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.DepthTest
 import javafx.scene.paint.Material
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.definition.ModelDefinition
 import stan.qodat.scene.paint.AtlasMaterial
 import stan.qodat.util.ModelUtil
 import stan.qodat.util.setAndBind
@@ -31,6 +32,7 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
     val materialProperty = SimpleObjectProperty<Material>()
+    val depthTestProperty = SimpleObjectProperty<DepthTest>()
 
     private var densityFunction: (Point3F) -> Double = {0.0}
     private var min = 0.0
@@ -40,16 +42,20 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
         visibleProperty.setAndBind(model.visibleProperty)
         drawModeProperty.setAndBind(model.drawModeProperty)
         cullFaceProperty.setAndBind(model.cullFaceProperty)
+        depthTestProperty.setAndBind(model.depthTestProperty)
     }
 
     override fun getSceneNode(): MeshView {
         if (!this::meshView.isInitialized){
             buildMesh()
             meshView = MeshView(this)
+            meshView.isPickOnBounds = false
+            meshView.isMouseTransparent = true
             meshView.visibleProperty().setAndBind(visibleProperty, true)
             meshView.cullFaceProperty().setAndBind(cullFaceProperty, true)
             meshView.materialProperty().setAndBind(materialProperty, true)
             meshView.drawModeProperty().setAndBind(drawModeProperty, true)
+            meshView.depthTestProperty().setAndBind(depthTestProperty, true)
         }
         return meshView
     }

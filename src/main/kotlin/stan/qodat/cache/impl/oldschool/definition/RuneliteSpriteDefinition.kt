@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.definition
 
-import stan.qodat.cache.definition.SpriteDefinition
+import qodat.cache.definition.SpriteDefinition
 
 class RuneliteSpriteDefinition(definition: net.runelite.cache.definitions.SpriteDefinition) : SpriteDefinition {
     override val id: Int = definition.id

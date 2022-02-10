@@ -1,6 +1,6 @@
 package stan.export.mp4
 
-import com.sun.javafx.application.PlatformImpl
+import javafx.application.Platform
 import javafx.concurrent.Task
 import javafx.embed.swing.SwingFXUtils
 import javafx.geometry.Rectangle2D
@@ -13,6 +13,7 @@ import org.jcodec.common.io.NIOUtils
 import org.jcodec.common.io.SeekableByteChannel
 import org.jcodec.common.model.Rational
 import org.jcodec.scale.AWTUtil
+import stan.qodat.javafx.JavaFXExecutor
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.nio.file.Path
@@ -42,7 +43,7 @@ class AnimationToMp4Task(
         val semaphore = Semaphore(0)
         val snapshots = AtomicReferenceArray<Pair<Duration, WritableImage>>(totalFrames)
         aniamtionFrames.forEachIndexed { index, frame ->
-            PlatformImpl.runLater {
+            Platform.runLater {
                 try {
                     transformables.forEach { transformable ->
                         transformable.animate(frame)
@@ -91,7 +92,7 @@ class AnimationToMp4Task(
                 val entry = snapshots.get(i) ?: continue
                 val (duration, image) = entry
                 count++
-                PlatformImpl.runAndWait {
+                JavaFXExecutor.execute {
                     updateMessage("Processing frame $count/$totalFrames...")
                     updateProgress(count.toLong(), totalFrames.toLong())
                 }
@@ -108,7 +109,7 @@ class AnimationToMp4Task(
             out?.close()
         }
 
-        PlatformImpl.runAndWait {
+        JavaFXExecutor.execute {
             updateProgress(0, 0)
             updateMessage("Generated MP4 at $file")
         }

@@ -9,6 +9,7 @@ import javafx.scene.paint.Color
  * @since   01/02/2021
  */
 
+
 val PURPLE = Color.web("#9876AA")
 val BABY_BLUE = Color.web("#6897BB")
 val DEFAULT = Color.web("#A9B7C6")

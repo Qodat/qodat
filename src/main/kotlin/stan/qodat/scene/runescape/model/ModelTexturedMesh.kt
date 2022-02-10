@@ -6,12 +6,11 @@ import fxyz3d.shapes.primitives.helper.MeshHelper
 import fxyz3d.shapes.primitives.helper.TriangleMeshHelper
 import javafx.scene.paint.Color
 import javafx.scene.shape.MeshView
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.definition.ModelDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.*
 import stan.qodat.util.ModelUtil
 import kotlin.collections.HashMap
-import kotlin.random.Random
 
 class ModelTexturedMesh(private val model: Model, private val atlas: ModelAtlasMesh) : TexturedMesh(), ModelSkin {
 

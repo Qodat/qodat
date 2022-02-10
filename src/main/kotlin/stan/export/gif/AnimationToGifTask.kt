@@ -1,12 +1,12 @@
 package stan.export.gif
 
-import com.sun.javafx.application.PlatformImpl
 import javafx.concurrent.Task
 import javafx.scene.SnapshotParameters
 import javafx.scene.SubScene
 import javafx.scene.image.WritableImage
 import javafx.util.Duration
 import stan.export.gif.encoder.*
+import stan.qodat.javafx.JavaFXExecutor
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.io.FileOutputStream
@@ -28,7 +28,7 @@ class AnimationToGifTask(
         updateMessage("Generating GIF for Animation $animationName")
 
         val snapshots = mutableListOf<Pair<Duration, WritableImage>>()
-        PlatformImpl.runAndWait {
+        JavaFXExecutor.execute {
             val totalFrames = aniamtionFrames.size
             snapshots.addAll(aniamtionFrames.mapIndexed { index, frame ->
                 animationPlayer.jumpToFrame(index)
@@ -57,10 +57,11 @@ class AnimationToGifTask(
         for ((duration, image) in snapshots) {
 
             count++
-            PlatformImpl.runAndWait {
+            JavaFXExecutor.execute {
                 updateMessage("Processing frame $count/$total...")
                 updateProgress(count.toLong(), total.toLong())
             }
+
             val reader = image.pixelReader
             val colors = Array(image.height.toInt()) { y ->
                 Array(image.width.toInt()) { x ->
@@ -78,7 +79,7 @@ class AnimationToGifTask(
         encoder.finishEncoding()
         out.flush()
         out.close()
-        PlatformImpl.runAndWait {
+        JavaFXExecutor.execute {
             updateProgress(0, 0)
             updateMessage("Generated GIF at $path")
         }

@@ -1,8 +1,8 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.definition.ModelDefinition
+import qodat.cache.models.RSModelLoader
 import stan.qodat.cache.util.CompressionUtil
-import stan.qodat.cache.util.RSModelLoader
 import java.nio.file.Files
 import java.nio.file.Path
 

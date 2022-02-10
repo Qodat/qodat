@@ -6,9 +6,8 @@ import javafx.embed.swing.SwingFXUtils
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.PhongMaterial
-import net.runelite.cache.definitions.exporters.SpriteExporter
-import stan.qodat.cache.definition.SpriteDefinition
-import stan.qodat.cache.definition.TextureDefinition
+import qodat.cache.definition.SpriteDefinition
+import qodat.cache.definition.TextureDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import java.awt.image.BufferedImage
 import java.util.concurrent.TimeUnit

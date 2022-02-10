@@ -6,6 +6,7 @@ import javafx.scene.Group
 import javafx.scene.Node
 import stan.qodat.Qodat
 import stan.qodat.scene.controller.SceneController
+import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.*
@@ -29,6 +30,8 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
      * Is this context the currently active context in the sub scene?
      */
     internal val activeContext = SimpleBooleanProperty()
+
+    internal val animationPlayer = AnimationPlayer()
 
     init {
         group.id = name

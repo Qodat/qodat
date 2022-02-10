@@ -1,5 +1,8 @@
 package stan.qodat.scene.control.tree
 
+import javafx.beans.binding.Bindings
+import javafx.event.EventHandler
+import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.TreeItem
@@ -10,16 +13,24 @@ import javafx.scene.shape.Box
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
+import javafx.scene.transform.Rotate
+import javafx.scene.transform.Translate
+import org.joml.Vector3f
+import stan.GizmoStackoverflow
 import stan.qodat.javafx.label
 import stan.qodat.javafx.onExpanded
 import stan.qodat.javafx.onSelected
 import stan.qodat.javafx.text
+import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
+import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.BABY_BLUE
 import stan.qodat.util.onInvalidation
+import stan.qodat.util.setAndBind
+import stan.toRay
+import java.util.concurrent.Callable
 import kotlin.math.abs
 
 class TransformGroupTreeItem(
@@ -27,9 +38,9 @@ class TransformGroupTreeItem(
     frame: AnimationFrame,
     frameItem: TreeItem<Node>,
     treeView: TreeView<Node>,
-    rootTransformation: Transformation,
+    private val rootTransformation: Transformation,
     private val childTransformations: List<Transformation>
-) : TreeItem<Node>() {
+) : TreeItem<Node>(), LineMode {
 
     init {
         text("TRANSFORMATIONS", Color.web("#FFC66D"))
@@ -45,49 +56,116 @@ class TransformGroupTreeItem(
         }
         treeView.selectionModel.onSelected { oldValue, newValue ->
             if (newValue == this) {
-                if (oldValue !is TransformTreeItem)
-                    for (model in entity.getModels())
-                        model.drawModeProperty.set(DrawMode.LINE)
                 entity.getSceneNode().children.addAll(getSelectionMesh())
+                selectGizmo()
             } else if (oldValue == this) {
-                if (newValue !is TransformTreeItem)
-                    for (model in entity.getModels())
-                        model.drawModeProperty.set(DrawMode.FILL)
-                entity.getSceneNode().children.removeAll(getSelectionMesh())
+                entity.getSceneNode().children.removeAll(selectionMesh)
+                unselectGizmo()
             }
         }
     }
 
     private lateinit var selectionMesh: Group
 
-    private fun getSelectionMesh(): Group {
-        if (!this::selectionMesh.isInitialized) {
-            val selectionMaterial = PhongMaterial(BABY_BLUE)
-            selectionMesh = Group()
-            var meshId = 0
-            for (transform in childTransformations) {
-                for (i in 0 until transform.groupIndices.size()) {
-                    val groupIndex = transform.groupIndices[i]
-                    for (model in entity.getModels()) {
-                        val vertices = model.getVertexGroups().getOrNull(groupIndex) ?: continue
-                        selectionMesh.children.add(getSelectionBox(meshId++, model, vertices))
+    val gizmo by lazy {
+        val gizmo = GizmoStackoverflow.Gizmo()
+
+        val controller = gizmo.controller
+
+        childTransformations.forEach {
+            when (it.getType()) {
+                TransformationType.TRANSLATE -> {
+                    controller.translateSliderX.valueProperty().setAndBind(it.deltaXProperty, true)
+                    controller.translateSliderY.valueProperty().setAndBind(it.deltaYProperty, true)
+                    controller.translateSliderZ.valueProperty().setAndBind(it.deltaZProperty, true)
+                }
+                TransformationType.ROTATE -> {
+                    controller.rotateSliderX.valueProperty().setAndBind(it.deltaXProperty, true)
+                    controller.rotateSliderY.valueProperty().setAndBind(it.deltaYProperty, true)
+                    controller.rotateSliderZ.valueProperty().setAndBind(it.deltaZProperty, true)
+                }
+                else -> {}
+            }
+        }
+        gizmo
+    }
+
+    fun selectGizmo(){
+        SubScene3D.mouseListener.set(EventHandler {
+            if (gizmo.selectedAxis.get() != null) {
+                val line3D = GizmoStackoverflow.getPickRay(SubScene3D.cameraHandler.camera, it)
+                gizmo.controller.position =
+                    Vector3f(gizmo.translateX.toFloat(), gizmo.translateY.toFloat(), gizmo.translateZ.toFloat())
+                when(gizmo.transformMode) {
+                    GizmoStackoverflow.TransformMode.TRANSLATE -> {
+                        gizmo.controller.manipulateTranslateGizmo(line3D.toRay())
+                    }
+                    GizmoStackoverflow.TransformMode.ROTATE -> {
+                        gizmo.controller.manipulateRotateGizmo(line3D.toRay())
                     }
                 }
+                it.consume()
             }
+        })
+        if (!getSelectionMesh().children.contains(gizmo))
+            getSelectionMesh().children.add(gizmo)
+
+    }
+
+    fun unselectGizmo(){
+        SubScene3D.mouseListener.set(null)
+        getSelectionMesh().children.remove(gizmo)
+    }
+
+    fun getSelectionMesh(): Group {
+        if (!this::selectionMesh.isInitialized) {
+            selectionMesh = Group()
+            var meshId = 0
+            var totalX = 0.0
+            var totalY = 0.0
+            var totalZ = 0.0
+
+
+            val controller = gizmo.controller
+//            val t = Translate(
+//                controller.translateSliderX.value,
+//                controller.translateSliderY.value,
+//                controller.translateSliderZ.value)
+//
+//            t.xProperty().setAndBind(controller.translateSliderX.valueProperty())
+//            t.yProperty().setAndBind(controller.translateSliderY.valueProperty())
+//            t.zProperty().setAndBind(controller.translateSliderZ.valueProperty())
+
+            for (i in 0 until rootTransformation.groupIndices.size()) {
+                val groupIndex = rootTransformation.groupIndices[i]
+                for (model in entity.getModels()) {
+                    val vertices = model.getVertexGroups().getOrNull(groupIndex) ?: continue
+                    val sphere = getSelectionBox(meshId++, model, vertices)
+                    totalX += sphere.translateX
+                    totalY += sphere.translateY
+                    totalZ += sphere.translateZ
+//                    sphere.transforms.add(t)
+                    selectionMesh.children.add(sphere)
+                }
+            }
+            gizmo.translateX = totalX / meshId
+            gizmo.translateY = totalY / meshId
+            gizmo.translateZ = totalZ / meshId
         }
         return selectionMesh
     }
+
     private fun getSelectionBox(meshId: Int, model: Model, vertices: IntArray) : Sphere {
         val selectionBox = Sphere()
         selectionBox.id = "$meshId"
         selectionBox.cullFace = CullFace.FRONT
-        selectionBox.drawMode = DrawMode.LINE
+        selectionBox.drawMode = DrawMode.FILL
+        selectionBox.depthTest = DepthTest.DISABLE
         selectionBox.material = PhongMaterial(Color.web("#CC7832"))
-        model.getSceneNode().boundsInLocalProperty().onInvalidation {
-            computerCenter(selectionBox, model, vertices)
-        }
+//        model.getSceneNode().boundsInLocalProperty().onInvalidation {
+//            computerCenter(selectionBox, model, vertices)
+//        }
         computerCenter(selectionBox, model, vertices)
-
         return selectionBox
     }
 
@@ -112,7 +190,7 @@ class TransformGroupTreeItem(
         val width = abs(maxX - minX)
         val height = abs(maxY - minY)
         val depth = abs(maxZ - minZ)
-        val box = Box()
+//        val box = Box()
 //        box.width = width.toDouble()
 //        box.height = height.toDouble()
 //        box.depth = depth.toDouble()

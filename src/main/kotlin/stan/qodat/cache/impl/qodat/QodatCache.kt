@@ -4,16 +4,18 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import qodat.cache.definition.*
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.EncodeResult
-import stan.qodat.cache.definition.*
+import qodat.cache.Cache
+import qodat.cache.EncodeResult
+import qodat.cache.models.RSModelLoader
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.cache.util.RSModelLoader
+import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
 import java.io.UnsupportedEncodingException
+import java.nio.file.Paths
 import kotlin.io.path.outputStream
 
 @ExperimentalSerializationApi
@@ -29,8 +31,34 @@ object QodatCache : Cache("qodat") {
     private val objects: MutableList<QodatObjectDefinition>
     private val animations: MutableMap<String, QodatAnimationDefinition>
     private val animationSkeletons: MutableList<QodatAnimationDefinition>
-    private val animationFrames: MutableMap<Int, QodatAnimationFrameDefinition>
+    private val animationFrames: MutableMap<Int, List<QodatAnimationFrameDefinition>>
     private val models: MutableMap<String, QodatModelDefinition>
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+
+//        val frameArchiveId = 2
+//        for (frameIndex in 0..15){
+//            val hash = ((frameArchiveId and  0xFFFF) shl 16) or (frameIndex and 0xFFFF)
+//            val hexString = Integer.toHexString(hash)
+//            assert(getFileId(hexString) == frameArchiveId)
+//            assert(getFrameId(hexString) == frameIndex)
+//            println("${hash},")
+//        }
+//        Paths.get("/Users/stanvanderbend/IdeaProjects/kotlin-qodat/exports/animation_frames/json/2")
+//            .toFile()
+//            .loadDefinitions<QodatAnimationFrameDefinition>("animation_frames/2")
+//            .forEach {
+//                it.frameHash
+//            }
+    }
+    internal fun getFileId(hexString: String): Int {
+        return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
+    }
+
+    internal fun getFrameId(hexString: String): Int {
+        return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
+    }
 
     init {
         val qodatCachePath = Properties.qodatCachePath.get()
@@ -47,9 +75,14 @@ object QodatCache : Cache("qodat") {
             .toMutableMap()
         animationSkeletons = qodatCacheDir.loadDefinitions("animation_skeletons")
         animationFrames = qodatCacheDir
-            .loadDefinitions<QodatAnimationFrameDefinition>("animation_frames")
-            .associateBy { it.frameHash }
-            .toMutableMap()
+            .resolve("animation_frames")
+            .listFiles()
+            ?.associate {
+                it.nameWithoutExtension.toInt() to it.loadDefinitions<QodatAnimationFrameDefinition>("animation_frames")
+            }
+            ?.toMutableMap()
+            ?: mutableMapOf()
+
         models = qodatCacheDir.loadModels("models")
     }
 
@@ -67,6 +100,80 @@ object QodatCache : Cache("qodat") {
             }
             encodeModel(file, getQodatModelDefinition(any))
             return EncodeResult(file)
+        } else if (any is Animation) {
+            val animationSaveDir = Properties.exportsPath.get().resolve("animation").resolve("json").toFile().apply {
+                if (!parentFile.exists())
+                    parentFile.mkdirs()
+                if (!exists())
+                    mkdir()
+            }
+            val animationFile = animationSaveDir.resolve("${any.getName()}.json").apply {
+                if (!exists())
+                    createNewFile()
+            }
+            val animationFrameSaveDir = Properties.exportsPath.get().resolve("animation_frames").resolve("json").toFile().apply {
+                if (!parentFile.exists())
+                    parentFile.mkdirs()
+                if (!exists())
+                    mkdir()
+            }
+            val animationFrameSkeletonSaveDir = Properties.exportsPath.get().resolve("animation_skeletons").resolve("json").toFile().apply {
+                if (!parentFile.exists())
+                    parentFile.mkdirs()
+                if (!exists())
+                    mkdir()
+            }
+            val frameList = any.getFrameList()
+            val frameArchiveId = any.exportFrameArchiveId.get()
+//            animationFrameSaveDir.listFiles()
+//                ?.mapNotNull { it.nameWithoutExtension.toIntOrNull() }
+//                ?.maxOrNull()?:1
+            val animationDefinition = QodatAnimationDefinition(
+                id = any.getName(),
+                frameHashes = IntArray(frameList.size) { index ->
+                    ((frameArchiveId and  0xFFFF) shl 16) or (index and 0xFFFF)
+                },
+                frameLengths = IntArray(frameList.size) { index ->
+                    val frame = frameList[index]
+                    frame.getLength().toInt()
+                },
+                loopOffset = any.loopOffsetProperty.get(),
+                leftHandItem = any.leftHandItemProperty.get(),
+                rightHandItem = any.rightHandItemProperty.get(),
+            )
+
+            val animationSkeletons = frameList.map {
+                val group = it.definition!!.transformationGroup
+                QodatAnimationSkeletonDefinition(
+                    group.id,
+                    group.transformationTypes,
+                    group.targetVertexGroupsIndices
+                )
+            }
+            val animationFrameDefinitions = frameList.mapIndexed { index, it ->
+                QodatAnimationFrameDefinition(
+                    ((frameArchiveId and  0xFFFF) shl 16) or (index and 0xFFFF),
+                    it.getTransformationCount(),
+                    it.transformationList.map { it.groupIndexProperty.get() }.toIntArray(),
+                    it.transformationList.map { it.getDeltaX() }.toIntArray(),
+                    it.transformationList.map { it.getDeltaY() }.toIntArray(),
+                    it.transformationList.map { it.getDeltaZ() }.toIntArray(),
+                    animationSkeletons[index]
+                )
+            }
+            for ((index, animationFrameDefinition) in animationFrameDefinitions.withIndex()) {
+                val animationFrameFile = animationFrameSaveDir.resolve(frameArchiveId.toString()).resolve("${index}.json").apply {
+                    if (!parentFile.exists())
+                        parentFile.mkdir()
+                }
+                json.encodeToStream(animationFrameDefinition, animationFrameFile.outputStream())
+            }
+            for (animationSkeletonDefinition in animationSkeletons) {
+                val animationSkeletonFile = animationFrameSkeletonSaveDir.resolve("${animationSkeletonDefinition.id}.json")
+                json.encodeToStream(animationSkeletonDefinition, animationSkeletonFile.outputStream())
+            }
+            json.encodeToStream(animationDefinition, animationFile.outputStream())
+            return EncodeResult(animationFile)
         }
         return super.encode(any)
     }
@@ -106,7 +213,8 @@ object QodatCache : Cache("qodat") {
 
                 npcs.add(definition)
                 json.encodeToStream(
-                    definition, Properties.qodatCachePath.get()
+                    definition,
+                    Properties.qodatCachePath.get()
                         .resolve("npcs/" + definition.name + ".json")
                         .outputStream()
                 )

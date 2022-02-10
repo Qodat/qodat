@@ -1,7 +1,7 @@
 package stan.qodat.util
 
 import com.google.gson.GsonBuilder
-import com.sun.javafx.application.PlatformImpl
+import javafx.application.Platform
 import javafx.concurrent.Task
 import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
@@ -42,7 +42,7 @@ fun createNpcAnimsJsonDir(
         val animations = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
-            PlatformImpl.runLater {
+            Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
                 updateProgress(progress, 100.0)
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
@@ -110,7 +110,7 @@ fun createNpcAnimsJsonDir(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                PlatformImpl.runLater {
+                Platform.runLater {
                     val i = counter.incrementAndGet()
                     val progress = (100.0 * i.toFloat().div(total))
                     updateProgress(progress, 100.0)
@@ -138,7 +138,7 @@ fun createObjectAnimsJsonDir(
         val animations = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
-            PlatformImpl.runLater {
+            Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
                 updateProgress(progress, 100.0)
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
@@ -198,7 +198,7 @@ fun createObjectAnimsJsonDir(
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
-                PlatformImpl.runLater {
+                Platform.runLater {
                     val i = counter.incrementAndGet()
                     val progress = (100.0 * i.toFloat().div(total))
                     updateProgress(progress, 100.0)

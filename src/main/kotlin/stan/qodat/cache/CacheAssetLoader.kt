@@ -1,13 +1,13 @@
 package stan.qodat.cache
 
-import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
 import javafx.concurrent.Task
+import qodat.cache.Cache
+import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.definition.EntityDefinition
+import qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.scene.controller.AnimationController
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.entity.Item
@@ -20,7 +20,7 @@ import java.util.stream.Stream
 
 class CacheAssetLoader(
     private val cache: Cache,
-    private val animationController: AnimationController
+    private val animationLoader: (AnimatedEntityDefinition) -> Array<Animation>
 ) {
 
     fun loadAnimations(onCompleted: (List<Animation>) -> Unit) {
@@ -78,7 +78,9 @@ class CacheAssetLoader(
             for ((i, definition) in animationDefinitions.withIndex()) {
                 try {
                     if (definition.frameHashes.isNotEmpty())
-                        animations += Animation("$i", definition, cache)
+                        animations += Animation("$i", definition, cache).apply {
+                            this.idProperty.set(i)
+                        }
                     updateProgress((100.0 * i.div(animationDefinitions.size)), 100.0)
                     updateMessage("Loading animation (${i + 1} / ${animationDefinitions.size})")
                 } catch (e: Exception) {
@@ -94,12 +96,12 @@ class CacheAssetLoader(
     }
     private fun createObjectLoadTask(cache: Cache, onCompleted: (List<Object>) -> Unit) = createLoadTask(
         definitions = cache.getObjects(),
-        mapper = { Object(cache, this, animationController) }
+        mapper = { Object(cache, this, animationLoader) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createNPCLoadTask(cache: Cache, onCompleted: (List<NPC>) -> Unit) = createLoadTask(
         definitions = cache.getNPCs(),
-        mapper = { NPC(cache, this, animationController) }
+        mapper = { NPC(cache, this, animationLoader) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createItemsLoadTask(cache: Cache, onCompleted: (List<Item>) -> Unit) = createLoadTask(
@@ -124,7 +126,7 @@ class CacheAssetLoader(
                 val values = Stream.of(*definitions).parallel().map {
                     val count = progressCounter.incrementAndGet()
                     if (count % updateFrequency == 0) {
-                        PlatformImpl.runLater {
+                        Platform.runLater {
                             updateProgress(count.toLong(), total.toLong())
                             updateMessage("Loading $name ($count / $total)")
                         }

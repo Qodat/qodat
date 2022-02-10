@@ -5,15 +5,9 @@ import javafx.scene.control.Label
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
-import javafx.scene.text.TextFlow
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.InterfaceDefinition
-import stan.qodat.javafx.label
-import stan.qodat.javafx.text
-import stan.qodat.javafx.treeItem
+import qodat.cache.Cache
+import qodat.cache.definition.InterfaceDefinition
 import stan.qodat.scene.runescape.ui.Sprite
-import stan.qodat.util.BABY_BLUE
-import stan.qodat.util.DISTINCT_COLORS
 
 class InterfaceComponentTreeItem(val cache: Cache, val definition: InterfaceDefinition) : TreeItem<Node>() {
 

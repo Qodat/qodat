@@ -1,11 +1,9 @@
 package stan.qodat.scene.runescape.entity
 
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.Encoder
-import stan.qodat.cache.definition.ItemDefinition
-import java.io.File
-import java.io.UnsupportedEncodingException
+import qodat.cache.Cache
+import qodat.cache.Encoder
+import qodat.cache.definition.ItemDefinition
 
 /**
  * TODO: add documentation

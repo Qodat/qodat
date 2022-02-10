@@ -8,17 +8,17 @@ import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
 import javafx.scene.text.TextFlow
 import stan.qodat.Qodat
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.EntityDefinition
-import stan.qodat.cache.impl.oldschool.RSModelDefinitionBuilder
+import qodat.cache.Cache
+import qodat.cache.definition.EntityDefinition
+import qodat.cache.models.RS2ModelBuilder
 import stan.qodat.javafx.menloText
-import stan.qodat.javafx.text
+import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.scene.control.ViewNodeListView
+import stan.qodat.scene.controller.EntityViewController
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.*
-import java.util.concurrent.TimeUnit
-import kotlin.system.measureNanoTime
 
 /**
  * TODO: add documentation
@@ -29,30 +29,47 @@ import kotlin.system.measureNanoTime
 abstract class Entity<D : EntityDefinition>(
     protected val cache: Cache,
     val definition: D
-) : Searchable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider{
+) : Searchable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider {
 
     private lateinit var modelGroup: Group
     private lateinit var models: Array<Model>
-    private lateinit var viewBox : HBox
+    private lateinit var viewBox: HBox
     private lateinit var treeItem: EntityTreeItem
 
+    val locked = SimpleBooleanProperty(false).apply {
+        addListener { _, oldValue, newValue ->
+            if (oldValue == true && newValue == false) {
+                (SubScene3D.contextProperty.get()?.getController() as? EntityViewController)
+                    ?.onUnselectedEvent
+                    ?.handle(
+                        ViewNodeListView.UnselectedEvent(
+                            viewNodeProvider = this@Entity,
+                            hasNewValueOfSameType = false,
+                            causedByTabSwitch = false
+                        )
+                    )
+            }
+        }
+    }
     val labelProperty = SimpleStringProperty(definition.name)
     val mergeModelProperty = SimpleBooleanProperty(true)
 
-    abstract fun property() : SimpleStringProperty
+    abstract fun property(): SimpleStringProperty
 
     override fun getName() = labelProperty.get()
 
     fun getModels(): Array<Model> {
-        if (!this::models.isInitialized){
+        if (!this::models.isInitialized) {
             try {
                 val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
 
                 models = if (definitions.size > 1 && mergeModelProperty.get()) {
-                    val multiModelName = "models_${definitions.joinToString {
-                        it.getName() + "_"
-                    }}"
-                    val modelDefinition = RSModelDefinitionBuilder(*definitions).build()
+                    val multiModelName = "models_${
+                        definitions.joinToString {
+                            it.getName() + "_"
+                        }
+                    }"
+                    val modelDefinition = RS2ModelBuilder(*definitions).build()
                     val model = Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor)
                     arrayOf(model)
                 } else
@@ -65,7 +82,17 @@ abstract class Entity<D : EntityDefinition>(
         return models
     }
 
-    fun getDistinctModels() = if(!mergeModelProperty.get() || definition.modelIds.size == 1)
+    fun createMergedModel(name: String) = Model(
+        name,
+        definition.modelIds
+            .map { cache.getModelDefinition(it) }
+            .toTypedArray()
+            .let { RS2ModelBuilder(*it).build() },
+        definition.findColor,
+        definition.replaceColor
+    )
+
+    fun getDistinctModels() = if (!mergeModelProperty.get() || definition.modelIds.size == 1)
         getModels()
     else
         createDistinctModels()
@@ -83,7 +110,7 @@ abstract class Entity<D : EntityDefinition>(
                 HBox().apply {
                     val id = optionalInt.asInt.toString()
                     val length = 7 - id.length
-                    val spaces = Array(length){""} .joinToString(" ")
+                    val spaces = Array(length) { "" }.joinToString(" ")
                     children.add(TextFlow().apply {
                         menloText("$id$spaces" to DEFAULT)
                     })
@@ -96,7 +123,7 @@ abstract class Entity<D : EntityDefinition>(
     }
 
     override fun getSceneNode(): Group {
-        if (!this::modelGroup.isInitialized){
+        if (!this::modelGroup.isInitialized) {
             modelGroup = Group()
             for (model in getModels())
                 modelGroup.children.add(model.getSceneNode())
@@ -104,7 +131,7 @@ abstract class Entity<D : EntityDefinition>(
         return modelGroup
     }
 
-    override fun getTreeItem(treeView: TreeView<Node>) : EntityTreeItem {
+    override fun getTreeItem(treeView: TreeView<Node>): EntityTreeItem {
         if (!this::treeItem.isInitialized)
             treeItem = EntityTreeItem(this, treeView)
         return treeItem

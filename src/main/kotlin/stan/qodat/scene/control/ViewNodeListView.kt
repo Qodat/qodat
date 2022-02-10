@@ -10,6 +10,7 @@ import javafx.scene.input.ClipboardContent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.util.Callback
+import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.ViewNodeProvider
 import java.io.File
 
@@ -60,7 +61,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             /*
              * TODO: add multi-select support?
              */
-            if (oldValue != null)
+            if (oldValue != null && (oldValue !is Entity<*> || !oldValue.locked.get()))
                 fireEvent(UnselectedEvent(oldValue, newValue != null, false))
             if (newValue != null)
                 fireEvent(SelectedEvent(newValue))

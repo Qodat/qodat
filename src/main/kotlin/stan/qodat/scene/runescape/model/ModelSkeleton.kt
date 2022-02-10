@@ -2,12 +2,15 @@ package stan.qodat.scene.runescape.model
 
 import fxyz3d.geometry.Point3F
 import javafx.geometry.Point3D
-import stan.qodat.cache.definition.ModelDefinition
+import qodat.cache.definition.ModelDefinition
+import qodat.cache.models.FaceNormal
+import qodat.cache.models.VertexNormal
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.COSINE
 import stan.qodat.util.SINE
+import kotlin.math.sqrt
 
 /**
  * TODO: add documentation
@@ -281,6 +284,10 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         Triple(getPoint(v1), getPoint(v2), getPoint(v3))
     }
 
+    fun getFaceCount() = modelDefinition.getFaceCount()
+
+    fun getVertexCount() = modelDefinition.getVertexCount()
+
     fun getPoint(vertex: Int) =
         Point3F(getX(vertex).toFloat(), getY(vertex).toFloat(), getZ(vertex).toFloat())
 
@@ -294,6 +301,8 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     fun getX(vertex: Int) = getPointXValues()[vertex]
     fun getY(vertex: Int) = getPointYValues()[vertex]
     fun getZ(vertex: Int) = getPointZValues()[vertex]
+
+    fun getXYZ(vertex: Int) = Triple(getX(vertex), getY(vertex), getZ(vertex))
 
     fun setX(vertex: Int, value: Int) {
         getPointXValues()[vertex] = value
@@ -317,5 +326,67 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         System.arraycopy(originalVertexXValues, 0, vertexPositionsX, 0, originalVertexXValues.size)
         System.arraycopy(originalVertexYValues, 0, vertexPositionsY, 0, originalVertexYValues.size)
         System.arraycopy(originalVertexZValues, 0, vertexPositionsZ, 0, originalVertexZValues.size)
+    }
+
+    fun calculateVertexNormals() : Array<VertexNormal> {
+        val normals = Array(getVertexCount()) {
+            VertexNormal()
+        }
+
+        for (face in 0 until getFaceCount()) {
+
+            val (vA, vB, vC) = getVertices(face) // indices (TODO: optimise)
+            val (v1, v2, v3) = getPoints(face)   // point instances
+
+            val xA = (v2.x - v1.x)
+            val yA = (v2.y - v1.y)
+            val zA = (v2.z - v1.z)
+
+            val xB = (v3.x - v1.x)
+            val yB = (v3.y - v1.y)
+            val zB = (v3.z - v1.z)
+
+            // Compute cross product
+            var var11 = (yA * zB - yB * zA).toInt()
+            var var12 = (zA * xB - zB * xA).toInt()
+            var var13 = (xA * yB - xB * yA).toInt()
+
+            while (var11 > 8192 || var12 > 8192 || var13 > 8192 || var11 < -8192 || var12 < -8192 || var13 < -8192) {
+                var11 = var11 shr 1
+                var12 = var12 shr 1
+                var13 = var13 shr 1
+            }
+
+            val length = sqrt((var11 * var11 + var12 * var12 + var13 * var13).toDouble())
+                .toInt()
+                .coerceAtLeast(1)
+
+            var11 = var11 * 256 / length
+            var12 = var12 * 256 / length
+            var13 = var13 * 256 / length
+
+            val var15 = modelDefinition.getFaceTypes()?.get(face)?.toInt()?:0
+            if (var15 == 0) {
+                normals[vA].apply {
+                    x += var11
+                    y += var12
+                    z += var13
+                    ++magnitude
+                }
+                normals[vB].apply {
+                    x += var11
+                    y += var12
+                    z += var13
+                    ++magnitude
+                }
+                normals[vC].apply {
+                    x += var11
+                    y += var12
+                    z += var13
+                    ++magnitude
+                }
+            }
+        }
+        return normals
     }
 }

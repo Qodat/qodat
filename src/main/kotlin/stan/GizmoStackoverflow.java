@@ -1,30 +1,19 @@
 package stan;
 
-import com.sun.javafx.geom.Vec3d;
 import com.sun.javafx.scene.CameraHelper;
 import javafx.application.Application;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.binding.Bindings;
 import javafx.beans.property.*;
-import javafx.event.EventHandler;
-import javafx.geometry.Point3D;
 import javafx.scene.*;
-import javafx.scene.effect.Light;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.input.PickResult;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.*;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Scale;
-import javafx.scene.transform.Transform;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import org.fxyz3d.shapes.primitives.CubeMesh;
 import us.ihmc.euclid.geometry.Line3D;
-
-import java.util.concurrent.Callable;
 
 
 /**
@@ -33,19 +22,19 @@ import java.util.concurrent.Callable;
  */
 public class GizmoStackoverflow extends Application {
 
-    private final static double AXIS_LENGTH = 800.0;
-    private final static double AXIS_WIDTH = 5.0;
+    private final static double AXIS_LENGTH = 80.0;
+    private final static double AXIS_WIDTH = 0.5;
 
-    private final static double CONE_RADIUS = 40.0;
-    private final static double CONE_HEIGHT = 80.0;
+    private final static double CONE_RADIUS = 4.0;
+    private final static double CONE_HEIGHT = 8.0;
 
-    private final static double TORUS_INNER_RADIUS = 5.0;
+    private final static double TORUS_INNER_RADIUS = 1.0;
 
     private final Group root = new Group();
     private final PerspectiveCamera camera = new PerspectiveCamera();
     private final CameraTransformer cameraTransform = new CameraTransformer();
     private final Gizmo gizmo = new Gizmo();
-    GizmoController gizmoController = new GizmoController(gizmo);
+
     CubeMesh cubeMesh = new CubeMesh(200);
 
     public static void main(String[] args) {
@@ -61,7 +50,7 @@ public class GizmoStackoverflow extends Application {
         loadControls(scene);
 
         root.getChildren().addAll(gizmo, cubeMesh);
-        gizmoController.getNodeProperty().set(cubeMesh);
+//        gizmo.controller.getNodeProperty().set(cubeMesh);
 
         stage.setTitle("Gizmo Example");
         stage.setScene(scene);
@@ -88,7 +77,7 @@ public class GizmoStackoverflow extends Application {
     private double mouseDeltaX;
     private double mouseDeltaY;
 
-    private static Line3D getPickRay(Camera camera, MouseEvent event)
+    public static Line3D getPickRay(Camera camera, MouseEvent event)
     {
         us.ihmc.euclid.tuple3D.Point3D point1 = new us.ihmc.euclid.tuple3D.Point3D();
         point1.setX(camera.getLocalToSceneTransform().getTx());
@@ -127,19 +116,19 @@ public class GizmoStackoverflow extends Application {
 //            Point3D point3D = gizmo.sceneToLocal(100.0, 1.0, 1.0);
 
 //            System.out.println(point3D);
-            gizmoController.getPosition().set(
+            gizmo.controller.getPosition().set(
                     1.0, 1.0, 1.0
 //                    point3D.getX(),
 //                    point3D.getY(),
 //                    point3D.getZ()
             );
-            gizmoController.manipulate(gizmoController.toRay(line3D));
+            gizmo.controller.manipulateRotateGizmo(GizmoControllerKt.toRay(line3D));
         });
         scene.setOnMouseReleased((MouseEvent event)-> {
             gizmo.selectedAxis.set(null);
             gizmo.transformMode = null;
-            gizmo.previousEvent = null;
-            gizmo.axis = null;
+//            gizmo.previousEvent = null;
+//            gizmo.axis = null;
         });
     }
 
@@ -147,14 +136,19 @@ public class GizmoStackoverflow extends Application {
      * @author Stan van der Bend
      */
     public static class Gizmo extends Group {
-        
-        private Axis axis;
-        private TransformMode transformMode;
-        private MouseEvent previousEvent;
+
+        private final GizmoController controller;
+
+        public TransformMode transformMode;
         public SimpleObjectProperty<Axis> selectedAxis = new SimpleObjectProperty<>();
         
         public Gizmo() {
+            this.controller = new GizmoController(this);
             create();
+        }
+
+        public GizmoController getController() {
+            return controller;
         }
 
         public void create() {
@@ -166,9 +160,9 @@ public class GizmoStackoverflow extends Application {
             final ConeMesh yCone = createTranslateCone(Axis.Y);
             final ConeMesh zCone = createTranslateCone(Axis.Z);
 
-            final DragGroup xDragGroup = new DragGroup(this, Axis.X, TransformMode.TRANSLATE, xAxis, xCone);
-            final DragGroup yDragGroup = new DragGroup(this, Axis.Y, TransformMode.TRANSLATE, yAxis, yCone);
-            final DragGroup zDragGroup = new DragGroup(this, Axis.Z, TransformMode.TRANSLATE, zAxis, zCone);
+            final DragGroup xDragGroup = new DragGroup(this, Axis.X, xAxis, xCone);
+            final DragGroup yDragGroup = new DragGroup(this, Axis.Y, yAxis, yCone);
+            final DragGroup zDragGroup = new DragGroup(this, Axis.Z, zAxis, zCone);
 
             getChildren().addAll(xDragGroup, yDragGroup, zDragGroup);
 
@@ -183,12 +177,16 @@ public class GizmoStackoverflow extends Application {
         private Box createAxisLine(Axis axis, double length, double width, double depth) {
             final Box box = new Box(length, width, depth);
             box.setDrawMode(DrawMode.FILL);
+            box.setDepthTest(DepthTest.DISABLE);
+            box.setCullFace(CullFace.FRONT);
             box.setMaterial(new PhongMaterial(axis.regularColor));
             return box;
         }
 
         private ConeMesh createTranslateCone(Axis axis) {
             final ConeMesh cone = new ConeMesh(CONE_RADIUS, CONE_HEIGHT);
+            cone.setDepthTest(DepthTest.DISABLE);
+            cone.setCullFace(CullFace.FRONT);
             cone.setDrawMode(DrawMode.FILL);
             cone.setMaterial(new PhongMaterial(axis.regularColor));
             if(axis == Axis.X){
@@ -209,8 +207,8 @@ public class GizmoStackoverflow extends Application {
 
         private TorusMesh createRotationTorus(Axis axis) {
             final TorusMesh torus = new TorusMesh(AXIS_LENGTH / 2, TORUS_INNER_RADIUS);
-//            torus.setDepthTest(DepthTest.DISABLE);
-//            torus.setCullFace(CullFace.FRONT);
+            torus.setDepthTest(DepthTest.DISABLE);
+            torus.setCullFace(CullFace.FRONT);
             torus.setDrawMode(DrawMode.FILL);
             torus.setMaterial(new PhongMaterial(axis.regularColor));
             if (axis == Axis.X)
@@ -222,18 +220,39 @@ public class GizmoStackoverflow extends Application {
                 torus.setRotationAxis(Rotate.X_AXIS);
                 torus.setRotate(-90.0);
             }
-            torus.setOnDragDetected(mouseEvent -> selectedAxis.set(axis));
-            torus.materialProperty().bind(Bindings.createObjectBinding(() -> (selectedAxis.get() == axis)
-                    ? new PhongMaterial(axis.regularColor)
-                    : new PhongMaterial(axis.regularColor.darker()), selectedAxis));
+
+            torus.setOnMousePressed(mouseEvent -> {
+                transformMode = TransformMode.ROTATE;
+                selectedAxis.set(axis);
+                torus.setMaterial(new PhongMaterial(axis.regularColor.darker()));
+                mouseEvent.consume();
+            });
+            torus.setOnMouseReleased(mouseEvent -> {
+                System.out.println("release "+selectedAxis.get());
+                selectedAxis.set(null);
+                torus.setMaterial(new PhongMaterial(axis.regularColor));
+                mouseEvent.consume();
+            });
+            torus.setOnMouseEntered(mouseEvent -> {
+                if (selectedAxis.get() != axis) {
+                    torus.setMaterial(new PhongMaterial(axis.regularColor.brighter()));
+                    mouseEvent.consume();
+                }
+            });
+            torus.setOnMouseExited(mouseEvent -> {
+                if (selectedAxis.get() != axis) {
+                    torus.setMaterial(new PhongMaterial(axis.regularColor));
+                    mouseEvent.consume();
+                }
+            });
             return torus;
         }
     }
 
-    enum Axis {
+    public enum Axis {
         X(Color.DARKRED),
         Y(Color.GREEN),
-        Z(Color.BLUEVIOLET);
+        Z(Color.BLUE);
 
         private final Color regularColor;
 
@@ -242,26 +261,42 @@ public class GizmoStackoverflow extends Application {
         }
     }
 
-    enum TransformMode {
+    public enum TransformMode {
         TRANSLATE,
         ROTATE
     }
 
     private static class DragGroup extends Group {
 
-        private final Axis axis;
-        private final TransformMode transformMode;
-        private Point3D startPoint;
-
-        public DragGroup(Gizmo gizmo, Axis axis, TransformMode transformMode, Node... children) {
+        public DragGroup(Gizmo gizmo, Axis axis, Shape3D... children) {
             super(children);
-            this.axis = axis;
-            this.transformMode = transformMode;
-            setOnDragDetected(event -> {
-                startPoint = localToParent(event.getPickResult().getIntersectedPoint());
-                gizmo.axis = axis;
-                gizmo.transformMode = transformMode;
-                gizmo.previousEvent = event;
+
+            setOnMousePressed(mouseEvent -> {
+                gizmo.transformMode = TransformMode.TRANSLATE;
+                gizmo.selectedAxis.set(axis);
+                for (Shape3D node : children)
+                    node.setMaterial(new PhongMaterial(axis.regularColor.darker()));
+                mouseEvent.consume();
+            });
+            setOnMouseReleased(mouseEvent -> {
+                gizmo.selectedAxis.set(null);
+                for (Shape3D node : children)
+                    node.setMaterial(new PhongMaterial(axis.regularColor));
+                mouseEvent.consume();
+            });
+            setOnMouseEntered(mouseEvent -> {
+                if (gizmo.selectedAxis.get() != axis) {
+                    for (Shape3D node : children)
+                        node.setMaterial(new PhongMaterial(axis.regularColor.brighter()));
+                    mouseEvent.consume();
+                }
+            });
+            setOnMouseExited(mouseEvent -> {
+                if (gizmo.selectedAxis.get() != axis) {
+                    for (Shape3D node : children)
+                        node.setMaterial(new PhongMaterial(axis.regularColor));
+                    mouseEvent.consume();
+                }
             });
         }
     }

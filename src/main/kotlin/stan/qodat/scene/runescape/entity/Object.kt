@@ -1,13 +1,12 @@
 package stan.qodat.scene.runescape.entity
 
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.EncodeResult
-import stan.qodat.cache.Encoder
-import stan.qodat.cache.definition.ObjectDefinition
+import qodat.cache.Cache
+import qodat.cache.EncodeResult
+import qodat.cache.Encoder
+import qodat.cache.definition.ObjectDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
-import java.io.File
 import java.io.UnsupportedEncodingException
 
 /**

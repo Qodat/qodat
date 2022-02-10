@@ -1,6 +1,6 @@
 package stan.qodat.scene.controller
 
-import com.sun.javafx.application.PlatformImpl
+import javafx.application.Platform
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.FXCollections
 import javafx.fxml.FXML
@@ -23,6 +23,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import stan.qodat.javafx.JavaFXExecutor
 import stan.qodat.scene.control.tree.ExceptionTreeItem
 import stan.qodat.util.LOG_ERROR
 import java.net.URL
@@ -55,7 +56,7 @@ class EventLogController : Initializable {
         lastTitle.set(title)
 
         val time = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-        PlatformImpl.runAndWait {
+        JavaFXExecutor.execute {
             exceptions.add(TitledThrowable(time, title, throwable))
         }
     }
@@ -73,7 +74,7 @@ class EventLogController : Initializable {
                             val cellHeight = 30.0
                             prefHeight = cellHeight
                             expandedItemCountProperty().addListener { _, _, newValue ->
-                                PlatformImpl.runLater {
+                                Platform.runLater {
                                     prefHeight =  (newValue.toInt() * cellHeight)
                                 }
                             }

@@ -67,13 +67,14 @@ class EditorController : EntityViewController("editor-scene") {
             configureColorPicker(entity)
         }
         super.initialize(location, resources)
-
-        val texture = TextureMaterial(OldschoolCacheRuneLite.getTexture(40))
-        textureList.items.add(texture)
-        textureList.selectionModel.onSelected { _, current ->
-            if (current != null) {
-                selectedTextureImage.imageProperty().unbind()
-                selectedTextureImage.imageProperty().setAndBind(current.imageProperty)
+        cacheProperty().addListener { _ ->
+            val texture = TextureMaterial(OldschoolCacheRuneLite.getTexture(40))
+            textureList.items.setAll(texture)
+            textureList.selectionModel.onSelected { _, current ->
+                if (current != null) {
+                    selectedTextureImage.imageProperty().unbind()
+                    selectedTextureImage.imageProperty().setAndBind(current.imageProperty)
+                }
             }
         }
 

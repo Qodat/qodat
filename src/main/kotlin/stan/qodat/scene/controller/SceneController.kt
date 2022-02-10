@@ -41,11 +41,15 @@ abstract class SceneController(val name: String)
 
     internal fun selectThisContext() {
         val oldContext = SubScene3D.contextProperty.get()
-        oldContext?.getController()?.onSwitch(this)
         SubScene3D.contextProperty.set(sceneContext)
+        if (oldContext != sceneContext)
+            oldContext?.getController()?.onSwitch(this)
+        onSelect(oldContext?.getController())
     }
 
-    abstract fun onSwitch(other: SceneController)
+    abstract fun onSwitch(next: SceneController)
+
+    open fun onSelect(old: SceneController?) = Unit
 
     override fun getSceneNode() = sceneContext.getSceneNode()
 }

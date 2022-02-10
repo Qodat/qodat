@@ -3,7 +3,10 @@ package stan.qodat.scene.control.tree
 import IntField
 import javafx.beans.InvalidationListener
 import javafx.beans.binding.Bindings
+import javafx.beans.property.SimpleDoubleProperty
 import javafx.collections.FXCollections
+import javafx.geometry.Orientation
+import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.*
@@ -24,6 +27,7 @@ import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.BABY_BLUE
 import stan.qodat.util.onInvalidation
+import stan.qodat.util.setAndBind
 import kotlin.math.abs
 
 open class TransformTreeItem(
@@ -32,7 +36,7 @@ open class TransformTreeItem(
     private val transform: Transformation,
     transformsItem: TreeItem<Node>,
     selectionModel: MultipleSelectionModel<TreeItem<Node>>
-) : TreeItem<Node>() {
+) : TreeItem<Node>(), LineMode {
 
     private lateinit var selectionMesh: Group
 
@@ -63,12 +67,12 @@ open class TransformTreeItem(
 
         selectionModel.onSelected { oldValue, newValue ->
             if (newValue == this) {
-                if (oldValue !is TransformTreeItem && oldValue !is TransformGroupTreeItem)
+                if (oldValue !is LineMode)
                     for (model in entity.getModels())
                         model.drawModeProperty.set(DrawMode.LINE)
                 entity.getSceneNode().children.addAll(getSelectionMesh())
             } else if (oldValue == this) {
-                if (newValue !is TransformTreeItem && oldValue !is TransformGroupTreeItem)
+                if (newValue !is LineMode)
                     for (model in entity.getModels())
                         model.drawModeProperty.set(DrawMode.FILL)
                 entity.getSceneNode().children.removeAll(getSelectionMesh())
@@ -77,14 +81,16 @@ open class TransformTreeItem(
     }
 
     private fun VBox.addGroupList() {
+        val propertyPrefHeight = SimpleDoubleProperty(28.0)
         val listView = ListView<Int>()
+        listView.orientation = Orientation.HORIZONTAL
         transform.groupIndices.onInvalidation {
             val ints = transform.groupIndices.toArray(null).toList()
             listView.items.setAll(ints)
         }
         val ints = transform.groupIndices.toArray(null).toList()
         listView.items.setAll(ints)
-        listView.prefHeightProperty().bind(Bindings.size(transform.groupIndices).multiply(28));
+        listView.prefHeightProperty().setAndBind(propertyPrefHeight)
         children.add(listView)
     }
 
@@ -113,19 +119,7 @@ open class TransformTreeItem(
         resetX.setOnAction { transform.deltaXProperty.set(initialX) }
         resetY.setOnAction { transform.deltaYProperty.set(initialY) }
         resetZ.setOnAction { transform.deltaZProperty.set(initialZ) }
-        Bindings.createBooleanBinding(
-            {
-                true
-            }, transform.deltaXProperty, transform.deltaYProperty, transform.deltaZProperty
-        )
-        val invalidationListener = InvalidationListener {
-            entity.getModels().forEach {
-                it.animate(frame)
-            }
-        }
-        transform.deltaXProperty.addListener(invalidationListener)
-        transform.deltaYProperty.addListener(invalidationListener)
-        transform.deltaZProperty.addListener(invalidationListener)
+
         children.addAll(boxX, boxY, boxZ)
     }
 

@@ -1,6 +1,5 @@
 package stan.qodat.scene.controller
 
-import com.sun.javafx.application.PlatformImpl
 import com.sun.nio.file.SensitivityWatchEventModifier
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.SimpleObjectProperty
@@ -17,6 +16,7 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.qodat.QodatCache
+import stan.qodat.javafx.JavaFXExecutor
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.model.Model
@@ -140,7 +140,7 @@ class ModelController : Initializable {
                             if (context is Path) {
                                 val file = path.resolve(context).toFile()
                                 val name = file.nameWithoutExtension
-                                PlatformImpl.runAndWait {
+                                JavaFXExecutor.execute {
                                     when (event.kind()) {
                                         StandardWatchEventKinds.ENTRY_DELETE -> {
                                             models.removeIf { it.getName() == name }

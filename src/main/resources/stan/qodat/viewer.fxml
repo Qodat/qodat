@@ -20,20 +20,7 @@
       <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
       <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
          <tabs>
-            <Tab text="Interfaces">
-            <content>
-               <VBox>
-                  <children>
-                     <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0" />
-                     <HBox>
-                        <children>
-                           <TextField fx:id="searchInterfaceField" promptText="Search Interface" />
-                        </children>
-                     </HBox>
-                  </children>
-               </VBox>
-            </content>
-            </Tab>
+
             <Tab text="NPC">
                <content>
                   <VBox>
@@ -65,6 +52,20 @@
                      <children>
                         <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0" />
                         <TextField fx:id="searchItemField" promptText="Search item" />
+                     </children>
+                  </VBox>
+               </content>
+            </Tab>
+            <Tab text="Interfaces">
+               <content>
+                  <VBox>
+                     <children>
+                        <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0" />
+                        <HBox>
+                           <children>
+                              <TextField fx:id="searchInterfaceField" promptText="Search Interface" />
+                           </children>
+                        </HBox>
                      </children>
                   </VBox>
                </content>

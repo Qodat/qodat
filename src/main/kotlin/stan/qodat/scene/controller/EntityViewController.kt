@@ -24,10 +24,9 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.actor
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.Cache
+import qodat.cache.Cache
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.qodat.QodatCache
-import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
@@ -89,6 +88,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         VBox.setVgrow(npcList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
         VBox.setVgrow(interfaceList, Priority.ALWAYS)
+
+        HBox.setHgrow(searchNpcField, Priority.ALWAYS)
 
         SplitSceneDividerDragRegion(
             splitPane = root,
@@ -181,7 +182,6 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             find { lastSelectedName == it.getName() }
     }
 
-
     private fun configureSortComboBox() {
         sortMethodBox.items.addAll(SortType.values())
         sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
@@ -190,7 +190,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                     it.getName()
                 }
                 SortType.ID -> Comparator.comparing {
-                    it.definition.name
+                    it.definition.getOptionalId().orElse(0)
                 }
             }
         }
@@ -203,7 +203,21 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             val animationView = animationLoader.load<VBox>()
             animationView.styleClass.add("border-right")
             animationController = animationLoader.getController()
+            animationController.animationsListView.onItemSelected { old, new ->
+                if (new == null && old != null) {
+                    Properties.selectedAnimationName.set("")
+                    sceneContext.animationPlayer.transformerProperty.set(null)
 
+                } else if(new != null) {
+                    Properties.selectedAnimationName.set(new.getName())
+                    sceneContext.animationPlayer.transformerProperty.set(new)
+                    (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
+                }
+            }
+            Properties.selectedEntity.addListener { _, oldEntity, newEntity ->
+                if (newEntity is AnimatedEntity)
+                    animationController.animations.setAll(*newEntity.getAnimations())
+            }
             val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
             val modelView = modelLoader.load<VBox>()
     //            modelView.styleClass.add("border-left")
@@ -298,14 +312,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     protected val cache: Cache
         get() = cacheProperty().get()
 
-    override fun onSwitch(other: SceneController) {
-        if (other is MainController) {
-//            for (model in sceneContext.getModels())
-//                other.sceneContext.addNode(model)
-        }
-        if (other is EditorController) {
-            // TODO
-        }
+    override fun onSwitch(next: SceneController) {
+        Properties.selectedAnimation.unbindBidirectional(sceneContext.animationPlayer.transformerProperty)
+    }
+
+    override fun onSelect(old: SceneController?) {
+        Properties.selectedAnimation.setAndBind(sceneContext.animationPlayer.transformerProperty, true)
     }
 
     override fun getViewNode() : SplitPane = root
@@ -325,7 +337,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             handleEmptySearchField(searchField)
         }
     }
-    private val onUnselectedEvent = EventHandler<ViewNodeListView.UnselectedEvent> { event ->
+
+    val onUnselectedEvent = EventHandler<ViewNodeListView.UnselectedEvent> { event ->
         val node = event.viewNodeProvider
 
         if (node is SceneNodeProvider)
@@ -340,12 +353,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                     animationController.animationsListView.items = animationController.filteredAnimations
                     animationController.filteredAnimations.setPredicate { true }
                 }
-                SubScene3D.animationPlayer.transformerProperty.set(null)
+                sceneContext.animationPlayer.transformerProperty.set(null)
             }
         }
 
         if (node is Transformable)
-            SubScene3D.animationPlayer.transformableList.remove(node)
+            sceneContext.animationPlayer.transformableList.remove(node)
 
         if (!event.hasNewValueOfSameType && !event.causedByTabSwitch) {
             when (node) {
@@ -366,15 +379,14 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
         if (newNode is Entity<*>) {
             newNode.property().set(newNode.getName())
+            Properties.selectedEntity.set(newNode)
             modelController.models.setAll(*newNode.getModels())
-            if (newNode is AnimatedEntity<*>)
-                animationController.animationsListView.items = FXCollections.observableArrayList(*newNode.getAnimations())
             if (this::onEntitySelected.isInitialized)
                 onEntitySelected(newNode)
         }
 
         if (newNode is Transformable)
-            SubScene3D.animationPlayer.transformableList.add(newNode)
+            sceneContext.animationPlayer.transformableList.add(newNode)
 
         when(newNode) {
             is NPC -> currentSelectedNpcProperty.set(newNode)

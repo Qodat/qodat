@@ -2,6 +2,7 @@ package stan.qodat.scene.runescape.model
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
+import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
@@ -21,11 +22,13 @@ class ModelSkeletonMesh(private val model: Model) : ModelSkin {
     val visibleProperty = SimpleBooleanProperty()
     val drawModeProperty = SimpleObjectProperty<DrawMode>()
     val cullFaceProperty = SimpleObjectProperty<CullFace>()
+    val depthTestProperty = SimpleObjectProperty<DepthTest>()
 
     init {
         visibleProperty.setAndBind(model.visibleProperty)
         drawModeProperty.setAndBind(model.drawModeProperty)
         cullFaceProperty.setAndBind(model.cullFaceProperty)
+        depthTestProperty.setAndBind(model.depthTestProperty)
     }
 
     override fun updatePoints(skeleton: ModelSkeleton) {

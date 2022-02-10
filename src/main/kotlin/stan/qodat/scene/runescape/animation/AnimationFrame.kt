@@ -7,7 +7,9 @@ import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.scene.Node
 import javafx.scene.layout.HBox
-import stan.qodat.cache.definition.AnimationFrameDefinition
+import javafx.util.Duration
+import qodat.cache.definition.AnimationFrameDefinition
+import qodat.cache.definition.AnimationSkeletonDefinition
 import stan.qodat.util.ViewNodeProvider
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.transform.TransformationGroup
@@ -23,17 +25,20 @@ import stan.qodat.util.onInvalidation
  */
 class AnimationFrame(
     name: String,
-    definition: AnimationFrameDefinition?,
+    val definition: AnimationFrameDefinition?,
     duration: Int
 ) : TransformationGroup, Searchable, ViewNodeProvider {
 
     private lateinit var viewBox : HBox
-    private val labelProperty = SimpleStringProperty(name)
+    val labelProperty = SimpleStringProperty(name)
 
+    val idProperty = SimpleIntegerProperty()
     val transformationCountProperty = SimpleIntegerProperty(definition?.transformationCount?:0)
     val transformationList = FXCollections.observableArrayList<Transformation>()
     val durationProperty = SimpleObjectProperty(FrameTimeUtil.frame(duration))
     val enabledProperty = SimpleBooleanProperty(true)
+
+    fun getLength() = FrameTimeUtil.toFrame(durationProperty.get())
 
     private val rootNodeProperty = SimpleObjectProperty<Transformation>()
 
@@ -48,9 +53,11 @@ class AnimationFrame(
                     definition.transformationDeltaX[it],
                     definition.transformationDeltaY[it],
                     definition.transformationDeltaZ[it]
-                )
+                ).apply {
+                    idProperty.set(it)
+                    groupIndexProperty.set(groupIndex)
+                }
             }
-
             transformationList.addAll(transformations)
         }
         transformationList.onInvalidation {
@@ -60,7 +67,9 @@ class AnimationFrame(
 
     fun getTransformationCount() = transformationCountProperty.get()
 
-    override fun getDuration() = durationProperty.get()
+    override fun durationProperty(): SimpleObjectProperty<Duration> = durationProperty
+
+    override fun getDuration() = durationProperty().get()
 
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized)
@@ -71,5 +80,36 @@ class AnimationFrame(
     override fun getName() = labelProperty.get()
 
     override fun toString() = getName()
+
+    fun clone(name: String) = AnimationFrame(
+        name = name,
+        definition = object : AnimationFrameDefinition {
+            override val transformationCount: Int = transformationCountProperty.get()
+            override val transformationGroupAccessIndices: IntArray =
+                transformationList.map { it.groupIndexProperty.get() }.toIntArray()
+            override val transformationDeltaX: IntArray =
+                transformationList.map { it.getDeltaX() }.toIntArray()
+            override val transformationDeltaY: IntArray =
+                transformationList.map { it.getDeltaY() }.toIntArray()
+            override val transformationDeltaZ: IntArray =
+                transformationList.map { it.getDeltaZ() }.toIntArray()
+            override val transformationGroup: AnimationSkeletonDefinition =
+                definition!!.transformationGroup
+        },
+        duration = getLength().toInt()
+    ).apply {
+        val hex = Integer.toHexString(this@AnimationFrame.idProperty.get())
+        val fileId = getFileId(hex)
+        val frameId = getFrameId(hex) + 1
+        this.idProperty.set(((fileId and  0xFFFF) shl 16) or (frameId and 0xFFFF))
+    }
+
+    internal fun getFileId(hexString: String): Int {
+        return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
+    }
+
+    internal fun getFrameId(hexString: String): Int {
+        return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
+    }
 
 }

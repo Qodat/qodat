@@ -7,15 +7,18 @@ import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
-import net.runelite.cache.definitions.providers.SpriteProvider
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
+import qodat.cache.definition.*
 import stan.qodat.Properties
-import stan.qodat.cache.Cache
-import stan.qodat.cache.definition.*
+import qodat.cache.Cache
+import qodat.cache.models.RSModelLoader
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
-import stan.qodat.cache.util.RSModelLoader
+import stan.qodat.cache.impl.qodat.QodatAnimationDefinition
+import stan.qodat.cache.impl.qodat.QodatAnimationFrameDefinition
+import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.TransformationType
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
@@ -63,6 +66,80 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         textureManager.load()
     }
 
+    @JvmStatic
+    fun main(args: Array<String>) {
+
+
+        val storage = store.storage
+        val index = store.getIndex(IndexType.CONFIGS)
+
+        val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
+        val seqArchiveData = storage.loadArchive(seqArchive)
+        val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
+
+        val sequence = SequenceLoader().load(7947, seqArchiveFiles.findFile(7947).contents)
+
+        println()
+//        val animationDef = getAnimation("7870")
+//
+//        val animation = Animation("bla", animationDef, this)
+//        val frames = animation.getFrameList()
+//        println("loopOffset = ${animation.loopOffsetProperty.get()}")
+//
+//        val myFrames = ArrayList<QodatAnimationFrameDefinition>()
+//
+//        frames.forEachIndexed { index, frame ->
+//
+//            println("frame[$index] dur = ${frame.getLength()}")
+//            println("reference:\t")
+//            for (transform in frame.transformationList){
+//                if (transform.getType() == TransformationType.SET_OFFSET) {
+//                    print("[ ")
+//                    print("${transform.getDeltaX()}, ")
+//                    print("${transform.getDeltaY()}, ")
+//                    print("${transform.getDeltaZ()} ")
+//                    print("], ")
+//                }
+//            }
+//            println()
+//            println("translate\t")
+//            for (transform in frame.transformationList){
+//                if (transform.getType() == TransformationType.TRANSLATE) {
+//                    print("[ ")
+//                    print("${transform.getDeltaX()}, ")
+//                    print("${transform.getDeltaY()}, ")
+//                    print("${transform.getDeltaZ()} ")
+//                    print("], ")
+//                }
+//            }
+//            println()
+//            println("rotate\t")
+//            for (transform in frame.transformationList){
+//                if (transform.getType() == TransformationType.ROTATE) {
+//                    print("[ ")
+//                    print("${transform.getDeltaX()}, ")
+//                    print("${transform.getDeltaY()}, ")
+//                    print("${transform.getDeltaZ()} ")
+//                    print("], ")
+//                }
+//            }
+//            println()
+//        }
+//
+//        val frameArchiveId = 1
+//        val newAnim = QodatAnimationDefinition(
+//            "boo",
+//            IntArray(frames.size) {
+//                ((frameArchiveId and  0xFFFF) shl 16) or (it and 0xFFFF)
+//            },
+//            animationDef.frameLengths.copyOf(),
+//            animationDef.loopOffset,
+//            animationDef.leftHandItem,
+//            animationDef.rightHandItem
+//        )
+
+    }
+
     override fun getTexture(id: Int): TextureDefinition {
         val def = textureManager.findTexture(id)
         def.method2680(1.0, 128) { spriteId, frameId ->
@@ -93,7 +170,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     }
 
     override fun getAnimation(id: String): AnimationDefinition {
-        return animations.find { it.id == id }!!
+        return getAnimationDefinitions().find { it.id == id }!!
     }
 
     override fun getNPCs(): Array<NPCDefinition> {
@@ -167,12 +244,12 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             animations = seqArchiveFiles.files.map {
                 val sequence = SequenceLoader().load(it.fileId, it.contents)!!
                 return@map object : AnimationDefinition {
-                    override val id: String
-                        get() = it.fileId.toString()
-                    override val frameHashes: IntArray
-                        get() = sequence.frameIDs?: IntArray(0)
-                    override val frameLengths: IntArray
-                        get() = sequence.frameLenghts?: IntArray(0)
+                    override val id: String = it.fileId.toString()
+                    override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
+                    override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                    override val loopOffset: Int = sequence.frameStep
+                    override val leftHandItem: Int = sequence.leftHandItem
+                    override val rightHandItem: Int = sequence.rightHandItem
                 }
             }.toTypedArray()
         }
@@ -202,12 +279,9 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     val frameMapContents = frameMapArchive.decompress(storage.loadArchive(frameMapArchive))
                     val frameMapDefinition = FramemapLoader().load(frameMapArchive.archiveId, frameMapContents)
                     frameMapDefinition to object : AnimationSkeletonDefinition {
-                        override val id: Int
-                            get() = frameMapArchiveId
-                        override val transformationTypes: IntArray
-                            get() = frameMapDefinition.types
-                        override val targetVertexGroupsIndices: Array<IntArray>
-                            get() = frameMapDefinition.frameMaps
+                        override val id: Int = frameMapArchiveId
+                        override val transformationTypes: IntArray = frameMapDefinition.types
+                        override val targetVertexGroupsIndices: Array<IntArray> = frameMapDefinition.frameMaps
                     }
                 }
                 val frame = FrameLoader().load(frameMapDefinition, file.fileId, frameContents)

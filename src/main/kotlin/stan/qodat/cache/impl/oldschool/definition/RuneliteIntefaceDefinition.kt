@@ -1,6 +1,8 @@
 package stan.qodat.cache.impl.oldschool.definition
 
-import stan.qodat.cache.definition.InterfaceDefinition
+import qodat.cache.definition.ClientScript1Instruction
+import qodat.cache.definition.ClientScript1Instruction.*
+import qodat.cache.definition.InterfaceDefinition
 
 class RuneliteIntefaceDefinition(definition: net.runelite.cache.definitions.InterfaceDefinition) : InterfaceDefinition {
    
@@ -83,7 +85,36 @@ class RuneliteIntefaceDefinition(definition: net.runelite.cache.definitions.Inte
     override var hoveredSiblingId: Int = definition.hoveredSiblingId
     override var alternateOperators = definition.alternateOperators
     override var alternateRhs = definition.alternateRhs
-    override var clientScripts = definition.clientScripts
+    override var clientScripts = definition.clientScripts?.map { scripts ->
+        Array(scripts.size) {
+            val script = scripts[it]
+            val opcode = when(script.opcode) {
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.RETURN -> Opcode.RETURN
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.BOOSTED_SKILL_LEVELS -> Opcode.BOOSTED_SKILL_LEVELS
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.REAL_SKILL_LEVELS -> Opcode.REAL_SKILL_LEVELS
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.SKILL_EXPERIENCE -> Opcode.SKILL_EXPERIENCE
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY -> Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP -> Opcode.VARP
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL -> Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP_TIMES_469 -> Opcode.VARP_TIMES_469
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.COMBAT_LEVEL -> Opcode.COMBAT_LEVEL
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.TOTAL_LEVEL -> Opcode.TOTAL_LEVEL
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_STAR -> Opcode.WIDGET_CONTAINS_ITEM_STAR
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.RUN_ENERGY -> Opcode.RUN_ENERGY
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WEIGHT -> Opcode.WEIGHT
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP_TESTBIT -> Opcode.VARP_TESTBIT
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARBIT -> Opcode.VARBIT
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.MINUS -> Opcode.MINUS
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.DIV -> Opcode.DIV
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.MUL -> Opcode.MUL
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WORLD_X -> Opcode.WORLD_X
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WORLD_Y -> Opcode.WORLD_Y
+                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.CONSTANT -> Opcode.CONSTANT
+                else -> null
+            }
+            ClientScript1Instruction(opcode, script.operands)
+        }
+    }?.toTypedArray()
     override var itemIds = definition.itemIds
     override var itemQuantities = definition.itemQuantities
     override var xPitch: Int = definition.xPitch

@@ -1,8 +1,6 @@
 package stan.qodat.scene.controller
 
-import com.sun.javafx.application.PlatformImpl
 import javafx.application.Platform
-import javafx.beans.binding.Bindings
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.concurrent.Task
@@ -15,13 +13,22 @@ import javafx.scene.layout.*
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import stan.qodat.Properties
 import stan.qodat.Qodat
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.layout.AutoScaleSubScenePane
-import stan.qodat.util.*
+import stan.qodat.util.bind
+import stan.qodat.util.createDragSpace
+import stan.qodat.util.createSelectTabListener
+import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
 
@@ -34,37 +41,98 @@ import java.util.*
  */
 class MainController : SceneController("main-scene") {
 
-    @FXML lateinit var modelsContainer: VBox
-    @FXML lateinit var sceneTreeView: TreeView<Node>
-    @FXML lateinit var leftFilesTab: ToggleButton
-    @FXML lateinit var rightMainTab: ToggleButton
-    @FXML lateinit var rightPluginsTab: ToggleButton
-    @FXML lateinit var rightEditorTab: ToggleButton
-    @FXML lateinit var rightViewerTab: ToggleButton
-    @FXML lateinit var bottomFramesTab: ToggleButton
-    @FXML lateinit var bottomEventLogTab: ToggleButton
-    @FXML lateinit var mainPanes: Accordion
-    @FXML lateinit var canvasPlaceHolder: Pane
-    @FXML lateinit var splitPlane: SplitPane
-    @FXML lateinit var mainPane: BorderPane
-    @FXML lateinit var searchModelsList: TextField
-    @FXML lateinit var menuBar: MenuBar
-    @FXML lateinit var recentPathsMenu: Menu
-    @FXML lateinit var leftTab: HBox
-    @FXML lateinit var filesWindow: SplitPane
-    @FXML lateinit var playControls: HBox
-    @FXML lateinit var startBtn: Button
-    @FXML lateinit var endBtn: Button
-    @FXML lateinit var ffBtn: Button
-    @FXML lateinit var rwBtn: Button
-    @FXML lateinit var playBtn: ToggleButton
-    @FXML lateinit var loopBtn: ToggleButton
-    @FXML lateinit var bottomBox: VBox
-    @FXML lateinit var sceneHBox: HBox
-    @FXML lateinit var sceneLabel: Label
-    @FXML lateinit var lockSceneContextButton: ToggleButton
-    @FXML lateinit var sceneContextBox: ComboBox<SceneContext>
-    @FXML lateinit var progressSpace: HBox
+    @FXML
+    lateinit var modelsContainer: VBox
+
+    @FXML
+    lateinit var sceneTreeView: TreeView<Node>
+
+    @FXML
+    lateinit var leftFilesTab: ToggleButton
+
+    @FXML
+    lateinit var rightMainTab: ToggleButton
+
+    @FXML
+    lateinit var rightPluginsTab: ToggleButton
+
+    @FXML
+    lateinit var rightEditorTab: ToggleButton
+
+    @FXML
+    lateinit var rightViewerTab: ToggleButton
+
+    @FXML
+    lateinit var bottomFramesTab: ToggleButton
+
+    @FXML
+    lateinit var bottomEventLogTab: ToggleButton
+
+    @FXML
+    lateinit var mainPanes: Accordion
+
+    @FXML
+    lateinit var canvasPlaceHolder: Pane
+
+    @FXML
+    lateinit var splitPlane: SplitPane
+
+    @FXML
+    lateinit var mainPane: BorderPane
+
+    @FXML
+    lateinit var searchModelsList: TextField
+
+    @FXML
+    lateinit var menuBar: MenuBar
+
+    @FXML
+    lateinit var recentPathsMenu: Menu
+
+    @FXML
+    lateinit var leftTab: HBox
+
+    @FXML
+    lateinit var filesWindow: SplitPane
+
+    @FXML
+    lateinit var playControls: HBox
+
+    @FXML
+    lateinit var startBtn: Button
+
+    @FXML
+    lateinit var endBtn: Button
+
+    @FXML
+    lateinit var ffBtn: Button
+
+    @FXML
+    lateinit var rwBtn: Button
+
+    @FXML
+    lateinit var playBtn: ToggleButton
+
+    @FXML
+    lateinit var loopBtn: ToggleButton
+
+    @FXML
+    lateinit var bottomBox: VBox
+
+    @FXML
+    lateinit var sceneHBox: HBox
+
+    @FXML
+    lateinit var sceneLabel: Label
+
+    @FXML
+    lateinit var lockSceneContextButton: ToggleButton
+
+    @FXML
+    lateinit var sceneContextBox: ComboBox<SceneContext>
+
+    @FXML
+    lateinit var progressSpace: HBox
 
     private val rightTabContents = SimpleObjectProperty<Node?>()
     private val leftTabContents = SimpleObjectProperty<Node?>()
@@ -80,7 +148,7 @@ class MainController : SceneController("main-scene") {
     private var lastLeftDividerPosition = 0.25
     private var lastRightDividerPosition = 0.75
 
-    override fun onSwitch(other: SceneController) {
+    override fun onSwitch(next: SceneController) {
     }
 
     override fun getViewNode() = mainPanes
@@ -195,10 +263,14 @@ class MainController : SceneController("main-scene") {
         SplitPane.setResizableWithParent(leftTab, false)
         SplitPane.setResizableWithParent(mainPanes, false)
 
-        subScenePane.leftOverlayGroup.children.add(splitPlane
-            .createDragSpace(Properties.centerDivider1Position, divider1IndexProperty))
-        subScenePane.rightOverlayGroup.children.add(splitPlane
-            .createDragSpace(Properties.centerDivider2Position, divider2IndexProperty))
+        subScenePane.leftOverlayGroup.children.add(
+            splitPlane
+                .createDragSpace(Properties.centerDivider1Position, divider1IndexProperty)
+        )
+        subScenePane.rightOverlayGroup.children.add(
+            splitPlane
+                .createDragSpace(Properties.centerDivider2Position, divider2IndexProperty)
+        )
     }
 
     private fun configureBottomTab() {
@@ -216,7 +288,7 @@ class MainController : SceneController("main-scene") {
         leftTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue !== newValue) {
                 if (newValue == null) {
-                    if (splitPlane.items.size > 2){
+                    if (splitPlane.items.size > 2) {
                         lastLeftDividerPosition = splitPlane.dividerPositions[0]
                         lastRightDividerPosition = splitPlane.dividerPositions[1]
                     } else {
@@ -249,7 +321,7 @@ class MainController : SceneController("main-scene") {
         rightTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue !== newValue) {
                 if (newValue == null) {
-                    if (splitPlane.items.size > 2){
+                    if (splitPlane.items.size > 2) {
                         lastLeftDividerPosition = splitPlane.dividerPositions[0]
                         lastRightDividerPosition = splitPlane.dividerPositions[1]
                     } else {
@@ -281,50 +353,62 @@ class MainController : SceneController("main-scene") {
     private fun configurePlayControls() {
         playBtn.setOnAction {
             if (playBtn.isSelected)
-                SubScene3D.animationPlayer.play()
+                SubScene3D.contextProperty.get().animationPlayer.play()
             else
-                SubScene3D.animationPlayer.pause()
+                SubScene3D.contextProperty.get().animationPlayer.pause()
         }
     }
 
     fun executeBackgroundTasks(vararg tasks: Task<*>) {
 
-        val stackPane = StackPane()
-
-        val progressLabel = Text()
-        progressLabel.fill = Color.rgb(100, 100, 100)
-
-        val progressBar = ProgressBar()
-        progressBar.prefWidthProperty().bind(mainPane.widthProperty())
-
-        stackPane.children.addAll(progressBar, progressLabel)
 
         for (task in tasks) {
             println("Running task ${task.title}")
+
+            val stackPane = StackPane()
+
+            val progressLabel = Text()
+            progressLabel.fill = Color.rgb(100, 100, 100)
+
+            val progressBar = ProgressBar()
+            progressBar.prefWidthProperty().bind(mainPane.widthProperty())
+
+            stackPane.children.addAll(progressBar, progressLabel)
+
             task.setOnFailed {
                 Platform.runLater {
+                    stackPane.children.clear()
                     task.exception.printStackTrace()
                     val dialog = Alert(AlertType.ERROR, "Error", ButtonType.OK)
                     dialog.show()
                 }
             }
-            Qodat.executor.submit {
-                PlatformImpl.runAndWait {
-                    progressSpace.children.setAll(stackPane)
-                    progressLabel.textProperty().unbind()
-                    progressLabel.textProperty().bind(task.messageProperty())
-                    progressBar.progressProperty().unbind()
-                    progressBar.progressProperty().bind(task.progressProperty())
+
+            val gate = Semaphore(1)
+            GlobalScope.launch {
+                gate.withPermit {
+                    try {
+                        withTimeout(8000) {
+                            withContext(Dispatchers.JavaFx) {
+                                progressSpace.children.add(stackPane)
+                                progressLabel.textProperty().bind(task.messageProperty())
+                                progressBar.progressProperty().bind(task.progressProperty())
+                            }
+                            task.run()
+                        }
+                    } catch (e: TimeoutCancellationException) {
+                        e.printStackTrace()
+                    } finally {
+                        withContext(Dispatchers.JavaFx) {
+                            println("finished task ${task.title}")
+                            progressSpace.children.remove(stackPane)
+                        }
+                    }
                 }
-                task.run()
-            }
-        }
-        Qodat.executor.submit {
-            PlatformImpl.runAndWait {
-                progressSpace.children.clear()
             }
         }
     }
+
     fun postCacheLoading() {
         bottomFramesTab.selectedProperty().setAndBind(Properties.showFramesTab, biDirectional = true)
         settingsController.root.expandedProperty().setAndBind(Properties.expandSettings, biDirectional = true)
@@ -355,6 +439,7 @@ class MainController : SceneController("main-scene") {
         try {
             val path = chooser.showDialog(menuBar.scene.window).toPath()
             Properties.osrsCachePath.set(path)
+            Properties.viewerCache.set(OldschoolCacheRuneLite)
         } catch (e: Exception) {
             e.printStackTrace()
         }

@@ -1,33 +1,32 @@
 package stan.qodat.scene.runescape.animation
 
+import javafx.beans.property.SimpleIntegerProperty
+import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.ObservableMap
 import javafx.scene.Node
-import javafx.scene.control.ContextMenu
-import javafx.scene.control.ListCell
-import javafx.scene.control.ListView
+import javafx.scene.control.*
 import javafx.scene.layout.HBox
 import javafx.util.Callback
+import qodat.cache.Cache
+import qodat.cache.Encoder
+import qodat.cache.definition.AnimationDefinition
 import stan.export.gif.*
 import stan.export.mp4.AnimationToMp4Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.Cache
-import stan.qodat.cache.Encoder
-import stan.qodat.cache.definition.AnimationDefinition
 import stan.qodat.javafx.menu
 import stan.qodat.javafx.menuItem
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.scene.control.tree.AnimationTreeItem
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.scene.transform.Transformer
 import stan.qodat.util.Searchable
+import stan.qodat.util.TreeItemProvider
 import stan.qodat.util.ViewNodeProvider
-import java.io.File
-import java.io.UnsupportedEncodingException
-
 
 /**
  * Represents a [Transformer] for [Model] objects.
@@ -37,29 +36,36 @@ import java.io.UnsupportedEncodingException
  */
 class Animation(
     label: String,
-    private val definition: AnimationDefinition,
-    private val cache: Cache
+    private val definition: AnimationDefinition? = null,
+    private val cache: Cache? = null
 ) : Transformer<AnimationFrame>, Searchable, ViewNodeProvider, Encoder {
 
     private lateinit var frames : ObservableList<AnimationFrame>
     private lateinit var skeletons : ObservableMap<Int, AnimationSkeleton>
     private lateinit var viewBox : HBox
+
     private var currentFrameIndex = 0
 
-    val playingProperty = SubScene3D.animationPlayer.transformerProperty.isEqualTo(this)
+    val treeItemProperty = SimpleObjectProperty<AnimationTreeItem>()
+    val exportFrameArchiveId = SimpleIntegerProperty()
     val labelProperty = SimpleStringProperty(label)
+    val idProperty = SimpleIntegerProperty()
+    val loopOffsetProperty = SimpleIntegerProperty(definition?.loopOffset?:-1)
+    val leftHandItemProperty = SimpleIntegerProperty(definition?.leftHandItem?:-1)
+    val rightHandItemProperty = SimpleIntegerProperty(definition?.rightHandItem?:-1)
 
     fun getSkeletons() : ObservableMap<Int, AnimationSkeleton> {
         if (!this::skeletons.isInitialized){
             try {
-                val skeletonsMap = definition.frameHashes
-                    .map { cache.getAnimationSkeletonDefinition(it) }
-                    .distinctBy { it.id }
-                    .map { it.id to AnimationSkeleton("${it.id}", it) }
-                    .toMap()
+                val skeletonsMap: Map<Int, AnimationSkeleton> = definition
+                    ?.frameHashes
+                    ?.map { getCacheSafe().getAnimationSkeletonDefinition(it) }
+                    ?.distinctBy { it.id }
+                    ?.associate { it.id to AnimationSkeleton("${it.id}", it) }
+                    ?: emptyMap()
                 skeletons = FXCollections.observableMap(skeletonsMap)
             } catch (e: Exception) {
-                Qodat.logException("Could not get animation {${definition.id}}'s skeletons", e)
+                Qodat.logException("Could not get animation {${getName()}}'s skeletons", e)
                 return FXCollections.emptyObservableMap()
             }
         }
@@ -69,21 +75,26 @@ class Animation(
     override fun getFrameList() : ObservableList<AnimationFrame> {
         if (!this::frames.isInitialized){
             try {
-                val framesArray = Array(definition.frameHashes.size) { idx ->
-                    val frameDefinition = cache.getFrameDefinition(definition.frameHashes[idx])!!
+                val framesArray = if (definition == null) emptyArray()  else Array(definition.frameHashes.size) { idx ->
+                    val frameDefinition = getCacheSafe().getFrameDefinition(definition.frameHashes[idx])!!
                     AnimationFrame(
                         name = "frame[$idx]",
                         definition = frameDefinition,
-                        duration = definition.frameLengths[idx])
+                        duration = definition.frameLengths[idx]).apply {
+                            idProperty.set(this@Animation.definition.frameHashes[idx])
+                    }
                 }
                 frames = FXCollections.observableArrayList(*framesArray)
             } catch (e: Exception) {
-                Qodat.logException("Could not get animation {${definition.id}}'s frames", e)
+                Qodat.logException("Could not get animation {${getName()}}'s frames", e)
                 return FXCollections.emptyObservableList()
             }
         }
         return frames
     }
+
+    private fun getCacheSafe() = requireNotNull(cache)
+    { "Cache must not be null if loading from cache definition!" }
 
     override fun setFrame(frameIndex: Int) {
         currentFrameIndex = frameIndex
@@ -114,7 +125,7 @@ class Animation(
                                 AnimationToGifTask(
                                     exportPath = Properties.exportsPath.get(),
                                     scene = SubScene3D.subSceneProperty.get(),
-                                    animationPlayer = SubScene3D.animationPlayer,
+                                    animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
                                     animation = this@Animation
                                 )
                             )
@@ -124,7 +135,7 @@ class Animation(
                                 AnimationToMp4Task(
                                     exportPath = Properties.exportsPath.get(),
                                     scene = SubScene3D.subSceneProperty.get(),
-                                    animationPlayer = SubScene3D.animationPlayer,
+                                    animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
                                     animation = this@Animation
                                 )
                             )
@@ -146,4 +157,5 @@ class Animation(
             }
         }
     }
+
 }

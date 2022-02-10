@@ -1,10 +1,9 @@
 package stan.qodat.scene.runescape.animation
 
-import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import stan.qodat.cache.definition.AnimationSkeletonDefinition
+import qodat.cache.definition.AnimationSkeletonDefinition
 import stan.qodat.util.Searchable
 
 /**
@@ -21,7 +20,6 @@ class AnimationSkeleton(
     private lateinit var transformationGroups: ObservableList<TransformationGroup>
 
     val labelProperty = SimpleStringProperty(name)
-
 
     fun getTransformationGroups(): ObservableList<TransformationGroup> {
         if (!this::transformationGroups.isInitialized){

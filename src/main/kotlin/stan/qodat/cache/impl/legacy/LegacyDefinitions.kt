@@ -2,9 +2,9 @@ package stan.qodat.cache.impl.legacy
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import net.runelite.cache.models.FaceNormal
-import net.runelite.cache.models.VertexNormal
-import stan.qodat.cache.definition.*
+import qodat.cache.models.FaceNormal
+import qodat.cache.models.VertexNormal
+import qodat.cache.definition.*
 
 @Serializable
 data class LegacyNpcDefinition(
@@ -46,7 +46,10 @@ data class LegacyKitDefinition(
 data class LegacyAnimationDefinition(
     override val id: String,
     override val frameHashes: IntArray,
-    override val frameLengths: IntArray
+    override val frameLengths: IntArray,
+    override val loopOffset: Int,
+    override val leftHandItem: Int,
+    override val rightHandItem: Int
 ) : AnimationDefinition
 
 @Serializable
