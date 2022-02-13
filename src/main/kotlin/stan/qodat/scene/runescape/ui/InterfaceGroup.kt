@@ -10,10 +10,10 @@ import qodat.cache.Cache
 import qodat.cache.definition.InterfaceDefinition
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.tree.InterfaceTreeItem
-import stan.qodat.util.SceneNodeProvider
+import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.util.Searchable
-import stan.qodat.util.TreeItemProvider
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.TreeItemProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 
 class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions: List<InterfaceDefinition>) :
     SceneNodeProvider, ViewNodeProvider, TreeItemProvider, Searchable {

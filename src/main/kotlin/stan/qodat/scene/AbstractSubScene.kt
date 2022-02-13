@@ -17,7 +17,6 @@ import stan.qodat.Properties
 abstract class AbstractSubScene {
 
     val subSceneProperty = SimpleObjectProperty<SubScene>()
-    val overlayGroup = Group()
 
     abstract val mouseEventHandler : EventHandler<MouseEvent>
     abstract val dragEventHandler : EventHandler<DragEvent>

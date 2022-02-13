@@ -1,22 +1,17 @@
 package stan.qodat.scene.controller
 
-import javafx.beans.binding.Bindings
 import javafx.scene.control.ContextMenu
-import javafx.scene.control.Menu
-import javafx.scene.control.MenuItem
-import javafx.stage.FileChooser
 import stan.qodat.Properties
-import stan.qodat.Qodat
-import stan.qodat.scene.runescape.entity.Entity
+import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.entity.Item
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.entity.Object
-import stan.qodat.task.ModelExportObjTask
+import stan.qodat.util.onInvalidation
 import java.net.URL
-import java.util.*
+import java.util.ResourceBundle
 
 /**
- * TODO: add documentation
+ * Represents an [EntityViewController] in which entities can be viewed but not edited.
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
@@ -25,54 +20,23 @@ class ViewerController : EntityViewController("viewer-scene") {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         super.initialize(location, resources)
-        itemList.contextMenuBuilder = contextMenuBuilder()
-        npcList.contextMenuBuilder = contextMenuBuilder()
-        objectList.contextMenuBuilder = contextMenuBuilder()
-    }
-
-    private fun<D, E : Entity<D>> contextMenuBuilder() = fun(entity: E): ContextMenu {
-        val contextMenu = ContextMenu()
-        val editItem = MenuItem().apply {
-            textProperty().bind(Bindings.format("Edit \"%s\"", entity.labelProperty))
-            setOnAction {
-                Qodat.mainController.rightEditorTab.isSelected = true
-                val editor = Qodat.mainController.editorController
-                if (Properties.lockScene.get()) // force scene switch
-                    editor.selectThisContext()
-                when (entity) {
-                    is Item -> {
-                        editor.items.add(entity)
-                        editor.itemList.selectionModel.select(entity)
-                    }
-                    is NPC -> {
-                        editor.npcs.add(entity)
-                        editor.npcList.selectionModel.select(entity)
-                    }
-                    is Object -> {
-                        editor.objects.add(entity)
-                        editor.objectList.selectionModel.select(entity)
-                    }
-                }
-            }
-        }
-        val exportMenu = Menu("Export", null, MenuItem(".obj/.mtl").apply {
-            setOnAction {
-                val entity = Properties.selectedEntity.get()
-                val fileChooser = FileChooser()
-                fileChooser.title = "Export to WaveFront format."
-                fileChooser.initialFileName = entity.getName()
-                val file = fileChooser.showSaveDialog(null)
-                if (file != null) {
-                    val model = entity.createMergedModel(file.nameWithoutExtension)
-                    Qodat.mainController.executeBackgroundTasks(ModelExportObjTask(file, model))
-                }
+        itemList.contextMenu = ContextMenu(ExportMenu<Item>().apply {
+            bindExportable(itemList.selectionModel.selectedItemProperty())
+        })
+        npcList.contextMenu = ContextMenu(ExportMenu<NPC>().apply {
+            val selectedNpcProperty = npcList.selectionModel.selectedItemProperty()
+            bindExportable(selectedNpcProperty)
+            selectedNpcProperty.onInvalidation {
+                bindAnimation(selectedNpcProperty.get().selectedAnimation)
             }
         })
-        contextMenu.items.addAll(
-//            editItem,
-            exportMenu
-        )
-        return contextMenu
+        objectList.contextMenu = ContextMenu(ExportMenu<Object>().apply {
+            val selectedObjectProperty = objectList.selectionModel.selectedItemProperty()
+            bindExportable(selectedObjectProperty)
+            selectedObjectProperty.onInvalidation {
+                bindAnimation(selectedObjectProperty.get().selectedAnimation)
+            }
+        })
     }
 
     override fun cacheProperty() = Properties.viewerCache

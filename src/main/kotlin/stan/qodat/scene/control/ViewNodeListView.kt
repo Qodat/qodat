@@ -11,7 +11,7 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.util.Callback
 import stan.qodat.scene.runescape.entity.Entity
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import java.io.File
 
 

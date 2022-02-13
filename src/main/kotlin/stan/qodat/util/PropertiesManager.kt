@@ -4,10 +4,13 @@ import javafx.beans.property.*
 import javafx.scene.paint.Color
 import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
+import org.slf4j.LoggerFactory
+import stan.qodat.Qodat
 import java.lang.Exception
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.math.log
 
 /**
  * TODO: add documentation
@@ -17,10 +20,11 @@ import java.util.*
  */
 class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/session.properties")) {
 
+    private val logger = LoggerFactory.getLogger(PropertiesManager::class.java)
     private val properties = Properties()
-    private lateinit var saveThread : Thread
+    private lateinit var saveThread: Thread
 
-    fun loadFromFile() : Boolean {
+    fun loadFromFile(): Boolean {
 
         if (!saveFilePath.toFile().exists())
             return false
@@ -45,17 +49,18 @@ class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/sessi
     }
 
     fun saveToFile() {
+        logger.info("Saving properties to $saveFilePath")
         try {
             val saveFile = saveFilePath.toFile()
             if (!saveFile.parentFile.exists())
                 saveFile.parentFile.mkdir()
             properties.store(saveFile.writer(), "Contains properties for the Qodat application.")
         } catch (e: Exception) {
-            e.printStackTrace()
+            Qodat.logException("Encountered error during saving", e)
         }
     }
 
-    fun<T> bind(key: String, property: Property<T>, transformer: (String) -> T){
+    fun <T> bind(key: String, property: Property<T>, transformer: (String) -> T) {
         val value = properties.getProperty(key)
         if (value != null)
             property.value = transformer.invoke(value)
@@ -67,14 +72,17 @@ class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/sessi
     /**
      * TODO: finish
      */
-    fun bindMaterial(key: String, property: ObjectProperty<Material>) = bind(key, property)
-    { PhongMaterial() }
+    fun bindMaterial(key: String, property: ObjectProperty<Material>) =
+        bind(key, property) { PhongMaterial() }
 
-    fun bindPath(key: String, property: ObjectProperty<Path>) = bind(key, property)
-    { Paths.get(it) }
+    fun bindPath(key: String, property: ObjectProperty<Path>) =
+        bind(key, property) { Paths.get(it) }
+
+    inline fun <reified T : Enum<T>> bindEnum(key: String, property: ObjectProperty<T>) =
+        bind(key, property) { enumValueOf<T>(it) }
 
     fun bindColor(key: String, property: ObjectProperty<Color>) = bind(key, property)
-    { Color.valueOf(it)}
+    { Color.valueOf(it) }
 
     fun bindBoolean(key: String, property: BooleanProperty) = bind(key, property)
     { java.lang.Boolean.parseBoolean(it) }

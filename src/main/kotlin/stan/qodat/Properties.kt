@@ -1,19 +1,18 @@
 package stan.qodat
 
-import javafx.beans.binding.Bindings
 import javafx.beans.property.*
 import javafx.scene.SceneAntialiasing
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
 import qodat.cache.Cache
+import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
-import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.PropertiesManager
 import stan.qodat.util.onInvalidation
+import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.concurrent.Callable
 
 /**
  * TODO: add documentation
@@ -90,17 +89,25 @@ object Properties {
     val legacyCachePath = SimpleObjectProperty(Paths.get("caches/667"))
 
     val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
-    val exportsPath = SimpleObjectProperty(Paths.get("exports"))
+    val defaultExportsPath = SimpleObjectProperty(Paths.get("exports"))
+    val lastWaveFrontSingleExportPath = SimpleObjectProperty<Path?>(null)
+    val lastWaveFrontSequenceExportPath = SimpleObjectProperty<Path?>(null)
+    val lastGIFExportPath = SimpleObjectProperty<Path?>(null)
 
-    val selectedViewerTab = SimpleStringProperty()
+
     val selectedNpcName = SimpleStringProperty()
-    val selectedObjectName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()
+    val selectedObjectName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
     val selectedInterfaceName = SimpleStringProperty()
+
+    val selectedNpcSortType = SimpleObjectProperty(SortType.NAME)
+    val selectedItemSortType = SimpleObjectProperty(SortType.NAME)
+    val selectedObjectSortType = SimpleObjectProperty(SortType.NAME)
     val selectedEntity = SimpleObjectProperty<Entity<*>>()
     val selectedAnimation = SimpleObjectProperty<Animation>()
 
+    val selectedViewerTab = SimpleStringProperty()
     val selectedRightTab = SimpleStringProperty()
     val selectedLeftTab = SimpleStringProperty()
     val selectedBottomTab = SimpleStringProperty()
@@ -150,16 +157,23 @@ object Properties {
         sessionManager.bindDouble("scene-initial-width", sceneInitialWidth)
         sessionManager.bindDouble("scene-initial-height", sceneInitialHeight)
 
+        centerDivider2Position.onInvalidation {
+            println(this.get())
+        }
         sessionManager.bindDouble("split-pane-divider-1-position", centerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-2-position", centerDivider2Position)
         sessionManager.bindDouble("split-pane-divider-3-position", sceneDividerPosition)
         sessionManager.bindDouble("split-pane-divider-4-position", viewerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-5-position", viewerDivider2Position)
 
+        sessionManager.bindEnum("selected-npc-sort-type", selectedNpcSortType)
+        sessionManager.bindEnum("selected-item-sort-type", selectedItemSortType)
+        sessionManager.bindEnum("selected-object-sort-type", selectedObjectSortType)
+
         sessionManager.bindPath("osrs-cache-path", osrsCachePath)
         sessionManager.bindPath("qodat-cache-path", qodatCachePath)
         sessionManager.bindPath("legacy-cache-path", legacyCachePath)
         sessionManager.bindPath("main-data-path", mainModelFilesPath)
-        sessionManager.bindPath("exports-path", exportsPath)
+        sessionManager.bindPath("exports-path", defaultExportsPath)
     }
 }

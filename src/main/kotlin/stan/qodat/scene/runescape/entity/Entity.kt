@@ -17,7 +17,11 @@ import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.controller.EntityViewController
+import stan.qodat.scene.provider.SceneNodeProvider
+import stan.qodat.scene.provider.TreeItemProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.task.Exportable
 import stan.qodat.util.*
 
 /**
@@ -29,7 +33,7 @@ import stan.qodat.util.*
 abstract class Entity<D : EntityDefinition>(
     protected val cache: Cache,
     val definition: D
-) : Searchable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider {
+) : Exportable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider {
 
     private lateinit var modelGroup: Group
     private lateinit var models: Array<Model>

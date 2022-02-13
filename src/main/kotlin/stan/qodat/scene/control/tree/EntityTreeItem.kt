@@ -8,10 +8,10 @@ import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.LockButton
+import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
-import stan.qodat.task.EntityExportObjTask
 import stan.qodat.util.setAndBind
 
 /**
@@ -26,7 +26,15 @@ class EntityTreeItem(
 ) : TreeItem<Node>() {
 
     init {
-        label(entity.getName())
+        label(entity.getName()) {
+            contextMenu = ContextMenu(
+                ExportMenu<Entity<*>>().apply {
+                    setExportable(entity)
+                    if (entity is AnimatedEntity)
+                        bindAnimation(entity.selectedAnimation)
+                }
+            )
+        }
         hBox(isGraphic = true) {
             children += LockButton().apply {
                 selectedProperty().setAndBind(entity.locked, true)
@@ -78,21 +86,9 @@ class EntityTreeItem(
 //            }
 //        }
         treeItem("Models") {
-             treeItem("Util") {
-                 treeItem {
-                     vBox {
-                         children += Button("Export as .obj/.mtl")
-                             .apply { setOnAction { Qodat.mainController.executeBackgroundTasks(EntityExportObjTask(entity)) } }
-                         children += Button("Reset Models")
-                             .apply { setOnAction { for (model in entity.getModels()) model.reset() } }
-                     }
-                 }
-             }
-            onExpanded {
-                if (children.isEmpty()) {
-                    for (model in entity.getModels())
-                        children.add(model.getTreeItem(treeView))
-                }
+            if (children.isEmpty()) {
+                for (model in entity.getModels())
+                    children.add(model.getTreeItem(treeView))
             }
         }
 

@@ -11,12 +11,11 @@ import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.Region
 import javafx.scene.paint.Material
-import javafx.scene.shape.Circle
 import javafx.scene.shape.Shape3D
-import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.event.SelectedTabChangeEvent
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.shape.PolygonMeshView
 
@@ -145,8 +144,8 @@ fun SplitPane.createDragSpace(
     return region
 }
 
-fun ToggleButton.createSelectTabListener(selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node) {
-    selectedProperty().addListener(createSelectTabListener(id, selectProperty, tabContents, node))
+fun ToggleButton.createSelectTabListener(property: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node) {
+    selectedProperty().addListener(createSelectTabListener(id, property, tabContents, node))
 }
 
 fun createSelectTabListener(id: String, selectProperty: SimpleStringProperty, tabContents: ObjectProperty<Node?>, node: Node): ChangeListener<Boolean> {
@@ -154,12 +153,15 @@ fun createSelectTabListener(id: String, selectProperty: SimpleStringProperty, ta
 
         val otherSelected = tabContents.value != node && tabContents.value != null
 
-        if (!oldValue && newValue)
+        if (!oldValue && newValue) {
             tabContents.set(node)
-        else if(!otherSelected)
+            selectProperty.set(id)
+        } else if(!otherSelected) {
             tabContents.set(null)
-
-        selectProperty.set(id)
+            selectProperty.set(null)
+        } else {
+            selectProperty.set(id)
+        }
 
         node.fireEvent(
             SelectedTabChangeEvent(

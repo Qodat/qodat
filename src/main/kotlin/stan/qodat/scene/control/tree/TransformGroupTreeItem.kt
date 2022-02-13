@@ -1,6 +1,5 @@
 package stan.qodat.scene.control.tree
 
-import javafx.beans.binding.Bindings
 import javafx.event.EventHandler
 import javafx.scene.DepthTest
 import javafx.scene.Group
@@ -9,28 +8,23 @@ import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
-import javafx.scene.shape.Box
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
-import javafx.scene.transform.Rotate
-import javafx.scene.transform.Translate
 import org.joml.Vector3f
-import stan.GizmoStackoverflow
+import stan.qodat.scene.control.gizmo.GizmoStackoverflow
 import stan.qodat.javafx.label
 import stan.qodat.javafx.onExpanded
 import stan.qodat.javafx.onSelected
 import stan.qodat.javafx.text
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.gizmo.toRay
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
-import stan.toRay
-import java.util.concurrent.Callable
 import kotlin.math.abs
 
 class TransformGroupTreeItem(

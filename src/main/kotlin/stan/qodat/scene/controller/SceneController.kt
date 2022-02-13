@@ -4,9 +4,9 @@ import javafx.fxml.Initializable
 import stan.qodat.Properties
 import stan.qodat.event.SelectedTabChangeEvent
 import stan.qodat.scene.SceneContext
-import stan.qodat.util.SceneNodeProvider
+import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.SubScene3D
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.util.setAndBind
 
 /**

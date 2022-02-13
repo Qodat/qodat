@@ -13,20 +13,20 @@ import javafx.util.Callback
 import qodat.cache.Cache
 import qodat.cache.Encoder
 import qodat.cache.definition.AnimationDefinition
-import stan.export.gif.*
-import stan.export.mp4.AnimationToMp4Task
+import stan.qodat.scene.control.export.mp4.AnimationToMp4Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.javafx.menu
 import stan.qodat.javafx.menuItem
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.scene.control.export.gif.AnimationToGifTask
 import stan.qodat.scene.control.tree.AnimationTreeItem
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.scene.transform.Transformer
 import stan.qodat.util.Searchable
-import stan.qodat.util.TreeItemProvider
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
+import stan.qodat.task.BackgroundTasks
 
 /**
  * Represents a [Transformer] for [Model] objects.
@@ -40,9 +40,9 @@ class Animation(
     private val cache: Cache? = null
 ) : Transformer<AnimationFrame>, Searchable, ViewNodeProvider, Encoder {
 
-    private lateinit var frames : ObservableList<AnimationFrame>
-    private lateinit var skeletons : ObservableMap<Int, AnimationSkeleton>
-    private lateinit var viewBox : HBox
+    private lateinit var frames: ObservableList<AnimationFrame>
+    private lateinit var skeletons: ObservableMap<Int, AnimationSkeleton>
+    private lateinit var viewBox: HBox
 
     private var currentFrameIndex = 0
 
@@ -50,12 +50,12 @@ class Animation(
     val exportFrameArchiveId = SimpleIntegerProperty()
     val labelProperty = SimpleStringProperty(label)
     val idProperty = SimpleIntegerProperty()
-    val loopOffsetProperty = SimpleIntegerProperty(definition?.loopOffset?:-1)
-    val leftHandItemProperty = SimpleIntegerProperty(definition?.leftHandItem?:-1)
-    val rightHandItemProperty = SimpleIntegerProperty(definition?.rightHandItem?:-1)
+    val loopOffsetProperty = SimpleIntegerProperty(definition?.loopOffset ?: -1)
+    val leftHandItemProperty = SimpleIntegerProperty(definition?.leftHandItem ?: -1)
+    val rightHandItemProperty = SimpleIntegerProperty(definition?.rightHandItem ?: -1)
 
-    fun getSkeletons() : ObservableMap<Int, AnimationSkeleton> {
-        if (!this::skeletons.isInitialized){
+    fun getSkeletons(): ObservableMap<Int, AnimationSkeleton> {
+        if (!this::skeletons.isInitialized) {
             try {
                 val skeletonsMap: Map<Int, AnimationSkeleton> = definition
                     ?.frameHashes
@@ -72,16 +72,17 @@ class Animation(
         return skeletons
     }
 
-    override fun getFrameList() : ObservableList<AnimationFrame> {
-        if (!this::frames.isInitialized){
+    override fun getFrameList(): ObservableList<AnimationFrame> {
+        if (!this::frames.isInitialized) {
             try {
-                val framesArray = if (definition == null) emptyArray()  else Array(definition.frameHashes.size) { idx ->
+                val framesArray = if (definition == null) emptyArray() else Array(definition.frameHashes.size) { idx ->
                     val frameDefinition = getCacheSafe().getFrameDefinition(definition.frameHashes[idx])!!
                     AnimationFrame(
                         name = "frame[$idx]",
                         definition = frameDefinition,
-                        duration = definition.frameLengths[idx]).apply {
-                            idProperty.set(this@Animation.definition.frameHashes[idx])
+                        duration = definition.frameLengths[idx]
+                    ).apply {
+                        idProperty.set(this@Animation.definition.frameHashes[idx])
                     }
                 }
                 frames = FXCollections.observableArrayList(*framesArray)
@@ -121,9 +122,10 @@ class Animation(
                 label.contextMenu = ContextMenu().apply {
                     menu("export") {
                         menuItem("GIF") {
-                            Qodat.mainController.executeBackgroundTasks(
+                            BackgroundTasks.submit(
+                                addProgressIndicator = true,
                                 AnimationToGifTask(
-                                    exportPath = Properties.exportsPath.get(),
+                                    exportPath = Properties.defaultExportsPath.get(),
                                     scene = SubScene3D.subSceneProperty.get(),
                                     animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
                                     animation = this@Animation
@@ -131,9 +133,10 @@ class Animation(
                             )
                         }
                         menuItem("mp4") {
-                            Qodat.mainController.executeBackgroundTasks(
+                            BackgroundTasks.submit(
+                                addProgressIndicator = true,
                                 AnimationToMp4Task(
-                                    exportPath = Properties.exportsPath.get(),
+                                    exportPath = Properties.defaultExportsPath.get(),
                                     scene = SubScene3D.subSceneProperty.get(),
                                     animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
                                     animation = this@Animation

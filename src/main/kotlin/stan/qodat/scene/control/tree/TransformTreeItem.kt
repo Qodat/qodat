@@ -1,12 +1,8 @@
 package stan.qodat.scene.control.tree
 
-import IntField
-import javafx.beans.InvalidationListener
-import javafx.beans.binding.Bindings
+import IntTextField
 import javafx.beans.property.SimpleDoubleProperty
-import javafx.collections.FXCollections
 import javafx.geometry.Orientation
-import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.*
@@ -107,9 +103,9 @@ open class TransformTreeItem(
         val resetX = Button("Undo")
         val resetY = Button("Undo")
         val resetZ = Button("Undo")
-        val textFieldX = IntField(-255, 255, transform.getDeltaX())
-        val textFieldY = IntField(-255, 255, transform.getDeltaY())
-        val textFieldZ = IntField(-255, 255, transform.getDeltaZ())
+        val textFieldX = IntTextField(-255, 255, transform.getDeltaX())
+        val textFieldY = IntTextField(-255, 255, transform.getDeltaY())
+        val textFieldZ = IntTextField(-255, 255, transform.getDeltaZ())
         textFieldX.valueProperty().bindBidirectional(transform.deltaXProperty)
         textFieldY.valueProperty().bindBidirectional(transform.deltaYProperty)
         textFieldZ.valueProperty().bindBidirectional(transform.deltaZProperty)

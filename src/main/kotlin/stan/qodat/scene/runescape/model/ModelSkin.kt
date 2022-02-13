@@ -1,6 +1,6 @@
 package stan.qodat.scene.runescape.model
 
-import stan.qodat.util.SceneNodeProvider
+import stan.qodat.scene.provider.SceneNodeProvider
 
 /**
  * TODO: add documentation

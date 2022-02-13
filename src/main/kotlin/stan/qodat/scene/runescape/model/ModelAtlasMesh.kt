@@ -126,12 +126,16 @@ class ModelAtlasMesh(private val model: Model, private val faceList: List<Int>? 
      */
     private fun createAtlas(definition: ModelDefinition) : AtlasMaterial{
         val atlas = AtlasMaterial()
-        val faceIterator = (0 until definition.getFaceCount())
-        atlas.setColors(faceIterator.map {
-            ModelUtil.hsbToColor(
-                getColor(definition, it),
-                    definition.getFaceAlphas()?.get(it))
-        }.toTypedArray())
+
+        val faceRange = (0 until definition.getFaceCount())
+        if (!faceRange.isEmpty()) {
+            atlas.setColors(faceRange.map {
+                ModelUtil.hsbToColor(
+                    getColor(definition, it),
+                    definition.getFaceAlphas()?.get(it)
+                )
+            }.toTypedArray())
+        }
         return atlas
     }
 

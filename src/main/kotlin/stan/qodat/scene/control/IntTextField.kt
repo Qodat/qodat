@@ -1,14 +1,11 @@
 import javafx.beans.property.IntegerProperty
 import javafx.beans.property.SimpleIntegerProperty
-import javafx.beans.value.ChangeListener
-import javafx.beans.value.ObservableValue
-import javafx.event.EventHandler
 import javafx.scene.control.TextField
 import javafx.scene.input.KeyEvent
 
 // helper text field subclass which restricts text input to a given range of natural int numbers
 // and exposes the current numeric int value of the edit box as a value property.
-class IntField(minValue: Int, maxValue: Int, initialValue: Int) : TextField() {
+class IntTextField(minValue: Int, maxValue: Int, initialValue: Int) : TextField() {
 
     private val value: IntegerProperty
     private val minValue: Int

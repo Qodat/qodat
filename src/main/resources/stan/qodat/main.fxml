@@ -80,7 +80,7 @@
                                             </items>
                                         </Menu>
                                         <MenuItem mnemonicParsing="false" onAction="#setSavePath" text="Set save path" />
-                              <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Set cache path" />
+                                        <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Set cache path" />
                                     </items>
                                 </Menu>
                                 <Menu mnemonicParsing="false" text="Edit">

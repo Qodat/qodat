@@ -11,5 +11,4 @@ import stan.qodat.scene.runescape.animation.AnimationFrame
 interface Transformable {
 
     fun animate(frame: AnimationFrame)
-
 }

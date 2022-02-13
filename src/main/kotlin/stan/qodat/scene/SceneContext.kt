@@ -6,6 +6,8 @@ import javafx.scene.Group
 import javafx.scene.Node
 import stan.qodat.Qodat
 import stan.qodat.scene.controller.SceneController
+import stan.qodat.scene.provider.SceneNodeProvider
+import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
@@ -97,9 +99,7 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
 
     abstract fun getController() : SceneController
 
-    override fun getSceneNode() = group
+    override fun getSceneNode(): Group = group
 
-    override fun toString(): String {
-        return group.id
-    }
+    override fun toString(): String = group.id
 }

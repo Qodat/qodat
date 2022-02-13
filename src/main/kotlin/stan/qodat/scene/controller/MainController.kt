@@ -24,6 +24,7 @@ import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
 import stan.qodat.util.bind
 import stan.qodat.util.createDragSpace
@@ -160,8 +161,8 @@ class MainController : SceneController("main-scene") {
         leftTab.minWidth = 1.0
         mainPanes.minWidth = 1.0
 
-        sceneTreeView.root = TreeItem(Label("Nodes"))
-        sceneTreeView.root.isExpanded = true
+        sceneTreeView.root = RootSceneTreeItem()
+
 
         VBox.setVgrow(sceneTreeView, Priority.ALWAYS)
         VBox.setVgrow(modelsContainer, Priority.ALWAYS)
@@ -227,6 +228,23 @@ class MainController : SceneController("main-scene") {
             rightEditorTab.id -> rightEditorTab.selectedProperty().set(true)
             rightViewerTab.id -> rightViewerTab.selectedProperty().set(true)
             rightMainTab.id -> rightMainTab.selectedProperty().set(true)
+            "null" -> {
+                rightEditorTab.isSelected = false
+                rightViewerTab.isSelected = false
+                rightMainTab.isSelected = false
+            }
+        }
+        when (Properties.selectedLeftTab.get()) {
+            leftFilesTab.id -> leftFilesTab.selectedProperty().set(true)
+            "null" -> leftFilesTab.isSelected = false
+        }
+        when (Properties.selectedBottomTab.get()) {
+            bottomFramesTab.id -> bottomFramesTab.selectedProperty().set(true)
+            bottomEventLogTab.id -> bottomEventLogTab.selectedProperty().set(true)
+            "null" -> {
+                bottomFramesTab.isSelected = false
+                bottomEventLogTab.isSelected = false
+            }
         }
         Properties.lockScene.set(wasLocked)
     }
@@ -274,7 +292,7 @@ class MainController : SceneController("main-scene") {
     }
 
     private fun configureBottomTab() {
-        bottomTabContents.value = null
+        bottomTabContents.set(null)
         bottomTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue != null)
                 bottomBox.children.remove(oldValue)
@@ -284,7 +302,7 @@ class MainController : SceneController("main-scene") {
     }
 
     private fun configureLeftPane() {
-        leftTabContents.value = leftTab
+        leftTabContents.set(leftTab)
         leftTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue !== newValue) {
                 if (newValue == null) {
@@ -317,7 +335,7 @@ class MainController : SceneController("main-scene") {
     }
 
     private fun configureRightPane() {
-        rightTabContents.value = mainPanes
+        rightTabContents.set(mainPanes)
         rightTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue !== newValue) {
                 if (newValue == null) {
@@ -359,55 +377,6 @@ class MainController : SceneController("main-scene") {
         }
     }
 
-    fun executeBackgroundTasks(vararg tasks: Task<*>) {
-
-
-        for (task in tasks) {
-            println("Running task ${task.title}")
-
-            val stackPane = StackPane()
-
-            val progressLabel = Text()
-            progressLabel.fill = Color.rgb(100, 100, 100)
-
-            val progressBar = ProgressBar()
-            progressBar.prefWidthProperty().bind(mainPane.widthProperty())
-
-            stackPane.children.addAll(progressBar, progressLabel)
-
-            task.setOnFailed {
-                Platform.runLater {
-                    stackPane.children.clear()
-                    task.exception.printStackTrace()
-                    val dialog = Alert(AlertType.ERROR, "Error", ButtonType.OK)
-                    dialog.show()
-                }
-            }
-
-            val gate = Semaphore(1)
-            GlobalScope.launch {
-                gate.withPermit {
-                    try {
-                        withTimeout(8000) {
-                            withContext(Dispatchers.JavaFx) {
-                                progressSpace.children.add(stackPane)
-                                progressLabel.textProperty().bind(task.messageProperty())
-                                progressBar.progressProperty().bind(task.progressProperty())
-                            }
-                            task.run()
-                        }
-                    } catch (e: TimeoutCancellationException) {
-                        e.printStackTrace()
-                    } finally {
-                        withContext(Dispatchers.JavaFx) {
-                            println("finished task ${task.title}")
-                            progressSpace.children.remove(stackPane)
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     fun postCacheLoading() {
         bottomFramesTab.selectedProperty().setAndBind(Properties.showFramesTab, biDirectional = true)

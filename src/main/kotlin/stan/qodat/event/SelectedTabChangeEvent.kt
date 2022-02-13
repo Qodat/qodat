@@ -2,7 +2,6 @@ package stan.qodat.event
 
 import javafx.event.Event
 import javafx.event.EventType
-import javafx.scene.Node
 
 /**
  * TODO: add documentation

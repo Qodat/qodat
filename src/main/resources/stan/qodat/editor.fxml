@@ -15,105 +15,119 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ColorPicker?>
 <?import javafx.scene.image.ImageView?>
-<SplitPane fx:id="root" dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.EditorController">
-   <stylesheets>
-      <URL value="@style.css" />
-   </stylesheets>
-   <items>
-      <TabPane fx:id="editTabPane">
-         <tabs>
-            <Tab text="Animations">
-               <content>
-               <VBox>
+<SplitPane fx:id="root" dividerPositions="0.5" orientation="VERTICAL" xmlns="http://javafx.com/javafx/8.0.171"
+           xmlns:fx="http://javafx.com/fxml/1" fx:controller="stan.qodat.scene.controller.EditorController">
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
+    <items>
+        <TabPane fx:id="editTabPane">
+            <tabs>
+                <Tab text="Animations">
+                    <content>
+                        <VBox>
 
-               </VBox>
-               </content>
-            </Tab>
-            <Tab text="Recolor">
-               <content>
-                  <VBox>
-                     <children>
-                        <Label text="Colors"/>
-                        <ListView fx:id="colorsList">
-                        </ListView>
-                        <Label text="Brushes"/>
-                        <ColorPicker fx:id="brushColorPicker"/>
-                        <Button text="Save Changes" fx:id="saveChangesButton"/>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Textures">
-               <content>
-                  <VBox>
-                     <children>
-                        <Label text="Textures"/>
-                        <Label fx:id="selectedFaceId"/>
-                        <Label fx:id="hoveredFaceId"/>
-                        <ImageView fx:id="selectedTextureImage"/>
-                        <ListView fx:id="textureList">
-                        </ListView>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-         </tabs>
-      </TabPane>
-      <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
-      <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
-         <tabs>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Recolor">
+                    <content>
+                        <VBox>
+                            <children>
+                                <Label text="Colors"/>
+                                <ListView fx:id="colorsList">
+                                </ListView>
+                                <Label text="Brushes"/>
+                                <ColorPicker fx:id="brushColorPicker"/>
+                                <Button text="Save Changes" fx:id="saveChangesButton"/>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Textures">
+                    <content>
+                        <VBox>
+                            <children>
+                                <Label text="Textures"/>
+                                <Label fx:id="selectedFaceId"/>
+                                <Label fx:id="hoveredFaceId"/>
+                                <ImageView fx:id="selectedTextureImage"/>
+                                <ListView fx:id="textureList">
+                                </ListView>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+        <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0"
+                   styleClass="split-viewer-pane"/>
+        <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+            <tabs>
 
-            <Tab text="NPC">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0" />
-                        <HBox alignment="BOTTOM_LEFT">
-                           <children>
-                              <Button fx:id="addNpcButton" contentDisplay="CENTER" styleClass="add-button" text="+" />
-                              <ComboBox fx:id="sortMethodBox" promptText="Sort by"/>
-                              <TextField fx:id="searchNpcField" alignment="CENTER" promptText="Search NPC" HBox.hgrow="ALWAYS" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Object">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="objectList" prefHeight="220.0" prefWidth="220.0" />
-                        <TextField fx:id="searchObjectField" promptText="Search object" />
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Item">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0" />
-                        <TextField fx:id="searchItemField" promptText="Search item" />
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Interfaces">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0" />
-                        <HBox>
-                           <children>
-                              <TextField fx:id="searchInterfaceField" promptText="Search Interface" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-         </tabs>
-      </TabPane>
-   </items>
+                <Tab text="NPC">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox alignment="BOTTOM_LEFT">
+                                    <children>
+                                        <Button fx:id="addNpcButton" contentDisplay="CENTER" styleClass="add-button"
+                                                text="+"/>
+                                        <ComboBox fx:id="sortNpcBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchNpcField" alignment="CENTER" promptText="Search NPC"
+                                                   HBox.hgrow="ALWAYS"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Object">
+                    <content>
+                        <VBox>
+                            <children>
+                            <ViewNodeListView fx:id="objectList" prefHeight="220.0" prefWidth="220.0"/>
+                            <HBox>
+                                <children>
+                                    <ComboBox fx:id="sortObjectBox" promptText="Sort by"/>
+                                    <TextField fx:id="searchObjectField" promptText="Search object"/>
+                                </children>
+                            </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Item">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <ComboBox fx:id="sortItemBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchItemField" promptText="Search item"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Interfaces">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <TextField fx:id="searchInterfaceField" promptText="Search Interface"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </items>
 </SplitPane>

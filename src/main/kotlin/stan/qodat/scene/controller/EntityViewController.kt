@@ -22,14 +22,21 @@ import javafx.scene.paint.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.actor
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import qodat.cache.Cache
+import qodat.cache.definition.EntityDefinition
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
 import stan.qodat.scene.control.ViewNodeListView
+import stan.qodat.scene.provider.SceneNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.ui.InterfaceGroup
@@ -37,7 +44,6 @@ import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.Comparator
 
 /**
@@ -48,18 +54,34 @@ import kotlin.Comparator
  */
 abstract class EntityViewController(name: String) : SceneController(name) {
 
-    @FXML lateinit var root: SplitPane
-    @FXML lateinit var tabPane: TabPane
-    @FXML lateinit var animationModelsSplitPane: SplitPane
-    @FXML lateinit var itemList: ViewNodeListView<Item>
-    @FXML lateinit var npcList: ViewNodeListView<NPC>
-    @FXML lateinit var objectList: ViewNodeListView<Object>
-    @FXML lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
-    @FXML lateinit var searchItemField: TextField
-    @FXML lateinit var searchNpcField: TextField
-    @FXML lateinit var searchObjectField: TextField
-    @FXML lateinit var searchInterfaceField: TextField
-    @FXML lateinit var sortMethodBox: ComboBox<SortType>
+    @FXML
+    lateinit var root: SplitPane
+    @FXML
+    lateinit var tabPane: TabPane
+    @FXML
+    lateinit var animationModelsSplitPane: SplitPane
+    @FXML
+    lateinit var itemList: ViewNodeListView<Item>
+    @FXML
+    lateinit var npcList: ViewNodeListView<NPC>
+    @FXML
+    lateinit var objectList: ViewNodeListView<Object>
+    @FXML
+    lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
+    @FXML
+    lateinit var searchItemField: TextField
+    @FXML
+    lateinit var searchNpcField: TextField
+    @FXML
+    lateinit var searchObjectField: TextField
+    @FXML
+    lateinit var searchInterfaceField: TextField
+    @FXML
+    lateinit var sortNpcBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortItemBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortObjectBox: ComboBox<SortType>
 
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
@@ -84,21 +106,24 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
-        VBox.setVgrow(itemList, Priority.ALWAYS)
         VBox.setVgrow(npcList, Priority.ALWAYS)
+        VBox.setVgrow(itemList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
         VBox.setVgrow(interfaceList, Priority.ALWAYS)
 
         HBox.setHgrow(searchNpcField, Priority.ALWAYS)
+        HBox.setHgrow(searchItemField, Priority.ALWAYS)
+        HBox.setHgrow(searchObjectField, Priority.ALWAYS)
 
         SplitSceneDividerDragRegion(
             splitPane = root,
             node = tabPane,
             dividerIndex = SimpleIntegerProperty(0),
             positionProperty = Properties.viewerDivider1Position,
-            relativeBounds = RelativeBounds(Placement.TOP_RIGHT,
+            relativeBounds = RelativeBounds(
+                Placement.TOP_RIGHT,
                 widthProperty = Bindings.subtract(tabPane.widthProperty(), 130.0), // 130 is roughly
-                                                                                        // the size of the 3 tabs
+                // the size of the 3 tabs
                 heightProperty = SimpleDoubleProperty(25.0)
             )
         )
@@ -106,51 +131,67 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         configureTabPane()
         configureModelAndAnimationController()
 
-        configureSortComboBox()
-
         npcList.configure(npcs, searchNpcField)
         itemList.configure(items, searchItemField)
         objectList.configure(objects, searchObjectField)
         interfaceList.configure(interfaces, searchInterfaceField)
 
+        configureSortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
+        configureSortComboBox(sortItemBox, itemList, Properties.selectedItemSortType)
+        configureSortComboBox(sortObjectBox, objectList, Properties.selectedObjectSortType)
+
         cacheProperty().addListener { _, _, newValue ->
 
-            val counter = AtomicInteger(2)
-
             CacheAssetLoader(newValue, animationController).run {
-                loadAnimations {
-                    animationController.animations.setAll(it)
+
+                val semaphore = Semaphore(1)
+                loadLastSelectedAnimation(6, semaphore)
+                loadAnimations { animationList ->
+                    animationController.animations.setAll(animationList)
+                    semaphore.release()
                 }
                 loadNpcs {
+
                     npcs.setAll(it)
-                    if (counter.decrementAndGet() == 0)
-                        loadLastSelectedAnimation()
                     handleLastSelectedEntity(it, npcList)
+                    semaphore.release()
                 }
                 loadObjects {
                     objects.setAll(it)
-                    if (counter.decrementAndGet() == 0)
-                        loadLastSelectedAnimation()
                     handleLastSelectedEntity(it, objectList)
+                    semaphore.release()
                 }
                 loadItems {
+
                     items.setAll(it)
                     handleLastSelectedEntity(it, itemList)
+                    semaphore.release()
                 }
+
                 interfaces.setAll(newValue.getRootInterfaces().map {
                     InterfaceGroup(newValue, it.key, it.value)
                 })
                 interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
+                semaphore.release()
             }
         }
     }
 
-    private fun loadLastSelectedAnimation() {
-        val animationToSelect = animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
-        animationController.animationsListView.selectionModel.select(animationToSelect)
+    private fun loadLastSelectedAnimation(requiredPermits: Int, semaphore: Semaphore) {
+        GlobalScope.launch {
+            repeat(requiredPermits) {
+                semaphore.acquire()
+            }
+            delay(666L)
+            GlobalScope.launch(Dispatchers.JavaFx) {
+                val animationToSelect =
+                    animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
+                animationController.animationsListView.selectionModel.select(animationToSelect)
+            }
+        }
     }
 
-    private inline fun<reified T : Entity<*>> handleLastSelectedEntity(
+    private inline fun <reified T : Entity<*>> handleLastSelectedEntity(
         it: List<T>,
         view: ViewNodeListView<T>,
     ) {
@@ -174,18 +215,23 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             selectedEntityProperty.set(entity)
     }
 
-    private fun<T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty) : T? {
-        val lastSelectedName = stringProperty.get()?:""
+    private fun <T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty): T? {
+        val lastSelectedName = stringProperty.get() ?: ""
         return if (lastSelectedName.isBlank())
             null
         else
             find { lastSelectedName == it.getName() }
     }
 
-    private fun configureSortComboBox() {
-        sortMethodBox.items.addAll(SortType.values())
-        sortMethodBox.selectionModel.selectedItemProperty().onInvalidation {
-            (npcList.items as SortedList).comparator = when (get()!!) {
+    private fun <D : EntityDefinition, N : Entity<D>> configureSortComboBox(
+        box: ComboBox<SortType>,
+        list: ViewNodeListView<N>,
+        property: ObjectProperty<SortType>
+    ) {
+        box.items.addAll(SortType.values())
+        box.selectionModel.selectedItemProperty().onInvalidation {
+            property.set(get())
+            (list.items as SortedList).comparator = when (get()!!) {
                 SortType.NAME -> Comparator.comparing {
                     it.getName()
                 }
@@ -194,6 +240,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 }
             }
         }
+        box.selectionModel.select(property.get())
     }
 
     private fun configureModelAndAnimationController() {
@@ -208,7 +255,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                     Properties.selectedAnimationName.set("")
                     sceneContext.animationPlayer.transformerProperty.set(null)
 
-                } else if(new != null) {
+                } else if (new != null) {
                     Properties.selectedAnimationName.set(new.getName())
                     sceneContext.animationPlayer.transformerProperty.set(new)
                     (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
@@ -220,7 +267,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             }
             val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
             val modelView = modelLoader.load<VBox>()
-    //            modelView.styleClass.add("border-left")
+            //            modelView.styleClass.add("border-left")
             modelController = modelLoader.getController()
             modelController.modelListView.enableDragAndDrop(
                 toFile = {
@@ -273,7 +320,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             if (newNode.isNotNull.get()) {
                 val selectedNode = newNode.get()
 //                onSelectedEvent.handle(ViewNodeListView.SelectedEvent(selectedNode))
-                when(selectedNode) {
+                when (selectedNode) {
                     is NPC -> npcList.run {
                         selectionModel.clearSelection()
                         selectionModel.select(selectedNode)
@@ -307,7 +354,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         else -> throw Exception("Unsupported tab name ${previousTab.text}")
     }
 
-    protected abstract fun cacheProperty() : ObjectProperty<Cache>
+    protected abstract fun cacheProperty(): ObjectProperty<Cache>
 
     protected val cache: Cache
         get() = cacheProperty().get()
@@ -320,10 +367,10 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         Properties.selectedAnimation.setAndBind(sceneContext.animationPlayer.transformerProperty, true)
     }
 
-    override fun getViewNode() : SplitPane = root
+    override fun getViewNode(): SplitPane = root
 
 
-    private inline fun<reified T : Searchable> ListView<T>.configure(
+    private inline fun <reified T : Searchable> ListView<T>.configure(
         backingList: ObservableList<T>,
         searchField: TextField? = null,
         sortComparator: Comparator<T> = Comparator.comparing { it.getName() },
@@ -388,7 +435,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         if (newNode is Transformable)
             sceneContext.animationPlayer.transformableList.add(newNode)
 
-        when(newNode) {
+        when (newNode) {
             is NPC -> currentSelectedNpcProperty.set(newNode)
             is Item -> currentSelectedItemProperty.set(newNode)
             is Object -> currentSelectedObjectProperty.set(newNode)
@@ -397,12 +444,13 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     }
 
     private fun handleEmptySearchField(searchField: TextField) {
-        searchField.textProperty().addListener { _: ObservableValue<out String?>?, oldValue: String?, newValue: String? ->
-            if (newValue != null && newValue.isEmpty() && oldValue != null && oldValue.isNotEmpty()) {
-                modelController.filteredModels.setPredicate { true }
-                animationController.filteredAnimations.setPredicate { true }
+        searchField.textProperty()
+            .addListener { _: ObservableValue<out String?>?, oldValue: String?, newValue: String? ->
+                if (newValue != null && newValue.isEmpty() && oldValue != null && oldValue.isNotEmpty()) {
+                    modelController.filteredModels.setPredicate { true }
+                    animationController.filteredAnimations.setPredicate { true }
+                }
             }
-        }
     }
 }
 
@@ -414,5 +462,5 @@ private fun <N : Event> Node.on(
         for (event in channel) action(event) // pass event to action
     }
     // install a listener to offer events to this actor
-   addEventHandler(unselectedEventType, eventActor::trySend)
+    addEventHandler(unselectedEventType, eventActor::trySend)
 }

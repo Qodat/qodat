@@ -1,6 +1,5 @@
 package stan.qodat.scene.control
 
-import javafx.beans.property.DoubleProperty
 import javafx.beans.property.ReadOnlyDoubleProperty
 import javafx.beans.value.ObservableValue
 import javafx.css.PseudoClass
@@ -91,16 +90,16 @@ class DragRegion(
         inside = false
     }
 
-    fun MouseEvent.inDragRegion() : Boolean {
+    private fun MouseEvent.inDragRegion() : Boolean {
         if (relativeBounds != null) {
             return relativeBounds.contains(node, x, y)
         }
         return true
     }
-    fun MouseEvent.getRelativeX() : Double {
+    private fun MouseEvent.getRelativeX() : Double {
         return sceneX / widthProperty.get()
     }
-    fun MouseEvent.getRelativeY() : Double {
+    private fun MouseEvent.getRelativeY() : Double {
         return sceneY / heightProperty.get()
     }
 

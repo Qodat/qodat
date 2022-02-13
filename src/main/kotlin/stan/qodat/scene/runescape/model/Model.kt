@@ -25,7 +25,11 @@ import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.tree.ModelTreeItem
+import stan.qodat.scene.provider.SceneNodeProvider
+import stan.qodat.scene.provider.TreeItemProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.task.Exportable
 import stan.qodat.util.*
 import java.io.File
 
@@ -40,10 +44,10 @@ class Model(label: String,
             internal val findColor: ShortArray? = null,
             internal val replaceColor: ShortArray? = null
 ) : ModelSkeleton(modelDefinition),
-        Searchable,
-        ViewNodeProvider,
-        SceneNodeProvider,
-        TreeItemProvider,
+    Exportable,
+    ViewNodeProvider,
+    SceneNodeProvider,
+    TreeItemProvider,
     Encoder {
 
     private lateinit var sceneGroup: Group

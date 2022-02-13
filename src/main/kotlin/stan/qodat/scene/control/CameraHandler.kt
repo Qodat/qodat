@@ -72,7 +72,7 @@ class CameraHandler(
 
         val cameraSpeed = when {
             it.isControlDown -> 0.1
-            it.isShiftDown -> 10.0
+            it.isShiftDown -> 5.0
             else -> 1.0
         } * Properties.cameraSpeed.get()
 
@@ -108,7 +108,7 @@ class CameraHandler(
             cameraTransformGroup.translate.x -= it.deltaX.times(0.01)
             cameraTransformGroup.translate.y += it.deltaY.times(0.01)
         } else {
-            val newZ = position.z - it.deltaY.times(0.2)
+            val newZ = position.z + it.deltaY.times(1.0)
             updateZValue(newZ)
         }
     }

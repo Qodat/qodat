@@ -12,65 +12,76 @@
         xmlns:fx="http://javafx.com/fxml"
         fx:id="root"
         fx:controller="stan.qodat.scene.controller.ViewerController">
-   <stylesheets>
-      <URL value="@style.css" />
-   </stylesheets>
-   <items>
+    <stylesheets>
+        <URL value="@style.css"/>
+    </stylesheets>
+    <items>
 
-      <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0" styleClass="split-viewer-pane" />
-      <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
-         <tabs>
+        <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0"
+                   styleClass="split-viewer-pane"/>
+        <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+            <tabs>
 
-            <Tab text="NPC">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0" />
-                        <HBox>
-                           <children>
-                              <ComboBox fx:id="sortMethodBox" promptText="Sort by"/>
-                              <TextField fx:id="searchNpcField" promptText="Search NPC" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Object">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="objectList" prefHeight="220.0" prefWidth="220.0" />
-                        <TextField fx:id="searchObjectField" promptText="Search object" />
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Item">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0" />
-                        <TextField fx:id="searchItemField" promptText="Search item" />
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-            <Tab text="Interfaces">
-               <content>
-                  <VBox>
-                     <children>
-                        <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0" />
-                        <HBox>
-                           <children>
-                              <TextField fx:id="searchInterfaceField" promptText="Search Interface" />
-                           </children>
-                        </HBox>
-                     </children>
-                  </VBox>
-               </content>
-            </Tab>
-         </tabs>
-      </TabPane>
-   </items>
+                <Tab text="NPC">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="npcList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <ComboBox fx:id="sortNpcBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchNpcField" promptText="Search NPC"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Object">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="objectList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <ComboBox fx:id="sortObjectBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchObjectField" promptText="Search object"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Item">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="itemList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <ComboBox fx:id="sortItemBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchItemField" promptText="Search item"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+                <Tab text="Interfaces">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="interfaceList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <TextField fx:id="searchInterfaceField" promptText="Search Interface"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
+    </items>
 </SplitPane>

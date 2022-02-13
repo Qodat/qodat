@@ -1,10 +1,9 @@
 package stan.qodat.scene.control.tree
 
-import IntField
+import IntTextField
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
-import javafx.geometry.Insets
 import javafx.geometry.Pos
 import javafx.scene.Group
 import javafx.scene.Node
@@ -14,7 +13,6 @@ import javafx.scene.paint.Color
 import javafx.scene.text.*
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.javafx.checkBox
 import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onSelected
 import stan.qodat.scene.SubScene3D
@@ -24,8 +22,6 @@ import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.*
-import java.util.concurrent.Callable
-import javax.swing.Box
 
 class AnimationFrameTreeItem(
     val entity: AnimatedEntity<*>,
@@ -90,7 +86,7 @@ class AnimationFrameTreeItem(
                 }
 
                 children += Label(" Length: ")
-                val frameDurationField = IntField(0, 255, FrameTimeUtil.toFrameAsInt(frame.durationProperty.get()))
+                val frameDurationField = IntTextField(0, 255, FrameTimeUtil.toFrameAsInt(frame.durationProperty.get()))
                 children += frameDurationField
                 frameDurationField.maxWidthProperty().set(35.0)
                 frameDurationField.valueProperty().addListener { _, _, newValue ->

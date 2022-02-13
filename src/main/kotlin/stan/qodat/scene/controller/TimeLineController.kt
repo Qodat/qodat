@@ -15,23 +15,22 @@ import javafx.scene.SnapshotParameters
 import javafx.scene.control.*
 import javafx.scene.input.ClipboardContent
 import javafx.scene.input.TransferMode
-import javafx.scene.layout.*
+import javafx.scene.layout.HBox
+import javafx.scene.layout.Priority
 import javafx.scene.paint.Color
 import javafx.scene.shape.Sphere
-import javafx.stage.FileChooser
 import javafx.util.Callback
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.DragRegion
+import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.task.EntityExportObjTask
-import stan.qodat.task.ModelExportObjTask
-import stan.qodat.util.*
-import java.io.File
+import stan.qodat.util.FrameTimeUtil
+import stan.qodat.util.onIndexSelected
 import java.net.URL
 import java.util.*
 import javax.imageio.ImageIO
@@ -46,8 +45,10 @@ class TimeLineController : Initializable {
 
     @FXML
     lateinit var timeLineBox: HBox
+
     @FXML
     lateinit var frameList: ListView<AnimationFrame>
+
     @FXML
     lateinit var transformsList: ListView<Transformation>
 
@@ -59,21 +60,7 @@ class TimeLineController : Initializable {
 
         timeLineBox.children.removeAll(transformsList)
 
-//        frameList.contextMenu = ContextMenu(
-//            Menu("Export", null, MenuItem(".obj").apply {
-//                disableProperty().setAndBind(Properties.selectedAnimation.isNull)
-//                setOnAction {
-//                    frameList.items.add(AnimationFrame("whoop", null, 5))
-//                }
-//            }),
-//            MenuItem("Add frame").apply {
-//                disableProperty().setAndBind(Properties.selectedAnimation.isNull)
-//                setOnAction {
-//                    frameList.items.add(AnimationFrame("whoop", null, 5))
-//                }
-//            }
-//
-//        )
+
         frameList.run {
             setOnDragDropped {
                 it.consume()
@@ -88,7 +75,7 @@ class TimeLineController : Initializable {
                     val snapShot = SubScene3D.subSceneProperty.get().snapshot(snapshotParameters, null)
                     val image = SwingFXUtils.fromFXImage(snapShot, null)
                     val name = Properties.selectedAnimationName.get() + "_" + frameIndex.toString()
-                    val out = Properties.exportsPath.get().resolve("png").resolve("$name.png").toFile().apply {
+                    val out = Properties.defaultExportsPath.get().resolve("png").resolve("$name.png").toFile().apply {
                         if (!parentFile.exists())
                             parentFile.mkdir()
                         if (!exists())
@@ -190,6 +177,14 @@ class TimeLineController : Initializable {
             updateTotalDuration(totalDurationProperty)
         }
 
+        frameList.contextMenu = ContextMenu(
+            ExportMenu<Entity<*>>().apply {
+                bindExportable(Properties.selectedEntity)
+                bindAnimation(Properties.selectedAnimation)
+                bindFrameList(frameList)
+            }
+        )
+
         frameList.itemsProperty().addListener(durationChangedListener)
         frameList.itemsProperty().addListener { _, oldValue, newValue ->
             oldValue?.forEach {
@@ -240,8 +235,10 @@ class TimeLineController : Initializable {
                 val frame = cell.item
 
                 val frameLength = Bindings
-                    .createIntegerBinding({ FrameTimeUtil.toFrameAsInt(frame.getDuration()) },
-                    frame.durationProperty)
+                    .createIntegerBinding(
+                        { FrameTimeUtil.toFrameAsInt(frame.getDuration()) },
+                        frame.durationProperty
+                    )
 
                 val cellIndex = cell.index
                 val first = cellIndex == 0
@@ -262,25 +259,7 @@ class TimeLineController : Initializable {
                 cell.textFill = Color.CYAN
                 cell.text = cellIndex.toString()
                 cell.tooltip = Tooltip(transformationTypeDetails)
-                cell.contextMenu = ContextMenu(
-                    Menu("Export", null, MenuItem(".obj/.mtl").apply {
-                        setOnAction {
-                            val entity = Properties.selectedEntity.get()
-
-                            val fileChooser = FileChooser()
-                            fileChooser.title = "Export to WaveFront format."
-                            fileChooser.initialFileName = formatExportName(entity, cellIndex)
-                            val file = fileChooser.showSaveDialog(null)
-                            if (file != null) {
-
-                                val model = entity.createMergedModel(file.nameWithoutExtension)
-                                Qodat.mainController.executeBackgroundTasks(ModelExportObjTask(file, model, cell.item))
-                            }
-                        }
-                    })
-                )
-
-               cell.prefWidthProperty().bind(Bindings.createDoubleBinding({
+                cell.prefWidthProperty().bind(Bindings.createDoubleBinding({
                     frameLength.get().times(maxWidthProperty.get()).div(totalDuration.get())
                 }, totalDuration, maxWidthProperty))
 //                binding.addListener { _, _, newWidth ->
@@ -318,10 +297,6 @@ class TimeLineController : Initializable {
         return cell
     }
 
-    private fun formatExportName(
-        entity: Entity<*>,
-        cellIndex: Int
-    ) = entity.getName() + "_" + Properties.selectedAnimationName.get() + "_$cellIndex"
 
     private fun setPrefwidth(
         pixelToDurationRatio: SimpleDoubleProperty,

@@ -54,6 +54,8 @@ class AtlasMaterial : PhongMaterial() {
      * @return the U coordinate of the color at the specified [index].
      */
     fun getU(index: Int) : Float {
+        if (!this::uniqueColors.isInitialized)
+            return 0F
         val colorIndex = uniqueColors.indexOf(colors[index])
         val onsetX = colorIndex.toDouble().div(uniqueColors.size)
         val offsetX = (1.0 / uniqueColors.size).div(2)

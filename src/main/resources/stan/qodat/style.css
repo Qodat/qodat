@@ -95,6 +95,10 @@
     -fx-graphic: url('images/lock.png');
 }
 
+.wave-front-format-export-menu {
+    -fx-graphic: url('images/object-file-format.png');
+}
+
 .scene-group {
     -fx-border-width: 0 0 1 0;
     -fx-border-color: rgb(50, 50, 50);

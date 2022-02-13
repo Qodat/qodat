@@ -10,7 +10,7 @@ import javafx.scene.layout.HBox
 import javafx.util.Duration
 import qodat.cache.definition.AnimationFrameDefinition
 import qodat.cache.definition.AnimationSkeletonDefinition
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.transform.TransformationGroup
 import stan.qodat.util.FrameTimeUtil

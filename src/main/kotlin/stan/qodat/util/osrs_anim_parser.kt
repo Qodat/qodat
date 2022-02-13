@@ -166,8 +166,9 @@ fun createObjectAnimsJsonDir(
             (anim.id to frames)
         }.collect(Collectors.toList()).toMap()
 
-        updateMessage("Loaded all animation mappings!")
-
+        Platform.runLater {
+            updateMessage("Loaded all animation mappings!")
+        }
 
         val total = objectManager.objects.size
         val counter = AtomicInteger(0)

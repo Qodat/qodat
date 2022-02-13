@@ -9,8 +9,8 @@ import javafx.scene.image.WritableImage
 import javafx.scene.layout.HBox
 import qodat.cache.definition.SpriteDefinition
 import stan.qodat.scene.control.LabeledHBox
-import stan.qodat.util.SceneNodeProvider
-import stan.qodat.util.ViewNodeProvider
+import stan.qodat.scene.provider.SceneNodeProvider
+import stan.qodat.scene.provider.ViewNodeProvider
 import java.nio.IntBuffer
 
 class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider {

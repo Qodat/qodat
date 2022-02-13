@@ -1,11 +1,15 @@
 package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
+import javafx.scene.control.ContextMenu
 import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.shape.DrawMode
+import stan.qodat.Properties
 import stan.qodat.javafx.*
+import stan.qodat.scene.control.export.ExportMenu
+import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 
 /**
@@ -21,7 +25,13 @@ class ModelTreeItem(
 
     init {
         text("MODEL", Color.web("#FFC66D"))
-        label(model.labelProperty)
+        label(model.labelProperty) {
+            contextMenu = ContextMenu(
+                ExportMenu<Model>().apply {
+                    setExportable(model)
+                }
+            )
+        }
         treeItem { checkBox("shading", model.shadingProperty, biDirectional = true) }
         treeItem { checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true) }
         treeItem { checkBox("visible", model.visibleProperty, biDirectional = true) }

@@ -4,15 +4,15 @@ import javafx.application.Platform
 import javafx.concurrent.Task
 import qodat.cache.Cache
 import qodat.cache.definition.AnimatedEntityDefinition
-import stan.qodat.Properties
-import stan.qodat.Qodat
 import qodat.cache.definition.EntityDefinition
+import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.entity.Item
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.entity.Object
+import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.createNpcAnimsJsonDir
 import stan.qodat.util.createObjectAnimsJsonDir
 import java.util.concurrent.atomic.AtomicInteger
@@ -24,11 +24,11 @@ class CacheAssetLoader(
 ) {
 
     fun loadAnimations(onCompleted: (List<Animation>) -> Unit) {
-        Qodat.mainController.executeBackgroundTasks(createLoadAnimationsTask(cache, onCompleted))
+        BackgroundTasks.submit(addProgressIndicator = true, createLoadAnimationsTask(cache, onCompleted))
     }
 
     fun loadItems(onCompleted: (List<Item>) -> Unit) {
-        Qodat.mainController.executeBackgroundTasks(createItemsLoadTask(cache, onCompleted))
+        BackgroundTasks.submit(addProgressIndicator = true, createItemsLoadTask(cache, onCompleted))
     }
 
     fun loadObjects(onCompleted: (List<Object>) -> Unit) {
@@ -42,13 +42,13 @@ class CacheAssetLoader(
                     objectManager = OldschoolCacheRuneLite.objectManager
                 )
                 task.setOnSucceeded {
-                    Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache, onCompleted))
+                    BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
                 }
-                Qodat.mainController.executeBackgroundTasks(task)
+                BackgroundTasks.submit(addProgressIndicator = true, task)
                 return
             }
         }
-        Qodat.mainController.executeBackgroundTasks(createObjectLoadTask(cache, onCompleted))
+        BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
     }
 
     fun loadNpcs(onCompleted: (List<NPC>) -> Unit) {
@@ -62,13 +62,13 @@ class CacheAssetLoader(
                     npcManager = OldschoolCacheRuneLite.npcManager
                 )
                 task.setOnSucceeded {
-                    Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache, onCompleted))
+                    BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
                 }
-                Qodat.mainController.executeBackgroundTasks(task)
+                BackgroundTasks.submit(addProgressIndicator = true, task)
                 return
             }
         }
-        Qodat.mainController.executeBackgroundTasks(createNPCLoadTask(cache, onCompleted))
+        BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
     }
 
     private fun createLoadAnimationsTask(cache: Cache, onCompleted: (List<Animation>) -> Unit) = object : Task<Void?>() {

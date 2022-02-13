@@ -32,8 +32,9 @@ class SplitSceneDividerDragRegion(
     private var inside = false
 
     init {
-        splitPane.dividers[dividerIndex.get()].positionProperty().setAndBind(positionProperty, true)
-
+        val divider = splitPane.dividers[dividerIndex.get()]
+        divider.positionProperty().setAndBind(positionProperty, true)
+        println(divider)
         if (relativeBounds != null) {
             node.setOnMouseMoved {
                 if (it.inDragRegion()) {

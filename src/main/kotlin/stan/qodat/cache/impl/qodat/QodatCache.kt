@@ -15,7 +15,6 @@ import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
 import java.io.UnsupportedEncodingException
-import java.nio.file.Paths
 import kotlin.io.path.outputStream
 
 @ExperimentalSerializationApi
@@ -88,7 +87,7 @@ object QodatCache : Cache("qodat") {
 
     override fun encode(any: Any): EncodeResult {
         if (any is Model) {
-            val saveDir = Properties.exportsPath.get().resolve("model").resolve("json").toFile().apply {
+            val saveDir = Properties.defaultExportsPath.get().resolve("model").resolve("json").toFile().apply {
                 if (!parentFile.exists())
                     parentFile.mkdir()
                 if (!exists())
@@ -101,7 +100,7 @@ object QodatCache : Cache("qodat") {
             encodeModel(file, getQodatModelDefinition(any))
             return EncodeResult(file)
         } else if (any is Animation) {
-            val animationSaveDir = Properties.exportsPath.get().resolve("animation").resolve("json").toFile().apply {
+            val animationSaveDir = Properties.defaultExportsPath.get().resolve("animation").resolve("json").toFile().apply {
                 if (!parentFile.exists())
                     parentFile.mkdirs()
                 if (!exists())
@@ -111,13 +110,13 @@ object QodatCache : Cache("qodat") {
                 if (!exists())
                     createNewFile()
             }
-            val animationFrameSaveDir = Properties.exportsPath.get().resolve("animation_frames").resolve("json").toFile().apply {
+            val animationFrameSaveDir = Properties.defaultExportsPath.get().resolve("animation_frames").resolve("json").toFile().apply {
                 if (!parentFile.exists())
                     parentFile.mkdirs()
                 if (!exists())
                     mkdir()
             }
-            val animationFrameSkeletonSaveDir = Properties.exportsPath.get().resolve("animation_skeletons").resolve("json").toFile().apply {
+            val animationFrameSkeletonSaveDir = Properties.defaultExportsPath.get().resolve("animation_skeletons").resolve("json").toFile().apply {
                 if (!parentFile.exists())
                     parentFile.mkdirs()
                 if (!exists())
