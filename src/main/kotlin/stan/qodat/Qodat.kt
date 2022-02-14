@@ -94,7 +94,7 @@ class Qodat : Application() {
                     exitProcess(0)
                 }
             }
-            if (true || !loadedProperties) {
+            if (!loadedProperties) {
                 val dialog = CacheChooserDialog()
                 dialog.showAndWait().ifPresent { (rootDir, cacheDir) ->
                     Properties.osrsCachePath.set(cacheDir)

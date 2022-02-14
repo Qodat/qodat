@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "stan.qodat"
-version = "0.0.8"
+version = "0.0.9"
 
 repositories {
     maven(url = "https://repo.runelite.net")
@@ -35,9 +35,7 @@ dependencies {
         exclude(group = "com.google.common")
     }
     implementation(project("qodat-api"))
-//    implementation("no.tornado:tornadofx:1.7.19")
-//    implementation("com.github.kotlin-graphics:gln:v0.5.2")
-    implementation("org.jsoup:jsoup:1.11.3")
+    implementation("org.jsoup:jsoup:1.14.3")
     implementation("us.ihmc:ihmc-javafx-toolkit:0.20.0")
     implementation("org.jcodec:jcodec:0.2.5")
     implementation("org.jcodec:jcodec-javase:0.2.5")
@@ -49,23 +47,8 @@ dependencies {
     implementation("com.displee:rs-cache-library:6.8.1")
     implementation("org.joml:joml-primitives:1.10.0")
     implementation("org.joml:joml:1.10.2")
-//    JavaFXPlatform.values().forEach { platform ->
-//        val cfg = configurations.create("javafx_" + platform.classifier)
-//        JavaFXModule.getJavaFXModules(javaFXOptions.modules).forEach { m ->
-//            project.dependencies.add(cfg.name,
-//                String.format("org.openjfx:%s:%s:%s", m.artifactName, javaFXOptions.version, platform.classifier));
-//        }
-//    }
-//    implementation("com.github.kotlin-graphics:gln:v0.5.2")
     testImplementation(kotlin("test-junit"))
 }
-
-
-//jlink {
-//    launcher {
-//        name = "hellofx"
-//    }
-//}
 
 sourceSets {
     named("main") {
@@ -74,7 +57,6 @@ sourceSets {
 }
 
 application {
-//    mainModule.set("stan")
     mainClass.set("stan.qodat.Launcher")
     applicationName = "Qodat"
 }
@@ -83,14 +65,15 @@ java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
 }
 runtime {
+
     imageZip.set(project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip"))
+
     options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+
     modules.set(listOf("java.desktop", "jdk.unsupported", "java.scripting", "java.logging", "java.xml", "java.naming", "java.sql"))
 
-//    addModules("java.compiler", "javafx.media")
-
     targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
-//    targetPlatform("mac")
+
     jpackage {
         appVersion = "1.0.0"
 
@@ -117,34 +100,7 @@ runtime {
 }
 
 tasks {
-//    withType(CreateStartScripts::class).forEach {script ->
-//        script.doFirst {
-//            script.classpath =  files("lib/*")
-//        }
-//    }
     withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
         kotlinOptions.jvmTarget = "17"
     }
-//    withType<Jar> {
-//        duplicatesStrategy = DuplicatesStrategy.INCLUDE
-//        manifest {
-//            attributes("Main-Class" to "stan.qodat.Qodat")
-//        }
-//        from(sourceSets.main.get().output)
-//        dependsOn(configurations.runtimeClasspath)
-//        from({
-//            configurations.runtimeClasspath.get().filter { it.name.endsWith("jar") }.map { zipTree(it) }
-//        })
-//    }
-//    this["runtime"].doLast {
-//        JavaFXPlatform.values().forEach { platform ->
-//            val cfg = configurations["javafx_" + platform.classifier]
-//            cfg.resolvedConfiguration.files.forEach { f ->
-//                copy {
-//                    from(f)
-//                    into("build/image/hello-${platform.classifier}/lib")
-//                }
-//            }
-//        }
-//    }
 }
