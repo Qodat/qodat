@@ -12,11 +12,10 @@ import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.task.BackgroundTasks
-import stan.qodat.task.ExportWaveFrontTask
+import stan.qodat.task.export.ExportWaveFrontTask
 import stan.qodat.util.Searchable
 import java.io.File
 import java.nio.file.Path
-import kotlin.io.path.exists
 
 sealed class WaveFrontFormat<C> : ExportFormat<C> {
 

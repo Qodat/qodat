@@ -29,7 +29,7 @@ import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.task.Exportable
+import stan.qodat.scene.control.export.Exportable
 import stan.qodat.util.*
 import java.io.File
 
@@ -81,7 +81,6 @@ class Model(label: String,
         editProperty.onInvalidation {
             buildTypeProperty.set(ModelMeshBuildType.MESH_PER_FACE)
         }
-
     }
 
     private fun rebuildModel() {
@@ -216,12 +215,11 @@ class Model(label: String,
         return treeItem
     }
 
-    override fun encode(format: Cache) : EncodeResult {
-        return format.encode(this)
-    }
+    override fun encode(format: Cache) : EncodeResult =
+        format.encode(this)
 
-    override fun getName() = labelProperty.get()
-
+    override fun getName(): String =
+        labelProperty.get()
 
     companion object {
 

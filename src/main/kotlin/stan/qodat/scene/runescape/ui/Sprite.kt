@@ -11,9 +11,10 @@ import qodat.cache.definition.SpriteDefinition
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.ViewNodeProvider
+import stan.qodat.util.Searchable
 import java.nio.IntBuffer
 
-class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider {
+class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider, Searchable {
 
     val nameProperty = SimpleStringProperty(definition.id.toString())
 
@@ -37,4 +38,6 @@ class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider
     override fun getSceneNode(): Node = sceneNode
 
     override fun getViewNode(): Node = viewNode
+
+    override fun getName(): String  = nameProperty.get()
 }

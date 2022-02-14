@@ -83,13 +83,15 @@ object Properties {
     val viewerCache = SimpleObjectProperty<Cache>()
     val editorCache = SimpleObjectProperty<Cache>()
 
-    val rootPath = SimpleObjectProperty(Paths.get(""))
-    val osrsCachePath = SimpleObjectProperty(Paths.get("caches/OS/rev203"))
-    val qodatCachePath = SimpleObjectProperty(Paths.get("caches/qodat"))
-    val legacyCachePath = SimpleObjectProperty(Paths.get("caches/667"))
+    val rootPath = SimpleObjectProperty(Paths.get(System.getProperty("user.home"), ".qodat"))
+    val osrsCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/OS/rev203"))
+    val qodatCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/qodat"))
+    val legacyCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/667"))
 
-    val mainModelFilesPath = SimpleObjectProperty(Paths.get("data"))
-    val defaultExportsPath = SimpleObjectProperty(Paths.get("exports"))
+    val downloadsPath = SimpleObjectProperty(rootPath.get().resolve("downloads"))
+
+    val projectFilesPath = SimpleObjectProperty(rootPath.get().resolve("data"))
+    val defaultExportsPath = SimpleObjectProperty(rootPath.get().resolve("exports"))
     val lastWaveFrontSingleExportPath = SimpleObjectProperty<Path?>(null)
     val lastWaveFrontSequenceExportPath = SimpleObjectProperty<Path?>(null)
     val lastGIFExportPath = SimpleObjectProperty<Path?>(null)
@@ -173,7 +175,7 @@ object Properties {
         sessionManager.bindPath("osrs-cache-path", osrsCachePath)
         sessionManager.bindPath("qodat-cache-path", qodatCachePath)
         sessionManager.bindPath("legacy-cache-path", legacyCachePath)
-        sessionManager.bindPath("main-data-path", mainModelFilesPath)
+        sessionManager.bindPath("main-data-path", projectFilesPath)
         sessionManager.bindPath("exports-path", defaultExportsPath)
     }
 }

@@ -21,7 +21,7 @@ import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.task.Exportable
+import stan.qodat.scene.control.export.Exportable
 import stan.qodat.util.*
 
 /**

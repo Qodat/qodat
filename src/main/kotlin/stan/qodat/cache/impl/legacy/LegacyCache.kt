@@ -48,6 +48,10 @@ object LegacyCache : Cache("Legacy") {
         return emptyMap()
     }
 
+    override fun getSprites(): Array<SpriteDefinition> {
+        TODO("Not yet implemented")
+    }
+
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
         TODO("Not yet implemented")
     }

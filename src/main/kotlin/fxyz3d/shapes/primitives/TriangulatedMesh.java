@@ -67,8 +67,9 @@ import org.poly2tri.triangulation.delaunay.DelaunayTriangle;
  */
 public class TriangulatedMesh extends TexturedMesh {
 
-    private List<Point3F> pointsExterior;
-    private List<List<Point3F>> pointsHoles;
+    private final List<Point3F> pointsExterior;
+    private final List<List<Point3F>> pointsHoles;
+
     private final static int DEFAULT_LEVEL = 1;
     private final static double DEFAULT_HEIGHT = 1d;
     private final static double DEFAULT_HOLE_RADIUS = 0d;

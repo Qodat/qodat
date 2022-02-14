@@ -97,12 +97,9 @@ fun createNpcAnimsJsonDir(
                         }
                     }
                 }
-                var name = npc.name
-                if (name.contains(">")) {
-                    name = name.substringAfter('>').substringBeforeLast('<')
-                }
+
                 try {
-                    val file = Properties.osrsCachePath.get().resolve("npc_anims/${name}.json").toFile()
+                    val file = Properties.osrsCachePath.get().resolve("npc_anims/${npc.id}.json").toFile()
                     val writer = FileWriter(file)
                     gson.toJson(matches.keys.toIntArray(), writer)
                     writer.flush()
@@ -186,12 +183,8 @@ fun createObjectAnimsJsonDir(
                         }
                     }
                 }
-                var name = objectDefinition.name
-                if (name.contains(">")) {
-                    name = name.substringAfter('>').substringBeforeLast('<')
-                }
                 try {
-                    val file = Properties.osrsCachePath.get().resolve("object_anims/${name}.json").toFile()
+                    val file = Properties.osrsCachePath.get().resolve("object_anims/${objectDefinition.id}.json").toFile()
                     val writer = FileWriter(file)
                     gson.toJson(matches.keys.toIntArray(), writer)
                     writer.flush()

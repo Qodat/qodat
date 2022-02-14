@@ -185,7 +185,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             if (npc.name.isEmpty() || npc.models == null || npc.models.isEmpty())
                 continue
             try {
-                val animsFile = npcAnimsDir.resolve(npc.name+".json")
+                val animsFile = npcAnimsDir.resolve("${npc.id}.json")
                 val animsReader = animsFile.bufferedReader()
                 val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
                 animsReader.close()
@@ -315,6 +315,12 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             .flatten()
             .map { RuneliteIntefaceDefinition(it) }
             .groupBy { it.id.shr(16) }
+    }
+
+    override fun getSprites(): Array<SpriteDefinition> {
+        return spriteManager.sprites.map {
+            RuneliteSpriteDefinition(it)
+        }.toTypedArray()
     }
 
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {

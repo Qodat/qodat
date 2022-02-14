@@ -18,18 +18,18 @@ interface Observable2DIntArray : ObservableArray<Observable2DIntArray> {
     operator fun get(index: Int): IntArray
 
     /**
-     * Replaces this array's content with [elements].
-     *
-     * @throws NullPointerException if [elements] is null
-     */
-    fun setAll(vararg elements: IntArray)
-
-    /**
      * Sets the [value] the [index] in this array.
      *
      * @throws ArrayIndexOutOfBoundsException if `index` is outside of array bounds
      */
     operator fun set(index: Int, value: IntArray)
+
+    /**
+     * Replaces this array's content with [elements].
+     *
+     * @throws NullPointerException if [elements] is null
+     */
+    fun setAll(vararg elements: IntArray)
 
     /**
      * Returns a copy of this array and puts it in [destination] or if it is too small,
@@ -38,6 +38,4 @@ interface Observable2DIntArray : ObservableArray<Observable2DIntArray> {
      * @return an array of [int arrays][IntArray]
      */
     fun toArray(destination: Array<IntArray?>): Array<IntArray?>
-
-    operator fun iterator(): Iterator<IntArray>
 }

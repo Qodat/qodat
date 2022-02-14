@@ -37,6 +37,7 @@ dependencies {
     implementation(project("qodat-api"))
 //    implementation("no.tornado:tornadofx:1.7.19")
 //    implementation("com.github.kotlin-graphics:gln:v0.5.2")
+    implementation("org.jsoup:jsoup:1.11.3")
     implementation("us.ihmc:ihmc-javafx-toolkit:0.20.0")
     implementation("org.jcodec:jcodec:0.2.5")
     implementation("org.jcodec:jcodec-javase:0.2.5")

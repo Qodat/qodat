@@ -32,8 +32,8 @@ class PolygonMesh(
 
     private fun getNumberOfEdgesInFaces() : Int {
         var edges = 0
-        for (faces in faces)
-            edges += faces.size
+        for (i in 0 until faces.size())
+            edges += faces[i].size
         return edges / 2
     }
 }

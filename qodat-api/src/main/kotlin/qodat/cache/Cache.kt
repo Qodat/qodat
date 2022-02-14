@@ -37,6 +37,8 @@ abstract class Cache(val name: String) {
 
     abstract fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>>
 
+    abstract fun getSprites(): Array<SpriteDefinition>
+
     abstract fun getSprite(groupId: Int, frameId: Int): SpriteDefinition
 
     abstract fun getTexture(id: Int): TextureDefinition

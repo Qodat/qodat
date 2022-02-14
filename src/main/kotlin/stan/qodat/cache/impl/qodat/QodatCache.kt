@@ -253,6 +253,10 @@ object QodatCache : Cache("qodat") {
         return emptyMap()
     }
 
+    override fun getSprites(): Array<SpriteDefinition> {
+        return emptyArray()
+    }
+
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
         TODO("Not yet implemented")
     }

@@ -40,6 +40,7 @@ import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.ui.InterfaceGroup
+import stan.qodat.scene.runescape.ui.Sprite
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
@@ -83,6 +84,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     @FXML
     lateinit var sortObjectBox: ComboBox<SortType>
 
+    @FXML
+    lateinit var searchSpritesField: TextField
+
+    @FXML
+    lateinit var spritesList: ViewNodeListView<Sprite>
+
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
 
@@ -94,26 +101,30 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
     val items: ObservableList<Item> = FXCollections.observableArrayList()
     val objects: ObservableList<Object> = FXCollections.observableArrayList()
+    val sprites: ObservableList<Sprite> = FXCollections.observableArrayList()
     val interfaces: ObservableList<InterfaceGroup> = FXCollections.observableArrayList()
 
     private val currentSelectedNpcProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedItemProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedSpriteProperty = SimpleObjectProperty<ViewNodeProvider>()
 
     lateinit var onEntitySelected: (Entity<*>) -> Unit
-
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
         VBox.setVgrow(npcList, Priority.ALWAYS)
         VBox.setVgrow(itemList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
+        VBox.setVgrow(spritesList, Priority.ALWAYS)
         VBox.setVgrow(interfaceList, Priority.ALWAYS)
 
         HBox.setHgrow(searchNpcField, Priority.ALWAYS)
         HBox.setHgrow(searchItemField, Priority.ALWAYS)
         HBox.setHgrow(searchObjectField, Priority.ALWAYS)
+        HBox.setHgrow(searchSpritesField, Priority.ALWAYS)
+        HBox.setHgrow(searchInterfaceField, Priority.ALWAYS)
 
         SplitSceneDividerDragRegion(
             splitPane = root,
@@ -134,6 +145,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         npcList.configure(npcs, searchNpcField)
         itemList.configure(items, searchItemField)
         objectList.configure(objects, searchObjectField)
+        spritesList.configure(sprites, searchSpritesField)
         interfaceList.configure(interfaces, searchInterfaceField)
 
         configureSortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
@@ -145,33 +157,42 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             CacheAssetLoader(newValue, animationController).run {
 
                 val semaphore = Semaphore(1)
+
                 loadLastSelectedAnimation(6, semaphore)
+
                 loadAnimations { animationList ->
                     animationController.animations.setAll(animationList)
                     semaphore.release()
                 }
-                loadNpcs {
 
+                loadNpcs {
                     npcs.setAll(it)
                     handleLastSelectedEntity(it, npcList)
                     semaphore.release()
                 }
+
                 loadObjects {
                     objects.setAll(it)
                     handleLastSelectedEntity(it, objectList)
                     semaphore.release()
                 }
-                loadItems {
 
+                loadItems {
                     items.setAll(it)
                     handleLastSelectedEntity(it, itemList)
                     semaphore.release()
                 }
 
+                sprites.setAll(newValue.getSprites().filter {
+                    it.width > 0 && it.height > 0
+                }.map {
+                    Sprite(it)
+                })
                 interfaces.setAll(newValue.getRootInterfaces().map {
                     InterfaceGroup(newValue, it.key, it.value)
                 })
                 interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
+
                 semaphore.release()
             }
         }
@@ -351,6 +372,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         "Object" -> currentSelectedObjectProperty
         "Item" -> currentSelectedItemProperty
         "Interfaces" -> currentSelectedInterfaceProperty
+        "Sprites" -> currentSelectedSpriteProperty
         else -> throw Exception("Unsupported tab name ${previousTab.text}")
     }
 
@@ -439,6 +461,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             is NPC -> currentSelectedNpcProperty.set(newNode)
             is Item -> currentSelectedItemProperty.set(newNode)
             is Object -> currentSelectedObjectProperty.set(newNode)
+            is Sprite -> currentSelectedSpriteProperty.set(newNode)
             is InterfaceGroup -> currentSelectedInterfaceProperty.set(newNode)
         }
     }

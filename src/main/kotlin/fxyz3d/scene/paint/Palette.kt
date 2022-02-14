@@ -28,21 +28,15 @@
  */
 package fxyz3d.scene.paint
 
-import javafx.embed.swing.SwingFXUtils
 import javafx.scene.image.Image
 import javafx.scene.image.WritableImage
 import javafx.scene.paint.Color
-import javafx.scene.paint.CycleMethod
-import javafx.scene.paint.LinearGradient
-import javafx.scene.paint.Stop
-import java.io.File
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Function
 import java.util.stream.DoubleStream
 import java.util.stream.IntStream
-import javax.imageio.ImageIO
 
 /**
  *

@@ -9,10 +9,8 @@ import stan.qodat.javafx.onChange
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.task.Exportable
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
-import kotlin.math.exp
 
 /**
  * Represents a [Menu] that can be used to export [exportable objects][T] to different file formats.

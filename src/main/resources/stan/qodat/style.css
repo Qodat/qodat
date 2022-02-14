@@ -113,7 +113,6 @@
 .menu-item:hover {
     -fx-background-color: #398291;
 }
-
 .split-pane,
 .titled-pane,
 .scroll-bar,
@@ -127,6 +126,17 @@
 #bottom,
 #bottom-group {
     -fx-background-color: #3C3F41;
+}
+
+.myDialog{
+     -fx-background-color: #3C3F41;
+ }
+.myDialog > *.button-bar > *.container{
+    -fx-background-color: #525657;
+}
+.myDialog > *.label.content{
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
 }
 
 .list-view {
@@ -456,6 +466,7 @@
     -fx-border-color: transparent;
     -fx-border-width: 0;
 }
+#cache-list,
 #frame-list,
 #models-list {
     -fx-spacing: 0;
@@ -463,6 +474,7 @@
     -fx-background-insets: 0;
     -fx-background-radius: 0;
 }
+#cache-list,
 #models-list {
     -fx-background-color: rgb(60, 63, 65);
     -fx-border-color: transparent;

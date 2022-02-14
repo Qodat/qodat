@@ -17,6 +17,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
 import org.slf4j.LoggerFactory
 import stan.qodat.Qodat
+import stan.qodat.task.export.ExportTaskResult
 import stan.qodat.util.DEFAULT
 import stan.qodat.util.LOG_ERROR
 import java.awt.Desktop

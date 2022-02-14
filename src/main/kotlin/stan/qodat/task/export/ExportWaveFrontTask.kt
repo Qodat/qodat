@@ -1,4 +1,4 @@
-package stan.qodat.task
+package stan.qodat.task.export
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
@@ -8,7 +8,7 @@ import stan.qodat.scene.control.export.wavefront.getFaceMaterials
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.task.ExportWaveFrontTask.*
+import stan.qodat.task.export.ExportWaveFrontTask.*
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.Exception

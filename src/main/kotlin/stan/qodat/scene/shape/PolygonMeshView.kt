@@ -5,8 +5,6 @@ import javafx.collections.ArrayChangeListener
 import javafx.collections.ObservableFloatArray
 import javafx.scene.Parent
 import javafx.scene.paint.Material
-import javafx.scene.shape.MeshView
-import javafx.scene.shape.TriangleMesh
 
 /**
  * TODO: add documentation
@@ -15,9 +13,6 @@ import javafx.scene.shape.TriangleMesh
  * @since   22/01/2021
  */
 class PolygonMeshView(polygonMesh: PolygonMesh) : Parent() {
-
-    private val meshView = MeshView()
-    private val triangleMesh = TriangleMesh()
 
     private var pointsDirty = true
 

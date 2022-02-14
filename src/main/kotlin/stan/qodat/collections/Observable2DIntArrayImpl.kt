@@ -14,16 +14,11 @@ class Observable2DIntArrayImpl(private var size: Int = 0) :
     ObservableArrayBase<Observable2DIntArray>(),
     Observable2DIntArray
 {
+    private var array = INITIAL
+
     constructor(array: Array<IntArray>) : this() {
         setAllInternal(array, 0, array.size)
     }
-
-    companion object {
-        private val INITIAL = emptyArray<IntArray?>()
-    }
-
-    private var array = INITIAL
-
 
     override fun get(index: Int): IntArray {
         rangeCheck(index + 1)
@@ -51,15 +46,10 @@ class Observable2DIntArrayImpl(private var size: Int = 0) :
 
     override fun toArray(dest: Array<IntArray?>): Array<IntArray?> {
         var safeDest = dest
-        if (size() > safeDest.size) {
+        if (size() > safeDest.size)
             safeDest = arrayOfNulls<IntArray?>(size())
-        }
         System.arraycopy(array, 0, safeDest, 0, size())
         return safeDest
-    }
-
-    override fun iterator(): Iterator<IntArray> {
-        TODO("Not yet implemented")
     }
 
     private fun rangeCheck(size: Int) {
@@ -84,7 +74,7 @@ class Observable2DIntArrayImpl(private var size: Int = 0) :
     }
 
     override fun trimToSize() {
-        if (array.size != size){
+        if (array.size != size) {
             val newArray = arrayOfNulls<IntArray>(size)
             System.arraycopy(array, 0, newArray, 0, size)
             array = newArray
@@ -96,4 +86,8 @@ class Observable2DIntArrayImpl(private var size: Int = 0) :
     }
 
     override fun size() = size
+
+    companion object {
+        private val INITIAL = emptyArray<IntArray?>()
+    }
 }

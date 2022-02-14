@@ -7,7 +7,6 @@ import javafx.scene.Parent
 import javafx.scene.Scene
 import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
-import javafx.stage.DirectoryChooser
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import kotlinx.coroutines.Dispatchers
@@ -21,6 +20,7 @@ import stan.qodat.javafx.JavaFXTrayIcon
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
+import stan.qodat.scene.dialog.CacheChooserDialog
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
 import java.util.concurrent.ExecutorService
@@ -45,7 +45,14 @@ class Qodat : Application() {
 
         SubScene3D.init()
 
+        val firstLoad = true
+
+        loadMainController(primaryStage, loadedProperties)
+    }
+
+    private fun loadMainController(primaryStage: Stage, loadedProperties: Boolean) {
         val mainLoader = FXMLLoader(Qodat::class.java.getResource("main.fxml"))
+
         val root = mainLoader.load<Parent>()
         mainController = mainLoader.getController()
 
@@ -87,42 +94,19 @@ class Qodat : Application() {
                     exitProcess(0)
                 }
             }
-            if (!loadedProperties) {
+            if (true || !loadedProperties) {
+                val dialog = CacheChooserDialog()
+                dialog.showAndWait().ifPresent { (rootDir, cacheDir) ->
+                    Properties.osrsCachePath.set(cacheDir)
+                    Properties.rootPath.set(rootDir)
+                    Properties.downloadsPath.set(rootDir.resolve("downloads"))
+                    Properties.qodatCachePath.set(rootDir.resolve("caches/qodat"))
+                    Properties.legacyCachePath.set(rootDir.resolve("cache/667"))
+                    Properties.projectFilesPath.set(rootDir.resolve("data"))
+                    Properties.defaultExportsPath.set(rootDir.resolve("exports"))
 
-                val dialog = DirectoryChooser()
-                dialog.title = "Please select the root Directory for Qodat (containing the /caches folder)"
-
-                val directory = dialog.showDialog(stage)
-                if (!directory.exists())
-                    directory.mkdirs()
-                Properties.rootPath.set(directory.toPath())
-
-                directory.resolve("caches/OS/rev203").apply {
-                    if (!exists())
-                        mkdir()
-                    Properties.osrsCachePath.set(toPath())
+                    propertiesManager.saveToFile()
                 }
-                directory.resolve("caches/qodat").apply {
-                    if (!exists())
-                        mkdir()
-                    Properties.qodatCachePath.set(toPath())
-                }
-                directory.resolve("caches/667").apply {
-                    if (!exists())
-                        mkdir()
-                    Properties.legacyCachePath.set(toPath())
-                }
-                directory.resolve("data").apply {
-                    if (!exists())
-                        mkdir()
-                    Properties.mainModelFilesPath.set(toPath())
-                }
-                directory.resolve("exports").apply {
-                    if (!exists())
-                        mkdir()
-                    Properties.defaultExportsPath.set(toPath())
-                }
-                propertiesManager.saveToFile()
             }
             Properties.viewerCache.set(OldschoolCacheRuneLite)
             Properties.editorCache.set(QodatCache)

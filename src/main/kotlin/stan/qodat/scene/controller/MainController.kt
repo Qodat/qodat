@@ -1,23 +1,13 @@
 package stan.qodat.scene.controller
 
-import javafx.application.Platform
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
-import javafx.concurrent.Task
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.control.*
-import javafx.scene.control.Alert.AlertType
 import javafx.scene.layout.*
-import javafx.scene.paint.Color
-import javafx.scene.text.Text
 import javafx.stage.DirectoryChooser
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
@@ -172,7 +162,7 @@ class MainController : SceneController("main-scene") {
         mainModelsLoader.getController<ModelController>().apply {
             bind(sceneContext)
             enableDragAndDrop()
-            syncWith(Properties.mainModelFilesPath)
+            syncWith(Properties.projectFilesPath)
         }
         modelsContainer.children.add(mainModelsView)
         addTabSelectedListener()
