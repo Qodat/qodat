@@ -15,22 +15,24 @@ import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import javafx.scene.shape.Sphere
 import kotlinx.serialization.json.decodeFromStream
-import stan.qodat.Properties
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
 import qodat.cache.Encoder
 import qodat.cache.definition.ModelDefinition
 import qodat.cache.models.RSModelLoader
+import stan.qodat.Properties
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.scene.control.export.Exportable
 import stan.qodat.scene.control.tree.ModelTreeItem
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.scene.control.export.Exportable
-import stan.qodat.util.*
+import stan.qodat.util.DISTINCT_COLORS
+import stan.qodat.util.onInvalidation
+import stan.qodat.util.setAndBind
 import java.io.File
 
 /**
@@ -63,7 +65,12 @@ class Model(label: String,
     val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
     val cullFaceProperty = SimpleObjectProperty(CullFace.NONE)
     val depthTestProperty = SimpleObjectProperty(DepthTest.ENABLE)
-    val buildTypeProperty = SimpleObjectProperty(ModelMeshBuildType.ATLAS)
+    val buildTypeProperty = SimpleObjectProperty(
+        if (modelDefinition.getFaceTextures() != null)
+            ModelMeshBuildType.MESH_PER_FACE
+        else
+            ModelMeshBuildType.ATLAS
+    )
     val displayFacePriorityLabelsProperty = SimpleBooleanProperty(false)
     val shadingProperty = SimpleBooleanProperty(false)
     val editProperty = SimpleObjectProperty<(ModelFaceMesh.EditContext.() -> Unit)?>(null)
@@ -202,7 +209,7 @@ class Model(label: String,
     private fun buildModelSkin() {
         modelSkin = when (buildTypeProperty.get()!!) {
             ModelMeshBuildType.ATLAS -> ModelAtlasMesh(this)
-            ModelMeshBuildType.TEXTURED_ATLAS -> ModelTexturedMesh(this, modelSkin as ModelAtlasMesh)
+            ModelMeshBuildType.TEXTURED_ATLAS -> ModelTexturedMesh(this)
             ModelMeshBuildType.SKELETON_ATLAS -> ModelSkeletonMesh(this)
             ModelMeshBuildType.MESH_PER_FACE -> ModelFaceMeshGroup(this)
         }

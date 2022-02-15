@@ -6,11 +6,9 @@ import javafx.scene.paint.Material
 import javafx.scene.paint.PhongMaterial
 import org.slf4j.LoggerFactory
 import stan.qodat.Qodat
-import java.lang.Exception
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
-import kotlin.math.log
 
 /**
  * TODO: add documentation
@@ -34,7 +32,6 @@ class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/sessi
         } catch (e: Exception) {
             e.printStackTrace()
         }
-
         return true
     }
 
@@ -81,20 +78,20 @@ class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/sessi
     inline fun <reified T : Enum<T>> bindEnum(key: String, property: ObjectProperty<T>) =
         bind(key, property) { enumValueOf<T>(it) }
 
-    fun bindColor(key: String, property: ObjectProperty<Color>) = bind(key, property)
-    { Color.valueOf(it) }
+    fun bindColor(key: String, property: ObjectProperty<Color>) =
+        bind(key, property) { Color.valueOf(it) }
 
-    fun bindBoolean(key: String, property: BooleanProperty) = bind(key, property)
-    { java.lang.Boolean.parseBoolean(it) }
+    fun bindBoolean(key: String, property: BooleanProperty) =
+        bind(key, property) { java.lang.Boolean.parseBoolean(it) }
 
-    fun bindDouble(key: String, property: DoubleProperty) = bind(key, property)
-    { java.lang.Double.parseDouble(it) }
+    fun bindDouble(key: String, property: DoubleProperty) =
+        bind(key, property) { java.lang.Double.parseDouble(it) }
 
-    fun bindInt(key: String, property: IntegerProperty) = bind(key, property)
-    { java.lang.Integer.parseInt(it) }
+    fun bindInt(key: String, property: IntegerProperty) =
+        bind(key, property) { Integer.parseInt(it) }
 
-    fun bindString(key: String, property: StringProperty) = bind(key, property)
-    { it }
+    fun bindString(key: String, property: StringProperty) =
+        bind(key, property) { it }
 
 }
 

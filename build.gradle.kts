@@ -72,7 +72,7 @@ runtime {
 
     modules.set(listOf("java.desktop", "jdk.unsupported", "java.scripting", "java.logging", "java.xml", "java.naming", "java.sql"))
 
-    targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
+//    targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
 
     jpackage {
         appVersion = "1.0.0"

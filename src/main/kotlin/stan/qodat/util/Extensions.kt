@@ -12,9 +12,13 @@ import javafx.scene.control.*
 import javafx.scene.layout.Region
 import javafx.scene.paint.Material
 import javafx.scene.shape.Shape3D
+import qodat.cache.Cache
+import qodat.cache.definition.ModelDefinition
 import stan.qodat.Qodat
 import stan.qodat.event.SelectedTabChangeEvent
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.paint.ColorMaterial
+import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.shape.PolygonMeshView
@@ -169,4 +173,19 @@ fun createSelectTabListener(id: String, selectProperty: SimpleStringProperty, ta
                 otherSelected = otherSelected)
         )
     }
+}
+
+fun ModelDefinition.getMaterial(face: Int, cache: Cache): stan.qodat.scene.paint.Material {
+    val faceAlpha = getFaceAlphas()?.getOrNull(face)
+    val faceColor = getFaceColors()[face]
+    val faceTexture = getFaceTextures()
+        ?.getOrNull(face)?.toInt()
+        ?.takeIf { textureId -> textureId != -1 }
+        ?.let { cache.getTexture(it) }
+    if (faceTexture != null) {
+        val textureMaterial = TextureMaterial(faceTexture)
+        if (textureMaterial.load())
+            return textureMaterial
+    }
+    return ColorMaterial(faceColor, faceAlpha)
 }

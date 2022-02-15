@@ -10,7 +10,6 @@ import javafx.scene.input.MouseEvent
 import javafx.scene.layout.GridPane
 import javafx.scene.layout.HBox
 import javafx.scene.paint.PhongMaterial
-import javafx.util.Callback
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
@@ -228,16 +227,16 @@ class EditorController : EntityViewController("editor-scene") {
                     u[1], v[1],
                     u[2], v[2]
                 )
-                changeMaterial(selectedTexture)
+//                changeMaterial(selectedTexture)
             }
             MouseEvent.MOUSE_EXITED -> {
                 revertMaterialChange()
             }
             MouseEvent.MOUSE_CLICKED -> {
-                val (v1, v2, v3) = model.getVertices(mesh.face)
-                selectedFaceId.text = "${mesh.face} \t$v1\t$v2\t$v3"
-                changeMaterial(selectedTexture)
-                mesh.previousMaterialProperty.set(selectedTexture)
+//                val (v1, v2, v3) = model.getVertices(mesh.face)
+//                selectedFaceId.text = "${mesh.face} \t$v1\t$v2\t$v3"
+//                changeMaterial(selectedTexture)
+//                mesh.previousMaterialProperty.set(selectedTexture)
             }
         }
     }

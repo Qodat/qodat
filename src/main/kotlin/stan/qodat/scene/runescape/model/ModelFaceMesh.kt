@@ -10,7 +10,6 @@ import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
-import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 
@@ -39,9 +38,9 @@ class ModelFaceMesh(val face: Int, material: Material) : ModelMesh() {
 
     init {
         materialProperty.onInvalidation {
-            if (get() is TextureMaterial) {
-
-            }
+//            if (get() is TextureMaterial) {
+//
+//            }
         }
     }
 
@@ -51,11 +50,11 @@ class ModelFaceMesh(val face: Int, material: Material) : ModelMesh() {
             get() = mesh.materialProperty.get() as PhongMaterial
 
         fun changeMaterial(newMaterial: Material) {
-            if (newMaterial is TextureMaterial) {
-                if (!mesh.textured){
-
-                }
-            }
+//            if (newMaterial is TextureMaterial) {
+//                if (!mesh.textured){
+//
+//                }
+//            }
             mesh.previousMaterialProperty.set(mesh.materialProperty.get())
             mesh.materialProperty.set(newMaterial)
         }

@@ -7,22 +7,24 @@ import javafx.scene.Node
 import javafx.scene.control.TreeView
 import javafx.scene.layout.HBox
 import javafx.scene.text.TextFlow
-import stan.qodat.Qodat
 import qodat.cache.Cache
 import qodat.cache.definition.EntityDefinition
 import qodat.cache.models.RS2ModelBuilder
+import stan.qodat.Qodat
 import stan.qodat.javafx.menloText
 import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.ViewNodeListView
+import stan.qodat.scene.control.export.Exportable
+import stan.qodat.scene.control.tree.EntityTreeItem
 import stan.qodat.scene.controller.EntityViewController
+import stan.qodat.scene.paint.Material
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.scene.control.export.Exportable
-import stan.qodat.util.*
+import stan.qodat.util.DEFAULT
+import stan.qodat.util.getMaterial
 
 /**
  * TODO: add documentation
@@ -37,6 +39,7 @@ abstract class Entity<D : EntityDefinition>(
 
     private lateinit var modelGroup: Group
     private lateinit var models: Array<Model>
+    private lateinit var materials: Array<Material>
     private lateinit var viewBox: HBox
     private lateinit var treeItem: EntityTreeItem
 
@@ -85,6 +88,28 @@ abstract class Entity<D : EntityDefinition>(
         }
         return models
     }
+
+    fun getMaterials(): Array<Material> {
+        if (!this::materials.isInitialized) {
+            try {
+                materials = getModels()
+                    .map { it.modelDefinition }
+                    .flatMap {
+                        (0 until it.getFaceCount())
+                            .map { face ->
+                                it.getMaterial(face, cache)
+                            }
+                    }
+                    .toSet()
+                    .toTypedArray()
+            } catch (e: Throwable) {
+                Qodat.logException("Could not get entity {${getName()}}'s materials", e)
+                return emptyArray()
+            }
+        }
+        return materials
+    }
+
 
     fun createMergedModel(name: String) = Model(
         name,

@@ -9,10 +9,6 @@ import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
@@ -150,12 +146,13 @@ class Qodat : Application() {
          * TODO: add safety checks, (are controllers initialised, are we on FX thread)
          */
         fun logException(title: String, e: Throwable) {
-            GlobalScope.launch(Dispatchers.JavaFx) {
-                System.err.println(title + " - " + e.localizedMessage + " - \n" + e.stackTrace?.let {
-                    it.copyOfRange(0, 5.coerceAtMost(it.size))
-                }?.joinToString("\n"))
-                mainController.eventLogController.add(title, e)
-            }
+            logger.error(title, e)
+//            Platform.runLater {
+//                System.err.println(title + " - " + e.localizedMessage + " - \n" + e.stackTrace?.let {
+//                    it.copyOfRange(0, 5.coerceAtMost(it.size))
+//                }?.joinToString("\n"))
+//                mainController.eventLogController.add(title, e)
+//            }
         }
     }
 }

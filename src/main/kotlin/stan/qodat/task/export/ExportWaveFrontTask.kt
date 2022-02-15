@@ -11,7 +11,6 @@ import stan.qodat.scene.runescape.model.Model
 import stan.qodat.task.export.ExportWaveFrontTask.*
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.Exception
 
 /**
  * Exports a single or multiple [models] as WaveFront (.obj/.mtl) file(s).
@@ -48,25 +47,23 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                 modelDefinition.computeTextureUVCoordinates()
             }
 
-            runBlocking {
-                frames.map { animationFrame ->
-                    GlobalScope.async(Dispatchers.IO) {
-                        val objWriter = WaveFrontWriter(saveDir)
-                        objWriter.writeObjFile(
-                            model = model,
-                            materials = materials,
-                            computeNormals = false,
-                            computeTextureUVCoordinate = false,
-                            objFileNameWithoutExtension = modelGroupName + "_${animationFrame.getName()}",
-                            mtlFileNameWithoutExtension = modelGroupName
-                        )
-                        GlobalScope.launch(Dispatchers.JavaFx) {
-                            val finishedCount = modelExportFinishedCount.incrementAndGet().toLong()
-                            updateMessage("Parsing model $finishedCount in group $modelGroupName")
-                            updateProgress(finishedCount, modelCount.toLong())
-                        }
-                    }
-                }.awaitAll()
+            frames.forEach { animationFrame ->
+                model.animate(animationFrame)
+                val objWriter = WaveFrontWriter(saveDir)
+
+                objWriter.writeObjFile(
+                    model = model,
+                    materials = materials,
+                    computeNormals = false,
+                    computeTextureUVCoordinate = false,
+                    objFileNameWithoutExtension = modelGroupName + "_${animationFrame.getName()}",
+                    mtlFileNameWithoutExtension = modelGroupName
+                )
+                GlobalScope.launch(Dispatchers.JavaFx) {
+                    val finishedCount = modelExportFinishedCount.incrementAndGet().toLong()
+                    updateMessage("Parsing model $finishedCount in group $modelGroupName")
+                    updateProgress(finishedCount, modelCount.toLong())
+                }
             }
             return ExportTaskResult.Success(saveDir)
         }

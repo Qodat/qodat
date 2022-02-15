@@ -5,10 +5,10 @@ import java.io.FileWriter
 import java.io.PrintWriter
 import java.nio.file.Path
 
-class WaveFrontWriter(private val fileDir: Path) {
+class WaveFrontWriter(private val saveDir: Path) {
 
     fun writeMtlFile(materials: Set<WaveFrontMaterial>, fileNameWithoutExtension: String) {
-        PrintWriter(FileWriter("$fileDir/$fileNameWithoutExtension.mtl")).use { mtlFileWriter ->
+        PrintWriter(FileWriter("$saveDir/$fileNameWithoutExtension.mtl")).use { mtlFileWriter ->
             for ((i, material) in materials.withIndex()) {
                 mtlFileWriter.println("newmtl m$i")
                 material.encode(mtlFileWriter)
@@ -31,16 +31,18 @@ class WaveFrontWriter(private val fileDir: Path) {
         if (computeTextureUVCoordinate)
             modelDefinition.computeTextureUVCoordinates()
 
-        val outFile = fileDir.resolve("$objFileNameWithoutExtension.obj").toFile()
+        val outFile = saveDir.resolve("$objFileNameWithoutExtension.obj").toFile()
 
         PrintWriter(FileWriter(outFile)).use {  objFileWriter ->
 
             objFileWriter.println("mtllib $mtlFileNameWithoutExtension.mtl")
             objFileWriter.println("o $objFileNameWithoutExtension")
+
             for (i in 0 until model.getVertexCount()) {
                 val (x, y, z) = model.getXYZ(i)
-                objFileWriter.println("v $x ${y * -1} ${z * -1}")
+                objFileWriter.println("v ${x.div(SCALE_FACTOR)} ${(y * -1).div(SCALE_FACTOR)} ${(z * -1).div(SCALE_FACTOR)}")
             }
+
             if (modelDefinition.getFaceTextures() != null) {
                 val u = modelDefinition.getFaceTextureUCoordinates()!!
                 val v = modelDefinition.getFaceTextureVCoordinates()!!
@@ -50,9 +52,11 @@ class WaveFrontWriter(private val fileDir: Path) {
                     objFileWriter.println("vt " + u[i][2] + " " + v[i][2])
                 }
             }
+
             for (normal in modelDefinition.getVertexNormals()) {
                 objFileWriter.println("vn " + normal.x + " " + normal.y + " " + normal.z)
             }
+
             for (face in 0 until model.getFaceCount()) {
                 val (v1, v2, v3) = model.getVertices(face)
                 val material = modelDefinition.getFaceMaterial(face)
@@ -62,6 +66,10 @@ class WaveFrontWriter(private val fileDir: Path) {
                 objFileWriter.println("")
             }
         }
+    }
 
+    companion object {
+
+        private const val SCALE_FACTOR = 1.0
     }
 }

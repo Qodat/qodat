@@ -4,11 +4,11 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
+<VBox styleClass="viewer-box" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="stan.qodat.scene.controller.AnimationController"
       stylesheets="@style.css">
     <children>
-        <ListView fx:id="animationsListView"/>
+        <ListView id="animations-list" fx:id="animationsListView"/>
         <TextField fx:id="searchTextField" maxHeight="27.0" promptText="Search animation"/>
     </children>
 </VBox>

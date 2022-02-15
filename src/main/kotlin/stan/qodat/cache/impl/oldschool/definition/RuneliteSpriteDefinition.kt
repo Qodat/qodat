@@ -14,4 +14,9 @@ class RuneliteSpriteDefinition(definition: net.runelite.cache.definitions.Sprite
     override val maxHeight: Int = definition.maxHeight
     override var pixelIdx: ByteArray = definition.pixelIdx
     override var palette: IntArray = definition.palette
+    override fun toString(): String {
+        return "RuneliteSpriteDefinition(id=$id, frame=$frame, offsetX=$offsetX, offsetY=$offsetY, width=$width, height=$height, pixels=${pixels.contentToString()}, maxWidth=$maxWidth, maxHeight=$maxHeight, pixelIdx=${pixelIdx.contentToString()}, palette=${palette.contentToString()})"
+    }
+
+
 }

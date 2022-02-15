@@ -236,8 +236,21 @@
 .tool-bar {
     -fx-border-color: rgb(50, 50, 50) rgb(50, 50, 50) rgb(50, 50, 50) transparent;
 }
-
-.viewer-box {
+/*.scroll-pane:focused,*/
+/*.split-pane:focused,*/
+/*.list-view:focused,*/
+/*.tree-view:focused,*/
+/*.table-view:focused,*/
+/*.tree-table-view:focused,*/
+/*.html-editor:focused {*/
+/*    -fx-accent: transparent;*/
+/*    -fx-background-color: transparent;*/
+/*    -fx-background-insets: 0;*/
+/*    -fx-background-radius: 0;*/
+/*    -fx-padding: 0;*/
+/*    -fx-spacing: 0;*/
+/*}*/
+.viewer-box  {
     -fx-padding: 0;
     -fx-background-insets: 0;
     -fx-background-radius: 0;
@@ -468,14 +481,20 @@
 }
 #cache-list,
 #frame-list,
+#materials-list,
+#animations-list,
 #models-list {
     -fx-spacing: 0;
     -fx-padding: 0;
     -fx-background-insets: 0;
     -fx-background-radius: 0;
 }
-#cache-list,
-#models-list {
+
+#animations-list,
+#materials-list,
+#models-list,
+#cache-list
+{
     -fx-background-color: rgb(60, 63, 65);
     -fx-border-color: transparent;
     -fx-border-width: 0;
@@ -529,3 +548,23 @@
     -fx-border-width: 10 !important;
 }
 
+.color-palette {
+    -fx-background-color: #3C3F41;
+    -fx-border-color: rgb(50, 50, 50);
+    -fx-background-radius: 0;
+    -fx-text-fill: rgb(214, 214, 214);
+}
+.color-palette-region {
+    -fx-background-color: green;
+}
+.color-picker > .color-picker-label > .picker-color > .picker-color-rect {
+    -fx-text-fill: rgb(214, 214, 214);
+    -fx-stroke: none;
+}
+.color-palette-region > .color-square.hover-square {
+    -fx-background-color: #3C3F41;
+    -fx-border-color: rgb(50, 50, 50);
+}
+/*.custom-color-dialog  {*/
+/*    -fx-background-color: #3C3F41;*/
+/*}*/

@@ -9,19 +9,13 @@ import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
-import qodat.cache.definition.*
-import stan.qodat.Properties
 import qodat.cache.Cache
+import qodat.cache.definition.*
 import qodat.cache.models.RSModelLoader
+import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
-import stan.qodat.cache.impl.qodat.QodatAnimationDefinition
-import stan.qodat.cache.impl.qodat.QodatAnimationFrameDefinition
-import stan.qodat.scene.runescape.animation.Animation
-import stan.qodat.scene.runescape.animation.TransformationType
 import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 /**
  * TODO: add documentation

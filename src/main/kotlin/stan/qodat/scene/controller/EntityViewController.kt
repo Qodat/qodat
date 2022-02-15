@@ -26,14 +26,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
-import stan.qodat.Properties
-import stan.qodat.Qodat
 import qodat.cache.Cache
 import qodat.cache.definition.EntityDefinition
+import stan.qodat.Properties
+import stan.qodat.Qodat
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
-import stan.qodat.scene.control.SplitSceneDividerDragRegion.*
+import stan.qodat.scene.control.SplitSceneDividerDragRegion.Placement
+import stan.qodat.scene.control.SplitSceneDividerDragRegion.RelativeBounds
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.ViewNodeProvider
@@ -45,7 +46,6 @@ import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
 import java.util.*
-import kotlin.Comparator
 
 /**
  * TODO: add documentation
@@ -92,6 +92,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
+    lateinit var materialController: MaterialController
 
     enum class SortType {
         NAME,
@@ -140,7 +141,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         )
 
         configureTabPane()
-        configureModelAndAnimationController()
+        configureTopSplitPane()
 
         npcList.configure(npcs, searchNpcField)
         itemList.configure(items, searchItemField)
@@ -264,63 +265,97 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         box.selectionModel.select(property.get())
     }
 
-    private fun configureModelAndAnimationController() {
+    private fun configureTopSplitPane() {
         try {
 
-            val animationLoader = FXMLLoader(Qodat::class.java.getResource("animation.fxml"))
-            val animationView = animationLoader.load<VBox>()
-            animationView.styleClass.add("border-right")
-            animationController = animationLoader.getController()
-            animationController.animationsListView.onItemSelected { old, new ->
-                if (new == null && old != null) {
-                    Properties.selectedAnimationName.set("")
-                    sceneContext.animationPlayer.transformerProperty.set(null)
+            val animationView = loadTopAnimationsView()
+            val modelView = loadTopModelsView()
+            val materialView = loadTopMaterialsView()
 
-                } else if (new != null) {
-                    Properties.selectedAnimationName.set(new.getName())
-                    sceneContext.animationPlayer.transformerProperty.set(new)
-                    (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
-                }
-            }
-            Properties.selectedEntity.addListener { _, oldEntity, newEntity ->
-                if (newEntity is AnimatedEntity)
-                    animationController.animations.setAll(*newEntity.getAnimations())
-            }
-            val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
-            val modelView = modelLoader.load<VBox>()
-            //            modelView.styleClass.add("border-left")
-            modelController = modelLoader.getController()
-            modelController.modelListView.enableDragAndDrop(
-                toFile = {
-                    QodatCache.encode(this).file
-                },
-                imageProvider = {
-                    getSceneNode().snapshot(
-                        SnapshotParameters().apply { fill = Color.TRANSPARENT },
-                        null
-                    )
-                },
-                supportedExtensions = Model.supportedExtensions
-            )
-
-            val containerWithDragSpace = HBox()
+            val containerWithDragSpace1 = HBox()
+            val containerWithDragSpace2 = HBox()
             HBox.setHgrow(animationView, Priority.ALWAYS)
+            HBox.setHgrow(modelView, Priority.ALWAYS)
 
-            containerWithDragSpace.children.add(animationView)
-            animationModelsSplitPane.items.add(containerWithDragSpace)
-            animationModelsSplitPane.items.add(modelView)
-            val dragSpace = animationModelsSplitPane
+            containerWithDragSpace1.children.add(animationView)
+            containerWithDragSpace2.children.add(modelView)
+
+            animationModelsSplitPane.items.add(containerWithDragSpace1)
+            animationModelsSplitPane.items.add(containerWithDragSpace2)
+            animationModelsSplitPane.items.add(materialView)
+
+
+            containerWithDragSpace1.children.add(animationModelsSplitPane
                 .createDragSpace(
                     Properties.viewerDivider2Position,
                     SimpleIntegerProperty(0),
                     size = 1,
                     styleClass = "dark-drag-space"
                 )
-            containerWithDragSpace.children.add(dragSpace)
+            )
 
+            containerWithDragSpace2.children.add(animationModelsSplitPane
+                .createDragSpace(
+                    Properties.viewerDivider3Position,
+                    SimpleIntegerProperty(1),
+                    size = 1,
+                    styleClass = "dark-drag-space"
+                )
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun loadTopModelsView(): VBox? {
+        val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
+        val modelView = modelLoader.load<VBox>()
+        modelView.styleClass.add("border-right")
+        //            modelView.styleClass.add("border-left")
+        modelController = modelLoader.getController()
+        modelController.modelListView.enableDragAndDrop(
+            toFile = {
+                QodatCache.encode(this).file
+            },
+            imageProvider = {
+                getSceneNode().snapshot(
+                    SnapshotParameters().apply { fill = Color.TRANSPARENT },
+                    null
+                )
+            },
+            supportedExtensions = Model.supportedExtensions
+        )
+        return modelView
+    }
+
+    private fun loadTopMaterialsView(): VBox? {
+        val materialListViewLoader = FXMLLoader(Qodat::class.java.getResource("materials.fxml"))
+        val materialListView = materialListViewLoader.load<VBox>()
+        materialController = materialListViewLoader.getController()
+        return materialListView
+    }
+
+    private fun loadTopAnimationsView(): VBox? {
+        val animationLoader = FXMLLoader(Qodat::class.java.getResource("animation.fxml"))
+        val animationView = animationLoader.load<VBox>()
+        animationView.styleClass.add("border-right")
+        animationController = animationLoader.getController()
+        animationController.animationsListView.onItemSelected { old, new ->
+            if (new == null && old != null) {
+                Properties.selectedAnimationName.set("")
+                sceneContext.animationPlayer.transformerProperty.set(null)
+
+            } else if (new != null) {
+                Properties.selectedAnimationName.set(new.getName())
+                sceneContext.animationPlayer.transformerProperty.set(new)
+                (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
+            }
+        }
+        Properties.selectedEntity.addListener { _, oldEntity, newEntity ->
+            if (newEntity is AnimatedEntity)
+                animationController.animations.setAll(*newEntity.getAnimations())
+        }
+        return animationView
     }
 
     private fun configureTabPane() {
@@ -416,6 +451,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         if (node is Entity<*>) {
             if (!event.hasNewValueOfSameType) {
                 modelController.models.clear()
+                materialController.materials.clear()
             }
             if (node is AnimatedEntity<*>) {
                 if (!event.hasNewValueOfSameType) {
@@ -450,6 +486,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             newNode.property().set(newNode.getName())
             Properties.selectedEntity.set(newNode)
             modelController.models.setAll(*newNode.getModels())
+            materialController.materials.setAll(*newNode.getMaterials())
             if (this::onEntitySelected.isInitialized)
                 onEntitySelected(newNode)
         }

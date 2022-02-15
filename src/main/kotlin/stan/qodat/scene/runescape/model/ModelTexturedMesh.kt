@@ -10,9 +10,8 @@ import qodat.cache.definition.ModelDefinition
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.*
 import stan.qodat.util.ModelUtil
-import kotlin.collections.HashMap
 
-class ModelTexturedMesh(private val model: Model, private val atlas: ModelAtlasMesh) : TexturedMesh(), ModelSkin {
+class ModelTexturedMesh(private val model: Model) : TexturedMesh(), ModelSkin {
 
     val vertexMap : MutableMap<Int, Int>
     init {

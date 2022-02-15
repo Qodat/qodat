@@ -44,13 +44,13 @@ class RSModelLoader {
                             setFaceVertexIndices1(it.faceIndices1)
                             setFaceVertexIndices2(it.faceIndices2)
                             setFaceVertexIndices3(it.faceIndices3)
-//                            setFaceTextures(it.faceTextures)
-//                            setTextureRenderTypes(it.textureRenderTypes)
-//                            setTextureTriangleVertexIndices1(it.texIndices1)
-//                            setTextureTriangleVertexIndices2(it.texIndices2)
-//                            setTextureTriangleVertexIndices3(it.texIndices3)
-//                            setFaceTextureConfigs(it.textureCoords)
 //                            setFaceSkins(it.packedTransparencyVertexGroups)
+                            setFaceTextures(it.faceTextures)
+                            setTextureRenderTypes(it.textureRenderTypes)
+                            setTextureTriangleVertexIndices1(it.texIndices1)
+                            setTextureTriangleVertexIndices2(it.texIndices2)
+                            setTextureTriangleVertexIndices3(it.texIndices3)
+                            setFaceTextureConfigs(it.textureCoords)
                             faceRenderPriorities = it.faceRenderPriorities
                             faceRenderTypes = it.faceRenderTypes
                         }

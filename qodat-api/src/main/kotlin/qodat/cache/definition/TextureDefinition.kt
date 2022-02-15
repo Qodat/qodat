@@ -10,4 +10,6 @@ interface TextureDefinition {
     var id: Int
     val fileIds: IntArray
     var pixels: IntArray
+
+
 }

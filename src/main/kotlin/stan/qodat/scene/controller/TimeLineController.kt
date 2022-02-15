@@ -26,6 +26,7 @@ import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.DragRegion
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
@@ -59,7 +60,6 @@ class TimeLineController : Initializable {
         HBox.setHgrow(frameList, Priority.ALWAYS)
 
         timeLineBox.children.removeAll(transformsList)
-
 
         frameList.run {
             setOnDragDropped {
@@ -102,46 +102,7 @@ class TimeLineController : Initializable {
                 if (animationPlayer != null) {
                     if (this != animationPlayer.frameIndexProperty.get()) {
                         animationPlayer.jumpToFrame(this)
-                        val frame = frameList.items[this]
-                        val groupIndicesList = frame.transformationList.map {
-                            it.groupIndices.toArray(null)
-                        }
-                        transformSpheres.children.clear()
-
-                        animationPlayer.transformableList.forEach {
-
-                            if (it is Model) {
-                                var previousSphere: Sphere? = null
-                                for (groupIndices in groupIndicesList) {
-                                    for (group in groupIndices) {
-                                        val vertices = it.getVertexGroup(group)
-                                        if (vertices.isEmpty())
-                                            continue
-                                        var totalX = 0
-                                        var totalY = 0
-                                        var totalZ = 0
-                                        for (vertex in vertices) {
-                                            totalX += it.getX(vertex)
-                                            totalY += it.getY(vertex)
-                                            totalZ += it.getZ(vertex)
-                                        }
-                                        val centerX = totalX / vertices.size
-                                        val centerY = totalY / vertices.size
-                                        val centerZ = totalZ / vertices.size
-                                        val sphere = Sphere(3.0)
-                                        if (previousSphere != null) {
-                                            //TODO: 3d lines between spheres
-                                        }
-                                        previousSphere = sphere
-
-                                        sphere.translateX = centerX.toDouble()
-                                        sphere.translateY = centerY.toDouble()
-                                        sphere.translateZ = centerZ.toDouble()
-                                        transformSpheres.children.add(sphere)
-                                    }
-                                }
-                            }
-                        }
+//                        createTeansformSpheres(animationPlayer)
 //                    SubScene3D.contentGroupProperty.get().children.add(transformSpheres)
                     }
 
@@ -213,6 +174,49 @@ class TimeLineController : Initializable {
         }
     }
 
+    private fun Int.createTeansformSpheres(animationPlayer: AnimationPlayer) {
+        val frame = frameList.items[this]
+        val groupIndicesList = frame.transformationList.map {
+            it.groupIndices.toArray(null)
+        }
+        transformSpheres.children.clear()
+
+        animationPlayer.transformableList.forEach {
+
+            if (it is Model) {
+                var previousSphere: Sphere? = null
+                for (groupIndices in groupIndicesList) {
+                    for (group in groupIndices) {
+                        val vertices = it.getVertexGroup(group)
+                        if (vertices.isEmpty())
+                            continue
+                        var totalX = 0
+                        var totalY = 0
+                        var totalZ = 0
+                        for (vertex in vertices) {
+                            totalX += it.getX(vertex)
+                            totalY += it.getY(vertex)
+                            totalZ += it.getZ(vertex)
+                        }
+                        val centerX = totalX / vertices.size
+                        val centerY = totalY / vertices.size
+                        val centerZ = totalZ / vertices.size
+                        val sphere = Sphere(3.0)
+                        if (previousSphere != null) {
+                            //TODO: 3d lines between spheres
+                        }
+                        previousSphere = sphere
+
+                        sphere.translateX = centerX.toDouble()
+                        sphere.translateY = centerY.toDouble()
+                        sphere.translateZ = centerZ.toDouble()
+                        transformSpheres.children.add(sphere)
+                    }
+                }
+            }
+        }
+    }
+
     private fun updateTotalDuration(totalDurationProperty: SimpleIntegerProperty) {
         var totalDuration = 0
 
@@ -221,7 +225,6 @@ class TimeLineController : Initializable {
 
         totalDurationProperty.set(totalDuration)
     }
-
 
     private fun createFrameCell(
         totalDuration: SimpleIntegerProperty,

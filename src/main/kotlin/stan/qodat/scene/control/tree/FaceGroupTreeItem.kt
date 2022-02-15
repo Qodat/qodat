@@ -78,6 +78,8 @@ class FaceGroupTreeItem(private val model: Model,
                     vertexIndex2, texIndex2,
                     vertexIndex3, texIndex3
                 )
+                val priority = (model.modelDefinition.getFacePriorities()?.getOrNull(face)?:model.modelDefinition.getPriority()).toInt()
+                mesh.faceSmoothingGroups.addAll(priority)
                 mesh.drawModeProperty.set(DrawMode.FILL)
                 mesh.visibleProperty.set(true)
                 selectionMesh.children.add(mesh.getSceneNode())

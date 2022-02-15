@@ -27,13 +27,9 @@ class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider
         image
     }
 
-    val sceneNode : ImageView by lazy {
-        ImageView(image)
-    }
+    val sceneNode : ImageView by lazy { ImageView(image) }
 
-    val viewNode : HBox by lazy {
-        LabeledHBox(nameProperty)
-    }
+    val viewNode : HBox by lazy { LabeledHBox(nameProperty) }
 
     override fun getSceneNode(): Node = sceneNode
 

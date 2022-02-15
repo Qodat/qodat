@@ -1,25 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.net.*?>
-<?import javafx.scene.*?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox id="root"
-      xmlns="https://javafx.com/javafx"
-      xmlns:fx="http://javafx.com/fxml"
+<VBox id="root" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="stan.qodat.scene.controller.TimeLineController">
     <stylesheets>
-        <URL value="@style.css" />
+        <URL value="@style.css"/>
     </stylesheets>
-   <HBox fx:id="timeLineBox">
-      <children>
-          <ListView id="frame-list" fx:id="frameList" orientation="HORIZONTAL" prefHeight="50.0">
-            <cursor>
-               <Cursor fx:constant="CROSSHAIR" />
-            </cursor>
-         </ListView>
-         <ListView fx:id="transformsList" prefHeight="100.0" />
-      </children>
-   </HBox>
+    <HBox fx:id="timeLineBox">
+        <children>
+<!--            <VBox id="left-group" prefWidth="30.0" stylesheets="@style.css" HBox.hgrow="NEVER">-->
+<!--                <children>-->
+<!--                    <ToolBar rotate="90.0" styleClass="toggle-tab-pane" VBox.vgrow="ALWAYS">-->
+<!--                        <items>-->
+<!--                            <HBox id="playControls" fx:id="playControls" alignment="CENTER_RIGHT" prefHeight="17.0">-->
+<!--                                <children>-->
+<!--                                    <ToggleButton fx:id="playBtn" mnemonicParsing="false" prefHeight="14.0" text="&gt;">-->
+<!--                                        <graphic>-->
+<!--                                            <Pane prefHeight="13.0" prefWidth="13.0"/>-->
+<!--                                        </graphic>-->
+<!--                                    </ToggleButton>-->
+<!--                                </children>-->
+<!--                            </HBox>-->
+<!--                        </items>-->
+<!--                    </ToolBar>-->
+<!--                </children>-->
+<!--            </VBox>-->
+            <ListView id="frame-list" fx:id="frameList" orientation="HORIZONTAL" prefHeight="50.0">
+                <cursor>
+                    <Cursor fx:constant="CROSSHAIR"/>
+                </cursor>
+            </ListView>
+            <ListView fx:id="transformsList" prefHeight="100.0"/>
+        </children>
+    </HBox>
 </VBox>

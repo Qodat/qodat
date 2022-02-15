@@ -10,7 +10,6 @@ import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.PropertiesManager
-import stan.qodat.util.onInvalidation
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -61,8 +60,11 @@ object Properties {
     val gridPlaneMaterial = SimpleObjectProperty(PhongMaterial(Color.AQUAMARINE))
 
     val sceneDividerPosition = SimpleDoubleProperty(0.3)
+
     val viewerDivider1Position = SimpleDoubleProperty(0.5)
-    val viewerDivider2Position = SimpleDoubleProperty(0.5)
+    val viewerDivider2Position = SimpleDoubleProperty(0.3)
+    val viewerDivider3Position = SimpleDoubleProperty(0.6)
+
     val centerDivider1Position = SimpleDoubleProperty(0.3)
     val centerDivider2Position = SimpleDoubleProperty(0.9)
 
@@ -159,14 +161,12 @@ object Properties {
         sessionManager.bindDouble("scene-initial-width", sceneInitialWidth)
         sessionManager.bindDouble("scene-initial-height", sceneInitialHeight)
 
-        centerDivider2Position.onInvalidation {
-            println(this.get())
-        }
         sessionManager.bindDouble("split-pane-divider-1-position", centerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-2-position", centerDivider2Position)
         sessionManager.bindDouble("split-pane-divider-3-position", sceneDividerPosition)
         sessionManager.bindDouble("split-pane-divider-4-position", viewerDivider1Position)
         sessionManager.bindDouble("split-pane-divider-5-position", viewerDivider2Position)
+        sessionManager.bindDouble("split-pane-divider-6-position", viewerDivider3Position)
 
         sessionManager.bindEnum("selected-npc-sort-type", selectedNpcSortType)
         sessionManager.bindEnum("selected-item-sort-type", selectedItemSortType)
