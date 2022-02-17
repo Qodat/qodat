@@ -1,21 +1,26 @@
 package stan.qodat.scene.control.export.wavefront
 
 import qodat.cache.definition.ModelDefinition
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import java.awt.Color
 
-fun ModelDefinition.getFaceMaterial(face: Int): WaveFrontMaterial.Color {
-    val color = rs2hsbToColor(
-        getFaceColors()[face].toInt()
-    )
-    val r = color.red / 255.0
-    val g = color.green / 255.0
-    val b = color.blue / 255.0
+fun ModelDefinition.getFaceMaterial(face: Int): WaveFrontMaterial {
     val a = getFaceAlphas()?.get(face)?.let { it.toInt() and 0xFF }?.div(255.0) ?: 0.0
-    val material = WaveFrontMaterial.Color(r, g, b, a)
-    return material
+    val textureId = getFaceTextures()?.getOrNull(face)?.toInt()?:-1
+    return if (textureId == -1) {
+        val color = rs2hsbToColor(getFaceColors()[face].toInt())
+        val r = color.red / 255.0
+        val g = color.green / 255.0
+        val b = color.blue / 255.0
+        WaveFrontMaterial.Color(r, g, b, a)
+    } else {
+        val texture = OldschoolCacheRuneLite.getTexture(textureId)
+        val spriteFileId = texture.fileIds[0]
+        WaveFrontMaterial.Texture(spriteFileId, a)
+    }
 }
 
-fun ModelDefinition.getFaceMaterials() = Array<WaveFrontMaterial>(getFaceCount()) { face ->
+fun ModelDefinition.getFaceMaterials() = Array(getFaceCount()) { face ->
     getFaceMaterial(face)
 }
 

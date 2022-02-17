@@ -113,10 +113,12 @@ abstract class Entity<D : EntityDefinition>(
 
     fun createMergedModel(name: String) = Model(
         name,
-        definition.modelIds
-            .map { cache.getModelDefinition(it) }
-            .toTypedArray()
-            .let { RS2ModelBuilder(*it).build() },
+        if (definition.modelIds.size == 1)
+            getModels().first().modelDefinition
+        else
+            getModels().map { it.modelDefinition }
+                .toTypedArray()
+                .let { RS2ModelBuilder(*it).build() },
         definition.findColor,
         definition.replaceColor
     )

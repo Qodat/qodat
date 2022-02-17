@@ -14,20 +14,9 @@ import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
-import javafx.scene.Group
-import javafx.scene.Node
 import javafx.util.Duration
-import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.impl.qodat.QodatCache
-import stan.qodat.javafx.onChange
-import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.runescape.entity.AnimatedEntity
-import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.util.FrameRateMeasurer
-import stan.qodat.util.FrameTimeUtil
-import stan.qodat.util.setAndBind
-import java.util.*
 
 /**
  * TODO: add documentation
@@ -77,18 +66,6 @@ open class TransformationTimer<R : Transformer<*>> {
             frameRateProperty.set(String.format("FPS: %d", fps))
         }
         val transformer = transformerProperty.get() ?: return@EventHandler
-
-
-//        val dragon = Qodat.mainController.viewerController.npcs.find { it.definition.getOptionalId().orElseGet { -1 } == 263 }
-//        if (dragon != null) {
-//            for (anim in dragon.getAnimations()){
-//                if (anim.idProperty.get() == 4635) {
-//                    anim.setFrame(frameIndexProperty.get())
-//                    anim.update(listOf(dragon))
-//                    break
-//                }
-//            }
-//        }
         if (transformableList.size > 1){
             transformableList.forEach {
                 if (it is GroupableTransformable) {
@@ -99,31 +76,6 @@ open class TransformationTimer<R : Transformer<*>> {
             transformer.setFrame(frameIndexProperty.get())
             transformer.update(transformableList)
         }
-//        for (transformable in transformableList){
-//            if (transformable is NPC) {
-//                if (transformable.getName().contains("dragon", true)){
-//                    for (anim in transformable.getAnimations()){
-//                        if (anim.getName().contains("7870")){
-//                            anim.setFrame(frameIndexProperty.get())
-//                            anim.update(listOf(transformable))
-//                            break
-//                        }
-//                    }
-//                } else if (transformable.getName().contains("necromancer", true)){
-//                    for (anim in transformable.getAnimations()){
-//                        if (anim.getName().contains("1379")){
-//                            anim.setFrame(frameIndexProperty.get())
-//                            anim.update(listOf(transformable))
-//                            break
-//                        }
-//                    }
-//                }
-//            }
-//        }
-
-
-//        println(transformableList)
-
     }
 
     fun jumpToFrame(frameIndex: Int) {

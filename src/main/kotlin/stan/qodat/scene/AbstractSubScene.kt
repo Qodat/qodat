@@ -2,7 +2,6 @@ package stan.qodat.scene
 
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.EventHandler
-import javafx.scene.Group
 import javafx.scene.SubScene
 import javafx.scene.input.*
 import javafx.scene.layout.Region
@@ -24,7 +23,7 @@ abstract class AbstractSubScene {
     abstract val scrollEventHandler : EventHandler<ScrollEvent>
     abstract val zoomEventHandler : EventHandler<ZoomEvent>
 
-    abstract fun createSubScene() : SubScene
+    abstract fun createSubScene(copyNodes: Boolean): SubScene
 
     fun rebuildSubScene() {
 

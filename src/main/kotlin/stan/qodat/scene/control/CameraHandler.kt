@@ -1,6 +1,7 @@
 package stan.qodat.scene.control
 
 import javafx.event.EventHandler
+import javafx.scene.Group
 import javafx.scene.PerspectiveCamera
 import javafx.scene.input.KeyEvent
 import javafx.scene.input.MouseEvent
@@ -9,7 +10,6 @@ import javafx.scene.input.ZoomEvent
 import javafx.scene.transform.Rotate
 import javafx.scene.transform.Translate
 import stan.qodat.Properties
-import stan.qodat.scene.transform.TransformGroup
 import stan.qodat.util.onInvalidation
 import kotlin.math.max
 import kotlin.math.min
@@ -125,5 +125,16 @@ class CameraHandler(
         newZ1 = max(newZ1, Properties.cameraMaxZoom.get())
         newZ1 = min(newZ1, Properties.cameraMinZoom.get())
         position.z = newZ1
+    }
+
+    class TransformGroup : Group() {
+
+        val translate = Translate()
+        val xRotate = Rotate(-20.0, 0.0, 0.0, 0.0, Rotate.X_AXIS)
+        val yRotate = Rotate(-20.0, 0.0, 0.0, 0.0, Rotate.Y_AXIS)
+
+        init {
+            transforms.addAll(translate, xRotate, yRotate)
+        }
     }
 }

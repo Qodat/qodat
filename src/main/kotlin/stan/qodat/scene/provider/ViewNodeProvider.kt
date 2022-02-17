@@ -1,8 +1,6 @@
 package stan.qodat.scene.provider
 
-import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.Node
-import javafx.scene.control.ContextMenu
 
 /**
  * Represents an interface that can be added to GUI elements.

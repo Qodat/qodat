@@ -1,4 +1,4 @@
-package stan.qodat.scene.transform
+package stan.qodat.scene
 
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.scene.Group

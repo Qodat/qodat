@@ -1,4 +1,4 @@
-package stan.qodat.javafx;
+package stan.qodat.scene.control;
 
 import javafx.geometry.Side;
 import javafx.scene.control.ContextMenu;

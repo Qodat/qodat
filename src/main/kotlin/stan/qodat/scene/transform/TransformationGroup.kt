@@ -1,6 +1,5 @@
 package stan.qodat.scene.transform
 
-import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.util.Duration
 

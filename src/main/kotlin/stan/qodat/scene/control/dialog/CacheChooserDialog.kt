@@ -1,4 +1,4 @@
-package stan.qodat.scene.dialog
+package stan.qodat.scene.control.dialog
 
 import javafx.fxml.FXMLLoader
 import javafx.scene.control.ButtonType

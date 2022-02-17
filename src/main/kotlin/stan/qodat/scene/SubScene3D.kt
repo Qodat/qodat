@@ -1,6 +1,5 @@
 package stan.qodat.scene
 
-import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.event.EventHandler
 import javafx.scene.AmbientLight
@@ -9,15 +8,12 @@ import javafx.scene.Group
 import javafx.scene.SubScene
 import javafx.scene.input.DragEvent
 import javafx.scene.input.MouseEvent
-import javafx.scene.layout.Region
 import stan.qodat.Properties
 import stan.qodat.scene.control.CameraHandler
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.shape.AxisView
-import stan.qodat.scene.transform.AutoScalingGroup
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
-import java.util.*
 
 /**
  * TODO: add documentation
@@ -34,7 +30,7 @@ object SubScene3D : AbstractSubScene() {
     /**
      * Contains nodes to be rendered in the scene.
      */
-    private val scalingGroup = AutoScalingGroup()
+    val scalingGroup = AutoScalingGroup()
 
     private lateinit var axisView: AxisView
 
@@ -93,8 +89,17 @@ object SubScene3D : AbstractSubScene() {
     override val scrollEventHandler = cameraHandler.scrollEventHandler
     override val zoomEventHandler = cameraHandler.zoomEventHandler
 
-    override fun createSubScene(): SubScene {
-        return SubScene(root,
+    override fun createSubScene(copyNodes: Boolean): SubScene {
+        return SubScene(
+            if (copyNodes)
+                root
+            else
+                Group().apply {
+                    children.addAll(
+                        cameraHandler.cameraTransformGroup,
+                        ambientLight
+                    )
+                },
             Properties.subSceneInitialWidth.get(),
             Properties.subSceneInitialHeight.get(),
             Properties.depthBuffer.get(),

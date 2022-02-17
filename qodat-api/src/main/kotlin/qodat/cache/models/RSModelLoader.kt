@@ -47,6 +47,7 @@ class RSModelLoader {
 //                            setFaceSkins(it.packedTransparencyVertexGroups)
                             setFaceTextures(it.faceTextures)
                             setTextureRenderTypes(it.textureRenderTypes)
+                            texturePrimaryColors = it.texturePrimaryColors
                             setTextureTriangleVertexIndices1(it.texIndices1)
                             setTextureTriangleVertexIndices2(it.texIndices2)
                             setTextureTriangleVertexIndices3(it.texIndices3)

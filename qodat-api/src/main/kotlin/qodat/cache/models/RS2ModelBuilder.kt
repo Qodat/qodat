@@ -21,6 +21,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private var copyFaceAlphas = false
     private var copyFaceSkins = false
     private var copyFaceColors = true
+    private var copyFaceTextures = false
 
     private var vertexPositionsX : IntArray
     private var vertexPositionsY : IntArray
@@ -32,6 +33,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private val faceVertexIndices3: IntArray
     private val faceAlphas: ByteArray?
     private val faceColors: ShortArray?
+    private val faceTextures: ShortArray?
     private val faceRenderPriorities: ByteArray?
     private val faceRenderTypes: ByteArray?
     private val faceSkins: IntArray?
@@ -47,6 +49,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
             else if(globalPriority == NULL_GLOBAL_PRIORITY)
                 globalPriority = definition.getPriority()
             copyFaceSkins = copyFaceSkins or (definition.getFaceSkins() != null)
+            copyFaceTextures = copyFaceTextures or (definition.getFaceTextures() != null)
         }
 
         vertexPositionsX = IntArray(vertexCount)
@@ -63,6 +66,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         faceAlphas = if(copyFaceAlphas) ByteArray(faceCount) else null
         faceColors = if(copyFaceColors) ShortArray(faceCount) else null
         faceSkins = if(copyFaceSkins) IntArray(faceCount) else null
+        faceTextures = if(copyFaceTextures) ShortArray(faceCount) {(-1).toShort()} else null
 
         for(definition in modelDefinitions){
             for(srcFaceIdx in 0 until definition.getFaceCount()){
@@ -71,6 +75,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
                 faceAlphas?.tryCopy(srcFaceIdx, definition.getFaceAlphas())
                 faceColors?.tryCopy(srcFaceIdx, definition.getFaceColors())
                 faceSkins?.tryCopy(srcFaceIdx, definition.getFaceSkins())
+                faceTextures?.tryCopy(srcFaceIdx, definition.getFaceTextures())
                 faceVertexIndices1[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices1() }
                 faceVertexIndices2[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices2() }
                 faceVertexIndices3[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices3() }
@@ -114,6 +119,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         setFaceAlphas(faceAlphas)
         setFaceColors(faceColors)
         setFaceSkins(faceSkins)
+        setFaceTextures(faceTextures)
         setPriority(globalPriority)
     }
 

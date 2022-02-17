@@ -14,9 +14,9 @@ import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.javafx.JavaFXTrayIcon
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.dialog.CacheChooserDialog
 import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
-import stan.qodat.scene.dialog.CacheChooserDialog
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
 import java.util.concurrent.ExecutorService
@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities
 import kotlin.system.exitProcess
 
 /**
- * Entry point of application.
+ * TODO: add documentation
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   22/01/2021
@@ -40,8 +40,6 @@ class Qodat : Application() {
         Properties.bind(propertiesManager)
 
         SubScene3D.init()
-
-        val firstLoad = true
 
         loadMainController(primaryStage, loadedProperties)
     }
@@ -129,7 +127,6 @@ class Qodat : Application() {
         /**
          * The main FXML controller.
          */
-
         lateinit var mainController: MainController
 
         lateinit var stage: Stage

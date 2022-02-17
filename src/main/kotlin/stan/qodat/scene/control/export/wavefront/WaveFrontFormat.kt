@@ -7,12 +7,13 @@ import javafx.stage.DirectoryChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.scene.control.export.ExportFormat
+import stan.qodat.scene.control.export.Exportable
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.task.BackgroundTasks
-import stan.qodat.task.export.ExportWaveFrontTask
+import stan.qodat.task.export.impl.ExportWaveFrontTask
 import stan.qodat.util.Searchable
 import java.io.File
 import java.nio.file.Path
@@ -111,7 +112,7 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
                     saveDir = path,
                     model = exportable,
                     animationFrame = animationFrame,
-                    fileName = exportable.getName()
+                    fileName = exportable.getName().replace(" ", "_")
                 )
                 else -> throw Exception("Could not export ${exportable.getName()} of type ${exportable::class.java}.")
             }
@@ -122,7 +123,7 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
         }
     }
 
-    class Sequence<T : Searchable>(
+    class Sequence<T : Exportable>(
         override val lastSaveDestinationProperty: ObjectProperty<Path?> =
             Properties.lastWaveFrontSequenceExportPath
     ) : WaveFrontFormat<Map<T, Pair<Animation?, List<AnimationFrame>>>>() {
