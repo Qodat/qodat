@@ -23,7 +23,7 @@ abstract class AbstractSubScene {
     abstract val scrollEventHandler : EventHandler<ScrollEvent>
     abstract val zoomEventHandler : EventHandler<ZoomEvent>
 
-    abstract fun createSubScene(copyNodes: Boolean): SubScene
+    abstract fun createSubScene(copyNodes: Boolean = true): SubScene
 
     fun rebuildSubScene() {
 

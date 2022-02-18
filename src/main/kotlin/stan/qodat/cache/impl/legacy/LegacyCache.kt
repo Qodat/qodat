@@ -1,8 +1,8 @@
 package stan.qodat.cache.impl.legacy
 
+import qodat.cache.Cache
 import qodat.cache.definition.*
 import stan.qodat.Properties
-import qodat.cache.Cache
 import stan.qodat.cache.impl.legacy.storage.*
 
 object LegacyCache : Cache("Legacy") {
@@ -15,38 +15,34 @@ object LegacyCache : Cache("Legacy") {
         LegacyBodyKitStorage.load(path)
     }
 
-    override fun getAnimation(id: String) = LegacyAnimationStorage[id.toInt()]
+    override fun getAnimation(id: String) =
+        LegacyAnimationStorage[id.toInt()]
 
-    override fun getNPCs(): Array<NPCDefinition> = Array(LegacyNpcStorage.npcCount) {
-        LegacyNpcStorage[it]
-    }
+    override fun getNPCs(): Array<NPCDefinition> =
+        Array(LegacyNpcStorage.npcCount) { LegacyNpcStorage[it] }
 
-    override fun getObjects(): Array<ObjectDefinition> = Array(LegacyObjectStorage.objectCount) {
-        LegacyObjectStorage[it]!!
-    }
-    override fun getItems(): Array<ItemDefinition> = emptyArray()
+    override fun getObjects(): Array<ObjectDefinition> =
+        Array(LegacyObjectStorage.objectCount) { LegacyObjectStorage[it]!! }
+    override fun getItems(): Array<ItemDefinition> =
+        emptyArray()
 
-    override fun getAnimationDefinitions(): Array<AnimationDefinition> = Array(LegacyAnimationStorage.animations.size) {
-        LegacyAnimationStorage[it]
-    }
+    override fun getSpotAnimations(): Array<SpotAnimationDefinition> =
+        emptyArray()
 
-    override fun getAnimationSkeletonDefinition(frameHash: Int) = LegacyFrameStorage.getSkeleton(
-        Properties.legacyCachePath.get(),
-        frameHash
-    )!!
+    override fun getAnimationDefinitions(): Array<AnimationDefinition> =
+        Array(LegacyAnimationStorage.animations.size) { LegacyAnimationStorage[it] }
 
-    override fun getFrameDefinition(frameHash: Int) = LegacyFrameStorage.decode(
-        Properties.legacyCachePath.get(),
-        frameHash
-    )!!
+    override fun getAnimationSkeletonDefinition(frameHash: Int) =
+        LegacyFrameStorage.getSkeleton(Properties.legacyCachePath.get(), frameHash)!!
 
-    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
-        return emptyArray()
-    }
+    override fun getFrameDefinition(frameHash: Int) =
+        LegacyFrameStorage.decode(Properties.legacyCachePath.get(), frameHash)!!
 
-    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
-        return emptyMap()
-    }
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> =
+        emptyArray()
+
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> =
+        emptyMap()
 
     override fun getSprites(): Array<SpriteDefinition> {
         TODO("Not yet implemented")

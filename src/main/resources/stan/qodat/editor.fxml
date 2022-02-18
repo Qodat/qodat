@@ -113,6 +113,21 @@
                         </VBox>
                     </content>
                 </Tab>
+                <Tab text="SpotAnim">
+                    <content>
+                        <VBox>
+                            <children>
+                                <ViewNodeListView fx:id="spotAnimList" prefHeight="220.0" prefWidth="220.0"/>
+                                <HBox>
+                                    <children>
+                                        <ComboBox fx:id="sortSpotAnimBox" promptText="Sort by"/>
+                                        <TextField fx:id="searchSpotAnimField" promptText="Search spot anims"/>
+                                    </children>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </content>
+                </Tab>
                 <Tab text="Sprites">
                     <content>
                         <VBox>

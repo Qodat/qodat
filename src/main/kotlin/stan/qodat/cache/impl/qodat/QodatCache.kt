@@ -4,11 +4,11 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
-import qodat.cache.definition.*
-import stan.qodat.Properties
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
+import qodat.cache.definition.*
 import qodat.cache.models.RSModelLoader
+import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.NPC
@@ -232,6 +232,8 @@ object QodatCache : Cache("qodat") {
     override fun getObjects(): Array<ObjectDefinition> = objects.toTypedArray()
 
     override fun getItems(): Array<ItemDefinition> = items.toTypedArray()
+
+    override fun getSpotAnimations(): Array<SpotAnimationDefinition> = emptyArray()
 
     override fun getAnimationDefinitions(): Array<AnimationDefinition> {
         return OldschoolCacheRuneLite.getAnimationDefinitions()

@@ -55,40 +55,29 @@ import java.util.*
  */
 abstract class EntityViewController(name: String) : SceneController(name) {
 
-    @FXML
-    lateinit var root: SplitPane
-    @FXML
-    lateinit var tabPane: TabPane
-    @FXML
-    lateinit var animationModelsSplitPane: SplitPane
-    @FXML
-    lateinit var itemList: ViewNodeListView<Item>
-    @FXML
-    lateinit var npcList: ViewNodeListView<NPC>
-    @FXML
-    lateinit var objectList: ViewNodeListView<Object>
-    @FXML
-    lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
-    @FXML
-    lateinit var searchItemField: TextField
-    @FXML
-    lateinit var searchNpcField: TextField
-    @FXML
-    lateinit var searchObjectField: TextField
-    @FXML
-    lateinit var searchInterfaceField: TextField
-    @FXML
-    lateinit var sortNpcBox: ComboBox<SortType>
-    @FXML
-    lateinit var sortItemBox: ComboBox<SortType>
-    @FXML
-    lateinit var sortObjectBox: ComboBox<SortType>
+    @FXML lateinit var root: SplitPane
+    @FXML lateinit var tabPane: TabPane
+    @FXML lateinit var animationModelsSplitPane: SplitPane
 
-    @FXML
-    lateinit var searchSpritesField: TextField
+    @FXML lateinit var npcList: ViewNodeListView<NPC>
+    @FXML lateinit var itemList: ViewNodeListView<Item>
+    @FXML lateinit var objectList: ViewNodeListView<Object>
+    @FXML lateinit var spritesList: ViewNodeListView<Sprite>
+    @FXML lateinit var spotAnimList: ViewNodeListView<SpotAnimation>
+    @FXML lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
 
-    @FXML
-    lateinit var spritesList: ViewNodeListView<Sprite>
+    @FXML lateinit var sortNpcBox: ComboBox<SortType>
+    @FXML lateinit var sortItemBox: ComboBox<SortType>
+    @FXML lateinit var sortObjectBox: ComboBox<SortType>
+    @FXML lateinit var sortSpotAnimBox: ComboBox<SortType>
+
+    @FXML lateinit var searchNpcField: TextField
+    @FXML lateinit var searchItemField: TextField
+    @FXML lateinit var searchObjectField: TextField
+    @FXML lateinit var searchSpritesField: TextField
+    @FXML lateinit var searchSpotAnimField: TextField
+    @FXML lateinit var searchInterfaceField: TextField
+
 
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
@@ -103,13 +92,15 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     val items: ObservableList<Item> = FXCollections.observableArrayList()
     val objects: ObservableList<Object> = FXCollections.observableArrayList()
     val sprites: ObservableList<Sprite> = FXCollections.observableArrayList()
+    val spotAnims: ObservableList<SpotAnimation> = FXCollections.observableArrayList()
     val interfaces: ObservableList<InterfaceGroup> = FXCollections.observableArrayList()
 
     private val currentSelectedNpcProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedItemProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedObjectProperty = SimpleObjectProperty<ViewNodeProvider>()
-    private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
     private val currentSelectedSpriteProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedSpotAnimProperty = SimpleObjectProperty<ViewNodeProvider>()
+    private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
 
     lateinit var onEntitySelected: (Entity<*>) -> Unit
 
@@ -119,12 +110,14 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         VBox.setVgrow(itemList, Priority.ALWAYS)
         VBox.setVgrow(objectList, Priority.ALWAYS)
         VBox.setVgrow(spritesList, Priority.ALWAYS)
+        VBox.setVgrow(spotAnimList, Priority.ALWAYS)
         VBox.setVgrow(interfaceList, Priority.ALWAYS)
 
         HBox.setHgrow(searchNpcField, Priority.ALWAYS)
         HBox.setHgrow(searchItemField, Priority.ALWAYS)
         HBox.setHgrow(searchObjectField, Priority.ALWAYS)
         HBox.setHgrow(searchSpritesField, Priority.ALWAYS)
+        HBox.setHgrow(searchSpotAnimField, Priority.ALWAYS)
         HBox.setHgrow(searchInterfaceField, Priority.ALWAYS)
 
         SplitSceneDividerDragRegion(
@@ -147,11 +140,13 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         itemList.configure(items, searchItemField)
         objectList.configure(objects, searchObjectField)
         spritesList.configure(sprites, searchSpritesField)
+        spotAnimList.configure(spotAnims, searchSpotAnimField)
         interfaceList.configure(interfaces, searchInterfaceField)
 
         configureSortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
         configureSortComboBox(sortItemBox, itemList, Properties.selectedItemSortType)
         configureSortComboBox(sortObjectBox, objectList, Properties.selectedObjectSortType)
+        configureSortComboBox(sortSpotAnimBox, spotAnimList, Properties.selectedSpotAnimSortType)
 
         cacheProperty().addListener { _, _, newValue ->
 
@@ -159,7 +154,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
                 val semaphore = Semaphore(1)
 
-                loadLastSelectedAnimation(6, semaphore)
+                loadLastSelectedAnimation(7, semaphore)
 
                 loadAnimations { animationList ->
                     animationController.animations.setAll(animationList)
@@ -181,6 +176,12 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 loadItems {
                     items.setAll(it)
                     handleLastSelectedEntity(it, itemList)
+                    semaphore.release()
+                }
+
+                loadSpotAnims {
+                    spotAnims.setAll(it)
+                    handleLastSelectedEntity(it, spotAnimList)
                     semaphore.release()
                 }
 
@@ -222,12 +223,14 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             NPC::class -> Properties.selectedNpcName
             Item::class -> Properties.selectedItemName
             Object::class -> Properties.selectedObjectName
+            SpotAnimation::class -> Properties.selectedSpotAnimName
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
         val selectedEntityProperty = when (T::class) {
             NPC::class -> currentSelectedNpcProperty
             Item::class -> currentSelectedItemProperty
             Object::class -> currentSelectedObjectProperty
+            SpotAnimation::class -> currentSelectedSpotAnimProperty
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
         val entity = it.lastSelectedEntity(selectedEntityNameProperty)
@@ -404,10 +407,11 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     private fun getNodeProperty(previousTab: Tab): ObjectProperty<ViewNodeProvider> = when (previousTab.text) {
         "NPC" -> currentSelectedNpcProperty
-        "Object" -> currentSelectedObjectProperty
         "Item" -> currentSelectedItemProperty
-        "Interfaces" -> currentSelectedInterfaceProperty
+        "Object" -> currentSelectedObjectProperty
         "Sprites" -> currentSelectedSpriteProperty
+        "SpotAnim" -> currentSelectedSpotAnimProperty
+        "Interfaces" -> currentSelectedInterfaceProperty
         else -> throw Exception("Unsupported tab name ${previousTab.text}")
     }
 

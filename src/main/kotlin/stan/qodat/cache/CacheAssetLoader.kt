@@ -8,10 +8,7 @@ import qodat.cache.definition.EntityDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
-import stan.qodat.scene.runescape.entity.Entity
-import stan.qodat.scene.runescape.entity.Item
-import stan.qodat.scene.runescape.entity.NPC
-import stan.qodat.scene.runescape.entity.Object
+import stan.qodat.scene.runescape.entity.*
 import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.createNpcAnimsJsonDir
 import stan.qodat.util.createObjectAnimsJsonDir
@@ -29,6 +26,10 @@ class CacheAssetLoader(
 
     fun loadItems(onCompleted: (List<Item>) -> Unit) {
         BackgroundTasks.submit(addProgressIndicator = true, createItemsLoadTask(cache, onCompleted))
+    }
+
+    fun loadSpotAnims(onCompleted: (List<SpotAnimation>) -> Unit) {
+        BackgroundTasks.submit(addProgressIndicator = true, createSpotAnimsLoadTask(cache, onCompleted))
     }
 
     fun loadObjects(onCompleted: (List<Object>) -> Unit) {
@@ -102,6 +103,11 @@ class CacheAssetLoader(
     private fun createNPCLoadTask(cache: Cache, onCompleted: (List<NPC>) -> Unit) = createLoadTask(
         definitions = cache.getNPCs(),
         mapper = { NPC(cache, this, animationLoader) }
+    ) { Platform.runLater { onCompleted(this) } }
+
+    private fun createSpotAnimsLoadTask(cache: Cache, onCompleted: (List<SpotAnimation>) -> Unit) = createLoadTask(
+        definitions = cache.getSpotAnimations(),
+        mapper = { SpotAnimation(cache, this, animationLoader) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createItemsLoadTask(cache: Cache, onCompleted: (List<Item>) -> Unit) = createLoadTask(

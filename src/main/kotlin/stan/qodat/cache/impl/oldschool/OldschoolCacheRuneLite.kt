@@ -7,6 +7,7 @@ import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
+import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
 import qodat.cache.Cache
@@ -40,6 +41,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     private val frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
 
     private lateinit var animations : Array<AnimationDefinition>
+    private lateinit var spotAnimations : Array<SpotAnimationDefinition>
 
     init {
         store.load()
@@ -224,6 +226,27 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 override val replaceColor = it.colorReplace
             }
         }.toTypedArray()
+    }
+
+    override fun getSpotAnimations(): Array<SpotAnimationDefinition> {
+        if (!this::spotAnimations.isInitialized) {
+            val storage = store.storage
+            val index = store.getIndex(IndexType.CONFIGS)
+            val spotAnimArchive = index.getArchive(ConfigType.SPOTANIM.id)
+            val spotAnimArchiveData = storage.loadArchive(spotAnimArchive)
+            val spotAnimArchiveFiles = spotAnimArchive.getFiles(spotAnimArchiveData)
+            spotAnimations = spotAnimArchiveFiles.files.map {
+                val spotAnim = SpotAnimLoader().load(it.fileId, it.contents)!!
+                return@map object : SpotAnimationDefinition {
+                    override val name: String = spotAnim.id.toString()
+                    override val modelIds: Array<String> = arrayOf(spotAnim.getModelId().toString())
+                    override val findColor: ShortArray? = spotAnim.recolorToFind
+                    override val replaceColor: ShortArray? = spotAnim.recolorToReplace
+                    override val animationIds: Array<String> = arrayOf(spotAnim.animationId.toString())
+                }
+            }.toTypedArray()
+        }
+        return spotAnimations
     }
 
     override fun getAnimationDefinitions(): Array<AnimationDefinition> {

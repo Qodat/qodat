@@ -27,6 +27,8 @@ abstract class Cache(val name: String) {
 
     abstract fun getItems() : Array<ItemDefinition>
 
+    abstract fun getSpotAnimations() : Array<SpotAnimationDefinition>
+
     abstract fun getAnimationDefinitions() : Array<AnimationDefinition>
 
     abstract fun getAnimationSkeletonDefinition(frameHash: Int) : AnimationSkeletonDefinition

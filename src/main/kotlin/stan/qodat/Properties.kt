@@ -102,12 +102,15 @@ object Properties {
     val selectedNpcName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()
     val selectedObjectName = SimpleStringProperty()
+    val selectedSpotAnimName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
     val selectedInterfaceName = SimpleStringProperty()
 
     val selectedNpcSortType = SimpleObjectProperty(SortType.NAME)
     val selectedItemSortType = SimpleObjectProperty(SortType.NAME)
     val selectedObjectSortType = SimpleObjectProperty(SortType.NAME)
+    val selectedSpotAnimSortType = SimpleObjectProperty(SortType.ID)
+
     val selectedEntity = SimpleObjectProperty<Entity<*>>()
     val selectedAnimation = SimpleObjectProperty<Animation>()
 
@@ -132,6 +135,7 @@ object Properties {
         sessionManager.bindString("last-selected-npc-name", selectedNpcName)
         sessionManager.bindString("last-selected-item-name", selectedItemName)
         sessionManager.bindString("last-selected-object-name", selectedObjectName)
+        sessionManager.bindString("last-selected-spot-anim-name", selectedSpotAnimName)
         sessionManager.bindString("last-selected-animation-name", selectedAnimationName)
         sessionManager.bindString("last-selected-viewer-tab", selectedViewerTab)
         sessionManager.bindString("last-selected-right-tab", selectedRightTab)

@@ -14,8 +14,8 @@ import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.qodat.QodatNpcDefinition
-import stan.qodat.scene.control.AutoCompleteTextField
 import stan.qodat.javafx.onSelected
+import stan.qodat.scene.control.AutoCompleteTextField
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.scene.runescape.animation.Animation
