@@ -6,6 +6,7 @@ import javafx.beans.property.ObjectProperty
 import javafx.stage.DirectoryChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
+import stan.qodat.scene.AbstractSubScene
 import stan.qodat.scene.control.export.ExportFormat
 import stan.qodat.scene.control.export.Exportable
 import stan.qodat.scene.runescape.animation.Animation

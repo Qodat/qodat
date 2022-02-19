@@ -71,6 +71,11 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     @FXML lateinit var sortObjectBox: ComboBox<SortType>
     @FXML lateinit var sortSpotAnimBox: ComboBox<SortType>
 
+    enum class SortType {
+        NAME,
+        ID
+    }
+
     @FXML lateinit var searchNpcField: TextField
     @FXML lateinit var searchItemField: TextField
     @FXML lateinit var searchObjectField: TextField
@@ -78,15 +83,9 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     @FXML lateinit var searchSpotAnimField: TextField
     @FXML lateinit var searchInterfaceField: TextField
 
-
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
     lateinit var materialController: MaterialController
-
-    enum class SortType {
-        NAME,
-        ID
-    }
 
     val npcs: ObservableList<NPC> = FXCollections.observableArrayList()
     val items: ObservableList<Item> = FXCollections.observableArrayList()
@@ -223,6 +222,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             NPC::class -> Properties.selectedNpcName
             Item::class -> Properties.selectedItemName
             Object::class -> Properties.selectedObjectName
+            Sprite::class -> Properties.selectedSpriteName
             SpotAnimation::class -> Properties.selectedSpotAnimName
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
@@ -230,6 +230,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             NPC::class -> currentSelectedNpcProperty
             Item::class -> currentSelectedItemProperty
             Object::class -> currentSelectedObjectProperty
+            Sprite::class -> currentSelectedSpriteProperty
             SpotAnimation::class -> currentSelectedSpotAnimProperty
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
@@ -287,7 +288,6 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             animationModelsSplitPane.items.add(containerWithDragSpace2)
             animationModelsSplitPane.items.add(materialView)
 
-
             containerWithDragSpace1.children.add(animationModelsSplitPane
                 .createDragSpace(
                     Properties.viewerDivider2Position,
@@ -312,9 +312,9 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     private fun loadTopModelsView(): VBox? {
         val modelLoader = FXMLLoader(Qodat::class.java.getResource("model.fxml"))
-        val modelView = modelLoader.load<VBox>()
-        modelView.styleClass.add("border-right")
-        //            modelView.styleClass.add("border-left")
+        val modelView = modelLoader.load<VBox>().apply {
+            styleClass.add("border-right")
+        }
         modelController = modelLoader.getController()
         modelController.modelListView.enableDragAndDrop(
             toFile = {
@@ -340,8 +340,9 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     private fun loadTopAnimationsView(): VBox? {
         val animationLoader = FXMLLoader(Qodat::class.java.getResource("animation.fxml"))
-        val animationView = animationLoader.load<VBox>()
-        animationView.styleClass.add("border-right")
+        val animationView = animationLoader.load<VBox>().apply {
+            styleClass.add("border-right")
+        }
         animationController = animationLoader.getController()
         animationController.animationsListView.onItemSelected { old, new ->
             if (new == null && old != null) {
@@ -362,13 +363,16 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     }
 
     private fun configureTabPane() {
+
         val lastSelectedTab = tabPane.tabs.find { it.text == Properties.selectedViewerTab.get() }
         tabPane.selectionModel.select(lastSelectedTab)
         tabPane.selectionModel.selectedItemProperty().addListener { _, previousTab, newTab ->
+
             Properties.selectedViewerTab.set(newTab?.text)
             val newNode = getNodeProperty(newTab)
             val previousNode = getNodeProperty(previousTab)
-            if (previousNode.isNotNull.get())
+
+            if (previousNode.isNotNull.get()) {
                 onUnselectedEvent.handle(
                     ViewNodeListView.UnselectedEvent(
                         previousNode.get(),
@@ -376,33 +380,24 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                         causedByTabSwitch = true
                     )
                 )
+            }
+
             if (newNode.isNotNull.get()) {
-                val selectedNode = newNode.get()
-//                onSelectedEvent.handle(ViewNodeListView.SelectedEvent(selectedNode))
-                when (selectedNode) {
-                    is NPC -> npcList.run {
-                        selectionModel.clearSelection()
-                        selectionModel.select(selectedNode)
-                        scrollTo(selectedNode)
-                    }
-                    is Item -> itemList.run {
-                        selectionModel.clearSelection()
-                        selectionModel.select(selectedNode)
-                        scrollTo(selectedNode)
-                    }
-                    is Object -> objectList.run {
-                        selectionModel.clearSelection()
-                        selectionModel.select(selectedNode)
-                        scrollTo(selectedNode)
-                    }
-                    is InterfaceGroup -> interfaceList.run {
-                        selectionModel.clearSelection()
-                        selectionModel.select(selectedNode)
-                        scrollTo(selectedNode)
-                    }
+                when (val selectedNode = newNode.get()) {
+                    is NPC -> npcList.clearAndScrollToSelect(selectedNode)
+                    is Item -> itemList.clearAndScrollToSelect(selectedNode)
+                    is Object -> objectList.clearAndScrollToSelect(selectedNode)
+                    is SpotAnimation -> spotAnimList.clearAndScrollToSelect(selectedNode)
+                    is InterfaceGroup -> interfaceList.clearAndScrollToSelect(selectedNode)
                 }
             }
         }
+    }
+
+    private fun<T : ViewNodeProvider> ViewNodeListView<T>.clearAndScrollToSelect(selectedNode: T?) {
+        selectionModel.clearSelection()
+        selectionModel.select(selectedNode)
+        scrollTo(selectedNode)
     }
 
     private fun getNodeProperty(previousTab: Tab): ObjectProperty<ViewNodeProvider> = when (previousTab.text) {
@@ -474,6 +469,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 is NPC -> currentSelectedNpcProperty.set(null)
                 is Item -> currentSelectedItemProperty.set(null)
                 is Object -> currentSelectedObjectProperty.set(null)
+                is Sprite -> currentSelectedSpriteProperty.set(null)
+                is SpotAnimation -> currentSelectedSpotAnimProperty.set(null)
                 is InterfaceGroup -> currentSelectedObjectProperty.set(null)
             }
         }
@@ -503,6 +500,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             is Item -> currentSelectedItemProperty.set(newNode)
             is Object -> currentSelectedObjectProperty.set(newNode)
             is Sprite -> currentSelectedSpriteProperty.set(newNode)
+            is SpotAnimation -> currentSelectedSpotAnimProperty.set(newNode)
             is InterfaceGroup -> currentSelectedInterfaceProperty.set(newNode)
         }
     }

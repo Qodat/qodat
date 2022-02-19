@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "stan.qodat"
-version = "0.0.9"
+version = "0.1.0"
 
 repositories {
     maven(url = "https://repo.runelite.net")
@@ -68,11 +68,11 @@ runtime {
 
     imageZip.set(project.file("${buildDir}/distributions/app-${javafx.platform.classifier}.zip"))
 
-    options.set(listOf("--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
+    options.set(listOf("--bind-services", "--strip-debug", "--compress", "2", "--no-header-files", "--no-man-pages"))
 
-    modules.set(listOf("java.desktop", "jdk.unsupported", "java.scripting", "java.logging", "java.xml", "java.naming", "java.sql"))
+    modules.set(listOf("java.base", "java.management", "java.desktop", "jdk.unsupported", "java.scripting", "java.logging", "java.xml", "java.naming", "java.sql"))
 
-//    targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
+    targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
 
     jpackage {
         appVersion = "1.0.0"

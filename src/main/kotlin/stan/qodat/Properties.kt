@@ -102,6 +102,7 @@ object Properties {
     val selectedNpcName = SimpleStringProperty()
     val selectedItemName = SimpleStringProperty()
     val selectedObjectName = SimpleStringProperty()
+    val selectedSpriteName = SimpleStringProperty()
     val selectedSpotAnimName = SimpleStringProperty()
     val selectedAnimationName = SimpleStringProperty()
     val selectedInterfaceName = SimpleStringProperty()
@@ -124,6 +125,10 @@ object Properties {
     val treeItemAnimationFrameSelectedColor = SimpleObjectProperty(Color.web("#7e76aa"))
     val treeItemAnimationFrameColor = SimpleObjectProperty(Color.web("#bba5c7"))
 
+    val treeItemModelExpanded = SimpleBooleanProperty(false)
+    val treeItemEntityExpanded = SimpleBooleanProperty(false)
+    val treeItemInterfaceExpanded = SimpleBooleanProperty(false)
+
     fun bind(sessionManager: PropertiesManager) {
 
         sessionManager.bind("anti-aliasing", antialiasing) {
@@ -142,6 +147,10 @@ object Properties {
         sessionManager.bindString("last-selected-left-tab", selectedLeftTab)
         sessionManager.bindString("last-selected-bottom-tab", selectedBottomTab)
         sessionManager.bindString("last-selected-scene", selectedScene)
+
+        sessionManager.bindBoolean("tree-item-model-expanded", treeItemModelExpanded)
+        sessionManager.bindBoolean("tree-item-entity-expanded", treeItemEntityExpanded)
+        sessionManager.bindBoolean("tree-item-interface-expanded", treeItemInterfaceExpanded)
 
         sessionManager.bindColor("ambient-light-color", ambientLightColor)
         sessionManager.bindColor("background-color", subSceneBackgroundColor)

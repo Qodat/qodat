@@ -1,11 +1,13 @@
 package stan.qodat.scene
 
 import javafx.beans.property.SimpleObjectProperty
+import javafx.beans.property.SimpleStringProperty
 import javafx.event.EventHandler
 import javafx.scene.SubScene
 import javafx.scene.input.*
 import javafx.scene.layout.Region
 import stan.qodat.Properties
+import stan.qodat.scene.control.export.Exportable
 
 /**
  * TODO: add documentation
@@ -13,8 +15,9 @@ import stan.qodat.Properties
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   22/01/2021
  */
-abstract class AbstractSubScene {
+abstract class AbstractSubScene : Exportable {
 
+    val nameProperty = SimpleStringProperty("qodat-scene")
     val subSceneProperty = SimpleObjectProperty<SubScene>()
 
     abstract val mouseEventHandler : EventHandler<MouseEvent>
@@ -50,4 +53,6 @@ abstract class AbstractSubScene {
         newSubScene.fillProperty().bind(Properties.subSceneBackgroundColor)
         subSceneProperty.set(newSubScene)
     }
+
+    override fun getName(): String = nameProperty.get()
 }

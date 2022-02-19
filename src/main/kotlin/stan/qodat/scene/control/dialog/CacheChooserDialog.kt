@@ -1,5 +1,6 @@
 package stan.qodat.scene.control.dialog
 
+import javafx.beans.binding.Bindings
 import javafx.fxml.FXMLLoader
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Dialog
@@ -14,7 +15,7 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
         try {
             val cacheChooserLoader = FXMLLoader(Qodat::class.java.getResource("cachechooser.fxml"))
             val root = cacheChooserLoader.load<AnchorPane>()
-            val cacheChooserController: CacheChooserController = cacheChooserLoader.getController()
+            val controller: CacheChooserController = cacheChooserLoader.getController()
 
             dialogPane.content = root
             dialogPane.stylesheets.add(root.stylesheets.first())
@@ -23,8 +24,8 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
             setResultConverter {
                 when(it) {
                     ButtonType.OK -> {
-                        val rootDir = cacheChooserController.rootDirChooser.pathProperty.get()
-                        val cacheDir = cacheChooserController.osrsCacheDirChooser.pathProperty.get()
+                        val rootDir = controller.rootDirChooser.pathProperty.get()
+                        val cacheDir = controller.osrsCacheDirChooser.pathProperty.get()
                         rootDir to cacheDir
                     }
                     else -> throw Exception("Unexpected button type {$it}")
@@ -32,6 +33,18 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
             }
 
             dialogPane.buttonTypes.add(ButtonType.OK)
+            dialogPane.lookupButton(ButtonType.OK).disableProperty()
+                .bind(
+                    Bindings.createBooleanBinding(
+                        {
+                            val path = controller.qodatCacheDirChooser.pathProperty.get()
+                            path != null && path.toFile().let {
+                                it.exists() && it.isDirectory && it.listFiles().isNotEmpty()
+                            }
+                        },
+                        controller.qodatCacheDirChooser.pathProperty
+                    )
+                )
 
         } catch (e: Exception) {
             e.printStackTrace()

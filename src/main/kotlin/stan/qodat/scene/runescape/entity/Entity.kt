@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.entity
 
+import javafx.beans.property.BooleanProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleStringProperty
 import javafx.scene.Group
@@ -10,6 +11,7 @@ import javafx.scene.text.TextFlow
 import qodat.cache.Cache
 import qodat.cache.definition.EntityDefinition
 import qodat.cache.models.RS2ModelBuilder
+import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.javafx.menloText
 import stan.qodat.scene.SubScene3D
@@ -167,4 +169,7 @@ abstract class Entity<D : EntityDefinition>(
             treeItem = EntityTreeItem(this, treeView)
         return treeItem
     }
+
+    override fun treeItemExpandedProperty(): BooleanProperty =
+        Properties.treeItemEntityExpanded
 }

@@ -238,6 +238,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             spotAnimations = spotAnimArchiveFiles.files.map {
                 val spotAnim = SpotAnimLoader().load(it.fileId, it.contents)!!
                 return@map object : SpotAnimationDefinition {
+                    override fun getOptionalId() = OptionalInt.of(spotAnim.id)
                     override val name: String = spotAnim.id.toString()
                     override val modelIds: Array<String> = arrayOf(spotAnim.getModelId().toString())
                     override val findColor: ShortArray? = spotAnim.recolorToFind

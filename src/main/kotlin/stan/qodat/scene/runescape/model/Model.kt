@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape.model
 
+import javafx.beans.property.BooleanProperty
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.property.SimpleStringProperty
@@ -215,6 +216,9 @@ class Model(label: String,
         }
         sceneNode = modelSkin.getSceneNode()
     }
+
+    override fun treeItemExpandedProperty(): BooleanProperty =
+        Properties.treeItemEntityExpanded
 
     override fun getTreeItem(treeView: TreeView<Node>): TreeItem<Node> {
         if (!this::treeItem.isInitialized)
