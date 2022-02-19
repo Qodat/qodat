@@ -6,7 +6,6 @@ import stan.qodat.Properties
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Item
-import stan.qodat.scene.runescape.entity.NPC
 import java.net.URL
 import java.util.*
 
@@ -24,14 +23,6 @@ class ViewerController : EntityViewController("viewer-scene") {
 
         itemList.contextMenu = ContextMenu(ExportMenu<Item>().apply {
             bindExportable(itemList.selectionModel.selectedItemProperty())
-        })
-        npcList.contextMenu = ContextMenu(ExportMenu<NPC>().apply {
-            val selectedNpcProperty = npcList.selectionModel.selectedItemProperty()
-            bindExportable(selectedNpcProperty)
-            selectedNpcProperty.addListener { _, _, newValue ->
-                if (newValue != null)
-                    bindAnimation(newValue.selectedAnimation)
-            }
         })
         npcList.createContextMenu()
         objectList.createContextMenu()
