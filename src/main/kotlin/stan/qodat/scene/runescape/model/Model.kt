@@ -67,7 +67,7 @@ class Model(label: String,
     val cullFaceProperty = SimpleObjectProperty(CullFace.NONE)
     val depthTestProperty = SimpleObjectProperty(DepthTest.ENABLE)
     val buildTypeProperty = SimpleObjectProperty(
-        if (modelDefinition.getFaceTextures() != null)
+        if (!Properties.alwaysRenderUsingAtlas.get() && modelDefinition.getFaceTextures() != null)
             ModelMeshBuildType.MESH_PER_FACE
         else
             ModelMeshBuildType.ATLAS

@@ -38,9 +38,7 @@ fun Qodat.Companion.getAnimationsView() : ListView<Animation> =
 
 fun Qodat.Companion.addSceneTreeItem(provider: TreeItemProvider) {
     mainController.sceneTreeView.root.children.add(
-        provider.getTreeItem(mainController.sceneTreeView).apply {
-            expandedProperty().bindBidirectional(provider.treeItemExpandedProperty())
-        }
+        provider.getTreeItem(mainController.sceneTreeView)
     )
 }
 fun Qodat.Companion.removeSceneTreeItem(provider: TreeItemProvider) {

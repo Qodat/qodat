@@ -2,11 +2,12 @@ package stan.qodat.scene.control.tree
 
 import javafx.animation.TranslateTransition
 import javafx.beans.binding.Bindings
-import javafx.beans.property.SimpleBooleanProperty
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.Parent
-import javafx.scene.control.*
+import javafx.scene.control.CheckBox
+import javafx.scene.control.MultipleSelectionModel
+import javafx.scene.control.TreeItem
 import javafx.scene.image.ImageView
 import javafx.scene.layout.*
 import javafx.scene.paint.Color
@@ -14,13 +15,10 @@ import javafx.scene.shape.Line
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 import javafx.util.Duration
-import stan.qodat.javafx.checkBox
 import stan.qodat.javafx.label
 import stan.qodat.javafx.text
 import stan.qodat.javafx.treeItem
-import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.ui.InterfaceGroup
-import stan.qodat.scene.runescape.ui.Sprite
 import stan.qodat.util.ModelUtil
 import stan.qodat.util.onInvalidation
 
@@ -61,6 +59,7 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
             }
             add(sceneNode, 0)
         }
+        expandedProperty().set(group.treeItemExpandedProperty().get())
     }
 
     private fun TreeItem<Node>.add(sceneGroup: Parent, depth: Int) {

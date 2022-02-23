@@ -75,6 +75,8 @@ object Properties {
     val subSceneInitialWidth = SimpleDoubleProperty(400.0)
     val subSceneInitialHeight = SimpleDoubleProperty(400.0)
 
+    val alwaysRenderUsingAtlas = SimpleBooleanProperty(false)
+
     val cameraInvert = SimpleBooleanProperty(true)
     val cameraSpeed = SimpleDoubleProperty(0.3)
     val cameraNearClip = SimpleDoubleProperty(1.0)
@@ -125,9 +127,10 @@ object Properties {
     val treeItemAnimationFrameSelectedColor = SimpleObjectProperty(Color.web("#7e76aa"))
     val treeItemAnimationFrameColor = SimpleObjectProperty(Color.web("#bba5c7"))
 
-    val treeItemModelExpanded = SimpleBooleanProperty(false)
-    val treeItemEntityExpanded = SimpleBooleanProperty(false)
-    val treeItemInterfaceExpanded = SimpleBooleanProperty(false)
+    val treeItemAnimationsExpanded = SimpleBooleanProperty(true)
+    val treeItemModelsExpanded = SimpleBooleanProperty(true)
+    val treeItemEntityExpanded = SimpleBooleanProperty(true)
+    val treeItemInterfaceExpanded = SimpleBooleanProperty(true)
 
     fun bind(sessionManager: PropertiesManager) {
 
@@ -148,12 +151,15 @@ object Properties {
         sessionManager.bindString("last-selected-bottom-tab", selectedBottomTab)
         sessionManager.bindString("last-selected-scene", selectedScene)
 
-        sessionManager.bindBoolean("tree-item-model-expanded", treeItemModelExpanded)
+        sessionManager.bindBoolean("tree-item-animations-expanded", treeItemAnimationsExpanded)
+        sessionManager.bindBoolean("tree-item-models-expanded", treeItemModelsExpanded)
         sessionManager.bindBoolean("tree-item-entity-expanded", treeItemEntityExpanded)
         sessionManager.bindBoolean("tree-item-interface-expanded", treeItemInterfaceExpanded)
 
         sessionManager.bindColor("ambient-light-color", ambientLightColor)
         sessionManager.bindColor("background-color", subSceneBackgroundColor)
+
+        sessionManager.bindBoolean("always-render-using-atlas", alwaysRenderUsingAtlas)
 
         sessionManager.bindBoolean("depth-buffer", depthBuffer)
         sessionManager.bindBoolean("show-axis", showAxis)

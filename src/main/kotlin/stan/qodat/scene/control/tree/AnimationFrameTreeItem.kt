@@ -10,7 +10,10 @@ import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.HBox
 import javafx.scene.paint.Color
-import javafx.scene.text.*
+import javafx.scene.text.Font
+import javafx.scene.text.FontPosture
+import javafx.scene.text.FontWeight
+import javafx.scene.text.Text
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.javafx.hBox
@@ -21,7 +24,9 @@ import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
-import stan.qodat.util.*
+import stan.qodat.util.FrameTimeUtil
+import stan.qodat.util.onInvalidation
+import stan.qodat.util.setAndBind
 
 class AnimationFrameTreeItem(
     val entity: AnimatedEntity<*>,
@@ -86,7 +91,7 @@ class AnimationFrameTreeItem(
                 }
 
                 children += Label(" Length: ")
-                val frameDurationField = IntTextField(0, 255, FrameTimeUtil.toFrameAsInt(frame.durationProperty.get()))
+                val frameDurationField = IntTextField(0, Short.MAX_VALUE.toInt(), FrameTimeUtil.toFrameAsInt(frame.durationProperty.get()))
                 children += frameDurationField
                 frameDurationField.maxWidthProperty().set(35.0)
                 frameDurationField.valueProperty().addListener { _, _, newValue ->

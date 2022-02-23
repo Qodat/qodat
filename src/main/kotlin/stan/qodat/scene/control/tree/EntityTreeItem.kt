@@ -1,11 +1,13 @@
 package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
-import javafx.scene.control.*
+import javafx.scene.control.ContextMenu
+import javafx.scene.control.MenuItem
+import javafx.scene.control.TreeItem
+import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
 import stan.qodat.Properties
-import stan.qodat.Qodat
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.export.ExportMenu
@@ -85,11 +87,14 @@ class EntityTreeItem(
 //                }
 //            }
 //        }
-        treeItem("Models") {
-            if (children.isEmpty()) {
-                for (model in entity.getModels())
-                    children.add(model.getTreeItem(treeView))
+        treeItem {
+            label("Models") {
+                if (children.isEmpty()) {
+                    for (model in entity.getModels())
+                        children.add(model.getTreeItem(treeView))
+                }
             }
+            expandedProperty().set(Properties.treeItemModelsExpanded.get())
         }
 
         if (entity is AnimatedEntity<*>) {
@@ -100,7 +105,6 @@ class EntityTreeItem(
 //            }
 
             treeItem {
-
                 label("Animations") {
                     contextMenu = ContextMenu(
                         MenuItem("Add empty").apply {
@@ -119,7 +123,6 @@ class EntityTreeItem(
 
                 val showAllTreeItem = TreeItem<Node>().apply {
                     label("Show all")
-
                 }
                 children += showAllTreeItem
 
@@ -139,8 +142,11 @@ class EntityTreeItem(
                 val selected = entity.selectedAnimation.get()
                 if (selected != null)
                     move(selected, showAllTreeItem, true)
+
+                expandedProperty().set(Properties.treeItemAnimationsExpanded.get())
             }
         }
+        expandedProperty().set(entity.treeItemExpandedProperty().get())
     }
 
     private fun TreeItem<Node>.move(

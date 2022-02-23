@@ -9,7 +9,6 @@ import javafx.scene.shape.DrawMode
 import stan.qodat.Properties
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.export.ExportMenu
-import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 
 /**
@@ -19,8 +18,8 @@ import stan.qodat.scene.runescape.model.Model
  * @since   01/02/2021
  */
 class ModelTreeItem(
-        model: Model,
-        selectionModel: MultipleSelectionModel<TreeItem<Node>>
+    model: Model,
+    selectionModel: MultipleSelectionModel<TreeItem<Node>>
 ) : TreeItem<Node>() {
 
     init {
@@ -32,21 +31,27 @@ class ModelTreeItem(
                 }
             )
         }
-        treeItem { checkBox("shading", model.shadingProperty, biDirectional = true) }
-        treeItem { checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true) }
-        treeItem { checkBox("visible", model.visibleProperty, biDirectional = true) }
-        treeItem { comboBox("Select draw mode", DrawMode.values(), model.drawModeProperty, biDirectional = true) }
+        treeItem("Render Options") {
+            treeItem {
+                vBox {
+                    checkBox("shading", model.shadingProperty, biDirectional = true)
+                    checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true)
+                    checkBox("visible", model.visibleProperty, biDirectional = true)
+                    comboBox("Select draw mode", DrawMode.values(), model.drawModeProperty, biDirectional = true)
+                }
+            }
+        }
         treeItem { label("vertexCount = ${model.modelDefinition.getVertexCount()}") }
         treeItem { label("faceCount = ${model.modelDefinition.getFaceCount()}") }
         val vertexGroups = model.getVertexGroups()
-        if (vertexGroups.isNotEmpty()){
+        if (vertexGroups.isNotEmpty()) {
             treeItem("Vertex Groups") {
                 for ((index, vertexGroup) in vertexGroups.withIndex())
                     children += VertexGroupTreeItem(model, index, vertexGroup, selectionModel)
             }
         }
         val faceGroups = model.getFaceGroups()
-        if (faceGroups.isNotEmpty()){
+        if (faceGroups.isNotEmpty()) {
             treeItem("Face Groups") {
                 for ((index, faceGroup) in faceGroups.withIndex())
                     children += FaceGroupTreeItem(model, index, faceGroup, selectionModel)
@@ -56,5 +61,6 @@ class ModelTreeItem(
             if (newValue == this) model.selectedProperty.set(true)
             else if (oldValue == this) model.selectedProperty.set(false)
         }
+        expandedProperty().set(Properties.treeItemModelsExpanded.get())
     }
 }

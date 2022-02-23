@@ -10,8 +10,8 @@ import javafx.scene.layout.HBox
 import javafx.util.Duration
 import qodat.cache.definition.AnimationFrameDefinition
 import qodat.cache.definition.AnimationSkeletonDefinition
-import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.control.LabeledHBox
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.transform.TransformationGroup
 import stan.qodat.util.FrameTimeUtil
 import stan.qodat.util.Searchable
@@ -39,8 +39,6 @@ class AnimationFrame(
     val enabledProperty = SimpleBooleanProperty(true)
 
     fun getLength() = FrameTimeUtil.toFrame(durationProperty.get())
-
-    private val rootNodeProperty = SimpleObjectProperty<Transformation>()
 
     init {
         if (definition != null) {
