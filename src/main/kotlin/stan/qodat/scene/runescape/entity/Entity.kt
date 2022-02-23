@@ -172,4 +172,13 @@ abstract class Entity<D : EntityDefinition>(
 
     override fun treeItemExpandedProperty(): BooleanProperty =
         Properties.treeItemEntityExpanded
+
+    fun formatFileName(): String {
+        val name = getName().replace(" ", "_")
+        val optionalId = definition.getOptionalId()
+        return if (optionalId.isPresent)
+            name + "_${optionalId.asInt}"
+        else
+            name
+    }
 }

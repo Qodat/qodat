@@ -34,7 +34,7 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                 this(saveDir, model.getName().replace(" ", "_"), frames, model)
 
         constructor(saveDir: Path, entity: Entity<*>, frames: List<AnimationFrame>) :
-                this(saveDir, entity.getName().replace(" ", "_"), frames, entity.createMergedModel(entity.getName()))
+                this(saveDir, entity.formatFileName(), frames, entity.createMergedModel(entity.getName()))
 
         override fun call(): ExportTaskResult {
             val materials = model.modelDefinition.getFaceMaterials().toSet()
@@ -90,7 +90,7 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
             model = entity.createMergedModel(entity.getName()),
             animationFrame = animationFrame,
             writeMaterials = writeMaterials,
-            fileName = entity.getName().replace(" ", "_")
+            fileName = entity.formatFileName()
         )
 
         override fun call(): ExportTaskResult {
