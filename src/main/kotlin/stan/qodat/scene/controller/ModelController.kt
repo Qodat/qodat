@@ -23,7 +23,10 @@ import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.onItemSelected
 import java.net.URL
-import java.nio.file.*
+import java.nio.file.FileSystems
+import java.nio.file.Path
+import java.nio.file.StandardWatchEventKinds
+import java.nio.file.WatchKey
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedDeque
 
@@ -97,18 +100,19 @@ class ModelController : Initializable {
 
         syncPath.bind(pathProperty)
 
-        val currentPath = pathProperty.get().toFile().apply {
-            if (!exists())
-                mkdir()
-        }
-        val files = currentPath.listFiles()
-        if (files != null) {
-            for (file in files)
-                models.add(Model.fromFile(file))
-        }
-        var pathKey = syncWithDirectory(currentPath.toPath())
+        val filesDirectory = pathProperty.get().toFile()
+        var pathKey: WatchKey? = if (filesDirectory.exists()) {
+            val files = filesDirectory.listFiles()
+            if (files != null) {
+                for (file in files)
+                    models.add(Model.fromFile(file))
+            }
+            syncWithDirectory(filesDirectory.toPath())
+        } else
+            null
+
         pathProperty.onInvalidation {
-            pathKey.cancel()
+            pathKey?.cancel()
             pathKey = syncWithDirectory(get())
         }
     }

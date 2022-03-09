@@ -374,17 +374,6 @@ class MainController : SceneController("main-scene") {
     }
 
 
-    @FXML
-    fun loadModels() {
-    }
-
-    @FXML
-    fun setLoadPath() {
-    }
-
-    @FXML
-    fun setSavePath() {
-    }
 
     @FXML
     fun setCachePath() {

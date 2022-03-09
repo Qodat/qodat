@@ -16,6 +16,7 @@ import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
+import stan.qodat.util.onInvalidation
 import java.util.*
 
 /**
@@ -28,25 +29,38 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     internal var store = Store(Properties.osrsCachePath.get().toFile())
 
-    var npcManager: NpcManager
-    private var itemManager: ItemManager
-    var objectManager: ObjectManager
-    var textureManager: TextureManager
-    var interfaceManager: InterfaceManager
-    var spriteManager: SpriteManager
+    lateinit var npcManager: NpcManager
+    lateinit var itemManager: ItemManager
+    lateinit var objectManager: ObjectManager
+    lateinit var textureManager: TextureManager
+    lateinit var interfaceManager: InterfaceManager
+    lateinit var spriteManager: SpriteManager
 
-    private val frameIndex: Index
-    private val framemapIndex: Index
-    private val frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
-    private val frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
+    private lateinit var frameIndex: Index
+    private lateinit var framemapIndex: Index
+    private lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
+    private lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>
 
     private lateinit var animations : Array<AnimationDefinition>
     private lateinit var spotAnimations : Array<SpotAnimationDefinition>
 
+    private val gson = GsonBuilder().create()
+    private val intArrayType = object: TypeToken<IntArray>() {}.type
+
     init {
+        load()
+        Properties.osrsCachePath.onInvalidation {
+            store = Store(get().toFile())
+            load()
+        }
+    }
+
+    private fun load() {
         store.load()
         frameIndex = store.getIndex(IndexType.FRAMES)
         framemapIndex = store.getIndex(IndexType.FRAMEMAPS)
+        frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
+        frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
         npcManager = NpcManager(store)
         npcManager.load()
         itemManager = ItemManager(store)
@@ -62,80 +76,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         textureManager.load()
     }
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-
-
-        val storage = store.storage
-        val index = store.getIndex(IndexType.CONFIGS)
-
-        val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
-        val seqArchiveData = storage.loadArchive(seqArchive)
-        val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
-
-        val sequence = SequenceLoader().load(7947, seqArchiveFiles.findFile(7947).contents)
-
-        println()
-//        val animationDef = getAnimation("7870")
-//
-//        val animation = Animation("bla", animationDef, this)
-//        val frames = animation.getFrameList()
-//        println("loopOffset = ${animation.loopOffsetProperty.get()}")
-//
-//        val myFrames = ArrayList<QodatAnimationFrameDefinition>()
-//
-//        frames.forEachIndexed { index, frame ->
-//
-//            println("frame[$index] dur = ${frame.getLength()}")
-//            println("reference:\t")
-//            for (transform in frame.transformationList){
-//                if (transform.getType() == TransformationType.SET_OFFSET) {
-//                    print("[ ")
-//                    print("${transform.getDeltaX()}, ")
-//                    print("${transform.getDeltaY()}, ")
-//                    print("${transform.getDeltaZ()} ")
-//                    print("], ")
-//                }
-//            }
-//            println()
-//            println("translate\t")
-//            for (transform in frame.transformationList){
-//                if (transform.getType() == TransformationType.TRANSLATE) {
-//                    print("[ ")
-//                    print("${transform.getDeltaX()}, ")
-//                    print("${transform.getDeltaY()}, ")
-//                    print("${transform.getDeltaZ()} ")
-//                    print("], ")
-//                }
-//            }
-//            println()
-//            println("rotate\t")
-//            for (transform in frame.transformationList){
-//                if (transform.getType() == TransformationType.ROTATE) {
-//                    print("[ ")
-//                    print("${transform.getDeltaX()}, ")
-//                    print("${transform.getDeltaY()}, ")
-//                    print("${transform.getDeltaZ()} ")
-//                    print("], ")
-//                }
-//            }
-//            println()
-//        }
-//
-//        val frameArchiveId = 1
-//        val newAnim = QodatAnimationDefinition(
-//            "boo",
-//            IntArray(frames.size) {
-//                ((frameArchiveId and  0xFFFF) shl 16) or (it and 0xFFFF)
-//            },
-//            animationDef.frameLengths.copyOf(),
-//            animationDef.loopOffset,
-//            animationDef.leftHandItem,
-//            animationDef.rightHandItem
-//        )
-
-    }
-
     override fun getTexture(id: Int): TextureDefinition {
         val def = textureManager.findTexture(id)
         def.method2680(1.0, 128) { spriteId, frameId ->
@@ -147,10 +87,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             override var pixels: IntArray = def.getPixels()
         }
     }
-
-    private val gson = GsonBuilder().create()
-    private val intArrayType = object: TypeToken<IntArray>() {}.type
-
     fun getModelData(id: String) : ByteArray {
         val modelId = id.toIntOrNull()?:throw IllegalArgumentException("Model id must be int-convertable $id")
         val modelIndex = store.getIndex(IndexType.MODELS)
@@ -304,57 +240,42 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 }
                 val frame = FrameLoader().load(frameMapDefinition, file.fileId, frameContents)
                 file.fileId to object : AnimationFrameDefinition {
-                    override val transformationCount: Int
-                        get() = frame.translatorCount
-                    override val transformationGroupAccessIndices: IntArray
-                        get() = frame.indexFrameIds
-                    override val transformationDeltaX: IntArray
-                        get() = frame.translator_x
-                    override val transformationDeltaY: IntArray
-                        get() = frame.translator_y
-                    override val transformationDeltaZ: IntArray
-                        get() = frame.translator_z
-                    override val transformationGroup: AnimationSkeletonDefinition
-                        get() = transformGroup
+                    override val transformationCount: Int = frame.translatorCount
+                    override val transformationGroupAccessIndices: IntArray = frame.indexFrameIds
+                    override val transformationDeltaX: IntArray = frame.translator_x
+                    override val transformationDeltaY: IntArray = frame.translator_y
+                    override val transformationDeltaZ: IntArray = frame.translator_z
+                    override val transformationGroup: AnimationSkeletonDefinition = transformGroup
                 }
             }.toMap()
         }[frameArchiveFileId]
     }
 
-    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
-        return interfaceManager
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> =
+        interfaceManager
             .getIntefaceGroup(groupId)
             .map { RuneliteIntefaceDefinition(it) }
             .toTypedArray()
-    }
 
-    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
-        return interfaceManager.interfaces
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> =
+        interfaceManager.interfaces
             .flatten()
             .map { RuneliteIntefaceDefinition(it) }
             .groupBy { it.id.shr(16) }
-    }
 
-    override fun getSprites(): Array<SpriteDefinition> {
-        return spriteManager.sprites.map {
-            RuneliteSpriteDefinition(it)
-        }.toTypedArray()
-    }
+    override fun getSprites(): Array<SpriteDefinition> =
+        spriteManager.sprites.map { RuneliteSpriteDefinition(it) }.toTypedArray()
 
-    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
-        return RuneliteSpriteDefinition(spriteManager.findSprite(groupId, frameId))
-    }
+    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition =
+        RuneliteSpriteDefinition(spriteManager.findSprite(groupId, frameId))
 
-    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition {
-        return getFrameDefinition(frameHash)!!.transformationGroup
-    }
+    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition=
+        getFrameDefinition(frameHash)!!.transformationGroup
 
-    internal fun getFileId(hexString: String): Int {
-        return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
-    }
+    internal fun getFileId(hexString: String): Int =
+        Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
 
-    internal fun getFrameId(hexString: String): Int {
-        return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
-    }
+    internal fun getFrameId(hexString: String) =
+        Integer.parseInt(hexString.substring(hexString.length - 4), 16)
 
 }

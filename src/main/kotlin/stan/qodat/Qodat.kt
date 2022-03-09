@@ -19,6 +19,7 @@ import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
+import java.nio.file.Path
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import javax.swing.SwingUtilities
@@ -93,11 +94,11 @@ class Qodat : Application() {
                 dialog.showAndWait().ifPresent { (rootDir, cacheDir) ->
                     Properties.osrsCachePath.set(cacheDir)
                     Properties.rootPath.set(rootDir)
-                    Properties.downloadsPath.set(rootDir.resolve("downloads"))
-                    Properties.qodatCachePath.set(rootDir.resolve("caches/qodat"))
-                    Properties.legacyCachePath.set(rootDir.resolve("cache/667"))
-                    Properties.projectFilesPath.set(rootDir.resolve("data"))
-                    Properties.defaultExportsPath.set(rootDir.resolve("exports"))
+                    Properties.downloadsPath.set(resolveAndMake(rootDir, "downloads"))
+                    Properties.qodatCachePath.set(resolveAndMake(rootDir,"caches/qodat"))
+                    Properties.legacyCachePath.set(resolveAndMake(rootDir,"cache/667"))
+                    Properties.projectFilesPath.set(resolveAndMake(rootDir,"data"))
+                    Properties.defaultExportsPath.set(resolveAndMake(rootDir,"exports"))
 
                     propertiesManager.saveToFile()
                 }
@@ -106,6 +107,12 @@ class Qodat : Application() {
             Properties.editorCache.set(QodatCache)
             propertiesManager.startSaveThread()
         }
+    }
+
+    private fun resolveAndMake(rootDir: Path, s: String) = rootDir.resolve(s).apply {
+        val file = toFile()
+        if (!file.exists())
+            file.mkdirs()
     }
 
     companion object {
@@ -117,7 +124,7 @@ class Qodat : Application() {
         /**
          * Handles the serialisation of [Properties].
          */
-        private val propertiesManager = PropertiesManager()
+        private val propertiesManager = PropertiesManager(Properties.rootPath.get().resolve("session.properties"))
 
         /**
          * Used to offload tasks to a different single-thread.

@@ -300,6 +300,7 @@
 .tree-cell,
 .list-cell {
     -fx-background-color: rgba(60, 63, 65, 0.9);
+    -fx-text-fill: rgb(214, 214, 214);
 }
 .tree-cell:hover,
 .list-cell:hover {
@@ -309,6 +310,7 @@
 .tree-view .tree-cell:selected,
 .list-view .list-cell:selected {
     -fx-background-color: rgb(33, 66, 131);
+    -fx-text-fill: rgb(214, 214, 214);
 }
 
 .text-field {

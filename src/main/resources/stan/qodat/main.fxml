@@ -72,14 +72,6 @@
                             <menus>
                                 <Menu mnemonicParsing="false" text="File">
                                     <items>
-                                        <MenuItem mnemonicParsing="false" onAction="#loadModels" text="Load models" />
-                                        <Menu mnemonicParsing="false" text="Set load path">
-                                            <items>
-                                                <MenuItem mnemonicParsing="false" onAction="#setLoadPath" text="Set load path" />
-                                                <Menu fx:id="recentPathsMenu" mnemonicParsing="false" text="Recent paths" />
-                                            </items>
-                                        </Menu>
-                                        <MenuItem mnemonicParsing="false" onAction="#setSavePath" text="Set save path" />
                                         <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Set cache path" />
                                     </items>
                                 </Menu>

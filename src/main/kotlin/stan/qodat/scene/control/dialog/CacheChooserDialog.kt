@@ -1,6 +1,5 @@
 package stan.qodat.scene.control.dialog
 
-import javafx.beans.binding.Bindings
 import javafx.fxml.FXMLLoader
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Dialog
@@ -15,12 +14,17 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
         try {
             val cacheChooserLoader = FXMLLoader(Qodat::class.java.getResource("cachechooser.fxml"))
             val root = cacheChooserLoader.load<AnchorPane>()
-            val controller: CacheChooserController = cacheChooserLoader.getController()
 
             dialogPane.content = root
             dialogPane.stylesheets.add(root.stylesheets.first())
             dialogPane.styleClass.add("myDialog")
+            dialogPane.buttonTypes.add(ButtonType.OK)
+            dialogPane
+                .lookupButton(ButtonType.OK)
+                .disableProperty()
+                .bind(CacheChooserController.disableOkButtonProperty)
 
+            val controller: CacheChooserController = cacheChooserLoader.getController()
             setResultConverter {
                 when(it) {
                     ButtonType.OK -> {
@@ -32,19 +36,6 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
                 }
             }
 
-            dialogPane.buttonTypes.add(ButtonType.OK)
-            dialogPane.lookupButton(ButtonType.OK).disableProperty()
-                .bind(
-                    Bindings.createBooleanBinding(
-                        {
-                            val path = controller.qodatCacheDirChooser.pathProperty.get()
-                            path != null && path.toFile().let {
-                                it.exists() && it.isDirectory && it.listFiles().isNotEmpty()
-                            }
-                        },
-                        controller.qodatCacheDirChooser.pathProperty
-                    )
-                )
 
         } catch (e: Exception) {
             e.printStackTrace()

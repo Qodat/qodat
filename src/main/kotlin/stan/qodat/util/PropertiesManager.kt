@@ -16,7 +16,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class PropertiesManager(private val saveFilePath: Path = Paths.get(".qodat/session.properties")) {
+class PropertiesManager(private val saveFilePath: Path) {
 
     private val logger = LoggerFactory.getLogger(PropertiesManager::class.java)
     private val properties = Properties()

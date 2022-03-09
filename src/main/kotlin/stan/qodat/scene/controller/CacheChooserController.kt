@@ -1,6 +1,8 @@
 package stan.qodat.scene.controller
 
+import javafx.application.Platform
 import javafx.beans.property.ObjectProperty
+import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.beans.value.ObservableValue
 import javafx.collections.FXCollections
@@ -49,6 +51,7 @@ class CacheChooserController : Initializable {
 
     @FXML
     private lateinit var lblStatusText: Label
+
     @FXML
     private lateinit var lblErrorText: Label
 
@@ -67,12 +70,39 @@ class CacheChooserController : Initializable {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
-        osrsCacheDirChooser = DirChooserHBox("OSRS Cache", Properties.osrsCachePath, lblErrorText)
-        rootDirChooser = DirChooserHBox("Root", Properties.rootPath, lblErrorText)
-        downloadDirChooser = DirChooserHBox(("Downloads"), Properties.downloadsPath, lblErrorText, editable = false)
-        projectFilesDirChooser = DirChooserHBox("Project Files", Properties.projectFilesPath, lblErrorText, editable = false)
-        exportsDirChooser = DirChooserHBox("Exports", Properties.defaultExportsPath, lblErrorText, editable = false)
-        qodatCacheDirChooser = DirChooserHBox("Qodat Cache", Properties.qodatCachePath, lblErrorText, editable = false)
+        osrsCacheDirChooser = DirChooserHBox(
+            identifier = "OSRS Cache",
+            property = Properties.osrsCachePath,
+            lblErrorText = lblErrorText,
+            disableOkButtonIfEmpty = true
+        )
+        rootDirChooser = DirChooserHBox(
+            identifier = "Root",
+            property = Properties.rootPath,
+            lblErrorText = lblErrorText
+        )
+        downloadDirChooser = DirChooserHBox(
+            identifier = ("Downloads"),
+            property = Properties.downloadsPath,
+            lblErrorText = lblErrorText, editable = false
+        )
+        projectFilesDirChooser = DirChooserHBox(
+            identifier = "Project Files",
+            property = Properties.projectFilesPath,
+            lblErrorText = lblErrorText,
+            editable = false,
+        )
+        exportsDirChooser = DirChooserHBox(
+            identifier = "Exports",
+            property = Properties.defaultExportsPath,
+            lblErrorText = lblErrorText, editable = false
+        )
+        qodatCacheDirChooser = DirChooserHBox(
+            identifier = "Qodat Cache",
+            property = Properties.qodatCachePath,
+            lblErrorText = lblErrorText,
+            editable = false,
+        )
         rootDirChooser.pathProperty.addListener { _, _, newValue ->
             qodatCacheDirChooser.field.text = newValue.resolve("caches/qodat").toString()
             projectFilesDirChooser.field.text = newValue.resolve("data").toString()
@@ -179,26 +209,55 @@ class CacheChooserController : Initializable {
 
     companion object {
         private const val RUNESTATS_URL = "https://archive.runestats.com/osrs"
+
+        val disableOkButtonProperty = SimpleBooleanProperty(true)
+
+
     }
 
-    class DirChooserHBox(identifier: String, property: ObjectProperty<Path>, lblErrorText: Label, editable: Boolean = true) : VBox(5.0) {
+    class DirChooserHBox(
+        identifier: String,
+        property: ObjectProperty<Path>,
+        lblErrorText: Label,
+        editable: Boolean = true,
+        disableOkButtonIfEmpty: Boolean = false
+    ) : VBox(5.0) {
         var pathProperty = SimpleObjectProperty(property.get())
         val field = TextField().apply {
             HBox.setHgrow(this, Priority.SOMETIMES)
-            text = property.get().toString()
             disableProperty().set(!editable)
             textProperty().addListener { _, _, newVal ->
                 if (newVal != "") {
                     lblErrorText.isVisible = false
                     try {
-                        pathProperty.set(Paths.get(newVal))
+                        val directory = Paths.get(newVal).toFile()
+                        pathProperty.set(directory.toPath())
+                        if (disableOkButtonIfEmpty)
+                            checkIfValid(directory)
                     } catch (e: Exception) {
                         lblErrorText.text = e.message
                         lblErrorText.isVisible = true
                     }
                 }
             }
+            Platform.runLater {
+                text = property.get().toString()
+            }
         }
+
+        private fun checkIfValid(directory: File) {
+            if (directory.exists() && directory.isDirectory) {
+                val files = directory.listFiles()?.takeIf { it.isNotEmpty() }
+                if (files != null) {
+                    disableOkButtonProperty.set(false)
+                    field.style = ""
+                    return
+                }
+            }
+            field.style = "-fx-text-fill: #CC666E;"
+            disableOkButtonProperty.set(true)
+        }
+
         init {
             children.add(Label("$identifier Directory:"))
             children.add(HBox().apply {

@@ -6,6 +6,6 @@ object Launcher {
     @ExperimentalTime
     @JvmStatic
     fun main(args: Array<String>) {
-        Qodat.main(args)
+      Qodat.main(args)
     }
 }
