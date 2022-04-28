@@ -9,14 +9,12 @@ import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
+import qodat.cache.Cache
 import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
-import qodat.cache.Cache
 import stan.qodat.javafx.onChange
-import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.util.configureSearchFilter
-import stan.qodat.util.onItemSelected
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
@@ -56,6 +54,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
         animations.onChange {
             while(next()) {
+
                 if (wasAdded()) {
                     for (i in from until to){
                         val anim = list[i]
@@ -78,6 +77,9 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
         }
     }
 
+    fun clearAnimationCache(){
+        animationMap.clear()
+    }
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {
         return p1.animationIds

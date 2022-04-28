@@ -7,13 +7,13 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.*
-import javafx.stage.DirectoryChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.control.dialog.CacheChooserDialog
 import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
 import stan.qodat.util.bind
@@ -21,6 +21,7 @@ import stan.qodat.util.createDragSpace
 import stan.qodat.util.createSelectTabListener
 import stan.qodat.util.setAndBind
 import java.net.URL
+import java.nio.file.Path
 import java.util.*
 
 
@@ -377,19 +378,23 @@ class MainController : SceneController("main-scene") {
 
     @FXML
     fun setCachePath() {
-        val chooser = DirectoryChooser()
 
-        val currentCachePath = Properties.osrsCachePath.get()
-        if (currentCachePath != null)
-            chooser.initialDirectory = currentCachePath.toFile()
+        fun resolveAndMake(rootDir: Path, s: String) = rootDir.resolve(s).apply {
+            val file = toFile()
+            if (!file.exists())
+                file.mkdirs()
+        }
 
-        chooser.title = "Select a path to load files from"
-        try {
-            val path = chooser.showDialog(menuBar.scene.window).toPath()
-            Properties.osrsCachePath.set(path)
+        val dialog = CacheChooserDialog()
+        dialog.showAndWait().ifPresent { (rootDir, cacheDir) ->
+            Properties.osrsCachePath.set(cacheDir)
+            Properties.rootPath.set(rootDir)
+            Properties.downloadsPath.set(resolveAndMake(rootDir, "downloads"))
+            Properties.qodatCachePath.set(resolveAndMake(rootDir,"caches/qodat"))
+            Properties.legacyCachePath.set(resolveAndMake(rootDir,"cache/667"))
+            Properties.projectFilesPath.set(resolveAndMake(rootDir,"data"))
+            Properties.defaultExportsPath.set(resolveAndMake(rootDir,"exports"))
             Properties.viewerCache.set(OldschoolCacheRuneLite)
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
 

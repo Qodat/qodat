@@ -8,7 +8,10 @@ import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
 import stan.qodat.Properties
-import stan.qodat.javafx.*
+import stan.qodat.javafx.hBox
+import stan.qodat.javafx.label
+import stan.qodat.javafx.onSelected
+import stan.qodat.javafx.treeItem
 import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.Animation
@@ -120,28 +123,33 @@ class EntityTreeItem(
                         }
                     )
                 }
-
-                val showAllTreeItem = TreeItem<Node>().apply {
-                    label("Show all")
-                }
-                children += showAllTreeItem
-
-                onExpanded {
-                    if (showAllTreeItem.children.isEmpty())
-                        for (animation in entity.getAnimations())
-                            showAllTreeItem.children.add(AnimationTreeItem(animation, entity, treeView))
-                }
-                entity.selectedAnimation.addListener { _, oldAnimation, newAnimation ->
-                    if (oldAnimation != null)
-                        showAllTreeItem.move(newAnimation, this, false)
+                entity.selectedAnimation.addListener { _, _, newAnimation ->
                     if (newAnimation != null)
-                        move(newAnimation, showAllTreeItem, true)
+                        children.setAll(AnimationTreeItem(newAnimation, entity, treeView))
                 }
-
-                // must be below adding of animations
-                val selected = entity.selectedAnimation.get()
-                if (selected != null)
-                    move(selected, showAllTreeItem, true)
+//                val showAllTreeItem = TreeItem<Node>().apply {
+//                    label("Show all")
+//                }
+//                children += showAllTreeItem
+//
+//                onExpanded {
+//                    if (showAllTreeItem.children.isEmpty()) {
+//                        for (animation in entity.getAnimations()) {
+//                            showAllTreeItem.children.add(AnimationTreeItem(animation, entity, treeView))
+//                        }
+//                    }
+//                }
+//                entity.selectedAnimation.addListener { _, oldAnimation, newAnimation ->
+//                    if (oldAnimation != null)
+//                        showAllTreeItem.move(newAnimation, this, false)
+//                    if (newAnimation != null)
+//                        move(newAnimation, showAllTreeItem, true)
+//                }
+//
+//                // must be below adding of animations
+//                val selected = entity.selectedAnimation.get()
+//                if (selected != null)
+//                    move(selected, showAllTreeItem, true)
 
                 expandedProperty().set(Properties.treeItemAnimationsExpanded.get())
             }

@@ -11,7 +11,10 @@ import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.*
+import stan.qodat.util.addSceneTreeItem
+import stan.qodat.util.filterAndMap
+import stan.qodat.util.onInvalidation
+import stan.qodat.util.removeSceneTreeItem
 
 /**
  * TODO: add documentation
@@ -85,6 +88,11 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
         } catch (e: Exception) {
             Qodat.logException("Failed to remove node {$nodeProvider} from scene $name", e)
         }
+    }
+
+    fun clear() {
+        group.children.clear()
+        nodeProviderMap.clear()
     }
 
     fun getModels(): List<Model> {

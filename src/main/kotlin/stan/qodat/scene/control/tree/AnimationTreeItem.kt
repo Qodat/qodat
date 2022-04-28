@@ -7,7 +7,9 @@ import javafx.scene.paint.Color
 import javafx.scene.text.Text
 import stan.qodat.Properties
 import stan.qodat.cache.impl.qodat.QodatCache
-import stan.qodat.javafx.*
+import stan.qodat.javafx.hBox
+import stan.qodat.javafx.onChange
+import stan.qodat.javafx.onExpanded
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
@@ -33,8 +35,8 @@ class AnimationTreeItem(
 
     init {
 
-        assert(animation.treeItemProperty.get() == null)
-        { "Tree item property for animation $animation is already set!" }
+//        assert(animation.treeItemProperty.get() == null)
+//        { "Tree item property for animation $animation is already set!" }
 
         hBox(isGraphic = false) {
             children += Text("ANIMATION").apply {

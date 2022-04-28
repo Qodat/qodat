@@ -12,6 +12,7 @@ import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
 import qodat.cache.Cache
 import qodat.cache.definition.*
+import qodat.cache.event.CacheReloadEvent
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
@@ -52,6 +53,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         Properties.osrsCachePath.onInvalidation {
             store = Store(get().toFile())
             load()
+            fire(CacheReloadEvent(this@OldschoolCacheRuneLite))
         }
     }
 

@@ -27,7 +27,9 @@ import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
 import qodat.cache.Cache
+import qodat.cache.CacheEventListener
 import qodat.cache.definition.EntityDefinition
+import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.CacheAssetLoader
@@ -55,33 +57,52 @@ import java.util.*
  */
 abstract class EntityViewController(name: String) : SceneController(name) {
 
-    @FXML lateinit var root: SplitPane
-    @FXML lateinit var tabPane: TabPane
-    @FXML lateinit var animationModelsSplitPane: SplitPane
+    @FXML
+    lateinit var root: SplitPane
+    @FXML
+    lateinit var tabPane: TabPane
+    @FXML
+    lateinit var animationModelsSplitPane: SplitPane
 
-    @FXML lateinit var npcList: ViewNodeListView<NPC>
-    @FXML lateinit var itemList: ViewNodeListView<Item>
-    @FXML lateinit var objectList: ViewNodeListView<Object>
-    @FXML lateinit var spritesList: ViewNodeListView<Sprite>
-    @FXML lateinit var spotAnimList: ViewNodeListView<SpotAnimation>
-    @FXML lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
+    @FXML
+    lateinit var npcList: ViewNodeListView<NPC>
+    @FXML
+    lateinit var itemList: ViewNodeListView<Item>
+    @FXML
+    lateinit var objectList: ViewNodeListView<Object>
+    @FXML
+    lateinit var spritesList: ViewNodeListView<Sprite>
+    @FXML
+    lateinit var spotAnimList: ViewNodeListView<SpotAnimation>
+    @FXML
+    lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
 
-    @FXML lateinit var sortNpcBox: ComboBox<SortType>
-    @FXML lateinit var sortItemBox: ComboBox<SortType>
-    @FXML lateinit var sortObjectBox: ComboBox<SortType>
-    @FXML lateinit var sortSpotAnimBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortNpcBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortItemBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortObjectBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortSpotAnimBox: ComboBox<SortType>
 
     enum class SortType {
         NAME,
         ID
     }
 
-    @FXML lateinit var searchNpcField: TextField
-    @FXML lateinit var searchItemField: TextField
-    @FXML lateinit var searchObjectField: TextField
-    @FXML lateinit var searchSpritesField: TextField
-    @FXML lateinit var searchSpotAnimField: TextField
-    @FXML lateinit var searchInterfaceField: TextField
+    @FXML
+    lateinit var searchNpcField: TextField
+    @FXML
+    lateinit var searchItemField: TextField
+    @FXML
+    lateinit var searchObjectField: TextField
+    @FXML
+    lateinit var searchSpritesField: TextField
+    @FXML
+    lateinit var searchSpotAnimField: TextField
+    @FXML
+    lateinit var searchInterfaceField: TextField
 
     lateinit var animationController: AnimationController
     lateinit var modelController: ModelController
@@ -147,53 +168,82 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         configureSortComboBox(sortObjectBox, objectList, Properties.selectedObjectSortType)
         configureSortComboBox(sortSpotAnimBox, spotAnimList, Properties.selectedSpotAnimSortType)
 
-        cacheProperty().addListener { _, _, newValue ->
-
-            CacheAssetLoader(newValue, animationController).run {
-
-                val semaphore = Semaphore(1)
-
-                loadLastSelectedAnimation(7, semaphore)
-
-                loadAnimations { animationList ->
-                    animationController.animations.setAll(animationList)
-                    semaphore.release()
+        val cacheListener = CacheEventListener {
+            if (it is CacheReloadEvent) {
+                val cache = it.cache
+                val properties = arrayOf(
+                    currentSelectedNpcProperty,
+                    currentSelectedItemProperty,
+                    currentSelectedObjectProperty,
+                    currentSelectedSpriteProperty,
+                    currentSelectedSpotAnimProperty,
+                    currentSelectedInterfaceProperty
+                )
+                for (property in properties) {
+                    val value = property.get()
+                    if (value != null)
+                        onUnselectedEvent.handle(ViewNodeListView.UnselectedEvent(value, false, false))
                 }
+                loadAssets(cache)
+            }
+        }
+        cacheProperty().addListener { _, oldValue, newValue ->
+            loadAssets(newValue)
+            oldValue?.removeListener(cacheListener)
+            newValue.addListener(cacheListener)
+        }
+    }
 
-                loadNpcs {
-                    npcs.setAll(it)
-                    handleLastSelectedEntity(it, npcList)
-                    semaphore.release()
-                }
+    private fun loadAssets(cache: Cache) {
+        CacheAssetLoader(cache, animationController).run {
 
-                loadObjects {
-                    objects.setAll(it)
-                    handleLastSelectedEntity(it, objectList)
-                    semaphore.release()
-                }
+            val semaphore = Semaphore(1)
 
-                loadItems {
-                    items.setAll(it)
-                    handleLastSelectedEntity(it, itemList)
-                    semaphore.release()
-                }
+            loadLastSelectedAnimation(7, semaphore)
 
-                loadSpotAnims {
-                    spotAnims.setAll(it)
-                    handleLastSelectedEntity(it, spotAnimList)
-                    semaphore.release()
-                }
+            loadAnimations { animationList ->
+                animationController.clearAnimationCache()
+                animationController.animationsListView.selectionModel.clearSelection()
+                animationController.animations.setAll(animationList)
+                semaphore.release()
+            }
 
-                sprites.setAll(newValue.getSprites().filter {
+            loadNpcs {
+                npcs.setAll(it)
+                handleLastSelectedEntity(it, npcList)
+                semaphore.release()
+            }
+
+            loadObjects {
+                objects.setAll(it)
+                handleLastSelectedEntity(it, objectList)
+                semaphore.release()
+            }
+
+            loadItems {
+                items.setAll(it)
+                handleLastSelectedEntity(it, itemList)
+                semaphore.release()
+            }
+
+            loadSpotAnims {
+                spotAnims.setAll(it)
+                handleLastSelectedEntity(it, spotAnimList)
+                semaphore.release()
+            }
+            try {
+                sprites.setAll(cache.getSprites().filter {
                     it.width > 0 && it.height > 0
                 }.map {
                     Sprite(it)
                 })
-                interfaces.setAll(newValue.getRootInterfaces().map {
-                    InterfaceGroup(newValue, it.key, it.value)
+                interfaces.setAll(cache.getRootInterfaces().map {
+                    InterfaceGroup(cache, it.key, it.value)
                 })
                 interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
-
+            } catch (e: Exception) {
+                Qodat.logException("Failed to load sprites/interfaces", e)
+            } finally {
                 semaphore.release()
             }
         }
@@ -288,22 +338,24 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             animationModelsSplitPane.items.add(containerWithDragSpace2)
             animationModelsSplitPane.items.add(materialView)
 
-            containerWithDragSpace1.children.add(animationModelsSplitPane
-                .createDragSpace(
-                    Properties.viewerDivider2Position,
-                    SimpleIntegerProperty(0),
-                    size = 1,
-                    styleClass = "dark-drag-space"
-                )
+            containerWithDragSpace1.children.add(
+                animationModelsSplitPane
+                    .createDragSpace(
+                        Properties.viewerDivider2Position,
+                        SimpleIntegerProperty(0),
+                        size = 1,
+                        styleClass = "dark-drag-space"
+                    )
             )
 
-            containerWithDragSpace2.children.add(animationModelsSplitPane
-                .createDragSpace(
-                    Properties.viewerDivider3Position,
-                    SimpleIntegerProperty(1),
-                    size = 1,
-                    styleClass = "dark-drag-space"
-                )
+            containerWithDragSpace2.children.add(
+                animationModelsSplitPane
+                    .createDragSpace(
+                        Properties.viewerDivider3Position,
+                        SimpleIntegerProperty(1),
+                        size = 1,
+                        styleClass = "dark-drag-space"
+                    )
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -394,7 +446,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         }
     }
 
-    private fun<T : ViewNodeProvider> ViewNodeListView<T>.clearAndScrollToSelect(selectedNode: T?) {
+    private fun <T : ViewNodeProvider> ViewNodeListView<T>.clearAndScrollToSelect(selectedNode: T?) {
         selectionModel.clearSelection()
         selectionModel.select(selectedNode)
         scrollTo(selectedNode)

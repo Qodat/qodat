@@ -47,6 +47,7 @@ dependencies {
     implementation("com.displee:rs-cache-library:6.8.1")
     implementation("org.joml:joml-primitives:1.10.0")
     implementation("org.joml:joml:1.10.2")
+    implementation("no.tornado:tornadofx:1.7.20")
     testImplementation(kotlin("test-junit"))
 }
 

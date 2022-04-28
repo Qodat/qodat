@@ -13,8 +13,24 @@ import java.io.UnsupportedEncodingException
  */
 abstract class Cache(val name: String) {
 
+    private val listeners = mutableListOf<CacheEventListener>()
+
     open fun encode(any: Any) : EncodeResult {
         throw UnsupportedEncodingException()
+    }
+
+    fun addListener(listener: CacheEventListener) {
+        listeners += listener
+    }
+
+    fun removeListener(listener: CacheEventListener) {
+        listeners -= listener
+    }
+
+    fun fire(event: CacheEvent){
+        listeners.forEach {
+            it.on(event)
+        }
     }
 
     abstract fun getModelDefinition(id: String) : ModelDefinition
