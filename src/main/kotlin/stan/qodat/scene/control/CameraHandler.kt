@@ -27,7 +27,8 @@ class CameraHandler(
     }
 ) {
 
-    val position = Translate(0.0, -100.0, -1000.0)
+    val pivot = Translate(0.0, 0.0, 0.0)
+    val position = Translate(0.0, 0.0, -1000.0)
 
     val cameraTransformGroup = TransformGroup()
 
@@ -41,6 +42,13 @@ class CameraHandler(
             xViewRotate,
             zViewRotate
         )
+
+        xViewRotate.pivotXProperty().bind(pivot.xProperty())
+        zViewRotate.pivotXProperty().bind(pivot.xProperty())
+        xViewRotate.pivotYProperty().bind(pivot.yProperty())
+        zViewRotate.pivotYProperty().bind(pivot.yProperty())
+        xViewRotate.pivotZProperty().bind(pivot.zProperty())
+        zViewRotate.pivotZProperty().bind(pivot.zProperty())
 
         cameraTransformGroup.children.add(camera)
 

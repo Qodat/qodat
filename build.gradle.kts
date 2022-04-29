@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "stan.qodat"
-version = "0.1.4"
+version = "0.1.5"
 
 repositories {
     maven(url = "https://repo.runelite.net")

@@ -53,12 +53,13 @@ object SubScene3D : AbstractSubScene() {
             scalingGroup,
             ambientLight
         )
-
         contextProperty.addListener { _, oldValue, newValue ->
             if (oldValue != null)
                 scalingGroup.children.remove(oldValue.getSceneNode())
-            if (newValue != null)
-                scalingGroup.children.add(newValue.getSceneNode())
+            if (newValue != null) {
+                val sceneContents = newValue.getSceneNode()
+                scalingGroup.children.add(sceneContents)
+            }
             Properties.selectedScene.set(newValue?.name)
         }
 

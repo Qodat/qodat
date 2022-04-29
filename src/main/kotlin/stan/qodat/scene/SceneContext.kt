@@ -4,6 +4,7 @@ import javafx.beans.property.SimpleBooleanProperty
 import javafx.collections.ListChangeListener
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.transform.Translate
 import stan.qodat.Qodat
 import stan.qodat.scene.controller.SceneController
 import stan.qodat.scene.provider.SceneNodeProvider
@@ -40,6 +41,7 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
 
     init {
         group.id = name
+        val t = Translate(0.0, 0.0, 0.0)
         val childrenChangeListener = ListChangeListener<Node> {
             if (activeContext.get()) {
                 while (it.next()) {
@@ -54,8 +56,10 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
                             Qodat.removeSceneTreeItem(provider)
                     }
                 }
+                t.y = -group.boundsInParent.centerY
             }
         }
+        group.transforms.add(t)
         group.children.addListener(childrenChangeListener)
         activeContext.onInvalidation {
             group.children.forEach {
