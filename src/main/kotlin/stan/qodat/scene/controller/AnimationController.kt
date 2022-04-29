@@ -69,7 +69,6 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             cellFactory = Animation.createCellFactory()
             items = filteredAnimations
             disableProperty().setAndBind(Properties.disableAnimationsView)
-
         }
         searchTextField.apply {
             disableProperty().setAndBind(Properties.disableAnimationsView)

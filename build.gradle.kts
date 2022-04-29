@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "stan.qodat"
-version = "0.1.1"
+version = "0.1.4"
 
 repositories {
     maven(url = "https://repo.runelite.net")
@@ -73,7 +73,7 @@ runtime {
 
     modules.set(listOf("java.base", "java.management", "java.desktop", "jdk.unsupported", "java.scripting", "java.logging", "java.xml", "java.naming", "java.sql"))
 
-    targetPlatform("win", "/Users/stanvanderbend/Documents/jdk-17.0.2")
+    targetPlatform("win-${version}", "/Users/stanvanderbend/Documents/jdk-17.0.2")
 
     jpackage {
         appVersion = "1.0.0"

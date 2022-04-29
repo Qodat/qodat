@@ -11,6 +11,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * This class is a TextField which implements an "autocomplete" functionality, based on a supplied list of entries.
@@ -35,11 +36,11 @@ public class AutoCompleteTextField extends TextField {
         entries = new TreeSet<>();
         entriesPopup = new ContextMenu();
         textProperty().addListener((observableValue, s, s2) -> {
-            String text = StringsKt.capitalize(getText());
+            String text = getText().toLowerCase();
             if (text.length() == 0) {
                 entriesPopup.hide();
             } else {
-                LinkedList<String> searchResult = new LinkedList<>(entries.subSet(text, text + Character.MAX_VALUE));
+                List<String> searchResult = entries.parallelStream().filter(name -> name.toLowerCase().contains(text)).collect(Collectors.toList());
                 if (entries.size() > 0) {
                     populatePopup(searchResult);
                     if (!entriesPopup.isShowing()) {
@@ -61,7 +62,7 @@ public class AutoCompleteTextField extends TextField {
     private void populatePopup(List<String> searchResult) {
         List<CustomMenuItem> menuItems = new LinkedList<>();
         // If you'd like more entries, modify this line.
-        int maxEntries = 10;
+        int maxEntries = 15;
         int count = Math.min(searchResult.size(), maxEntries);
         for (int i = 0; i < count; i++) {
             final String result = searchResult.get(i);

@@ -4,6 +4,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
+import mqo.MQOImporter
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
 import qodat.cache.definition.*
@@ -15,6 +16,8 @@ import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
 import java.io.UnsupportedEncodingException
+import kotlin.io.path.deleteIfExists
+import kotlin.io.path.exists
 import kotlin.io.path.outputStream
 
 @ExperimentalSerializationApi
@@ -210,13 +213,32 @@ object QodatCache : Cache("qodat") {
                 if (definition !is QodatNpcDefinition)
                     throw IllegalArgumentException("Can only serialize QodatNpcDefinitions not $definition")
 
+                val outDir = Properties.qodatCachePath.get().resolve("npcs").apply {
+                    if (!exists())
+                        toFile().mkdirs()
+                }
                 npcs.add(definition)
                 json.encodeToStream(
                     definition,
-                    Properties.qodatCachePath.get()
-                        .resolve("npcs/" + definition.name + ".json")
-                        .outputStream()
+                    outDir.resolve(definition.name + ".json").outputStream()
                 )
+            }
+        }
+    }
+
+    fun remove(any: Any) {
+        when (any) {
+            is Model -> {
+                val modelName = any.getName()
+                models.remove(modelName)
+                Properties.qodatCachePath.get().resolve("models/$modelName.json").deleteIfExists()
+            }
+            is NPC -> {
+                val definition = any.definition
+                if (definition !is QodatNpcDefinition)
+                    throw IllegalArgumentException("Can only serialize QodatNpcDefinitions not $definition")
+                npcs.remove(definition)
+                Properties.qodatCachePath.get().resolve("npcs").resolve(definition.name + ".json").deleteIfExists()
             }
         }
     }
@@ -278,6 +300,7 @@ object QodatCache : Cache("qodat") {
             when (it.extension) {
                 "json" -> json.decodeFromStream(it.inputStream())
                 "model", "dat" -> QodatModelDefinition.create(RSModelLoader().load(it.name, it.readBytes()))
+                "mqo" -> QodatModelDefinition.create(MQOImporter().load(it))
                 else -> throw UnsupportedEncodingException("Can only read .json, .model, .dat files.")
             }
         }

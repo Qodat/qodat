@@ -10,8 +10,8 @@ import javafx.scene.input.ClipboardContent
 import javafx.scene.input.MouseEvent
 import javafx.scene.input.TransferMode
 import javafx.util.Callback
-import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.provider.ViewNodeProvider
+import stan.qodat.scene.runescape.entity.Entity
 import java.io.File
 
 
@@ -30,10 +30,10 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             val listCell = object : ListCell<N>() {
                 override fun updateItem(item: N?, empty: Boolean) {
                     super.updateItem(item, empty)
-                    if (item != null)
-                        graphic = item.getViewNode()
+                    graphic = if (empty || item == null)
+                        null
                     else
-                        graphic = null
+                        item.getViewNode()
                 }
             }
             listCell.itemProperty().addListener { _, n, n2 ->

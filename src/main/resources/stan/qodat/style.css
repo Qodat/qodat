@@ -484,7 +484,7 @@
 #cache-list,
 #frame-list,
 #materials-list,
-#animations-list,
+.animations-list,
 #models-list {
     -fx-spacing: 0;
     -fx-padding: 0;
@@ -492,7 +492,7 @@
     -fx-background-radius: 0;
 }
 
-#animations-list,
+.animations-list,
 #materials-list,
 #models-list,
 #cache-list

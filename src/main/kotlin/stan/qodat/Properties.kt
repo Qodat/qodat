@@ -132,6 +132,9 @@ object Properties {
     val treeItemEntityExpanded = SimpleBooleanProperty(true)
     val treeItemInterfaceExpanded = SimpleBooleanProperty(true)
 
+    val copyModelsFromNpc = SimpleBooleanProperty(true)
+    val copyAnimationsFromNpc = SimpleBooleanProperty(true)
+
     fun bind(sessionManager: PropertiesManager) {
 
         sessionManager.bind("anti-aliasing", antialiasing) {
@@ -167,6 +170,8 @@ object Properties {
         sessionManager.bindBoolean("show-frames-tab", showFramesTab)
         sessionManager.bindBoolean("expand-settings", expandSettings)
         sessionManager.bindBoolean("lock-scene", lockScene)
+        sessionManager.bindBoolean("copy-models-from-npc", copyModelsFromNpc)
+        sessionManager.bindBoolean("copy-animations-from-npc", copyAnimationsFromNpc)
 
         sessionManager.bindBoolean("camera-inverse", cameraInvert)
         sessionManager.bindDouble("camera-speed", cameraSpeed)

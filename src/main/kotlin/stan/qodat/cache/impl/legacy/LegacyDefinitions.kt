@@ -2,9 +2,9 @@ package stan.qodat.cache.impl.legacy
 
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import qodat.cache.definition.*
 import qodat.cache.models.FaceNormal
 import qodat.cache.models.VertexNormal
-import qodat.cache.definition.*
 
 @Serializable
 data class LegacyNpcDefinition(
@@ -114,7 +114,7 @@ data class LegacyModelDefinition(
     override fun getFaceAlphas() = faceAlphas
     override fun getFacePriorities() = facePriorities
     override fun getFaceTypes() = faceTypes
-    override fun getFaceNormals() = emptyArray<FaceNormal>()
+    override fun getFaceNormals() = emptyArray<FaceNormal?>()
     override fun getPriority() = priority
     override fun getTextureConfigCount() = 0
     override fun getTextureRenderTypes() = null

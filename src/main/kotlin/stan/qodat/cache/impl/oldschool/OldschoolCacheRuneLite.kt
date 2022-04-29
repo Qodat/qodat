@@ -116,8 +116,9 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
         val animatedNpcs = ArrayList<NPCDefinition>()
         for (npc in npcManager.npcs) {
-            if (npc.name.isEmpty() || npc.models == null || npc.models.isEmpty())
+            if (npc.models == null || npc.models.isEmpty()) {
                 continue
+            }
             try {
                 val animsFile = npcAnimsDir.resolve("${npc.id}.json")
                 val animsReader = animsFile.bufferedReader()
@@ -125,13 +126,15 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 animsReader.close()
                 animatedNpcs.add(object : NPCDefinition {
                     override fun getOptionalId() = OptionalInt.of(npc.id)
-                    override val name = npc.name
+                    override val name = npc.name.ifBlank { "null" }
                     override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                     override val animationIds = anims.map { it.toString() }.toTypedArray()
                     override val findColor = npc.recolorToFind
                     override val replaceColor = npc.recolorToReplace
                 })
             } catch (ignored: Exception) {
+                if (npc.name.contains("olm", true))
+                    System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
                 continue
             }
         }

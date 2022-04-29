@@ -8,7 +8,7 @@
       fx:controller="stan.qodat.scene.controller.AnimationController"
       stylesheets="@style.css">
     <children>
-        <ListView id="animations-list" fx:id="animationsListView"/>
+        <ListView styleClass="animations-list" fx:id="animationsListView"/>
         <TextField fx:id="searchTextField" maxHeight="27.0" promptText="Search animation"/>
     </children>
 </VBox>

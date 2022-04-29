@@ -22,9 +22,9 @@ import javafx.scene.paint.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.actor
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Semaphore
 import qodat.cache.Cache
 import qodat.cache.CacheEventListener
@@ -125,6 +125,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     lateinit var onEntitySelected: (Entity<*>) -> Unit
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
+
 
         VBox.setVgrow(npcList, Priority.ALWAYS)
         VBox.setVgrow(itemList, Priority.ALWAYS)
@@ -250,17 +251,19 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     }
 
     private fun loadLastSelectedAnimation(requiredPermits: Int, semaphore: Semaphore) {
-        GlobalScope.launch {
-            repeat(requiredPermits) {
-                semaphore.acquire()
+        Thread {
+            runBlocking {
+                repeat(requiredPermits) {
+                    semaphore.acquire()
+                }
             }
-            delay(666L)
+            Thread.sleep(666L)
             GlobalScope.launch(Dispatchers.JavaFx) {
                 val animationToSelect =
                     animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
                 animationController.animationsListView.selectionModel.select(animationToSelect)
             }
-        }
+        }.start()
     }
 
     private inline fun <reified T : Entity<*>> handleLastSelectedEntity(
@@ -408,8 +411,10 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             }
         }
         Properties.selectedEntity.addListener { _, oldEntity, newEntity ->
-            if (newEntity is AnimatedEntity)
+            if (newEntity is AnimatedEntity) {
                 animationController.animations.setAll(*newEntity.getAnimations())
+                animationController.animationsListView.refresh()
+            }
         }
         return animationView
     }
@@ -473,6 +478,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     override fun onSelect(old: SceneController?) {
         Properties.selectedAnimation.setAndBind(sceneContext.animationPlayer.transformerProperty, true)
+        animationController.animationsListView.refresh()
     }
 
     override fun getViewNode(): SplitPane = root
@@ -494,7 +500,10 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     }
 
     val onUnselectedEvent = EventHandler<ViewNodeListView.UnselectedEvent> { event ->
+
         val node = event.viewNodeProvider
+
+        println("unselected $node")
 
         if (node is SceneNodeProvider)
             sceneContext.removeNode(node)

@@ -21,45 +21,45 @@
         <URL value="@style.css"/>
     </stylesheets>
     <items>
-        <TabPane fx:id="editTabPane">
-            <tabs>
-                <Tab text="Animations">
-                    <content>
-                        <VBox>
+<!--        <TabPane fx:id="editTabPane">-->
+<!--            <tabs>-->
+<!--                <Tab text="Animations">-->
+<!--                    <content>-->
+<!--                        <VBox>-->
 
-                        </VBox>
-                    </content>
-                </Tab>
-                <Tab text="Recolor">
-                    <content>
-                        <VBox>
-                            <children>
-                                <Label text="Colors"/>
-                                <ListView fx:id="colorsList">
-                                </ListView>
-                                <Label text="Brushes"/>
-                                <ColorPicker fx:id="brushColorPicker"/>
-                                <Button text="Save Changes" fx:id="saveChangesButton"/>
-                            </children>
-                        </VBox>
-                    </content>
-                </Tab>
-                <Tab text="Textures">
-                    <content>
-                        <VBox>
-                            <children>
-                                <Label text="Textures"/>
-                                <Label fx:id="selectedFaceId"/>
-                                <Label fx:id="hoveredFaceId"/>
-                                <ImageView fx:id="selectedTextureImage"/>
-                                <ListView fx:id="textureList">
-                                </ListView>
-                            </children>
-                        </VBox>
-                    </content>
-                </Tab>
-            </tabs>
-        </TabPane>
+<!--                        </VBox>-->
+<!--                    </content>-->
+<!--                </Tab>-->
+<!--                <Tab text="Recolor">-->
+<!--                    <content>-->
+<!--                        <VBox>-->
+<!--                            <children>-->
+<!--                                <Label text="Colors"/>-->
+<!--                                <ListView fx:id="colorsList">-->
+<!--                                </ListView>-->
+<!--                                <Label text="Brushes"/>-->
+<!--                                <ColorPicker fx:id="brushColorPicker"/>-->
+<!--                                <Button text="Save Changes" fx:id="saveChangesButton"/>-->
+<!--                            </children>-->
+<!--                        </VBox>-->
+<!--                    </content>-->
+<!--                </Tab>-->
+<!--                <Tab text="Textures">-->
+<!--                    <content>-->
+<!--                        <VBox>-->
+<!--                            <children>-->
+<!--                                <Label text="Textures"/>-->
+<!--                                <Label fx:id="selectedFaceId"/>-->
+<!--                                <Label fx:id="hoveredFaceId"/>-->
+<!--                                <ImageView fx:id="selectedTextureImage"/>-->
+<!--                                <ListView fx:id="textureList">-->
+<!--                                </ListView>-->
+<!--                            </children>-->
+<!--                        </VBox>-->
+<!--                    </content>-->
+<!--                </Tab>-->
+<!--            </tabs>-->
+<!--        </TabPane>-->
         <SplitPane fx:id="animationModelsSplitPane" prefHeight="160.0" prefWidth="200.0"
                    styleClass="split-viewer-pane"/>
         <TabPane fx:id="tabPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">

@@ -16,6 +16,7 @@ import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import javafx.scene.shape.Sphere
 import kotlinx.serialization.json.decodeFromStream
+import mqo.MQOImporter
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
 import qodat.cache.Encoder
@@ -234,25 +235,19 @@ class Model(label: String,
 
     companion object {
 
-        val supportedExtensions = arrayOf("model", "dat", "json")
+        val supportedExtensions = arrayOf("model", "dat", "json", "mqo")
 
         fun toFile(file: File) : Model {
-            val definition = when (file.extension) {
-                "json" -> {
-                    QodatCache.json.decodeFromStream<QodatModelDefinition>(file.inputStream())
-                }
-                else -> {
-                    // TODO: support gzip, mqo
-                    RSModelLoader().load(file.nameWithoutExtension, file.readBytes())
-                }
-            }
-            return Model(definition.getName(), definition)
+            TODO("Not implemented")
         }
 
         fun fromFile(file: File) : Model {
             val definition = when (file.extension) {
                 "json" -> {
                     QodatCache.json.decodeFromStream<QodatModelDefinition>(file.inputStream())
+                }
+                "mqo" -> {
+                    MQOImporter().load(file)
                 }
                 else -> {
                     // TODO: support gzip, mqo

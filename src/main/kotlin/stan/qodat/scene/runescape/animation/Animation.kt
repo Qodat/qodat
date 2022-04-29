@@ -13,7 +13,6 @@ import javafx.util.Callback
 import qodat.cache.Cache
 import qodat.cache.Encoder
 import qodat.cache.definition.AnimationDefinition
-import stan.qodat.scene.control.export.mp4.AnimationToMp4Task
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.javafx.menu
@@ -21,12 +20,13 @@ import stan.qodat.javafx.menuItem
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.export.gif.AnimationToGifTask
+import stan.qodat.scene.control.export.mp4.AnimationToMp4Task
 import stan.qodat.scene.control.tree.AnimationTreeItem
+import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.scene.transform.Transformer
-import stan.qodat.util.Searchable
-import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.task.BackgroundTasks
+import stan.qodat.util.Searchable
 
 /**
  * Represents a [Transformer] for [Model] objects.
@@ -149,6 +149,8 @@ class Animation(
         }
         return viewBox
     }
+
+    fun copy() = Animation(labelProperty.get(), definition, cache)
 
     companion object {
         fun createCellFactory() = Callback<ListView<Animation>, ListCell<Animation>> {

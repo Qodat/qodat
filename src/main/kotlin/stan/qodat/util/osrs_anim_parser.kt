@@ -39,7 +39,7 @@ fun createNpcAnimsJsonDir(
         val files = seqArchive.getFiles(archiveData)
         val frameIndex = store.getIndex(IndexType.FRAMES)
         val animationFiles = files.files
-        val animations = animationFiles.parallelStream().map { file ->
+        val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
@@ -48,25 +48,19 @@ fun createNpcAnimsJsonDir(
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
             val frames: Set<Int> =  anim.frameIDs?.map {
-                val hexString = Integer.toHexString(it)
-                if (hexString.length < 6) {
-                    println("Could not parse frame[$it] in anim[${anim.id}]")
-                    null
-                } else {
-                    val frameArchiveId = decodeArchiveId(hexString)
-                    val frameArchiveFileId = decodeArchiveFileId(hexString)
+                val frameArchiveId = it shr 16
+                val frameArchiveFileId = it and 65535
 
-                    val frameArchive = frameIndex.getArchive(frameArchiveId)!!
-                    val frameArchiveFiles = map.getOrPut(frameArchiveId) {
-                        frameArchive.getFiles(storage.loadArchive(frameArchive))!!
-                    }
-                    val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
-                    val frameContents = frameFile.contents
-
-                    val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
-                    frameMapArchiveId
+                val frameArchive = frameIndex.getArchive(frameArchiveId)!!
+                val frameArchiveFiles = map.getOrPut(frameArchiveId) {
+                    frameArchive.getFiles(storage.loadArchive(frameArchive))!!
                 }
-            }?.filterNotNull()?.toSet()?: emptySet()
+                val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
+                val frameContents = frameFile.contents
+
+                val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
+                frameMapArchiveId
+            }?.toSet()?: emptySet()
             (anim.id to frames)
         }.collect(Collectors.toList()).toMap()
 
@@ -141,25 +135,19 @@ fun createObjectAnimsJsonDir(
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
             val frames: Set<Int> =  anim.frameIDs?.map {
-                val hexString = Integer.toHexString(it)
-                if (hexString.length < 6) {
-                    println("Could not parse frame[$it] in anim[${anim.id}]")
-                    null
-                } else {
-                    val frameArchiveId = decodeArchiveId(hexString)
-                    val frameArchiveFileId = decodeArchiveFileId(hexString)
+                val frameArchiveId = it shr 16
+                val frameArchiveFileId = it and 65535
 
-                    val frameArchive = frameIndex.getArchive(frameArchiveId)!!
-                    val frameArchiveFiles = map.getOrPut(frameArchiveId) {
-                        frameArchive.getFiles(storage.loadArchive(frameArchive))!!
-                    }
-                    val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
-                    val frameContents = frameFile.contents
-
-                    val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
-                    frameMapArchiveId
+                val frameArchive = frameIndex.getArchive(frameArchiveId)!!
+                val frameArchiveFiles = map.getOrPut(frameArchiveId) {
+                    frameArchive.getFiles(storage.loadArchive(frameArchive))!!
                 }
-            }?.filterNotNull()?.toSet()?: emptySet()
+                val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
+                val frameContents = frameFile.contents
+
+                val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
+                frameMapArchiveId
+            }?.toSet()?: emptySet()
             (anim.id to frames)
         }.collect(Collectors.toList()).toMap()
 
