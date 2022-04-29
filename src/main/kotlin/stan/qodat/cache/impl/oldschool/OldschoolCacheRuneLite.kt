@@ -2,6 +2,7 @@ package stan.qodat.cache.impl.oldschool
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
+import kotlinx.coroutines.*
 import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
@@ -19,6 +20,7 @@ import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.util.onInvalidation
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * TODO: add documentation
@@ -107,6 +109,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         return getAnimationDefinitions().find { it.id == id }!!
     }
 
+    val animIdsCache = ConcurrentHashMap<Int, Array<String>>()
+
     override fun getNPCs(): Array<NPCDefinition> {
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
         if (!npcAnimsDir.exists()){
@@ -114,30 +118,34 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             return emptyArray()
         }
 
-        val animatedNpcs = ArrayList<NPCDefinition>()
-        for (npc in npcManager.npcs) {
-            if (npc.models == null || npc.models.isEmpty()) {
-                continue
-            }
-            try {
-                val animsFile = npcAnimsDir.resolve("${npc.id}.json")
-                val animsReader = animsFile.bufferedReader()
-                val anims = gson.fromJson<IntArray>(animsReader, intArrayType)
-                animsReader.close()
-                animatedNpcs.add(object : NPCDefinition {
-                    override fun getOptionalId() = OptionalInt.of(npc.id)
-                    override val name = npc.name.ifBlank { "null" }
-                    override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                    override val animationIds = anims.map { it.toString() }.toTypedArray()
-                    override val findColor = npc.recolorToFind
-                    override val replaceColor = npc.recolorToReplace
-                })
-            } catch (ignored: Exception) {
-                if (npc.name.contains("olm", true))
-                    System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
-                continue
-            }
+        val animatedNpcs = runBlocking {
+            npcManager.npcs
+                .filter { it.models != null && it.models.isNotEmpty() }
+                .map { npc ->
+                    GlobalScope.async(Dispatchers.IO) {
+                        object : NPCDefinition {
+                            override fun getOptionalId() = OptionalInt.of(npc.id)
+                            override val name = npc.name.ifBlank { "null" }
+                            override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                            override val animationIds = try {
+                                animIdsCache.getOrPut(npc.standingAnimation) {
+                                    npcAnimsDir
+                                        .resolve("${npc.id}.json")
+                                        .bufferedReader()
+                                        .use {gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }.toTypedArray() }
+                                }
+                            } catch (ignored: Exception) {
+                                if (npc.name.contains("olm", true))
+                                    System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
+                                emptyArray()
+                            }
+                            override val findColor = npc.recolorToFind
+                            override val replaceColor = npc.recolorToReplace
+                        }
+                    }
+                }.awaitAll()
         }
+
         return animatedNpcs.toTypedArray()
     }
 
