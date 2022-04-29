@@ -94,12 +94,13 @@ fun TreeItem<*>.vBox(spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, in
 fun TreeItem<*>.onExpanded(action: Boolean.() -> Unit) {
     expandedProperty().onInvalidation { action.invoke(value) }
 }
-fun<T> TreeItem<T>.treeItem(text: String? = null, init: TreeItem<T>.() -> Unit) {
-    children.add(TreeItem<T>().apply {
+fun<T> TreeItem<T>.treeItem(text: String? = null, init: TreeItem<T>.() -> Unit = {}): TreeItem<T> {
+    return TreeItem<T>().apply {
         if (text != null)
             label(text)
         init()
-    })
+        this@treeItem.children.add(this)
+    }
 }
 
 fun<T> SelectionModel<T>.onSelected(onSelected: (T?, T?) -> Unit) {

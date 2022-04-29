@@ -5,7 +5,6 @@ import qodat.cache.Cache
 import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.scene.runescape.animation.AnimationSkeleton
 import stan.qodat.scene.transform.GroupableTransformable
 import stan.qodat.scene.transform.Transformable
 
@@ -22,29 +21,29 @@ abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
 ) : Entity<D>(cache, definition), Transformable, GroupableTransformable {
 
     private lateinit var animations: Array<Animation>
-    private lateinit var skeletons: Map<Int, AnimationSkeleton>
+//    private lateinit var skeletons: Map<Int, AnimationSkeleton>
 
     val selectedAnimation = SimpleObjectProperty<Animation>()
 
-    fun getSkeletons(): Map<Int, AnimationSkeleton> {
-        if (!this::skeletons.isInitialized) {
-            val map = HashMap<Int, AnimationSkeleton>()
-            for (animation in getAnimations()) {
-                for ((id, skeleton) in animation.getSkeletons()){
-                    if (!map.containsKey(id)){
-                        map[id] = skeleton
-                    }
-                }
-            }
-            skeletons = map
-        }
-        return skeletons
-    }
+//    fun getSkeletons(): Map<Int, AnimationSkeleton> {
+//        if (!this::skeletons.isInitialized) {
+//            val map = HashMap<Int, AnimationSkeleton>()
+//            for (animation in getAnimations()) {
+//                for ((id, skeleton) in animation.getSkeletons()){
+//                    if (!map.containsKey(id)){
+//                        map[id] = skeleton
+//                    }
+//                }
+//            }
+//            skeletons = map
+//        }
+//        return skeletons
+//    }
 
     fun getAnimations(): Array<Animation> {
-        if (!this::animations.isInitialized)
-            animations = animationProvider.invoke(definition)
-        return animations
+//        if (!this::animations.isInitialized)
+//            animations = animationProvider.invoke(definition)
+        return animationProvider.invoke(definition)
     }
 
     override fun animate(index: Int) {

@@ -8,10 +8,7 @@ import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
 import javafx.scene.text.Text
 import stan.qodat.Properties
-import stan.qodat.javafx.hBox
-import stan.qodat.javafx.label
-import stan.qodat.javafx.onSelected
-import stan.qodat.javafx.treeItem
+import stan.qodat.javafx.*
 import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.Animation
@@ -91,10 +88,13 @@ class EntityTreeItem(
 //            }
 //        }
         treeItem {
-            label("Models") {
-                if (children.isEmpty()) {
-                    for (model in entity.getModels())
-                        children.add(model.getTreeItem(treeView))
+            label("Models")
+            onExpanded {
+                if (this) {
+                    if (children.isEmpty()) {
+                        for (model in entity.getModels())
+                            children.add(model.getTreeItem(treeView))
+                    }
                 }
             }
             expandedProperty().set(Properties.treeItemModelsExpanded.get())

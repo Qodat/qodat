@@ -41,20 +41,24 @@ class ModelTreeItem(
                 }
             }
         }
-        treeItem { label("vertexCount = ${model.modelDefinition.getVertexCount()}") }
-        treeItem { label("faceCount = ${model.modelDefinition.getFaceCount()}") }
-        val vertexGroups = model.getVertexGroups()
-        if (vertexGroups.isNotEmpty()) {
-            treeItem("Vertex Groups") {
-                for ((index, vertexGroup) in vertexGroups.withIndex())
-                    children += VertexGroupTreeItem(model, index, vertexGroup, selectionModel)
-            }
-        }
-        val faceGroups = model.getFaceGroups()
-        if (faceGroups.isNotEmpty()) {
-            treeItem("Face Groups") {
-                for ((index, faceGroup) in faceGroups.withIndex())
-                    children += FaceGroupTreeItem(model, index, faceGroup, selectionModel)
+        treeItem("Details") {
+            treeItem { label("vertexCount = ${model.modelDefinition.getVertexCount()}") }
+            treeItem { label("faceCount = ${model.modelDefinition.getFaceCount()}") }
+            val vGroups = treeItem("Vertex Groups")
+            val fGroups = treeItem("Face Groups")
+            onExpanded {
+                if (this) {
+                    if (vGroups.children.isEmpty()) {
+                        val vertexGroups = model.getVertexGroups()
+                        for ((index, vertexGroup) in vertexGroups.withIndex())
+                            vGroups.children += VertexGroupTreeItem(model, index, vertexGroup, selectionModel)
+                    }
+                    if (fGroups.children.isEmpty()) {
+                        val faceGroups = model.getFaceGroups()
+                        for ((index, faceGroup) in faceGroups.withIndex())
+                            fGroups.children += FaceGroupTreeItem(model, index, faceGroup, selectionModel)
+                    }
+                }
             }
         }
         selectionModel.onSelected { oldValue, newValue ->

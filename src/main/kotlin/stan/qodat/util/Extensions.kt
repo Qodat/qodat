@@ -4,7 +4,6 @@ import javafx.beans.Observable
 import javafx.beans.property.*
 import javafx.beans.value.ChangeListener
 import javafx.beans.value.ObservableValue
-import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.geometry.Orientation
 import javafx.scene.Node
@@ -20,7 +19,6 @@ import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.paint.ColorMaterial
 import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.scene.provider.TreeItemProvider
-import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.shape.PolygonMeshView
 
 //fun Qodat.Companion.addTo3DScene(node: Node) {
