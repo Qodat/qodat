@@ -113,6 +113,7 @@ object Properties {
     val selectedItemSortType = SimpleObjectProperty(SortType.NAME)
     val selectedObjectSortType = SimpleObjectProperty(SortType.NAME)
     val selectedSpotAnimSortType = SimpleObjectProperty(SortType.ID)
+    val selectedSpriteSortType = SimpleObjectProperty(SortType.ID)
 
     val selectedEntity = SimpleObjectProperty<Entity<*>>()
     val selectedAnimation = SimpleObjectProperty<Animation>()

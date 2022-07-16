@@ -59,13 +59,16 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     @FXML
     lateinit var root: SplitPane
+
     @FXML
     lateinit var tabPane: TabPane
+
     @FXML
     lateinit var animationModelsSplitPane: SplitPane
 
     @FXML
     lateinit var npcList: ViewNodeListView<NPC>
+
     @FXML
     lateinit var itemList: ViewNodeListView<Item>
     @FXML
@@ -85,6 +88,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     lateinit var sortObjectBox: ComboBox<SortType>
     @FXML
     lateinit var sortSpotAnimBox: ComboBox<SortType>
+    @FXML
+    lateinit var sortSpritesBox: ComboBox<SortType>
 
     enum class SortType {
         NAME,
@@ -93,14 +98,19 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     @FXML
     lateinit var searchNpcField: TextField
+
     @FXML
     lateinit var searchItemField: TextField
+
     @FXML
     lateinit var searchObjectField: TextField
+
     @FXML
     lateinit var searchSpritesField: TextField
+
     @FXML
     lateinit var searchSpotAnimField: TextField
+
     @FXML
     lateinit var searchInterfaceField: TextField
 
@@ -164,10 +174,11 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         spotAnimList.configure(spotAnims, searchSpotAnimField)
         interfaceList.configure(interfaces, searchInterfaceField)
 
-        configureSortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
-        configureSortComboBox(sortItemBox, itemList, Properties.selectedItemSortType)
-        configureSortComboBox(sortObjectBox, objectList, Properties.selectedObjectSortType)
-        configureSortComboBox(sortSpotAnimBox, spotAnimList, Properties.selectedSpotAnimSortType)
+        configureEntitySortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
+        configureEntitySortComboBox(sortItemBox, itemList, Properties.selectedItemSortType)
+        configureEntitySortComboBox(sortObjectBox, objectList, Properties.selectedObjectSortType)
+        configureSpriteSortComboBox(sortSpritesBox, spritesList, Properties.selectedSpriteSortType)
+        configureEntitySortComboBox(sortSpotAnimBox, spotAnimList, Properties.selectedSpotAnimSortType)
 
         val cacheListener = CacheEventListener {
             if (it is CacheReloadEvent) {
@@ -238,6 +249,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 }.map {
                     Sprite(it)
                 })
+                spritesList.selectionModel.select(sprites.lastSelectedEntity(Properties.selectedSpriteName))
                 interfaces.setAll(cache.getRootInterfaces().map {
                     InterfaceGroup(cache, it.key, it.value)
                 })
@@ -302,25 +314,42 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             find { lastSelectedName == it.getName() }
     }
 
-    private fun <D : EntityDefinition, N : Entity<D>> configureSortComboBox(
+    private fun <D : EntityDefinition, N : Entity<D>> configureEntitySortComboBox(
         box: ComboBox<SortType>,
         list: ViewNodeListView<N>,
-        property: ObjectProperty<SortType>
-    ) {
+        property: ObjectProperty<SortType>,
+    ) = configureSortComboBox(box, list, property) {
+        when(it) {
+            SortType.NAME -> Comparator.comparing(Entity<*>::getName)
+            SortType.ID -> Comparator.comparing { it.definition.getOptionalId().orElse(0) }
+        }
+    }
+
+
+    private fun configureSpriteSortComboBox(
+        box: ComboBox<SortType>,
+        list: ViewNodeListView<Sprite>,
+        property: ObjectProperty<SortType>,
+    ) = configureSortComboBox(box, list, property) {
+        when(it) {
+            SortType.NAME -> Comparator.comparing(Sprite::getName)
+            SortType.ID -> Comparator.comparing { it.definition.id }
+        }
+    }
+
+    private fun<T : ViewNodeProvider> configureSortComboBox(box: ComboBox<SortType>,
+                                                            list: ViewNodeListView<T>,
+                                                            property: ObjectProperty<SortType>,
+                                                            comparator: (SortType) -> Comparator<T>
+    ){
         box.items.addAll(SortType.values())
         box.selectionModel.selectedItemProperty().onInvalidation {
             property.set(get())
-            (list.items as SortedList).comparator = when (get()!!) {
-                SortType.NAME -> Comparator.comparing {
-                    it.getName()
-                }
-                SortType.ID -> Comparator.comparing {
-                    it.definition.getOptionalId().orElse(0)
-                }
-            }
+            (list.items as SortedList).comparator = comparator(property.get()!!)
         }
         box.selectionModel.select(property.get())
     }
+
 
     private fun configureTopSplitPane() {
         try {
@@ -579,7 +608,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
 private fun <N : Event> Node.on(
     unselectedEventType: EventType<N>,
-    action: suspend (N) -> Unit
+    action: suspend (N) -> Unit,
 ) {
     val eventActor = GlobalScope.actor<N>(Dispatchers.Main) {
         for (event in channel) action(event) // pass event to action

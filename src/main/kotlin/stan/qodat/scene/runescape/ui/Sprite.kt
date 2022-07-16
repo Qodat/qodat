@@ -13,9 +13,11 @@ import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.util.Searchable
+import tornadofx.contextmenu
+import tornadofx.item
 import java.nio.IntBuffer
 
-class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider, Searchable {
+class Sprite(val definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider, Searchable {
 
     val nameProperty = SimpleStringProperty(definition.id.toString())
 
@@ -31,6 +33,16 @@ class Sprite(definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider
     val sceneNode: ImageView by lazy {
         ImageView(image).apply {
             transforms.add(Transform.translate(-image.width.div(2.0), 0.0))
+            contextmenu {
+                item("Export") {
+                    item("PNG") {
+
+                    }
+                    item("JPG") {
+
+                    }
+                }
+            }
         }
     }
 
