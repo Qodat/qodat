@@ -11,4 +11,6 @@ import javafx.scene.Node
 interface SceneNodeProvider {
 
     fun getSceneNode() : Node
+
+    fun removeSceneNodeReference() {}
 }

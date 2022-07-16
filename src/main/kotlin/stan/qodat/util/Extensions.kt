@@ -37,6 +37,7 @@ fun Qodat.Companion.removeSceneTreeItem(provider: TreeItemProvider) {
     mainController.sceneTreeView.root.children.remove(
         provider.getTreeItem(mainController.sceneTreeView)
     )
+    provider.removeTreeItemReference()
 }
 inline fun<reified N> Collection<*>.filterAndMap() : List<N> {
     val list = ArrayList<N>()

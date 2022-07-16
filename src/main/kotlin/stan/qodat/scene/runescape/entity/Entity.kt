@@ -39,11 +39,11 @@ abstract class Entity<D : EntityDefinition>(
     val definition: D
 ) : Exportable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider {
 
-    private lateinit var modelGroup: Group
-    private lateinit var models: Array<Model>
+    private var modelGroup: Group? = null
+    private var models: Array<Model>? = null
     private lateinit var materials: Array<Material>
     private lateinit var viewBox: HBox
-    private lateinit var treeItem: EntityTreeItem
+    private var treeItem: EntityTreeItem? = null
 
     val locked = SimpleBooleanProperty(false).apply {
         addListener { _, oldValue, newValue ->
@@ -68,10 +68,9 @@ abstract class Entity<D : EntityDefinition>(
     override fun getName() = labelProperty.get()
 
     fun getModels(): Array<Model> {
-        if (!this::models.isInitialized) {
+        if (models == null) {
             try {
                 val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
-
                 models = if (definitions.size > 1 && mergeModelProperty.get()) {
                     val multiModelName = "models_${
                         definitions.joinToString {
@@ -88,7 +87,7 @@ abstract class Entity<D : EntityDefinition>(
                 return emptyArray()
             }
         }
-        return models
+        return models!!
     }
 
     fun getMaterials(): Array<Material> {
@@ -156,18 +155,29 @@ abstract class Entity<D : EntityDefinition>(
     }
 
     override fun getSceneNode(): Group {
-        if (!this::modelGroup.isInitialized) {
-            modelGroup = Group()
-            for (model in getModels())
-                modelGroup.children.add(model.getSceneNode())
+        if (modelGroup == null) {
+            modelGroup = Group().apply {
+                for (model in getModels())
+                    children.add(model.getSceneNode())
+            }
         }
-        return modelGroup
+        return modelGroup!!
+    }
+
+    override fun removeSceneNodeReference() {
+        modelGroup = null
+        models?.forEach(Model::removeSceneNodeReference)
+        models = null
+    }
+
+    override fun removeTreeItemReference() {
+        treeItem = null
     }
 
     override fun getTreeItem(treeView: TreeView<Node>): EntityTreeItem {
-        if (!this::treeItem.isInitialized)
+        if (treeItem == null)
             treeItem = EntityTreeItem(this, treeView)
-        return treeItem
+        return treeItem!!
     }
 
     override fun treeItemExpandedProperty(): BooleanProperty =

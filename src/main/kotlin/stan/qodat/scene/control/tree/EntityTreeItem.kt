@@ -15,6 +15,7 @@ import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.setAndBind
+import tornadofx.progressindicator
 
 /**
  * TODO: add documentation
@@ -70,32 +71,15 @@ class EntityTreeItem(
                 Properties.selectedEntity.set(null)
             }
         }
-//        val selectionModel = treeView.selectionModel.apply {
-//            selectionMode = SelectionMode.MULTIPLE
-//            onSelected { oldValue, newValue ->
-//                if (oldValue == this){
-//                    for (model in entity.getModels()) {
-//                        model.buildTypeProperty.set(ModelMeshBuildType.ATLAS)
-//                        for (mesh in model.collectMeshes())
-//                            if (mesh is ModelFaceMesh)
-//                                mesh.selectProperty.set(null)
-//                    }
-//                }
-//                if (newValue == this){
-//                    for (model in entity.getModels())
-//                        model.buildTypeProperty.set(ModelMeshBuildType.MESH_PER_FACE)
-//                }
-//            }
-//        }
         treeItem {
             label("Models")
+            val treeItemPlaceHolder = addPlaceHolder()
             onExpanded {
-                if (this) {
-                    if (children.isEmpty()) {
-                        for (model in entity.getModels())
-                            children.add(model.getTreeItem(treeView))
-                    }
-                }
+                if (!this)
+                    Properties.treeItemModelsExpanded.set(false)
+                else if (children.remove(treeItemPlaceHolder))
+                    for (model in entity.getModels())
+                        children.add(model.getTreeItem(treeView))
             }
             expandedProperty().set(Properties.treeItemModelsExpanded.get())
         }
@@ -123,55 +107,24 @@ class EntityTreeItem(
                         }
                     )
                 }
-                entity.selectedAnimation.addListener { _, _, newAnimation ->
-                    if (newAnimation != null)
-                        children.setAll(AnimationTreeItem(newAnimation, entity, treeView))
+                val treeItemPlaceHolder = addPlaceHolder()
+                onExpanded {
+                    if (!this)
+                        Properties.treeItemAnimationsExpanded.set(false)
+                    else if (children.remove(treeItemPlaceHolder))
+                        for (animation in entity.getAnimations())
+                            children.add(AnimationTreeItem(animation, entity, treeView))
                 }
-//                val showAllTreeItem = TreeItem<Node>().apply {
-//                    label("Show all")
-//                }
-//                children += showAllTreeItem
-//
-//                onExpanded {
-//                    if (showAllTreeItem.children.isEmpty()) {
-//                        for (animation in entity.getAnimations()) {
-//                            showAllTreeItem.children.add(AnimationTreeItem(animation, entity, treeView))
-//                        }
-//                    }
-//                }
-//                entity.selectedAnimation.addListener { _, oldAnimation, newAnimation ->
-//                    if (oldAnimation != null)
-//                        showAllTreeItem.move(newAnimation, this, false)
-//                    if (newAnimation != null)
-//                        move(newAnimation, showAllTreeItem, true)
-//                }
-//
-//                // must be below adding of animations
-//                val selected = entity.selectedAnimation.get()
-//                if (selected != null)
-//                    move(selected, showAllTreeItem, true)
-
                 expandedProperty().set(Properties.treeItemAnimationsExpanded.get())
             }
         }
         expandedProperty().set(entity.treeItemExpandedProperty().get())
     }
 
-    private fun TreeItem<Node>.move(
-        selected: Animation,
-        showAllTreeItem: TreeItem<Node>,
-        createIfNoTreeItem: Boolean
-    ) {
-
-        var animationTreeItem = selected.treeItemProperty.get()
-        if (animationTreeItem != null)
-            showAllTreeItem.children.remove(animationTreeItem)
-        else if (createIfNoTreeItem) {
-            animationTreeItem = AnimationTreeItem(selected, entity as AnimatedEntity<*>, treeView)
-            selected.treeItemProperty.set(animationTreeItem)
+    private fun TreeItem<Node>.addPlaceHolder(): TreeItem<Node> {
+        val treeItemPlaceHolder = treeItem {
+            progressindicator { }
         }
-
-        if (animationTreeItem != null && children.filterIsInstance<AnimationTreeItem>().none { it.animation == selected})
-            children.add(0, animationTreeItem)
+        return treeItemPlaceHolder
     }
 }

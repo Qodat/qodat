@@ -54,7 +54,7 @@ class Model(label: String,
     TreeItemProvider,
     Encoder {
 
-    private lateinit var sceneGroup: Group
+    private var sceneGroup: Group? = null
     private lateinit var sceneNode: Node
     private lateinit var modelSkin : ModelSkin
     private lateinit var viewBox : HBox
@@ -192,14 +192,18 @@ class Model(label: String,
     }
 
     override fun getSceneNode() : Group {
-        if (!this::sceneGroup.isInitialized){
-            sceneGroup = Group()
-            if (!this::sceneNode.isInitialized)
-                buildModelSkin()
-            sceneGroup.transforms
-            sceneGroup.children.add(sceneNode)
+        if (sceneGroup == null){
+            sceneGroup = Group().apply {
+                if (!this@Model::sceneNode.isInitialized)
+                    buildModelSkin()
+                children.add(sceneNode)
+            }
         }
-        return sceneGroup
+        return sceneGroup!!
+    }
+
+    override fun removeSceneNodeReference() {
+        sceneGroup = null
     }
 
     private fun getModelSkin() : ModelSkin {

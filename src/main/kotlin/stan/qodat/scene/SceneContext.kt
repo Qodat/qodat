@@ -89,6 +89,7 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
             val sceneNode = nodeProvider.getSceneNode()
             group.children.remove(sceneNode)
             nodeProviderMap.remove(sceneNode)
+            nodeProvider.removeSceneNodeReference()
         } catch (e: Exception) {
             Qodat.logException("Failed to remove node {$nodeProvider} from scene $name", e)
         }

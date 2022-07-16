@@ -16,4 +16,6 @@ interface TreeItemProvider {
     fun treeItemExpandedProperty() : BooleanProperty
 
     fun getTreeItem(treeView: TreeView<Node>) : TreeItem<Node>
+
+    fun removeTreeItemReference() {}
 }
