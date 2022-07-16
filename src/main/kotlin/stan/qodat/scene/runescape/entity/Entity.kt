@@ -26,6 +26,7 @@ import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.DEFAULT
+import stan.qodat.util.formatName
 import stan.qodat.util.getMaterial
 
 /**
@@ -184,7 +185,7 @@ abstract class Entity<D : EntityDefinition>(
         Properties.treeItemEntityExpanded
 
     fun formatFileName(): String {
-        val name = getName().replace(" ", "_")
+        val name = formatName().replace(" ", "_")
         val optionalId = definition.getOptionalId()
         return if (optionalId.isPresent)
             name + "_${optionalId.asInt}"

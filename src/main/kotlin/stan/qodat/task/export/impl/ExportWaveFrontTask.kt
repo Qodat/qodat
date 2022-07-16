@@ -12,6 +12,7 @@ import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.task.export.ExportTask
 import stan.qodat.task.export.ExportTaskResult
+import stan.qodat.util.formatName
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -34,7 +35,7 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                 this(saveDir, model.getName().replace(" ", "_"), frames, model)
 
         constructor(saveDir: Path, entity: Entity<*>, frames: List<AnimationFrame>) :
-                this(saveDir, entity.formatFileName(), frames, entity.createMergedModel(entity.getName()))
+                this(saveDir, entity.formatFileName(), frames, entity.createMergedModel(entity.formatName()))
 
         override fun call(): ExportTaskResult {
             val materials = model.modelDefinition.getFaceMaterials().toSet()

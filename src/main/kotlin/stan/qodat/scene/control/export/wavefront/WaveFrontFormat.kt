@@ -6,7 +6,6 @@ import javafx.beans.property.ObjectProperty
 import javafx.stage.DirectoryChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.scene.AbstractSubScene
 import stan.qodat.scene.control.export.ExportFormat
 import stan.qodat.scene.control.export.Exportable
 import stan.qodat.scene.runescape.animation.Animation
@@ -16,6 +15,7 @@ import stan.qodat.scene.runescape.model.Model
 import stan.qodat.task.BackgroundTasks
 import stan.qodat.task.export.impl.ExportWaveFrontTask
 import stan.qodat.util.Searchable
+import stan.qodat.util.formatName
 import java.io.File
 import java.nio.file.Path
 
@@ -70,14 +70,14 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
     ) : WaveFrontFormat<Triple<Searchable, Animation?, AnimationFrame?>>() {
 
         override fun getFileName(context: Triple<Searchable, Animation?, AnimationFrame?>): String =
-            context.first.getName()
+            context.first.formatName()
 
         override fun getFileChooserTitle(context: Triple<Searchable, Animation?, AnimationFrame?>) =
-            "Export ${context.first.getName()} as WaveFront file"
+            "Export ${getFileName(context)} as WaveFront file"
 
         override fun getFileChooserInitialFileName(context: Triple<Searchable, Animation?, AnimationFrame?>): String {
-            val (searchable, animation, animationFrame) = context
-            var base = searchable.getName()
+            val (_, animation, animationFrame) = context
+            var base = getFileName(context)
             if (animationFrame != null) {
                 if (animation != null) {
                     base += "_${animation.getName()}_${animationFrame.getName()}"
@@ -113,7 +113,7 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
                     saveDir = path,
                     model = exportable,
                     animationFrame = animationFrame,
-                    fileName = exportable.getName().replace(" ", "_")
+                    fileName = getFileName(context).replace(" ", "_")
                 )
                 else -> throw Exception("Could not export ${exportable.getName()} of type ${exportable::class.java}.")
             }
@@ -140,8 +140,9 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
             BackgroundTasks.submit(addProgressIndicator) {
                 context.forEach { (exportable, animationFramesPair) ->
 
+                    val exportableName = exportable.formatName()
                     val (animation, animationFrames) = animationFramesPair
-                    var directory = path.resolve(exportable.getName())
+                    var directory = path.resolve(exportableName)
 
                     if (animation != null)
                         directory = directory.resolve("animation/${animation.getName()}")
@@ -159,7 +160,7 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
                             animationFrames
                         )
                         is Model -> ExportWaveFrontTask.Sequence(saveDir = directory, exportable, animationFrames)
-                        else -> throw Exception("Could not export ${exportable.getName()} of type ${exportable::class.java}.")
+                        else -> throw Exception("Could not export $exportableName of type ${exportable::class.java}.")
                     }
 
                     task.setOnFailed {
@@ -172,3 +173,4 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
         }
     }
 }
+

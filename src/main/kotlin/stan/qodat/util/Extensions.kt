@@ -182,3 +182,10 @@ fun ModelDefinition.getMaterial(face: Int, cache: Cache): stan.qodat.scene.paint
     }
     return ColorMaterial(faceColor, faceAlpha)
 }
+
+fun Searchable.formatName() = getName().let {
+    if (it.startsWith("<col=")){
+        it.substringAfter(">").substringBefore("<")
+    } else
+        it
+}
