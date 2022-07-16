@@ -99,6 +99,7 @@ object Properties {
     val lastWaveFrontSingleExportPath = SimpleObjectProperty<Path?>(null)
     val lastWaveFrontSequenceExportPath = SimpleObjectProperty<Path?>(null)
     val lastGIFExportPath = SimpleObjectProperty<Path?>(null)
+    val lastSpriteExportPath = SimpleObjectProperty<Path?>(null)
 
 
     val selectedNpcName = SimpleStringProperty()
@@ -202,5 +203,10 @@ object Properties {
         sessionManager.bindPath("legacy-cache-path", legacyCachePath)
         sessionManager.bindPath("main-data-path", projectFilesPath)
         sessionManager.bindPath("exports-path", defaultExportsPath)
+
+        sessionManager.bindPath("last-wavefront-single-export-path", lastWaveFrontSingleExportPath)
+        sessionManager.bindPath("last-wavefront-sequence-export-path", lastWaveFrontSequenceExportPath)
+        sessionManager.bindPath("last-gif-export-path", lastGIFExportPath)
+        sessionManager.bindPath("last-sprite-export-path", lastSpriteExportPath)
     }
 }

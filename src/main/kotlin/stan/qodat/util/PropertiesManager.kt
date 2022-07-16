@@ -62,7 +62,10 @@ class PropertiesManager(private val saveFilePath: Path) {
         if (value != null)
             property.value = transformer.invoke(value)
         property.addListener { _ ->
-            properties.setProperty(key, property.value.toString())
+            if (property.value == null)
+                properties.remove(key)
+            else
+                properties.setProperty(key, property.value.toString())
         }
     }
 
@@ -72,7 +75,7 @@ class PropertiesManager(private val saveFilePath: Path) {
     fun bindMaterial(key: String, property: ObjectProperty<Material>) =
         bind(key, property) { PhongMaterial() }
 
-    fun bindPath(key: String, property: ObjectProperty<Path>) =
+    fun bindPath(key: String, property: ObjectProperty<Path?>) =
         bind(key, property) { Paths.get(it) }
 
     inline fun <reified T : Enum<T>> bindEnum(key: String, property: ObjectProperty<T>) =
