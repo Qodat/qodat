@@ -23,6 +23,7 @@ class SettingsController : Initializable {
     @FXML lateinit var showAxisCheckBox : CheckBox
     @FXML lateinit var msaaCheckBox: CheckBox
     @FXML lateinit var fpsCheckBox: CheckBox
+    @FXML lateinit var showNullNamesCheckBox: CheckBox
     @FXML lateinit var invertCameraCheckBox: CheckBox
     @FXML lateinit var renderTexturesCheckBox: CheckBox
     @FXML lateinit var backgroundColorPicker: ColorPicker
@@ -38,6 +39,7 @@ class SettingsController : Initializable {
         }
         showAxisCheckBox.selectedProperty().setAndBind(Properties.showAxis, true)
         fpsCheckBox.selectedProperty().setAndBind(Properties.showFPS, true)
+        showNullNamesCheckBox.selectedProperty().setAndBind(Properties.showNullNamedEntities, true)
         invertCameraCheckBox.selectedProperty().setAndBind(Properties.cameraInvert, true)
         renderTexturesCheckBox.selectedProperty().setAndBind(Properties.alwaysRenderUsingAtlas, true)
         backgroundColorPicker.valueProperty().setAndBind(Properties.subSceneBackgroundColor, true)

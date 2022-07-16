@@ -29,16 +29,24 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
         val modelGroupName: String,
         val frames: List<AnimationFrame>,
         val model: Model,
+        val reColorMap: Map<Short, Short>? = null,
     ) : ExportWaveFrontTask(saveDir) {
 
         constructor(saveDir: Path, model: Model, frames: List<AnimationFrame>) :
                 this(saveDir, model.getName().replace(" ", "_"), frames, model)
 
         constructor(saveDir: Path, entity: Entity<*>, frames: List<AnimationFrame>) :
-                this(saveDir, entity.formatFileName(), frames, entity.createMergedModel(entity.formatName()))
+                this(
+                    saveDir = saveDir,
+                    modelGroupName = entity.formatFileName(),
+                    frames = frames,
+                    model = entity.createMergedModel(entity.formatName()),
+                    reColorMap = entity.getRecolorMap()
+                )
 
         override fun call(): ExportTaskResult {
-            val materials = model.modelDefinition.getFaceMaterials().toSet()
+
+            val materials = model.modelDefinition.getFaceMaterials(reColorMap).toSet()
 
             val mtlWriter = WaveFrontWriter(saveDir)
             mtlWriter.writeMtlFile(materials, fileNameWithoutExtension = modelGroupName.replace(" ", "_"))
@@ -50,7 +58,6 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                 modelDefinition.computeNormals()
                 modelDefinition.computeTextureUVCoordinates()
             }
-
             frames.forEach { animationFrame ->
                 model.animate(animationFrame)
                 val objWriter = WaveFrontWriter(saveDir)
@@ -79,19 +86,21 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
         private val writeMaterials: Boolean = true,
         private val fileName: String = model.getName(),
         private val materials: Set<WaveFrontMaterial>? = null,
+        val reColorMap: Map<Short, Short>? = null,
     ) : ExportWaveFrontTask(saveDir) {
 
         constructor(
             saveDir: Path,
             entity: Entity<*>,
             animationFrame: AnimationFrame? = null,
-            writeMaterials: Boolean = true
+            writeMaterials: Boolean = true,
         ) : this(
             saveDir = saveDir,
             model = entity.createMergedModel(entity.getName()),
             animationFrame = animationFrame,
             writeMaterials = writeMaterials,
-            fileName = entity.formatFileName()
+            fileName = entity.formatFileName(),
+            reColorMap = entity.getRecolorMap()
         )
 
         override fun call(): ExportTaskResult {
@@ -113,7 +122,7 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                 if (animationFrame != null)
                     model.animate(animationFrame)
 
-                val materials = materials?:model.modelDefinition.getFaceMaterials().toSet()
+                val materials = materials ?: model.modelDefinition.getFaceMaterials(reColorMap).toSet()
                 writer.writeObjFile(
                     model, materials,
                     mtlFileNameWithoutExtension = fileName,

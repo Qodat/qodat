@@ -113,6 +113,10 @@ abstract class Entity<D : EntityDefinition>(
     }
 
 
+    fun getRecolorMap(): Map<Short, Short>? = definition.let {
+        it.findColor?.mapIndexed { index, toFind -> toFind to it.replaceColor!![index] }?.toMap()
+    }
+
     fun createMergedModel(name: String) = Model(
         name,
         if (definition.modelIds.size == 1)

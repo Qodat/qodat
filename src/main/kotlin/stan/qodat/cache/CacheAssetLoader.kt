@@ -137,7 +137,9 @@ class CacheAssetLoader(
                             updateMessage("Loading $name ($count / $total)")
                         }
                     }
-                    if (it.name.isNotBlank() && it.name != "null" && it.modelIds.isNotEmpty())
+                    val nullName = it.name.isBlank() || it.name == "null"
+                    val showNulls = Properties.showNullNamedEntities.get()
+                    if (it.modelIds.isNotEmpty() && (!nullName || showNulls))
                         mapper(it)
                     else
                         null
@@ -147,4 +149,5 @@ class CacheAssetLoader(
             }
         }
     }
+
 }

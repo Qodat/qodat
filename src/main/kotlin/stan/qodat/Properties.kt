@@ -10,6 +10,7 @@ import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.PropertiesManager
+import tornadofx.booleanProperty
 import java.nio.file.Path
 import java.nio.file.Paths
 
@@ -41,6 +42,7 @@ object Properties {
      */
     val antialiasing = SimpleObjectProperty(SceneAntialiasing.BALANCED)
     val ambientLightColor = SimpleObjectProperty(Color.WHITE)
+    val showNullNamedEntities = booleanProperty(true)
 
     val disableAnimationsView = SimpleBooleanProperty(false)
     val depthBuffer = SimpleBooleanProperty(true)
@@ -168,6 +170,7 @@ object Properties {
 
         sessionManager.bindBoolean("depth-buffer", depthBuffer)
         sessionManager.bindBoolean("show-axis", showAxis)
+        sessionManager.bindBoolean("show-null-named-entities", showNullNamedEntities)
         sessionManager.bindBoolean("show-fps", showFPS)
         sessionManager.bindBoolean("show-frames-tab", showFramesTab)
         sessionManager.bindBoolean("expand-settings", expandSettings)
