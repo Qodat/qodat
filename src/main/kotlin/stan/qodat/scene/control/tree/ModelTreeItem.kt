@@ -2,14 +2,20 @@ package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
 import javafx.scene.control.ContextMenu
+import javafx.scene.control.MenuItem
 import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.scene.shape.DrawMode
+import javafx.stage.FileChooser
+import net.runelite.cache.util.GZip
 import stan.qodat.Properties
+import stan.qodat.util.export
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.model.Model
+import tornadofx.FileChooserMode
+import tornadofx.chooseFile
 
 /**
  * TODO: add documentation
@@ -19,7 +25,7 @@ import stan.qodat.scene.runescape.model.Model
  */
 class ModelTreeItem(
     model: Model,
-    selectionModel: MultipleSelectionModel<TreeItem<Node>>
+    selectionModel: MultipleSelectionModel<TreeItem<Node>>,
 ) : TreeItem<Node>() {
 
     init {
@@ -30,6 +36,25 @@ class ModelTreeItem(
                     setExportable(model)
                 }
             )
+            contextMenu.items.add(MenuItem("RS2").apply {
+                setOnAction {
+                    val file = chooseFile(
+                        "Choose export file",
+                        filters = arrayOf(
+                            FileChooser.ExtensionFilter("RS", "dat", "model"),
+                            FileChooser.ExtensionFilter("RS GZIP", "gz")
+                        ),
+                        mode = FileChooserMode.Save
+                    ) {}.first()
+                    val bytes = export(model.modelDefinition).flip().let {
+                        if (file.name.endsWith(".gz"))
+                            GZip.compress(it)
+                        else
+                            it
+                    }
+                    file.writeBytes(bytes)
+                }
+            })
         }
         treeItem("Render Options") {
             treeItem {
