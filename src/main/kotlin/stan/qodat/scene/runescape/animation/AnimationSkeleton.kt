@@ -3,7 +3,7 @@ package stan.qodat.scene.runescape.animation
 import javafx.beans.property.SimpleStringProperty
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import qodat.cache.definition.AnimationSkeletonDefinition
+import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.util.Searchable
 
 /**
@@ -14,7 +14,7 @@ import stan.qodat.util.Searchable
  */
 class AnimationSkeleton(
     name: String,
-    private val definition: AnimationSkeletonDefinition
+    private val definition: AnimationTransformationGroup
 ) : Searchable {
 
     private lateinit var transformationGroups: ObservableList<TransformationGroup>

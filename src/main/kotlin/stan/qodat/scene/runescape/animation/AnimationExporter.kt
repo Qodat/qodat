@@ -6,7 +6,7 @@ import net.runelite.cache.fs.ArchiveFiles
 import net.runelite.cache.fs.Container
 import net.runelite.cache.fs.FSFile
 import net.runelite.cache.index.FileData
-import qodat.cache.definition.AnimationSkeletonDefinition
+import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
@@ -203,7 +203,7 @@ class AnimationExporter {
         val z = if (transformation.getDeltaZ() != 0) 4 else 0
         return x or y or z
     }
-    private fun encodeFrameMap(def: AnimationSkeletonDefinition): ByteArray {
+    private fun encodeFrameMap(def: AnimationTransformationGroup): ByteArray {
         val out = ByteArrayOutputStream()
         val os = DataOutputStream(out)
 

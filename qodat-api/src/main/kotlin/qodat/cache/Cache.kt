@@ -47,7 +47,7 @@ abstract class Cache(val name: String) {
 
     abstract fun getAnimationDefinitions() : Array<AnimationDefinition>
 
-    abstract fun getAnimationSkeletonDefinition(frameHash: Int) : AnimationSkeletonDefinition
+    abstract fun getAnimationSkeletonDefinition(frameHash: Int) : AnimationTransformationGroup
 
     abstract fun getFrameDefinition(frameHash: Int) : AnimationFrameDefinition?
 

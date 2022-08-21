@@ -14,5 +14,5 @@ interface AnimationFrameDefinition {
     val transformationDeltaY : IntArray
     val transformationDeltaZ : IntArray
 
-    val transformationGroup : AnimationSkeletonDefinition
+    val transformationGroup : AnimationTransformationGroup
 }

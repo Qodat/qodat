@@ -43,11 +43,11 @@ data class QodatAnimationDefinition(
 ) : AnimationDefinition
 
 @Serializable
-data class QodatAnimationSkeletonDefinition(
+data class QodatAnimationTransformationGroup(
     override val id: Int,
     override val transformationTypes: IntArray,
     override val targetVertexGroupsIndices: Array<IntArray>
-) : AnimationSkeletonDefinition
+) : AnimationTransformationGroup
 
 @Serializable
 data class QodatAnimationFrameDefinition(
@@ -57,7 +57,7 @@ data class QodatAnimationFrameDefinition(
     override val transformationDeltaX: IntArray,
     override val transformationDeltaY: IntArray,
     override val transformationDeltaZ: IntArray,
-    override val transformationGroup: QodatAnimationSkeletonDefinition
+    override val transformationGroup: QodatAnimationTransformationGroup
 ) : AnimationFrameDefinition
 
 @Serializable

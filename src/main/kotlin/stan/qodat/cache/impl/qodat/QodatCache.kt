@@ -146,7 +146,7 @@ object QodatCache : Cache("qodat") {
 
             val animationSkeletons = frameList.map {
                 val group = it.definition!!.transformationGroup
-                QodatAnimationSkeletonDefinition(
+                QodatAnimationTransformationGroup(
                     group.id,
                     group.transformationTypes,
                     group.targetVertexGroupsIndices
@@ -261,7 +261,7 @@ object QodatCache : Cache("qodat") {
         return OldschoolCacheRuneLite.getAnimationDefinitions()
     }
 
-    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition {
+    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup {
         return OldschoolCacheRuneLite.getAnimationSkeletonDefinition(frameHash)
     }
 

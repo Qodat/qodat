@@ -53,11 +53,12 @@ data class LegacyAnimationDefinition(
 ) : AnimationDefinition
 
 @Serializable
-data class LegacyAnimationSkeletonDefinition(
+data class
+LegacyAnimationSkeletonDefinition(
     override val id: Int,
     override val transformationTypes: IntArray,
     override val targetVertexGroupsIndices: Array<IntArray>
-) : AnimationSkeletonDefinition
+) : AnimationTransformationGroup
 
 @Serializable
 data class LegacyAnimationFrameDefinition(

@@ -42,7 +42,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     private lateinit var frameIndex: Index
     private lateinit var framemapIndex: Index
     private lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
-    private lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>
+    private lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
 
     private lateinit var animations : Array<AnimationDefinition>
     private lateinit var spotAnimations : Array<SpotAnimationDefinition>
@@ -64,7 +64,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         frameIndex = store.getIndex(IndexType.FRAMES)
         framemapIndex = store.getIndex(IndexType.FRAMEMAPS)
         frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
-        frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationSkeletonDefinition>>()
+        frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
         npcManager = NpcManager(store)
         npcManager.load()
         itemManager = ItemManager(store)
@@ -135,8 +135,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                                         .use {gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }.toTypedArray() }
                                 }
                             } catch (ignored: Exception) {
-                                if (npc.name.contains("olm", true))
-                                    System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
+                                System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
+                                ignored.printStackTrace()
                                 emptyArray()
                             }
                             override val findColor = npc.recolorToFind
@@ -226,7 +226,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getFrameDefinition(frameHash: Int): AnimationFrameDefinition? {
 
         val storage = store.storage
-
         val hexString = Integer.toHexString(frameHash)
 
         val frameArchiveId = getFileId(hexString)
@@ -245,7 +244,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     val frameMapArchive = framemapIndex.getArchive(frameMapArchiveId)
                     val frameMapContents = frameMapArchive.decompress(storage.loadArchive(frameMapArchive))
                     val frameMapDefinition = FramemapLoader().load(frameMapArchive.archiveId, frameMapContents)
-                    frameMapDefinition to object : AnimationSkeletonDefinition {
+                    frameMapDefinition to object : AnimationTransformationGroup {
                         override val id: Int = frameMapArchiveId
                         override val transformationTypes: IntArray = frameMapDefinition.types
                         override val targetVertexGroupsIndices: Array<IntArray> = frameMapDefinition.frameMaps
@@ -258,7 +257,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     override val transformationDeltaX: IntArray = frame.translator_x
                     override val transformationDeltaY: IntArray = frame.translator_y
                     override val transformationDeltaZ: IntArray = frame.translator_z
-                    override val transformationGroup: AnimationSkeletonDefinition = transformGroup
+                    override val transformationGroup: AnimationTransformationGroup = transformGroup
                 }
             }.toMap()
         }[frameArchiveFileId]
@@ -282,7 +281,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition =
         RuneliteSpriteDefinition(spriteManager.findSprite(groupId, frameId))
 
-    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationSkeletonDefinition=
+    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup=
         getFrameDefinition(frameHash)!!.transformationGroup
 
     internal fun getFileId(hexString: String): Int =

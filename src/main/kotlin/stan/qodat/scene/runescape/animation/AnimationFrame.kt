@@ -9,7 +9,7 @@ import javafx.scene.Node
 import javafx.scene.layout.HBox
 import javafx.util.Duration
 import qodat.cache.definition.AnimationFrameDefinition
-import qodat.cache.definition.AnimationSkeletonDefinition
+import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.transform.TransformationGroup
@@ -91,7 +91,7 @@ class AnimationFrame(
                 transformationList.map { it.getDeltaY() }.toIntArray()
             override val transformationDeltaZ: IntArray =
                 transformationList.map { it.getDeltaZ() }.toIntArray()
-            override val transformationGroup: AnimationSkeletonDefinition =
+            override val transformationGroup: AnimationTransformationGroup =
                 definition!!.transformationGroup
         },
         duration = getLength().toInt()
