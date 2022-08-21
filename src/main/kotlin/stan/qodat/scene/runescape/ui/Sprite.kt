@@ -20,7 +20,7 @@ import java.nio.IntBuffer
 
 class Sprite(val definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProvider, Searchable {
 
-    val nameProperty = SimpleStringProperty(definition.id.toString())
+    val nameProperty = SimpleStringProperty(definition.id.toString()+"["+definition.frame+"]")
 
     val image: Image by lazy {
         val width = definition.width
