@@ -47,11 +47,12 @@ fun createNpcAnimsJsonDir(
                 updateProgress(progress, 100.0)
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
-            val frames: Set<Int> =  anim.frameIDs?.map {
+            val frames: Set<Int> = anim.frameIDs?.map {
                 val frameArchiveId = it shr 16
                 val frameArchiveFileId = it and 65535
 
-                val frameArchive = frameIndex.getArchive(frameArchiveId)!!
+                val frameArchive = requireNotNull(frameIndex.getArchive(frameArchiveId))
+                { "Frame group null for $frameArchiveId file $frameArchiveFileId" }
                 val frameArchiveFiles = map.getOrPut(frameArchiveId) {
                     frameArchive.getFiles(storage.loadArchive(frameArchive))!!
                 }
@@ -60,7 +61,7 @@ fun createNpcAnimsJsonDir(
 
                 val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
                 frameMapArchiveId
-            }?.toSet()?: emptySet()
+            }?.toSet() ?: emptySet()
             (anim.id to frames)
         }.collect(Collectors.toList()).toMap()
 
@@ -79,34 +80,41 @@ fun createNpcAnimsJsonDir(
                 npc.rotate90RightAnimation,
                 npc.rotate180Animation
             ).filter { it > 0 }
+            try {
+                if (animationRef.isNotEmpty()) {
 
-            if (animationRef.isNotEmpty()) {
+                    val referenceFrames = animationRef.flatMap {
+                        requireNotNull(animations[it]) {
+                            "Animation $it was null for npc ${npc.name}"
+                        }
+                    }.toSet()
 
-                val referenceFrames = animationRef.flatMap { animations[it]!! }.toSet()
-
-                val matches = animations.filter { entry ->
-                    entry.value.any {
-                        referenceFrames.any { reference ->
-                            reference == it
+                    val matches = animations.filter { entry ->
+                        entry.value.any {
+                            referenceFrames.any { reference ->
+                                reference == it
+                            }
                         }
                     }
-                }
 
-                try {
-                    val file = Properties.osrsCachePath.get().resolve("npc_anims/${npc.id}.json").toFile()
-                    val writer = FileWriter(file)
-                    gson.toJson(matches.keys.toIntArray(), writer)
-                    writer.flush()
-                    writer.close()
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                    try {
+                        val file = Properties.osrsCachePath.get().resolve("npc_anims/${npc.id}.json").toFile()
+                        val writer = FileWriter(file)
+                        gson.toJson(matches.keys.toIntArray(), writer)
+                        writer.flush()
+                        writer.close()
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                    Platform.runLater {
+                        val i = counter.incrementAndGet()
+                        val progress = (100.0 * i.toFloat().div(total))
+                        updateProgress(progress, 100.0)
+                        updateMessage("Parsed npc ($i / $total})")
+                    }
                 }
-                Platform.runLater {
-                    val i = counter.incrementAndGet()
-                    val progress = (100.0 * i.toFloat().div(total))
-                    updateProgress(progress, 100.0)
-                    updateMessage("Parsed npc ($i / $total})")
-                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
         }
         return null
@@ -115,7 +123,7 @@ fun createNpcAnimsJsonDir(
 
 fun createObjectAnimsJsonDir(
     store: Store,
-    objectManager: ObjectManager
+    objectManager: ObjectManager,
 ) = object : Task<Void?>() {
     override fun call(): Void? {
         val map = ConcurrentHashMap<Int, ArchiveFiles>()
@@ -134,7 +142,7 @@ fun createObjectAnimsJsonDir(
                 updateProgress(progress, 100.0)
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
-            val frames: Set<Int> =  anim.frameIDs?.map {
+            val frames: Set<Int> = anim.frameIDs?.map {
                 val frameArchiveId = it shr 16
                 val frameArchiveFileId = it and 65535
 
@@ -147,7 +155,7 @@ fun createObjectAnimsJsonDir(
 
                 val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
                 frameMapArchiveId
-            }?.toSet()?: emptySet()
+            }?.toSet() ?: emptySet()
             (anim.id to frames)
         }.collect(Collectors.toList()).toMap()
 
@@ -172,7 +180,8 @@ fun createObjectAnimsJsonDir(
                     }
                 }
                 try {
-                    val file = Properties.osrsCachePath.get().resolve("object_anims/${objectDefinition.id}.json").toFile()
+                    val file =
+                        Properties.osrsCachePath.get().resolve("object_anims/${objectDefinition.id}.json").toFile()
                     val writer = FileWriter(file)
                     gson.toJson(matches.keys.toIntArray(), writer)
                     writer.flush()
@@ -190,11 +199,4 @@ fun createObjectAnimsJsonDir(
         }
         return null
     }
-}
-private fun decodeArchiveId(hexString: String): Int {
-    return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
-}
-
-private fun decodeArchiveFileId(hexString: String): Int {
-    return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
 }
