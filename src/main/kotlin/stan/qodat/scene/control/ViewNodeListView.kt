@@ -85,10 +85,11 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
             setOnDragDropped {
                 val db = it.dragboard
                 if (db.hasFiles()) {
-                    val newEntries = db.files
-                        .filter { file -> supportedExtensions.contains(file.extension) }
-                        .mapNotNull { file -> file to fromFile(file) }
-                    onDropFrom?.invoke(newEntries)
+                    val files = db.files
+                        .flatMap { it.walkBottomUp().filter { it.isFile && supportedExtensions.contains(it.extension) } }
+                        .toSet()
+                        .map { file -> file to fromFile(file) }
+                    onDropFrom?.invoke(files)
                     it.isDropCompleted = true
                 }
                 it.consume()
