@@ -17,6 +17,10 @@ dependencies {
     }
 }
 
+java {
+    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
 sourceSets {
     named("main") {
         java.srcDir("src/main/kotlin")
