@@ -3,7 +3,7 @@ import org.gradle.internal.os.OperatingSystem
 plugins {
     id("org.openjfx.javafxplugin") version "0.0.11"
     id("org.beryx.runtime") version "1.12.7"
-    kotlin("jvm") version "1.6.0"
+    kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.6.0"
     application
 }
