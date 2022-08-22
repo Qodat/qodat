@@ -13,7 +13,6 @@ version = "0.1.8"
 
 repositories {
     maven(url = "https://repo.runelite.net")
-    maven(url = "https://jitpack.io")
     mavenCentral()
     jcenter()
 }
