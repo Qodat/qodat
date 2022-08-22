@@ -9,9 +9,10 @@ repositories {
     jcenter()
 }
 
+version = "0.1.8"
+
 allprojects {
     group = "stan.qodat"
-    version = "0.0.6"
     apply(plugin = "org.jetbrains.kotlin.jvm")
     repositories {
         maven(url = "https://repo.runelite.net")
