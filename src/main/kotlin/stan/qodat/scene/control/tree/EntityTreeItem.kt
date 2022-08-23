@@ -2,7 +2,6 @@ package stan.qodat.scene.control.tree
 
 import javafx.scene.Node
 import javafx.scene.control.ContextMenu
-import javafx.scene.control.MenuItem
 import javafx.scene.control.TreeItem
 import javafx.scene.control.TreeView
 import javafx.scene.paint.Color
@@ -15,6 +14,9 @@ import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.setAndBind
+import tornadofx.contextmenu
+import tornadofx.item
+import tornadofx.onChange
 import tornadofx.progressindicator
 
 /**
@@ -93,8 +95,8 @@ class EntityTreeItem(
 
             treeItem {
                 label("Animations") {
-                    contextMenu = ContextMenu(
-                        MenuItem("Add empty").apply {
+                    contextmenu {
+                        item("Add empty") {
                             setOnAction {
                                 val newAnimation = Animation("10000").apply {
                                     idProperty.set(10_000)
@@ -105,15 +107,22 @@ class EntityTreeItem(
                                 children.add(0, newAnimationTreeItem)
                             }
                         }
-                    )
+                    }
                 }
                 val treeItemPlaceHolder = addPlaceHolder()
                 onExpanded {
                     if (!this)
                         Properties.treeItemAnimationsExpanded.set(false)
-                    else if (children.remove(treeItemPlaceHolder))
+                    else if (children.remove(treeItemPlaceHolder)) {
                         for (animation in entity.getAnimations())
                             children.add(AnimationTreeItem(animation, entity, treeView))
+                        entity.selectedAnimation.onChange { animation ->
+                            if (animation != null) {
+                                children.removeIf { it is AnimationTreeItem && it.animation == animation }
+                                children.add(0, AnimationTreeItem(animation, entity, treeView))
+                            }
+                        }
+                    }
                 }
                 expandedProperty().set(Properties.treeItemAnimationsExpanded.get())
             }
