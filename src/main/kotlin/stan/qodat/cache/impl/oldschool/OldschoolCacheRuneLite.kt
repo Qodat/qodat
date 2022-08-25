@@ -7,7 +7,6 @@ import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
-import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
@@ -18,6 +17,7 @@ import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
+import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import stan.qodat.util.onInvalidation
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -39,10 +39,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     lateinit var interfaceManager: InterfaceManager
     lateinit var spriteManager: SpriteManager
 
-    private lateinit var frameIndex: Index
-    private lateinit var framemapIndex: Index
-    private lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
-    private lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
+    lateinit var frameIndex: Index
+    lateinit var framemapIndex: Index
+    lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
+    lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
 
     private lateinit var animations : Array<AnimationDefinition>
     private lateinit var spotAnimations : Array<SpotAnimationDefinition>
@@ -136,7 +136,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                                 }
                             } catch (ignored: Exception) {
                                 System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
-                                ignored.printStackTrace()
                                 emptyArray()
                             }
                             override val findColor = npc.recolorToFind
@@ -209,7 +208,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
 
             animations = seqArchiveFiles.files.map {
-                val sequence = SequenceLoader().load(it.fileId, it.contents)!!
+                val sequence = SequenceLoader206().load(it.fileId, it.contents)
                 return@map object : AnimationDefinition {
                     override val id: String = it.fileId.toString()
                     override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)

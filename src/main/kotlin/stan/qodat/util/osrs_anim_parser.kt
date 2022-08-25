@@ -7,11 +7,13 @@ import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
 import net.runelite.cache.ObjectManager
-import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.fs.ArchiveFiles
 import net.runelite.cache.fs.Store
 import stan.qodat.Properties
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import java.io.FileWriter
+import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
@@ -40,7 +42,7 @@ fun createNpcAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.FRAMES)
         val animationFiles = files.files
         val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader()
+            val loader = SequenceLoader206()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
@@ -71,6 +73,9 @@ fun createNpcAnimsJsonDir(
         val total = npcManager.npcs.size
         val counter = AtomicInteger(0)
         npcManager.npcs.parallelStream().forEach { npc ->
+            if (npc.name.contains("Akkha")){
+                println()
+            }
             val animationRef = intArrayOf(
                 npc.walkingAnimation,
                 npc.standingAnimation,
@@ -135,7 +140,7 @@ fun createObjectAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.FRAMES)
         val animationFiles = files.files
         val animations = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader()
+            val loader = SequenceLoader206()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
