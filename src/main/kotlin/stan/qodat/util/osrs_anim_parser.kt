@@ -39,7 +39,7 @@ fun createNpcAnimsJsonDir(
         val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
         val archiveData = storage.loadArchive(seqArchive)
         val files = seqArchive.getFiles(archiveData)
-        val frameIndex = store.getIndex(IndexType.FRAMES)
+        val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader206()
@@ -79,10 +79,10 @@ fun createNpcAnimsJsonDir(
             val animationRef = intArrayOf(
                 npc.walkingAnimation,
                 npc.standingAnimation,
-                npc.rotateLeftAnimation,
+                npc.idleRotateLeftAnimation ,
+                npc.idleRotateRightAnimation ,
+                npc.rotateLeftAnimation ,
                 npc.rotateRightAnimation,
-                npc.rotate90LeftAnimation,
-                npc.rotate90RightAnimation,
                 npc.rotate180Animation
             ).filter { it > 0 }
             try {
@@ -137,7 +137,7 @@ fun createObjectAnimsJsonDir(
         val seqArchive = index.getArchive(ConfigType.SEQUENCE.id)
         val archiveData = storage.loadArchive(seqArchive)
         val files = seqArchive.getFiles(archiveData)
-        val frameIndex = store.getIndex(IndexType.FRAMES)
+        val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader206()

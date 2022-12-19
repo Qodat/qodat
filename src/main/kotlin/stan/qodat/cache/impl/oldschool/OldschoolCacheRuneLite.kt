@@ -61,8 +61,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     private fun load() {
         store.load()
-        frameIndex = store.getIndex(IndexType.FRAMES)
-        framemapIndex = store.getIndex(IndexType.FRAMEMAPS)
+        frameIndex = store.getIndex(IndexType.ANIMATIONS)
+        framemapIndex = store.getIndex(IndexType.SKELETONS)
         frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
         frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
         npcManager = NpcManager(store)

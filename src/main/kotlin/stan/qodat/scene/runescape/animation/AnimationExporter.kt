@@ -64,7 +64,7 @@ class AnimationExporter {
 
     private fun packFrames(animation: Animation): Int {
         val store = OldschoolCacheRuneLite.store
-        val frameIndex = store.getIndex(IndexType.FRAMES)
+        val frameIndex = store.getIndex(IndexType.ANIMATIONS)
 
         val curArchives = animation.getFrameList().map {
             val hexString = Integer.toHexString(it.idProperty.get())
