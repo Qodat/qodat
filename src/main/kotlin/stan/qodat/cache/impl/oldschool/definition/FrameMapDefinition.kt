@@ -24,26 +24,43 @@
  */
 package stan.qodat.cache.impl.oldschool.definition
 
-class SequenceDefinition206(val id: Int) {
-    var frameIDs : IntArray? = null
-    var chatFrameIds: IntArray? = null
-    var frameLenghts: IntArray? = null
-    var frameSounds: IntArray? = null
-    var frameStep = -1
-    var interleaveLeave: IntArray? = null
-    var stretches = false
-    var forcedPriority = 5
-    var leftHandItem = -1
-    var rightHandItem = -1
-    var maxLoops = 99
-    var precedenceAnimating = -1
-    var priority = -1
-    var replyMode = 2
-    var skeletalAnimationId = -1
-    var firstSkeletalFrame = 0
-    var lastSkeletalFrame = 0
-    var masks: IntArray? = null
+import net.runelite.cache.io.InputStream
+
+class FrameMapDefinition(val id: Int) {
+
+    lateinit var types: IntArray
+    lateinit var frameMaps: Array<IntArray>
+    var length = 0
+    var skeleton: MayaSkeleton? = null
 
 
+    constructor(id: Int, b: ByteArray): this(id) {
+        val stream = InputStream(b)
+
+        length = stream.readUnsignedByte()
+        types = IntArray(length)
+        frameMaps = Array(length) { IntArray(0) }
+
+        for (i in 0 until length) {
+            types[i] = stream.readUnsignedByte()
+        }
+
+        for (i in 0 until length) {
+            val frameMapLength = stream.readUnsignedByte()
+            frameMaps[i] = IntArray(frameMapLength)
+        }
+
+        for (i in 0 until length) {
+            for (j in 0 until frameMaps[i].size) {
+                frameMaps[i][j] = stream.readUnsignedByte()
+            }
+        }
+
+        val boneCount: Int = stream.readUnsignedShort()
+
+        if (boneCount > 0) {
+            skeleton = MayaSkeleton(stream, boneCount)
+        }
+    }
 
 }

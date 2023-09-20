@@ -76,7 +76,7 @@ class SequenceLoader206 {
                 stream.read24BitInt()
             }
             14 -> {
-                cachedModelId = stream.readInt()
+                skeletalAnimationId = stream.readInt()
             }
             15 -> {
                 repeat(stream.readUnsignedShort()) {
@@ -85,12 +85,16 @@ class SequenceLoader206 {
                 }
             }
             16 -> {
-                stream.readUnsignedShort()
-                stream.readUnsignedShort()
+                lastSkeletalFrame = stream.readUnsignedShort()
+                firstSkeletalFrame = stream.readUnsignedShort()
             }
             17 -> {
-                repeat(stream.readUnsignedByte()) {
-                    stream.readUnsignedByte()
+                masks = IntArray(256)
+                i = 0
+                length = stream.readUnsignedByte()
+                while (i < length) {
+                    masks!![i] += stream.readUnsignedByte()
+                    ++i
                 }
             }
         }
