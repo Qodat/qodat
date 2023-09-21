@@ -1,5 +1,6 @@
 package stan.qodat.cache.impl.legacy
 
+import net.runelite.cache.fs.Store
 import qodat.cache.Cache
 import qodat.cache.definition.*
 import stan.qodat.Properties
@@ -13,6 +14,10 @@ object LegacyCache : Cache("Legacy") {
         LegacyObjectStorage.load(path)
         LegacyAnimationStorage.load(path)
         LegacyBodyKitStorage.load(path)
+    }
+
+    override fun getStore(): Store {
+        TODO("Not yet implemented")
     }
 
     override fun getAnimation(id: String) =

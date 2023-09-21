@@ -13,6 +13,7 @@ interface AnimationFrameDefinition {
     val transformationDeltaX : IntArray
     val transformationDeltaY : IntArray
     val transformationDeltaZ : IntArray
+    val framemapArchiveIndex: Int
 
     val transformationGroup : AnimationTransformationGroup
 }

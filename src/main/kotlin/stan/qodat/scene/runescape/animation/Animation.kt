@@ -53,6 +53,7 @@ class Animation(
     val loopOffsetProperty = SimpleIntegerProperty(definition?.loopOffset ?: -1)
     val leftHandItemProperty = SimpleIntegerProperty(definition?.leftHandItem ?: -1)
     val rightHandItemProperty = SimpleIntegerProperty(definition?.rightHandItem ?: -1)
+    val skeletalAnimationId = SimpleIntegerProperty(definition?.skeletalAnimationId ?: -1)
 
     fun getSkeletons(): ObservableMap<Int, AnimationSkeleton> {
         if (!this::skeletons.isInitialized) {
@@ -75,16 +76,29 @@ class Animation(
     override fun getFrameList(): ObservableList<AnimationFrame> {
         if (!this::frames.isInitialized) {
             try {
-                val framesArray = if (definition == null) emptyArray() else Array(definition.frameHashes.size) { idx ->
-                    val frameDefinition = getCacheSafe().getFrameDefinition(definition.frameHashes[idx])!!
-                    AnimationFrame(
-                        name = "frame[$idx]",
-                        definition = frameDefinition,
-                        duration = definition.frameLengths[idx]
-                    ).apply {
-                        idProperty.set(this@Animation.definition.frameHashes[idx])
+                val framesArray =
+                    if (definition == null)
+                        emptyArray()
+                    else if (definition.isMayaAnimation()) Array(0) {
+                        AnimationFrame(
+                            name = "frame[$0]",
+                            definition = null,
+                            duration = 0
+                        ).apply {
+                            idProperty.set(0)
+                        }
+                    } else {
+                        Array(definition.frameHashes.size) { idx ->
+                            val frameDefinition = getCacheSafe().getFrameDefinition(definition.frameHashes[idx])!!
+                            AnimationFrame(
+                                name = "frame[$idx]",
+                                definition = frameDefinition,
+                                duration = definition.frameLengths[idx]
+                            ).apply {
+                                idProperty.set(this@Animation.definition.frameHashes[idx])
+                            }
+                        }
                     }
-                }
                 frames = FXCollections.observableArrayList(*framesArray)
             } catch (e: Exception) {
                 Qodat.logException("Could not get animation {${getName()}}'s frames", e)

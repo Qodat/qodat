@@ -4,9 +4,6 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.*
 import net.runelite.cache.*
-import net.runelite.cache.definitions.FramemapDefinition
-import net.runelite.cache.definitions.loaders.FrameLoader
-import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
@@ -15,6 +12,8 @@ import qodat.cache.definition.*
 import qodat.cache.event.CacheReloadEvent
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
+import stan.qodat.cache.impl.oldschool.definition.FrameDefinition
+import stan.qodat.cache.impl.oldschool.definition.FrameMapDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
@@ -42,7 +41,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     lateinit var frameIndex: Index
     lateinit var framemapIndex: Index
     lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
-    lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
+    lateinit var frameMaps: HashMap<Int, Pair<FrameMapDefinition, AnimationTransformationGroup>>
 
     private lateinit var animations : Array<AnimationDefinition>
     private lateinit var spotAnimations : Array<SpotAnimationDefinition>
@@ -64,7 +63,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         frameIndex = store.getIndex(IndexType.ANIMATIONS)
         framemapIndex = store.getIndex(IndexType.SKELETONS)
         frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
-        frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
+        frameMaps = HashMap<Int, Pair<FrameMapDefinition, AnimationTransformationGroup>>()
         npcManager = NpcManager(store)
         npcManager.load()
         itemManager = ItemManager(store)
@@ -78,6 +77,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         spriteManager.load()
         textureManager = TextureManager(store)
         textureManager.load()
+    }
+
+    override fun getStore(): Store {
+        return store
     }
 
     override fun getTexture(id: Int): TextureDefinition {
@@ -128,6 +131,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                             override val name = npc.name.ifBlank { "null" }
                             override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                             override val animationIds = try {
+                                println("${npc.name} ${npc.standingAnimation}")
                                 animIdsCache.getOrPut(npc.standingAnimation) {
                                     npcAnimsDir
                                         .resolve("${npc.id}.json")
@@ -216,6 +220,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     override val loopOffset: Int = sequence.frameStep
                     override val leftHandItem: Int = sequence.leftHandItem
                     override val rightHandItem: Int = sequence.rightHandItem
+                    override val skeletalAnimationId: Int = sequence.skeletalAnimationId
                 }
             }.toTypedArray()
         }
@@ -242,14 +247,14 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 val (frameMapDefinition, transformGroup) = frameMaps.getOrPut(frameMapArchiveId) {
                     val frameMapArchive = framemapIndex.getArchive(frameMapArchiveId)
                     val frameMapContents = frameMapArchive.decompress(storage.loadArchive(frameMapArchive))
-                    val frameMapDefinition = FramemapLoader().load(frameMapArchive.archiveId, frameMapContents)
+                    val frameMapDefinition = FrameMapDefinition(frameMapArchive.archiveId, frameMapContents)
                     frameMapDefinition to object : AnimationTransformationGroup {
                         override val id: Int = frameMapArchiveId
                         override val transformationTypes: IntArray = frameMapDefinition.types
                         override val targetVertexGroupsIndices: Array<IntArray> = frameMapDefinition.frameMaps
                     }
                 }
-                val frame = FrameLoader().load(frameMapDefinition, file.fileId, frameContents)
+                val frame = FrameDefinition(frameMapDefinition, file.fileId, frameContents)
                 file.fileId to object : AnimationFrameDefinition {
                     override val transformationCount: Int = frame.translatorCount
                     override val transformationGroupAccessIndices: IntArray = frame.indexFrameIds
@@ -257,6 +262,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     override val transformationDeltaY: IntArray = frame.translator_y
                     override val transformationDeltaZ: IntArray = frame.translator_z
                     override val transformationGroup: AnimationTransformationGroup = transformGroup
+                    override val framemapArchiveIndex: Int = frame.framemapArchiveIndex
                 }
             }.toMap()
         }[frameArchiveFileId]

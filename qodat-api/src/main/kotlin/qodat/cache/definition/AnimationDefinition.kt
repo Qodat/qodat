@@ -14,4 +14,6 @@ interface AnimationDefinition {
     val loopOffset: Int
     val leftHandItem: Int
     val rightHandItem: Int
+    val skeletalAnimationId: Int
+    fun isMayaAnimation(): Boolean = skeletalAnimationId >= 0
 }

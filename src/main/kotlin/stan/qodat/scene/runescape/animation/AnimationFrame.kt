@@ -93,6 +93,7 @@ class AnimationFrame(
                 transformationList.map { it.getDeltaZ() }.toIntArray()
             override val transformationGroup: AnimationTransformationGroup =
                 definition!!.transformationGroup
+            override val framemapArchiveIndex: Int = -1
         },
         duration = getLength().toInt()
     ).apply {

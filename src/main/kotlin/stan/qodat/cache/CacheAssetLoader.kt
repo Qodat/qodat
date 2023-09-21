@@ -39,7 +39,7 @@ class CacheAssetLoader(
                 println("Did not find object_anims dir, creating...")
                 objectAnimsDir.mkdir()
                 val task = createObjectAnimsJsonDir(
-                    store = OldschoolCacheRuneLite.store,
+                    cache = cache,
                     objectManager = OldschoolCacheRuneLite.objectManager
                 )
                 task.setOnSucceeded {
@@ -59,7 +59,7 @@ class CacheAssetLoader(
                 println("Did not find npc_anims dir, creating...")
                 npcAnimsDir.mkdir()
                 val task = createNpcAnimsJsonDir(
-                    store = OldschoolCacheRuneLite.store,
+                    cache = cache,
                     npcManager = OldschoolCacheRuneLite.npcManager
                 )
                 task.setOnSucceeded {
@@ -82,6 +82,11 @@ class CacheAssetLoader(
                         animations += Animation("$i", definition, cache).apply {
                             this.idProperty.set(i)
                         }
+                    else if (definition.skeletalAnimationId > 0) {
+                        animations += Animation("$i (Skeletal)", definition, cache).apply {
+                            this.idProperty.set(i)
+                        }
+                    }
                     updateProgress((100.0 * i.div(animationDefinitions.size)), 100.0)
                     updateMessage("Loading animation (${i + 1} / ${animationDefinitions.size})")
                 } catch (e: Exception) {

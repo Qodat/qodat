@@ -5,6 +5,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import mqo.MQOImporter
+import net.runelite.cache.fs.Store
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
 import qodat.cache.definition.*
@@ -142,6 +143,7 @@ object QodatCache : Cache("qodat") {
                 loopOffset = any.loopOffsetProperty.get(),
                 leftHandItem = any.leftHandItemProperty.get(),
                 rightHandItem = any.rightHandItemProperty.get(),
+                skeletalAnimationId = any.skeletalAnimationId.get()
             )
 
             val animationSkeletons = frameList.map {
@@ -154,13 +156,13 @@ object QodatCache : Cache("qodat") {
             }
             val animationFrameDefinitions = frameList.mapIndexed { index, it ->
                 QodatAnimationFrameDefinition(
-                    ((frameArchiveId and  0xFFFF) shl 16) or (index and 0xFFFF),
                     it.getTransformationCount(),
                     it.transformationList.map { it.groupIndexProperty.get() }.toIntArray(),
                     it.transformationList.map { it.getDeltaX() }.toIntArray(),
                     it.transformationList.map { it.getDeltaY() }.toIntArray(),
                     it.transformationList.map { it.getDeltaZ() }.toIntArray(),
-                    animationSkeletons[index]
+                    animationSkeletons[index],
+                    ((frameArchiveId and  0xFFFF) shl 16) or (index and 0xFFFF)
                 )
             }
             for ((index, animationFrameDefinition) in animationFrameDefinitions.withIndex()) {
@@ -241,6 +243,10 @@ object QodatCache : Cache("qodat") {
                 Properties.qodatCachePath.get().resolve("npcs").resolve(definition.name + ".json").deleteIfExists()
             }
         }
+    }
+
+    override fun getStore(): Store {
+        TODO("Not yet implemented")
     }
 
     override fun getModelDefinition(id: String): ModelDefinition {

@@ -49,7 +49,8 @@ data class LegacyAnimationDefinition(
     override val frameLengths: IntArray,
     override val loopOffset: Int,
     override val leftHandItem: Int,
-    override val rightHandItem: Int
+    override val rightHandItem: Int,
+    override val skeletalAnimationId: Int = -1
 ) : AnimationDefinition
 
 @Serializable
@@ -62,14 +63,14 @@ LegacyAnimationSkeletonDefinition(
 
 @Serializable
 data class LegacyAnimationFrameDefinition(
-    val frameHash: Int,
     val showing: Boolean,
     override val transformationCount: Int,
     override val transformationGroupAccessIndices: IntArray,
     override val transformationDeltaX: IntArray,
     override val transformationDeltaY: IntArray,
     override val transformationDeltaZ: IntArray,
-    override val transformationGroup: LegacyAnimationSkeletonDefinition
+    override val transformationGroup: LegacyAnimationSkeletonDefinition,
+    override val framemapArchiveIndex: Int
 ) : AnimationFrameDefinition
 
 @Serializable

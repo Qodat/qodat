@@ -1,5 +1,6 @@
 package qodat.cache
 
+import net.runelite.cache.fs.Store
 import qodat.cache.definition.*
 import java.io.UnsupportedEncodingException
 
@@ -32,6 +33,8 @@ abstract class Cache(val name: String) {
             it.on(event)
         }
     }
+
+    abstract fun getStore() : Store
 
     abstract fun getModelDefinition(id: String) : ModelDefinition
 

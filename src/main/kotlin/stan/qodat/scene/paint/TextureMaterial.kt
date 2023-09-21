@@ -77,7 +77,7 @@ data class TextureMaterial(val definition: TextureDefinition) : Material {
                 }
             }
         } catch (e: Exception) {
-            Qodat.logException("Failed to export texture sprite ${textureSprite}", e)
+            Qodat.logException("Failed to export texture sprite ${definition.fileIds[0]}", e)
             null
         }
         if (textureSpriteImage != null) {

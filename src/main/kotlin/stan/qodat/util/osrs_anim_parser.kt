@@ -8,7 +8,8 @@ import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
 import net.runelite.cache.ObjectManager
 import net.runelite.cache.fs.ArchiveFiles
-import net.runelite.cache.fs.Store
+import qodat.cache.Cache
+
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
@@ -29,10 +30,11 @@ import java.util.stream.Collectors
 private val gson = GsonBuilder().setPrettyPrinting().create()
 
 fun createNpcAnimsJsonDir(
-    store: Store,
+    cache: Cache,
     npcManager: NpcManager
 ) = object : Task<Void?>() {
     override fun call(): Void? {
+        val store = cache.getStore()
         val map = ConcurrentHashMap<Int, ArchiveFiles>()
         val storage = store.storage
         val index = store.getIndex(IndexType.CONFIGS)
@@ -44,15 +46,33 @@ fun createNpcAnimsJsonDir(
         val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
             val loader = SequenceLoader206()
             val anim = loader.load(file.fileId, file.contents)
+
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
                 updateProgress(progress, 100.0)
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
-            val frames: Set<Int> = anim.frameIDs?.map {
-                val frameArchiveId = it shr 16
-                val frameArchiveFileId = it and 65535
 
+            if (anim.skeletalAnimationId == -1) {
+                val frames: Set<Int> = anim.frameIDs?.map {
+                    val frameArchiveId = it shr 16
+                    val frameArchiveFileId = it and 65535
+
+                    val frameArchive = requireNotNull(frameIndex.getArchive(frameArchiveId))
+                    { "Frame group null for $frameArchiveId file $frameArchiveFileId" }
+                    val frameArchiveFiles = map.getOrPut(frameArchiveId) {
+                        frameArchive.getFiles(storage.loadArchive(frameArchive))!!
+                    }
+                    val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
+                    val frameContents = frameFile.contents
+
+                    val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
+                    frameMapArchiveId
+                }?.toSet() ?: emptySet()
+                (anim.id to frames)
+            } else {
+                val frameArchiveId = anim.skeletalAnimationId shr 16
+                val frameArchiveFileId = anim.skeletalAnimationId and 65535
                 val frameArchive = requireNotNull(frameIndex.getArchive(frameArchiveId))
                 { "Frame group null for $frameArchiveId file $frameArchiveFileId" }
                 val frameArchiveFiles = map.getOrPut(frameArchiveId) {
@@ -60,11 +80,11 @@ fun createNpcAnimsJsonDir(
                 }
                 val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
                 val frameContents = frameFile.contents
-
                 val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
-                frameMapArchiveId
-            }?.toSet() ?: emptySet()
-            (anim.id to frames)
+                println("id ${anim.id} $frameMapArchiveId")
+                (anim.id to setOf(frameMapArchiveId))
+            }
+
         }.collect(Collectors.toList()).toMap()
 
         updateMessage("Loaded all animation mappings!")
@@ -73,9 +93,6 @@ fun createNpcAnimsJsonDir(
         val total = npcManager.npcs.size
         val counter = AtomicInteger(0)
         npcManager.npcs.parallelStream().forEach { npc ->
-            if (npc.name.contains("Akkha")){
-                println()
-            }
             val animationRef = intArrayOf(
                 npc.walkingAnimation,
                 npc.standingAnimation,
@@ -127,10 +144,11 @@ fun createNpcAnimsJsonDir(
 }
 
 fun createObjectAnimsJsonDir(
-    store: Store,
+    cache: Cache,
     objectManager: ObjectManager,
 ) = object : Task<Void?>() {
     override fun call(): Void? {
+        val store = cache.getStore()
         val map = ConcurrentHashMap<Int, ArchiveFiles>()
         val storage = store.storage
         val index = store.getIndex(IndexType.CONFIGS)

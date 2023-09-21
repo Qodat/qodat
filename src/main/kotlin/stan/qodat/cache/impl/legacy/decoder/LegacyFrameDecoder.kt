@@ -74,14 +74,14 @@ class LegacyFrameDecoder {
                 showing = true
         }
         return LegacyAnimationFrameDefinition(
-            id,
             showing,
             index,
             indexFrameIds,
             scratchTranslatorX,
             scratchTranslatorY,
             scratchTranslatorZ,
-            framemap
+            framemap,
+            id
         )
     }
 }

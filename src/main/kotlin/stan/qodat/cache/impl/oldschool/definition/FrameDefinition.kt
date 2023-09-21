@@ -11,6 +11,7 @@ class FrameDefinition(framemap: FrameMapDefinition, id: Int, b: ByteArray) {
     var translatorCount: Int = -1
     var indexFrameIds: IntArray
     var showing: Boolean = false
+    var framemapArchiveIndex: Int
 
     init {
         val `in` = InputStream(b)
@@ -19,7 +20,7 @@ class FrameDefinition(framemap: FrameMapDefinition, id: Int, b: ByteArray) {
         this.id = id
         this.framemap = framemap
 
-        val framemapArchiveIndex = `in`.readUnsignedShort()
+        framemapArchiveIndex = `in`.readUnsignedShort()
         val length = `in`.readUnsignedByte()
 
         data.skip(3 + length)

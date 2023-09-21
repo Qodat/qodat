@@ -39,7 +39,8 @@ data class QodatAnimationDefinition(
     override val frameLengths: IntArray,
     override val loopOffset: Int,
     override val leftHandItem: Int,
-    override val rightHandItem: Int
+    override val rightHandItem: Int,
+    override val skeletalAnimationId: Int
 ) : AnimationDefinition
 
 @Serializable
@@ -51,13 +52,13 @@ data class QodatAnimationTransformationGroup(
 
 @Serializable
 data class QodatAnimationFrameDefinition(
-    val frameHash: Int,
     override val transformationCount: Int,
     override val transformationGroupAccessIndices: IntArray,
     override val transformationDeltaX: IntArray,
     override val transformationDeltaY: IntArray,
     override val transformationDeltaZ: IntArray,
-    override val transformationGroup: QodatAnimationTransformationGroup
+    override val transformationGroup: QodatAnimationTransformationGroup,
+    override val framemapArchiveIndex: Int
 ) : AnimationFrameDefinition
 
 @Serializable
