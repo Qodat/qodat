@@ -19,6 +19,7 @@ import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.paint.ColorMaterial
 import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.scene.provider.TreeItemProvider
+import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.shape.PolygonMeshView
 
 //fun Qodat.Companion.addTo3DScene(node: Node) {
@@ -72,10 +73,14 @@ fun<S : Searchable> TextField.configureSearchFilter(filteredList: FilteredList<S
         if (newValue != null && newValue.isEmpty())
             filteredList.setPredicate { true }
         else {
-            filteredList.setPredicate { it.getName().contains(newValue, ignoreCase = true) }
+            val id = newValue?.toIntOrNull()
+            filteredList.setPredicate { containsName<S>(it, newValue) || (containsId<S>(it, id, newValue)) }
         }
     }
 }
+private fun <S : Searchable> containsName(it: S, newValue: String) = it.getName().contains(newValue, ignoreCase = true)
+private fun <S : Searchable> containsId(it: S, id: Int?, newValue: String) =
+    it is Entity<*> && id != null && it.definition.getOptionalId().orElse(-1).toString().contains(newValue)
 
 
 fun<M : Material> PolygonMeshView.setAndBindMaterial(materialProperty: ObjectProperty<M>){
