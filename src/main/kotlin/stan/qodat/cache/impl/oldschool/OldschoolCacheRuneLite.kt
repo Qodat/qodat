@@ -270,9 +270,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> =
         interfaceManager.interfaces
-            .flatten()
-            .map { RuneliteIntefaceDefinition(it) }
-            .groupBy { it.id.shr(16) }
+            ?.flatten()
+            ?.map { RuneliteIntefaceDefinition(it) }
+            ?.groupBy { it.id.shr(16) }
+            ?: emptyMap()
 
     override fun getSprites(): Array<SpriteDefinition> =
         spriteManager.sprites.map { RuneliteSpriteDefinition(it) }.toTypedArray()
