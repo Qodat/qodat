@@ -7,12 +7,12 @@ import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
 import net.runelite.cache.ObjectManager
+import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.fs.ArchiveFiles
 import qodat.cache.Cache
 
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import java.io.FileWriter
 import java.nio.file.Paths
 import java.util.concurrent.ConcurrentHashMap
@@ -44,7 +44,7 @@ fun createNpcAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader206()
+            val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
 
             Platform.runLater {
@@ -53,7 +53,7 @@ fun createNpcAnimsJsonDir(
                 updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
             }
 
-            if (anim.skeletalAnimationId == -1) {
+            if (anim.animMayaID == -1) {
                 val frames: Set<Int> = anim.frameIDs?.map {
                     val frameArchiveId = it shr 16
                     val frameArchiveFileId = it and 65535
@@ -71,8 +71,8 @@ fun createNpcAnimsJsonDir(
                 }?.toSet() ?: emptySet()
                 (anim.id to frames)
             } else {
-                val frameArchiveId = anim.skeletalAnimationId shr 16
-                val frameArchiveFileId = anim.skeletalAnimationId and 65535
+                val frameArchiveId = anim.animMayaID  shr 16
+                val frameArchiveFileId = anim.animMayaID  and 65535
                 val frameArchive = requireNotNull(frameIndex.getArchive(frameArchiveId))
                 { "Frame group null for $frameArchiveId file $frameArchiveFileId" }
                 val frameArchiveFiles = map.getOrPut(frameArchiveId) {
@@ -158,7 +158,7 @@ fun createObjectAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader206()
+            val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))

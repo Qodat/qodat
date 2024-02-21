@@ -4,6 +4,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import kotlinx.coroutines.*
 import net.runelite.cache.*
+import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
@@ -16,7 +17,6 @@ import stan.qodat.cache.impl.oldschool.definition.FrameDefinition
 import stan.qodat.cache.impl.oldschool.definition.FrameMapDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
-import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import stan.qodat.util.onInvalidation
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -212,7 +212,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
 
             animations = seqArchiveFiles.files.map {
-                val sequence = SequenceLoader206().load(it.fileId, it.contents)
+                val sequence = SequenceLoader().load(it.fileId, it.contents)
                 return@map object : AnimationDefinition {
                     override val id: String = it.fileId.toString()
                     override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
@@ -220,7 +220,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     override val loopOffset: Int = sequence.frameStep
                     override val leftHandItem: Int = sequence.leftHandItem
                     override val rightHandItem: Int = sequence.rightHandItem
-                    override val skeletalAnimationId: Int = sequence.skeletalAnimationId
+                    override val skeletalAnimationId: Int = sequence.animMayaID
                 }
             }.toTypedArray()
         }
