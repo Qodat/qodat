@@ -7,6 +7,7 @@ import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
+import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
@@ -208,7 +209,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
 
             animations = seqArchiveFiles.files.map {
-                val sequence = SequenceLoader206().load(it.fileId, it.contents)
+                val sequence = SequenceLoader().load(it.fileId, it.contents)
                 return@map object : AnimationDefinition {
                     override val id: String = it.fileId.toString()
                     override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
@@ -270,9 +271,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> =
         interfaceManager.interfaces
-            .flatten()
-            .map { RuneliteIntefaceDefinition(it) }
-            .groupBy { it.id.shr(16) }
+            ?.flatten()
+            ?.map { RuneliteIntefaceDefinition(it) }
+            ?.groupBy { it.id.shr(16) }
+            ?: emptyMap()
 
     override fun getSprites(): Array<SpriteDefinition> =
         spriteManager.sprites.map { RuneliteSpriteDefinition(it) }.toTypedArray()

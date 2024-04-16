@@ -1,7 +1,7 @@
 plugins {
     id("org.openjfx.javafxplugin") version "0.1.0"
     kotlin("jvm") version "1.9.10"
-    kotlin("plugin.serialization") version "1.6.0"
+    kotlin("plugin.serialization") version "1.9.10"
     application
 }
 
@@ -29,6 +29,10 @@ allprojects {
     tasks {
         withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
             kotlinOptions.jvmTarget = "17"
+        }
+
+        jar {
+            duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
     }
 }

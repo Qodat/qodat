@@ -7,6 +7,7 @@ import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
 import net.runelite.cache.ObjectManager
+import net.runelite.cache.definitions.loaders.SequenceLoader
 import net.runelite.cache.fs.ArchiveFiles
 import net.runelite.cache.fs.Store
 import stan.qodat.Properties
@@ -42,7 +43,7 @@ fun createNpcAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations: Map<Int, Set<Int>> = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader206()
+            val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
@@ -140,7 +141,7 @@ fun createObjectAnimsJsonDir(
         val frameIndex = store.getIndex(IndexType.ANIMATIONS)
         val animationFiles = files.files
         val animations = animationFiles.parallelStream().map { file ->
-            val loader = SequenceLoader206()
+            val loader = SequenceLoader()
             val anim = loader.load(file.fileId, file.contents)
             Platform.runLater {
                 val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
