@@ -79,7 +79,7 @@ class ModelController : Initializable {
                  if (syncPath != null) {
                      for ((file, _) in it) {
                          val savePath = syncPath.resolve(file.name)
-                         file.copyTo(savePath.toFile())
+                         file.copyTo(savePath.toFile(), overwrite = true)
                      }
                  } else {
                      for ((_, model) in it)
