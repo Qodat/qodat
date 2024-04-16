@@ -209,14 +209,26 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val seqArchiveFiles = seqArchive.getFiles(seqArchiveData)
 
             animations = seqArchiveFiles.files.map {
-                val sequence = SequenceLoader().load(it.fileId, it.contents)
-                return@map object : AnimationDefinition {
-                    override val id: String = it.fileId.toString()
-                    override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
-                    override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
-                    override val loopOffset: Int = sequence.frameStep
-                    override val leftHandItem: Int = sequence.leftHandItem
-                    override val rightHandItem: Int = sequence.rightHandItem
+                try {
+                    val sequence = SequenceLoader().load(it.fileId, it.contents)
+                    object : AnimationDefinition {
+                        override val id: String = it.fileId.toString()
+                        override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
+                        override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                        override val loopOffset: Int = sequence.frameStep
+                        override val leftHandItem: Int = sequence.leftHandItem
+                        override val rightHandItem: Int = sequence.rightHandItem
+                    }
+                } catch (e: Exception) {
+                    val sequence =  SequenceLoader206().load(it.fileId, it.contents)
+                    object : AnimationDefinition {
+                        override val id: String = it.fileId.toString()
+                        override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
+                        override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                        override val loopOffset: Int = sequence.frameStep
+                        override val leftHandItem: Int = sequence.leftHandItem
+                        override val rightHandItem: Int = sequence.rightHandItem
+                    }
                 }
             }.toTypedArray()
         }
