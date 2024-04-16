@@ -15,10 +15,21 @@ import javafx.scene.shape.Line
 import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 import javafx.util.Duration
+import qodat.cache.definition.InterfaceDefinition
+import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.javafx.label
 import stan.qodat.javafx.text
 import stan.qodat.javafx.treeItem
 import stan.qodat.scene.runescape.ui.InterfaceGroup
+import stan.qodat.scene.runescape.ui.Sprite
+import stan.qodat.scene.runescape.widget.Widget
+import stan.qodat.scene.runescape.widget.component.Component
+import stan.qodat.scene.runescape.widget.component.Pos
+import stan.qodat.scene.runescape.widget.component.Size
+import stan.qodat.scene.runescape.widget.component.impl.Graphic
+import stan.qodat.scene.runescape.widget.component.impl.Inventory
+import stan.qodat.scene.runescape.widget.component.impl.Layer
+import stan.qodat.scene.runescape.widget.component.impl.Model
 import stan.qodat.util.ModelUtil
 import stan.qodat.util.onInvalidation
 
@@ -30,6 +41,13 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
         label(group.nameProperty)
         text(group.javaClass.simpleName, Color.web("#FFC66D"))
 
+        val widget = Widget()
+
+        val componentsById = group.definitions.associateBy { it.id.and(0xffff) }
+        componentsById.forEach { (id, comp) ->
+            val component = convert(comp, componentsById, id)
+            widget.children.add(component)
+        }
         do3d.selectedProperty().onInvalidation {
             if (get()) {
 
@@ -60,6 +78,42 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
             add(sceneNode, 0)
         }
         expandedProperty().set(group.treeItemExpandedProperty().get())
+    }
+
+    private fun convert(
+        base: InterfaceDefinition,
+        componentsById: Map<Int, InterfaceDefinition>,
+        id: Int,
+    ): Component<*> {
+        val component = when (base.type) {
+            0 -> Layer().apply {
+                scrollX = 0
+                scrollY = 0
+                scrollHeight = base.scrollHeight
+                children.addAll(componentsById.values.filter { it.parentId.and(0xffff) == id }.map { convert(it, componentsById, it.id.and(0xffff))})
+            }
+            2 -> Inventory().apply {
+
+            }
+            3 -> stan.qodat.scene.runescape.widget.component.impl.Rectangle().apply {
+            }
+            4 -> stan.qodat.scene.runescape.widget.component.impl.Text()
+            5 -> Graphic()
+            6 -> Model()
+            9 -> stan.qodat.scene.runescape.widget.component.impl.Line()
+            else -> error("Unsupported component type: $base")
+        }.apply {
+            name = base.id.toString()
+            x = base.originalX
+            y = base.originalY
+            width = base.originalWidth
+            height = base.originalHeight
+            hSize = Size.fromId(base.widthMode)
+            vSize = Size.fromId(base.heightMode)
+            hPos = Pos.fromIdHor(base.xPositionMode)
+            vPos = Pos.fromIdVer(base.yPositionMode)
+        }
+        return component
     }
 
     private fun TreeItem<Node>.add(sceneGroup: Parent, depth: Int) {
@@ -114,10 +168,8 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
                         fill = ModelUtil.hsbToColor(def.textColor, def.opacity.toByte())
                     }
                     5 -> {
-                        val view = ImageView((child.children.find { it.graphic is ImageView }?.graphic as ImageView).image)
-//                        view.x = bounds.x
-//                        view.y = bounds.y
-                        view
+                        val sprite = def.spriteId.takeIf { it > 0 }?.let { OldschoolCacheRuneLite.getSprite(it, 0) }?.let { Sprite(it) }
+                        ImageView(sprite?.image)
                     }
                     6 -> Group()
                     9 -> Line()
