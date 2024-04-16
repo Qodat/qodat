@@ -11,7 +11,7 @@ import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 class SequenceLoader206 {
 
     fun load(id: Int, b: ByteArray): SequenceDefinition206 {
-        val def = SequenceDefinition206(id)
+        val def = SequenceDefinition206(id.toString())
         val `is` = InputStream(b)
         while (true) {
             val opcode = `is`.readUnsignedByte()
@@ -26,6 +26,9 @@ class SequenceLoader206 {
     private fun SequenceDefinition206.decodeValues(opcode: Int, stream: InputStream) {
         val length: Int
         var i: Int
+        if (id == "7981") {
+            println()
+        }
         when (opcode) {
             1 -> {
                 length = stream.readUnsignedShort()
