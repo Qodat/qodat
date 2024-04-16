@@ -24,7 +24,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
     val nameProperty = SimpleStringProperty(idProperty.get().toString())
 
     private val viewBox: HBox by lazy {
-        LabeledHBox(nameProperty)
+        LabeledHBox(nameProperty, labelPrefix = "widget")
     }
 
     private val sceneGroup: Group by lazy {
