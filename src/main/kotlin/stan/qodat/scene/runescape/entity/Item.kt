@@ -1,9 +1,9 @@
 package stan.qodat.scene.runescape.entity
 
-import stan.qodat.Properties
 import qodat.cache.Cache
 import qodat.cache.Encoder
 import qodat.cache.definition.ItemDefinition
+import stan.qodat.Properties
 
 /**
  * TODO: add documentation
@@ -12,7 +12,7 @@ import qodat.cache.definition.ItemDefinition
  * @since   28/01/2021
  */
 class Item(cache: Cache, definition: ItemDefinition)
-    : Entity<ItemDefinition>(cache, definition), Encoder {
+    : Entity<ItemDefinition>(cache, definition, "item"), Encoder {
 
     override fun property() = Properties.selectedItemName
 }

@@ -17,8 +17,9 @@ import stan.qodat.scene.transform.Transformable
 abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
     cache: Cache,
     definition: D,
-    private val animationProvider: D.() -> Array<Animation>
-) : Entity<D>(cache, definition), Transformable, GroupableTransformable {
+    private val animationProvider: D.() -> Array<Animation>,
+    labelPrefix: String? = null,
+) : Entity<D>(cache, definition, labelPrefix), Transformable, GroupableTransformable {
 
     private lateinit var animations: Array<Animation>
 //    private lateinit var skeletons: Map<Int, AnimationSkeleton>

@@ -93,6 +93,7 @@ object Properties {
     val osrsCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/OS/rev203"))
     val qodatCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/qodat"))
     val legacyCachePath = SimpleObjectProperty(rootPath.get().resolve("caches/667"))
+    val labelMappingPath = SimpleObjectProperty(rootPath.get().resolve("labels.json"))
 
     val downloadsPath = SimpleObjectProperty(rootPath.get().resolve("downloads"))
 
@@ -138,6 +139,8 @@ object Properties {
 
     val copyModelsFromNpc = SimpleBooleanProperty(true)
     val copyAnimationsFromNpc = SimpleBooleanProperty(true)
+
+    val showIdAfterLabel = SimpleBooleanProperty(true)
 
     fun bind(sessionManager: PropertiesManager) {
 
@@ -204,6 +207,7 @@ object Properties {
         sessionManager.bindPath("osrs-cache-path", osrsCachePath)
         sessionManager.bindPath("qodat-cache-path", qodatCachePath)
         sessionManager.bindPath("legacy-cache-path", legacyCachePath)
+        sessionManager.bindPath("label-mapping-path", labelMappingPath)
         sessionManager.bindPath("main-data-path", projectFilesPath)
         sessionManager.bindPath("exports-path", defaultExportsPath)
 
@@ -211,5 +215,7 @@ object Properties {
         sessionManager.bindPath("last-wavefront-sequence-export-path", lastWaveFrontSequenceExportPath)
         sessionManager.bindPath("last-gif-export-path", lastGIFExportPath)
         sessionManager.bindPath("last-sprite-export-path", lastSpriteExportPath)
+
+        sessionManager.bindBoolean("show-id-after-label", showIdAfterLabel)
     }
 }
