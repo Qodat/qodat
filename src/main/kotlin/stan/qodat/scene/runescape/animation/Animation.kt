@@ -27,6 +27,9 @@ import stan.qodat.scene.transform.Transformable
 import stan.qodat.scene.transform.Transformer
 import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.Searchable
+import tornadofx.contextmenu
+import tornadofx.item
+import tornadofx.stringBinding
 
 /**
  * Represents a [Transformer] for [Model] objects.
@@ -35,7 +38,7 @@ import stan.qodat.util.Searchable
  * @since   28/01/2021
  */
 class Animation(
-    label: String,
+    private val label: String,
     private val definition: AnimationDefinition? = null,
     private val cache: Cache? = null
 ) : Transformer<AnimationFrame>, Searchable, ViewNodeProvider, Encoder {
@@ -49,6 +52,7 @@ class Animation(
     val treeItemProperty = SimpleObjectProperty<AnimationTreeItem>()
     val exportFrameArchiveId = SimpleIntegerProperty()
     val labelProperty = SimpleStringProperty(label)
+    val nameProperty = SimpleStringProperty(label)
     val idProperty = SimpleIntegerProperty()
     val loopOffsetProperty = SimpleIntegerProperty(definition?.loopOffset ?: -1)
     val leftHandItemProperty = SimpleIntegerProperty(definition?.leftHandItem ?: -1)
@@ -114,12 +118,20 @@ class Animation(
         }
     }
 
-    override fun getName() = labelProperty.get()
+    override fun getName() = nameProperty.get()
 
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized) {
-            viewBox = LabeledHBox(labelProperty).apply {
-                label.contextMenu = ContextMenu().apply {
+            viewBox = LabeledHBox(labelProperty, labelPrefix = "animation").apply {
+                nameProperty.bind(editableValueProperty.stringBinding(labelProperty) {
+                    "${editableValueProperty.get()} (${labelProperty.get()})"
+                })
+                contextmenu {
+                    item("Rename") {
+                        setOnAction {
+                            editableProperty.set(true)
+                        }
+                    }
                     menu("export") {
                         menuItem("GIF") {
                             BackgroundTasks.submit(
