@@ -210,7 +210,9 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
             animations = seqArchiveFiles.files.map {
                 try {
-                    val sequence = SequenceLoader().load(it.fileId, it.contents)
+                    val sequence = SequenceLoader().apply {
+                        configureForRevision(seqArchive.revision)
+                    }.load(it.fileId, it.contents)
                     object : AnimationDefinition {
                         override val id: String = it.fileId.toString()
                         override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)

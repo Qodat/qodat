@@ -19,6 +19,7 @@ import stan.qodat.scene.controller.MainController
 import stan.qodat.scene.controller.ModelController
 import stan.qodat.util.ActionCache
 import stan.qodat.util.PropertiesManager
+import stan.qodat.util.runCatchingWithDialog
 import java.nio.file.Path
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -34,15 +35,20 @@ import kotlin.system.exitProcess
 class Qodat : Application() {
 
     override fun start(primaryStage: Stage) {
+        runCatchingWithDialog(activityName = "Starting Qodat") {
 
-        stage = primaryStage
-        val loadedProperties = propertiesManager.loadFromFile()
+            stage = primaryStage
 
-        Properties.bind(propertiesManager)
+            val loadedProperties = propertiesManager.loadFromFile()
 
-        SubScene3D.init()
+            Properties.bind(propertiesManager)
 
-        loadMainController(primaryStage, loadedProperties)
+            SubScene3D.init()
+
+            loadMainController(primaryStage, loadedProperties)
+        }.onFailure {
+            logException("Failed to start Qodat", it)
+        }
     }
 
     private fun loadMainController(primaryStage: Stage, loadedProperties: Boolean) {

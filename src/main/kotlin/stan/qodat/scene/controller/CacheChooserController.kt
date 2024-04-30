@@ -19,8 +19,8 @@ import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.text.TextAlignment
 import javafx.stage.DirectoryChooser
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -28,7 +28,12 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jsoup.Jsoup
 import stan.qodat.Properties
-import java.io.*
+import stan.qodat.Qodat
+import stan.qodat.util.runCatchingWithDialog
+import java.io.BufferedInputStream
+import java.io.BufferedOutputStream
+import java.io.File
+import java.io.FileOutputStream
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -121,19 +126,10 @@ class CacheChooserController : Initializable {
         }
         listCaches.placeholder = listCachesPlaceholder
 
-        try {
-            val doc = Jsoup.connect(RUNESTATS_URL).get()
-            entries.addAll(doc.select("a")
-                .map { col -> col.attr("href") }
-                .filter { it.length > 10 } // get rid of ../ and ./types
-                .reversed()
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            listCachesPlaceholder.text += "\n\n${e.message}"
-            if (e is SSLHandshakeException) {
-                listCachesPlaceholder.text += "\n\nSSLHandshakeException is a known bug with certain Java versions, try updating."
-            }
+        runCatchingWithDialog("Fetching caches") {
+            fetchRuneStatsCaches(listCachesPlaceholder)
+        }.onFailure {
+            Qodat.logException("Failed to fetch caches", it)
         }
 
         val filterableEntries = FilteredList(entries)
@@ -161,6 +157,23 @@ class CacheChooserController : Initializable {
         }
     }
 
+    private fun fetchRuneStatsCaches(listCachesPlaceholder: Label) {
+        try {
+            val doc = Jsoup.connect(RUNESTATS_URL).get()
+            entries.addAll(doc.select("a")
+                .map { col -> col.attr("href") }
+                .filter { it.length > 10 } // get rid of ../ and ./types
+                .reversed()
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            listCachesPlaceholder.text += "\n\n${e.message}"
+            if (e is SSLHandshakeException) {
+                listCachesPlaceholder.text += "\n\nSSLHandshakeException is a known bug with certain Java versions, try updating."
+            }
+        }
+    }
+
     private fun downloadCache(cacheName: String, dirChooser: DirChooserHBox) {
         lblStatusText.isVisible = true
         lblStatusText.text = "Downloading cache $cacheName please wait.."
@@ -169,9 +182,8 @@ class CacheChooserController : Initializable {
             .pathProperty.get()
             .resolve(cacheName.removeSuffix(".tar.gz"))
             .toFile()
-
-        GlobalScope.launch {
-            try {
+        runCatchingWithDialog("Downloading cache $cacheName") {
+            CoroutineScope(Dispatchers.IO).launch {
                 val conn = URL("$RUNESTATS_URL/$cacheName").openConnection()
                 conn.addRequestProperty("User-Agent", "qodat")
                 BufferedInputStream(withContext(Dispatchers.IO) {
@@ -201,9 +213,9 @@ class CacheChooserController : Initializable {
                     lblStatusText.isVisible = false
                     dirChooser.field.text = destFolder.resolve("cache").absolutePath.toString()
                 }
-            } catch (e: IOException) {
-                e.printStackTrace()
             }
+        }.onFailure {
+            Qodat.logException("Failed to download cache $cacheName", it)
         }
     }
 
@@ -220,7 +232,7 @@ class CacheChooserController : Initializable {
         property: ObjectProperty<Path>,
         lblErrorText: Label,
         editable: Boolean = true,
-        disableOkButtonIfEmpty: Boolean = false
+        disableOkButtonIfEmpty: Boolean = false,
     ) : VBox(5.0) {
         var pathProperty = SimpleObjectProperty(property.get())
         val field = TextField().apply {

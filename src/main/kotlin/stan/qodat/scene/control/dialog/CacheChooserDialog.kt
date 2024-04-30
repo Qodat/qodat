@@ -6,12 +6,13 @@ import javafx.scene.control.Dialog
 import javafx.scene.layout.AnchorPane
 import stan.qodat.Qodat
 import stan.qodat.scene.controller.CacheChooserController
+import stan.qodat.util.runCatchingWithDialog
 import java.nio.file.Path
 
 class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
 
     init {
-        try {
+        runCatchingWithDialog(activityName = "Creating CacheChooserDialog") {
             val cacheChooserLoader = FXMLLoader(Qodat::class.java.getResource("cachechooser.fxml"))
             val root = cacheChooserLoader.load<AnchorPane>()
 
@@ -35,10 +36,8 @@ class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
                     else -> throw Exception("Unexpected button type {$it}")
                 }
             }
-
-
-        } catch (e: Exception) {
-            e.printStackTrace()
+        }.onFailure {
+            Qodat.logException("Failed to create CacheChooserDialog", it)
         }
     }
 }

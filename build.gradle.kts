@@ -9,7 +9,7 @@ repositories {
     jcenter()
 }
 
-version = "0.1.9"
+version = "0.2.6"
 
 allprojects {
     group = "stan.qodat"
@@ -65,6 +65,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.8.0")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
+    implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.9")
     implementation("com.displee:rs-cache-library:7.1.3")
     implementation("org.joml:joml-primitives:1.10.0")
     implementation("org.joml:joml:1.10.5")
