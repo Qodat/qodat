@@ -37,7 +37,8 @@ import stan.qodat.util.getMaterial
  */
 abstract class Entity<D : EntityDefinition>(
     protected val cache: Cache,
-    val definition: D
+    val definition: D,
+    val labelPrefix: String? = null
 ) : Exportable, SceneNodeProvider, ViewNodeProvider, TreeItemProvider {
 
     private var modelGroup: Group? = null
@@ -142,7 +143,7 @@ abstract class Entity<D : EntityDefinition>(
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized) {
             val optionalInt = definition.getOptionalId()
-            val box = LabeledHBox(labelProperty)
+            val box = LabeledHBox(labelProperty, labelPrefix = labelPrefix)
             viewBox = if (optionalInt.isPresent)
                 HBox().apply {
                     val id = optionalInt.asInt.toString()

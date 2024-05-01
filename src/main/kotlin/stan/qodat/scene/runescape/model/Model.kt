@@ -186,7 +186,7 @@ class Model(label: String,
 
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized) {
-            viewBox = LabeledHBox(labelProperty)
+            viewBox = LabeledHBox(labelProperty, labelPrefix = "model")
         }
         return viewBox
     }

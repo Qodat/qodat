@@ -11,7 +11,7 @@ class SpotAnimation(
     cache: Cache = OldschoolCacheRuneLite,
     definition: SpotAnimationDefinition,
     animationProvider: SpotAnimationDefinition.() -> Array<Animation>
-) : AnimatedEntity<SpotAnimationDefinition>(cache, definition, animationProvider), Encoder {
+) : AnimatedEntity<SpotAnimationDefinition>(cache, definition, animationProvider, labelPrefix = "spot_anim"), Encoder {
 
     override fun toString(): String = getName()
 

@@ -38,7 +38,7 @@ class Sprite(val definition: SpriteDefinition) : SceneNodeProvider, ViewNodeProv
     }
 
     val viewNode: HBox by lazy {
-        LabeledHBox(nameProperty) .apply {
+        LabeledHBox(nameProperty, labelPrefix = "sprite").apply {
             contextmenu {
                 styleClass += "wave-front-format-export-menu"
                 for (exportFormat in SpriteExportFormat.all)
