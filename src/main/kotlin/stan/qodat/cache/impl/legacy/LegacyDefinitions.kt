@@ -70,7 +70,7 @@ data class LegacyAnimationFrameDefinition(
     override val transformationDeltaY: IntArray,
     override val transformationDeltaZ: IntArray,
     override val transformationGroup: LegacyAnimationSkeletonDefinition
-) : AnimationFrameDefinition
+) : AnimationFrameLegacyDefinition
 
 @Serializable
 data class LegacyModelDefinition(

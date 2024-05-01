@@ -26,6 +26,7 @@ open class ViewNodeListView<N : ViewNodeProvider> : ListView<N>() {
     lateinit var contextMenuBuilder: (N) -> ContextMenu
 
     init {
+        fixedCellSize = 22.0
         cellFactory = Callback {
             val listCell = object : ListCell<N>() {
                 override fun updateItem(item: N?, empty: Boolean) {

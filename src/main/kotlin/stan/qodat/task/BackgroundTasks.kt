@@ -56,7 +56,7 @@ object BackgroundTasks {
 
         if (addProgressIndicator) {
             val stackPane = StackPane()
-            GlobalScope.launch(Dispatchers.JavaFx) {
+            CoroutineScope(Dispatchers.JavaFx).launch {
 
                 val progressPane = ProgressIndicatorPane()
                 progressPane.bindPrefWidth(mainPane)
@@ -67,7 +67,7 @@ object BackgroundTasks {
                 withContext(Dispatchers.Default) {
                     try {
                         task.run()
-                        GlobalScope.launch(Dispatchers.IO) {
+                        launch(Dispatchers.IO) {
                             when (val result  = task.get(240, TimeUnit.SECONDS)) {
                                 is ExportTaskResult.Success ->
                                     showOpenFileOption(result.saveDir, progressBox)
@@ -85,7 +85,7 @@ object BackgroundTasks {
                 }
             }
         } else {
-            GlobalScope.launch(Dispatchers.Default) {
+            CoroutineScope(Dispatchers.Default).launch {
                 try {
                     task.run()
                 } catch (e: Exception) {

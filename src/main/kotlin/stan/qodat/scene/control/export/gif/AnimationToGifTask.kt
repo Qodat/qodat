@@ -7,9 +7,8 @@ import javafx.scene.image.WritableImage
 import javafx.util.Duration
 import kotlinx.coroutines.*
 import kotlinx.coroutines.javafx.JavaFx
-import stan.qodat.javafx.JavaFXExecutor
 import stan.qodat.scene.control.export.gif.encoder.*
-import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.io.FileOutputStream
 import java.nio.file.Path
@@ -20,7 +19,7 @@ class AnimationToGifTask(
     private val exportPath: Path,
     private val scene: SubScene,
     private val animationPlayer: AnimationPlayer,
-    private val animation: Animation
+    private val animation: AnimationLegacy
 ) : Task<Path>() {
 
     override fun call(): Path {

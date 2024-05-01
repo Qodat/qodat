@@ -16,6 +16,7 @@ import stan.qodat.cache.impl.qodat.QodatNpcDefinition
 import stan.qodat.scene.control.AutoCompleteTextField
 import stan.qodat.scene.control.ViewNodeListView
 import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.Searchable
@@ -190,7 +191,7 @@ class EditorController : EntityViewController("editor-scene") {
                                 setOnAction {
                                     val animationDefinition = OldschoolCacheRuneLite.getAnimationDefinitions().find { it.id == textField.text }
                                     if (animationDefinition != null) {
-                                        val animation = Animation(animationDefinition.id, animationDefinition, OldschoolCacheRuneLite)
+                                        val animation = AnimationLegacy(animationDefinition.id, animationDefinition, OldschoolCacheRuneLite)
                                         animationList.items.add(animation)
                                     }
                                 }

@@ -4,10 +4,13 @@ import javafx.application.Platform
 import javafx.concurrent.Task
 import qodat.cache.Cache
 import qodat.cache.definition.AnimatedEntityDefinition
+import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.EntityDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
+import stan.qodat.scene.runescape.animation.AnimationMaya
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.createNpcAnimsJsonDir
@@ -78,10 +81,17 @@ class CacheAssetLoader(
             val animations = ArrayList<Animation>()
             for ((i, definition) in animationDefinitions.withIndex()) {
                 try {
-                    if (definition.frameHashes.isNotEmpty())
-                        animations += Animation("$i", definition, cache).apply {
+                    if (definition is AnimationMayaDefinition) {
+                        animations += AnimationMaya("$i", definition, cache).apply {
                             this.idProperty.set(i)
                         }
+                    } else {
+                        if (definition.frameHashes.isNotEmpty()) {
+                            animations += AnimationLegacy("$i", definition, cache).apply {
+                                this.idProperty.set(i)
+                            }
+                        }
+                    }
                     updateProgress((100.0 * i.div(animationDefinitions.size)), 100.0)
                     updateMessage("Loading animation (${i + 1} / ${animationDefinitions.size})")
                 } catch (e: Exception) {

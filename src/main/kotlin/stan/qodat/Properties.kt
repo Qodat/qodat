@@ -8,6 +8,7 @@ import javafx.scene.shape.DrawMode
 import qodat.cache.Cache
 import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.PropertiesManager
 import tornadofx.booleanProperty

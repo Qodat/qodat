@@ -78,6 +78,9 @@ public class RS2Model implements ModelDefinition
 	private transient int[][] vertexGroups;
 	private transient int[][] faceGroups;
 
+	private int[][] animayaGroups;
+	private int[][] animayaScales;
+
 
 	/**
 	 * Computes the UV coordinates for every three-vertex face that has a
@@ -578,6 +581,22 @@ public class RS2Model implements ModelDefinition
 
 	public void setTexturePrimaryColors(short[] texturePrimaryColors) {
 		this.texturePrimaryColors = texturePrimaryColors;
+	}
+
+	public void setAnimayaGroups(int[][] animayaGroups) {
+		this.animayaGroups = animayaGroups;
+	}
+
+	public void setAnimayaScales(int[][] animayaScales) {
+		this.animayaScales = animayaScales;
+	}
+
+	public int[][] getAnimayaGroups() {
+		return animayaGroups;
+	}
+
+	public int[][] getAnimayaScales() {
+		return animayaScales;
 	}
 
 	public void setPriority(byte priority) {

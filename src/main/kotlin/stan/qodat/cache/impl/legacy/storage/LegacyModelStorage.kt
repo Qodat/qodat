@@ -18,7 +18,7 @@ object LegacyModelStorage {
     private val modelMap = HashMap<String, ModelDefinition>()
 
     fun getModel(cachePath: Path, modelId: String) = modelMap.getOrPut(modelId) {
-        val compressedData = Files.readAllBytes(cachePath.resolve("all_models").resolve("$modelId.gz"))!!
+        val compressedData = Files.readAllBytes(cachePath.resolve("all_models").resolve("$modelId.gz"))
         RSModelLoader().load(modelId, CompressionUtil.uncrompressGzip(compressedData))
     }
 }
