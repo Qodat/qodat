@@ -138,6 +138,7 @@ class ModelController : Initializable {
                     if (Qodat.shutDown) {
                         stop = true
                     } else {
+                        Thread.sleep(500)
                         val watchKey = watchService.poll() ?: continue
                         for (event in watchKey.pollEvents()) {
                             val context = event.context()

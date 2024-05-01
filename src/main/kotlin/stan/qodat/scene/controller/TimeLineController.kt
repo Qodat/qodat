@@ -26,6 +26,7 @@ import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.DragRegion
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.entity.Entity
@@ -176,6 +177,10 @@ class TimeLineController : Initializable {
 
     private fun Int.createTeansformSpheres(animationPlayer: AnimationPlayer) {
         val frame = frameList.items[this]
+        if (frame !is AnimationFrameLegacy) {
+            // TODO: 3d lines between spheres
+            return
+        }
         val groupIndicesList = frame.transformationList.map {
             it.groupIndices.toArray(null)
         }
@@ -253,15 +258,17 @@ class TimeLineController : Initializable {
                             "    -fx-font-weight: bold;\n" +
                             "    -fx-border-color: rgb(174, 138, 190);\n" +
                             "    -fx-border-width: 0 1 0 0"
-                val transformationTypeDetails = frame.transformationList
-                    .groupBy { it.getType() }
-                    .mapValues { it.value.size }
-                    .entries
-                    .map { "${it.value}x ${it.key} transforms" }
-                    .joinToString("\n")
+                if (frame is AnimationFrameLegacy) {
+                    val transformationTypeDetails = frame.transformationList
+                        .groupBy { it.getType() }
+                        .mapValues { it.value.size }
+                        .entries
+                        .map { "${it.value}x ${it.key} transforms" }
+                        .joinToString("\n")
+                    cell.tooltip = Tooltip(transformationTypeDetails)
+                }
                 cell.textFill = Color.CYAN
                 cell.text = cellIndex.toString()
-                cell.tooltip = Tooltip(transformationTypeDetails)
                 cell.prefWidthProperty().bind(Bindings.createDoubleBinding({
                     frameLength.get().times(maxWidthProperty.get()).div(totalDuration.get())
                 }, totalDuration, maxWidthProperty))

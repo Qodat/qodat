@@ -11,7 +11,8 @@ import qodat.cache.definition.*
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
-import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
@@ -102,7 +103,7 @@ object QodatCache : Cache("qodat") {
             }
             encodeModel(file, getQodatModelDefinition(any))
             return EncodeResult(file)
-        } else if (any is Animation) {
+        } else if (any is AnimationLegacy) {
             val animationSaveDir = Properties.defaultExportsPath.get().resolve("animation").resolve("json").toFile().apply {
                 if (!parentFile.exists())
                     parentFile.mkdirs()
@@ -125,7 +126,7 @@ object QodatCache : Cache("qodat") {
                 if (!exists())
                     mkdir()
             }
-            val frameList = any.getFrameList()
+            val frameList = any.getFrameList().filterIsInstance<AnimationFrameLegacy>()
             val frameArchiveId = any.exportFrameArchiveId.get()
 //            animationFrameSaveDir.listFiles()
 //                ?.mapNotNull { it.nameWithoutExtension.toIntOrNull() }
@@ -265,7 +266,7 @@ object QodatCache : Cache("qodat") {
         return OldschoolCacheRuneLite.getAnimationSkeletonDefinition(frameHash)
     }
 
-    override fun getFrameDefinition(frameHash: Int): AnimationFrameDefinition? {
+    override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? {
         return OldschoolCacheRuneLite.getFrameDefinition(frameHash)
     }
 

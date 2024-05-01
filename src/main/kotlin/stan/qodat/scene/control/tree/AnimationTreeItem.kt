@@ -11,9 +11,7 @@ import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onChange
 import stan.qodat.javafx.onExpanded
 import stan.qodat.scene.control.TreeItemListContextMenu
-import stan.qodat.scene.runescape.animation.Animation
-import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.scene.runescape.animation.Transformation
+import stan.qodat.scene.runescape.animation.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.setAndBind
 
@@ -46,16 +44,18 @@ class AnimationTreeItem(
                 textProperty().setAndBind(animation.labelProperty)
                 contextMenu = createContextMenu()
             }
-            children += Button("Pack").apply {
-                setOnAction {
-                    if (animation.exportFrameArchiveId.get() == 0){
-                        val dialog = TextInputDialog()
-                        dialog.showAndWait().ifPresent {
-                            animation.exportFrameArchiveId.set(it.toIntOrNull()?:0)
+            if (animation is AnimationLegacy) {
+                children += Button("Pack").apply {
+                    setOnAction {
+                        if (animation.exportFrameArchiveId.get() == 0) {
+                            val dialog = TextInputDialog()
+                            dialog.showAndWait().ifPresent {
+                                animation.exportFrameArchiveId.set(it.toIntOrNull() ?: 0)
+                            }
                         }
+                        if (animation.exportFrameArchiveId.get() != 0)
+                            QodatCache.encode(animation)
                     }
-                    if (animation.exportFrameArchiveId.get() != 0)
-                        QodatCache.encode(animation)
                 }
             }
             children += Button("Load").apply {
@@ -96,6 +96,8 @@ class AnimationTreeItem(
         for (treeItem in children) {
             if (treeItem is AnimationFrameTreeItem) {
                 val frame = treeItem.frame
+                if (frame !is AnimationFrameLegacy)
+                    continue
                 val transforms = frame.transformationList ?: continue
                 transforms.onChange { treeItem.resetTransformTreeItems(transforms, entity, frame, treeView) }
                 treeItem.resetTransformTreeItems(transforms, entity, frame, treeView)

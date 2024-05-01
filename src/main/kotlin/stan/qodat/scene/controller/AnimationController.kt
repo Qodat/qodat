@@ -14,6 +14,7 @@ import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
 import stan.qodat.javafx.onChange
 import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.setAndBind
 import java.net.URL
@@ -33,18 +34,18 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     @FXML lateinit var animationsListView: ListView<Animation>
 
     /**
-     * A [TextField] in which users can filter the [animations][Animation] contained in the [animationsListView].
+     * A [TextField] in which users can filter the [animations][AnimationLegacy] contained in the [animationsListView].
      * This is used to set the predicate of [filteredAnimations].
      */
     @FXML lateinit var searchTextField: TextField
 
     /**
-     * A [FilteredList] of [animations][Animation]. This list is backed by [animations].
+     * A [FilteredList] of [animations][AnimationLegacy]. This list is backed by [animations].
      */
     lateinit var filteredAnimations: FilteredList<Animation>
 
     /**
-     * An [ObservableList] of all the [animations][Animation] present in the loaded [Cache].
+     * An [ObservableList] of all the [animations][AnimationLegacy] present in the loaded [Cache].
      */
     val animations: ObservableList<Animation> = FXCollections.observableArrayList()
 

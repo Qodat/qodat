@@ -5,11 +5,11 @@ import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.ObjectProperty
 import stan.qodat.Properties
 import stan.qodat.scene.control.export.ExportFormat
-import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import java.io.File
 import java.nio.file.Path
 
-class GifFormat : ExportFormat<Animation> {
+class GifFormat : ExportFormat<AnimationLegacy> {
 
     override val defaultSaveDestinationProperty: ObjectBinding<Path> =
         Bindings.createObjectBinding(
@@ -20,11 +20,11 @@ class GifFormat : ExportFormat<Animation> {
     override val lastSaveDestinationProperty: ObjectProperty<Path?> =
         Properties.lastGIFExportPath
 
-    override fun export(context: Animation, destination: Path) {
+    override fun export(context: AnimationLegacy, destination: Path) {
         TODO("Not yet implemented")
     }
 
-    override fun chooseSaveDestination(context: Animation): File? {
+    override fun chooseSaveDestination(context: AnimationLegacy): File? {
         TODO("Not yet implemented")
     }
 }

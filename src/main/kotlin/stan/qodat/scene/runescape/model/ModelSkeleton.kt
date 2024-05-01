@@ -1,11 +1,14 @@
 package stan.qodat.scene.runescape.model
 
 import fxyz3d.geometry.Point3F
+import jagex.BoneTransform
 import javafx.geometry.Point3D
 import qodat.cache.definition.ModelDefinition
-import qodat.cache.models.FaceNormal
+import qodat.cache.models.RS2Model
 import qodat.cache.models.VertexNormal
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
+import stan.qodat.scene.runescape.animation.AnimationFrameMaya
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.COSINE
@@ -55,8 +58,16 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
 
         copyOriginalVertexValues()
 
-        resetPointOffset()
 
+        if (frame is AnimationFrameLegacy) {
+            animateLegacyFrame(frame)
+        } else if (frame is AnimationFrameMaya) {
+            animationMayaFrame(frame)
+        }
+    }
+
+    private fun animateLegacyFrame(frame: AnimationFrameLegacy) {
+        resetPointOffset()
         for (transformation in frame.transformationList) {
 
             if (!transformation.enabledProperty.get())
@@ -77,15 +88,20 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
             when (type) {
                 TransformationType.SET_OFFSET ->
                     offset(vertexGroupIndices, deltaX, deltaY, deltaZ)
+
                 TransformationType.TRANSLATE ->
                     translate(vertexGroupIndices, deltaX, deltaY, deltaZ)
+
                 TransformationType.ROTATE ->
                     rotate(vertexGroupIndices, deltaX, deltaY, deltaZ)
+
                 TransformationType.SCALE ->
                     scale(vertexGroupIndices, deltaX, deltaY, deltaZ)
+
                 TransformationType.TRANSPARENCY -> {
                     // TODO: Implement
                 }
+
                 TransformationType.UNDEFINED -> {
                     // TODO: Throw undefined exception?
                 }
@@ -93,11 +109,66 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         }
     }
 
+    val field2674 = BoneTransform()
+    var field2739: BoneTransform = BoneTransform()
+    var field2703: BoneTransform = BoneTransform()
+
+    private fun animationMayaFrame(frame: AnimationFrameMaya) {
+        val anim = frame.animation
+        val animLength = anim.duration
+        val animSkeleton = anim.skeleton.mayaAnimationSkeleton
+
+        anim.skeleton
+        if (modelDefinition !is RS2Model)
+            error("ModelDefinition is not an RS2Model")
+
+        animSkeleton.applyAnimation(anim, frame.index)
+
+        val duration = anim.duration
+        for (vertex in 0 until getVertexCount()) {
+            val boneIndices = modelDefinition.animayaGroups[vertex]
+            if (boneIndices != null && boneIndices.isNotEmpty()) {
+                val scales = modelDefinition.animayaScales[vertex]
+                field2703.zeroMatrix()
+                for ((index, boneIndex) in boneIndices.withIndex()) {
+                    val bone = animSkeleton.getBone(boneIndex)
+                    if (bone != null) {
+                        field2674.setUniformScale(scales[index] / 255.0F)
+                        field2739.copy(bone.getTransform(duration))
+                        field2739.combine(field2674)
+                        field2703.addTransform(field2739)
+                    }
+                }
+                applyMayaTransform(vertex, field2703)
+            }
+        }
+
+        if (anim.hasTransformations()) {
+//            this.method4707(var1, var2)
+        }
+    }
+
+    private fun applyMayaTransform(vertex: Int, transform: BoneTransform) {
+        val x = getX(vertex)
+        val y = -getY(vertex)
+        val z = -getZ(vertex)
+        val d = 1.0F
+        if (!this::originalVertexXValues.isInitialized) {
+            originalVertexXValues = vertexPositionsX.copyOf()
+            originalVertexYValues = vertexPositionsY.copyOf()
+            originalVertexZValues = vertexPositionsZ.copyOf()
+        }
+        setX(vertex, (transform.matrix[0] * x + transform.matrix[4] * y + transform.matrix[8] * z + transform.matrix[12] * d).toInt())
+        setY(vertex, -(transform.matrix[1] * x + transform.matrix[5] * y + transform.matrix[9] * z + transform.matrix[13] * d).toInt())
+        setZ(vertex, -(transform.matrix[2] * x + transform.matrix[6] * y + transform.matrix[10] * z + transform.matrix[14] * d).toInt())
+//        println("\tv[$vertex] -> ${transform.matrix.contentToString()}")
+    }
+
     private fun scale(
-            targetVertexGroupIndices: IntArray,
-            deltaX: Int,
-            deltaY: Int,
-            deltaZ: Int
+        targetVertexGroupIndices: IntArray,
+        deltaX: Int,
+        deltaY: Int,
+        deltaZ: Int,
     ) {
         for (vertexGroupIndex in targetVertexGroupIndices) {
             if (vertexGroupIndex < vertexGroups.size) {
@@ -117,10 +188,10 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     }
 
     private fun rotate(
-            targetVertexGroupIndices: IntArray,
-            deltaX: Int,
-            deltaY: Int,
-            deltaZ: Int
+        targetVertexGroupIndices: IntArray,
+        deltaX: Int,
+        deltaY: Int,
+        deltaZ: Int,
     ) {
         val rotationX = convertRotationValue(deltaX)
         val rotationY = convertRotationValue(deltaY)
@@ -181,10 +252,10 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     private fun convertRotationValue(value: Int) = (value and 255).times(8)
 
     private fun translate(
-            targetVertexGroupIndices: IntArray,
-            deltaX: Int,
-            deltaY: Int,
-            deltaZ: Int
+        targetVertexGroupIndices: IntArray,
+        deltaX: Int,
+        deltaY: Int,
+        deltaZ: Int,
     ) {
         for (vertexGroupIndex in targetVertexGroupIndices) {
             if (vertexGroupIndex < vertexGroups.size) {
@@ -198,10 +269,10 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     }
 
     private fun offset(
-            targetVertexGroupIndices: IntArray,
-            deltaX: Int,
-            deltaY: Int,
-            deltaZ: Int
+        targetVertexGroupIndices: IntArray,
+        deltaX: Int,
+        deltaY: Int,
+        deltaZ: Int,
     ) {
         resetPointOffset()
         var iteratedVertexCount = 0

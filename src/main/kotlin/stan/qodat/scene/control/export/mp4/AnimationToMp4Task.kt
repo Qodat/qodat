@@ -14,7 +14,7 @@ import org.jcodec.common.io.SeekableByteChannel
 import org.jcodec.common.model.Rational
 import org.jcodec.scale.AWTUtil
 import stan.qodat.javafx.JavaFXExecutor
-import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
@@ -24,7 +24,7 @@ class AnimationToMp4Task(
     private val exportPath: Path,
     private val scene: SubScene,
     private val animationPlayer: AnimationPlayer,
-    private val animation: Animation
+    private val animation: AnimationLegacy
 ) : Task<Unit>() {
 
     override fun call() {

@@ -58,7 +58,7 @@ data class QodatAnimationFrameDefinition(
     override val transformationDeltaY: IntArray,
     override val transformationDeltaZ: IntArray,
     override val transformationGroup: QodatAnimationTransformationGroup
-) : AnimationFrameDefinition
+) : AnimationFrameLegacyDefinition
 
 @Serializable
 data class QodatModelDefinition(

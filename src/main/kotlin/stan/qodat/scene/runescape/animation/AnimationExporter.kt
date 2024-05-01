@@ -13,12 +13,15 @@ import java.io.DataOutputStream
 
 class AnimationExporter {
 
-    fun encode(animation: Animation){
+    fun encode(animation: AnimationLegacy){
         val out = ByteArrayOutputStream()
         val os = DataOutputStream(out)
 
         val frames = animation.getFrameList()
         val firstFrame = frames.first()
+
+        if (firstFrame !is AnimationFrameLegacy)
+            error("Only legacy frames are supported")
 
         val group = firstFrame.definition!!.transformationGroup
         os.write(encodeFrameMap(group))
@@ -62,7 +65,7 @@ class AnimationExporter {
 //        storage.save(cache.store)
     }
 
-    private fun packFrames(animation: Animation): Int {
+    private fun packFrames(animation: AnimationLegacy): Int {
         val store = OldschoolCacheRuneLite.store
         val frameIndex = store.getIndex(IndexType.ANIMATIONS)
 
@@ -108,7 +111,7 @@ class AnimationExporter {
         return archiveId
     }
 
-    fun encodeSequence(animation: Animation) : ByteArray {
+    fun encodeSequence(animation: AnimationLegacy) : ByteArray {
         val out = ByteArrayOutputStream()
         val os = DataOutputStream(out)
 
@@ -116,6 +119,10 @@ class AnimationExporter {
         os.writeShort(animation.getFrameList().size)
 
         for (frame in animation.getFrameList()) {
+
+            if (frame !is AnimationFrameLegacy)
+                error("Only legacy frames are supported")
+
             os.writeShort(frame.getLength().toInt())
         }
 
@@ -147,6 +154,10 @@ class AnimationExporter {
     }
 
     private fun encodeFrame(animationFrame: AnimationFrame): ByteArray {
+
+        if (animationFrame !is AnimationFrameLegacy)
+            error("Only legacy frames are supported")
+
         val out = ByteArrayOutputStream()
         val os = DataOutputStream(out)
 

@@ -19,10 +19,7 @@ import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
 import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onSelected
 import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.runescape.animation.Animation
-import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.scene.runescape.animation.Transformation
-import stan.qodat.scene.runescape.animation.TransformationType
+import stan.qodat.scene.runescape.animation.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.FrameTimeUtil
 import stan.qodat.util.onInvalidation
@@ -67,26 +64,28 @@ class AnimationFrameTreeItem(
                     }
                 }
 
-                if (frame.definition != null) {
-                    val fileIdText = Text().apply {
-                        font = Font.font("Menlo", 11.0)
-                        fill = Color.web("#A4B8C8")
-                    }
-                    val frameIdText = Text().apply {
-                        font = Font.font("Menlo", FontWeight.EXTRA_BOLD, 11.0)
-                        fill = Color.web("#A4B8C8")
-                    }
-                    updateFileAndFrameIdTexts(frame.idProperty.get(), fileIdText, frameIdText)
-                    frame.idProperty.onInvalidation {
-                        val hash = get()
-                        updateFileAndFrameIdTexts(hash, fileIdText, frameIdText)
-                    }
-                    children += fileIdText
-                    children += frameIdText
-                    children += Text().apply {
-                        fill = Color.web("#A4B8C8")
-                        font = Font.font("Menlo", FontWeight.EXTRA_LIGHT, FontPosture.ITALIC, 11.0)
-                        textProperty().setAndBind(frame.idProperty.asString())
+                if (frame is AnimationFrameLegacy) {
+                    if (frame.definition != null) {
+                        val fileIdText = Text().apply {
+                            font = Font.font("Menlo", 11.0)
+                            fill = Color.web("#A4B8C8")
+                        }
+                        val frameIdText = Text().apply {
+                            font = Font.font("Menlo", FontWeight.EXTRA_BOLD, 11.0)
+                            fill = Color.web("#A4B8C8")
+                        }
+                        updateFileAndFrameIdTexts(frame.idProperty.get(), fileIdText, frameIdText)
+                        frame.idProperty.onInvalidation {
+                            val hash = get()
+                            updateFileAndFrameIdTexts(hash, fileIdText, frameIdText)
+                        }
+                        children += fileIdText
+                        children += frameIdText
+                        children += Text().apply {
+                            fill = Color.web("#A4B8C8")
+                            font = Font.font("Menlo", FontWeight.EXTRA_LIGHT, FontPosture.ITALIC, 11.0)
+                            textProperty().setAndBind(frame.idProperty.asString())
+                        }
                     }
                 }
 
@@ -216,7 +215,8 @@ class AnimationFrameTreeItem(
             setOnAction {
                 val index = animation.getFrameList().indexOf(frame)
                 shiftFrameIndices(index)
-                animation.getFrameList().add(index + 1, frame.clone("frame[${index + 1}]"))
+                if (frame is AnimationFrameLegacy)
+                    animation.getFrameList().add(index + 1, frame.clone("frame[${index + 1}]"))
             }
         }
 
@@ -233,7 +233,8 @@ class AnimationFrameTreeItem(
 
                 if (nextFrameIndex != index) {
                     val nextFrame = frames[nextFrameIndex]
-                    if (frame.transformationCountProperty.get() == nextFrame.transformationCountProperty.get()) {
+                    if (frame is AnimationFrameLegacy && nextFrame is AnimationFrameLegacy)
+                        if (frame.transformationCountProperty.get() == nextFrame.transformationCountProperty.get()) {
                         val transforms = mutableListOf<Transformation>()
                         for (i in 0 until frame.transformationCountProperty.get()) {
                             val initialTransform = frame.transformationList.get(i)

@@ -17,6 +17,7 @@ import javafx.scene.shape.Sphere
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.Entity
@@ -40,18 +41,20 @@ open class TransformTreeItem(
         hBox(isGraphic = true) {
             checkBox(transform.enabledProperty, biDirectional = true)
             label(transform.labelProperty) {
-                contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
-                    TreeItemListContextMenu(
-                        list = frame.transformationList,
-                        rootItem = transformsItem,
-                        selectionModel = selectionModel,
-                        itemCreator = { type, transform ->
-                            if (type == TreeItemListContextMenu.CreateActionType.DUPLICATE)
-                                transform.clone()
-                            else
-                                Transformation("New")
-                        }
-                    )
+                if (frame is AnimationFrameLegacy) {
+                    contextMenu = AnimationTreeItem.transformsContextMenuMap.getOrPut(frame) {
+                        TreeItemListContextMenu(
+                            list = frame.transformationList,
+                            rootItem = transformsItem,
+                            selectionModel = selectionModel,
+                            itemCreator = { type, transform ->
+                                if (type == TreeItemListContextMenu.CreateActionType.DUPLICATE)
+                                    transform.clone()
+                                else
+                                    Transformation("New")
+                            }
+                        )
+                    }
                 }
             }
             vBox {

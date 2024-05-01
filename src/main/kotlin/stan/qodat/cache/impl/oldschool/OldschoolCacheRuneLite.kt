@@ -2,9 +2,13 @@ package stan.qodat.cache.impl.oldschool
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
+import net.runelite.cache.definitions.SequenceDefinition
 import net.runelite.cache.definitions.loaders.FrameLoader
 import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
@@ -31,7 +35,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object OldschoolCacheRuneLite : Cache("LIVE") {
 
-    internal var store = Store(Properties.osrsCachePath.get().toFile())
+    var store = Store(Properties.osrsCachePath.get().toFile())
 
     lateinit var npcManager: NpcManager
     lateinit var itemManager: ItemManager
@@ -42,7 +46,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     lateinit var frameIndex: Index
     lateinit var framemapIndex: Index
-    lateinit var frames: HashMap<Int, Map<Int, AnimationFrameDefinition>>
+    lateinit var frames: HashMap<Int, Map<Int, AnimationFrameLegacyDefinition>>
     lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
 
     private lateinit var animations : Array<AnimationDefinition>
@@ -64,7 +68,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         store.load()
         frameIndex = store.getIndex(IndexType.ANIMATIONS)
         framemapIndex = store.getIndex(IndexType.SKELETONS)
-        frames = HashMap<Int, Map<Int, AnimationFrameDefinition>>()
+        frames = HashMap<Int, Map<Int, AnimationFrameLegacyDefinition>>()
         frameMaps = HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
         npcManager = NpcManager(store)
         npcManager.load()
@@ -123,17 +127,21 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             npcManager.npcs
                 .filter { it.models != null && it.models.isNotEmpty() }
                 .map { npc ->
-                    GlobalScope.async(Dispatchers.IO) {
+                    async(Dispatchers.IO) {
                         object : NPCDefinition {
                             override fun getOptionalId() = OptionalInt.of(npc.id)
                             override val name = npc.name.ifBlank { "null" }
                             override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                             override val animationIds = try {
                                 animIdsCache.getOrPut(npc.standingAnimation) {
-                                    npcAnimsDir
+                                    val data = npcAnimsDir
                                         .resolve("${npc.id}.json")
                                         .bufferedReader()
                                         .use {gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }.toTypedArray() }
+                                    if (data.isEmpty()) {
+                                        emptyArray()
+                                    } else
+                                        data
                                 }
                             } catch (ignored: Exception) {
                                 System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
@@ -213,7 +221,21 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     val sequence = SequenceLoader().apply {
                         configureForRevision(seqArchive.revision)
                     }.load(it.fileId, it.contents)
-                    object : AnimationDefinition {
+                    if (sequence.animMayaID >= 0)
+                        object : AnimationMayaDefinition {
+                            override val id: String = it.fileId.toString()
+                            override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
+                            override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                            override val loopOffset: Int = sequence.frameStep
+                            override val leftHandItem: Int = sequence.leftHandItem
+                            override val rightHandItem: Int = sequence.rightHandItem
+                            override val animMayaID: Int = sequence.animMayaID
+                            override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> = sequence.animMayaFrameSounds?: emptyMap()
+                            override val animMayaStart: Int = sequence.animMayaStart
+                            override val animMayaEnd: Int = sequence.animMayaEnd
+                            override val animMayaMasks: BooleanArray = sequence.animMayaMasks?: BooleanArray(0)
+                        }
+                    else object : AnimationDefinition {
                         override val id: String = it.fileId.toString()
                         override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
                         override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
@@ -222,6 +244,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                         override val rightHandItem: Int = sequence.rightHandItem
                     }
                 } catch (e: Exception) {
+                    e.printStackTrace()
                     val sequence =  SequenceLoader206().load(it.fileId, it.contents)
                     object : AnimationDefinition {
                         override val id: String = it.fileId.toString()
@@ -237,7 +260,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         return animations
     }
 
-    override fun getFrameDefinition(frameHash: Int): AnimationFrameDefinition? {
+    override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? {
 
         val storage = store.storage
         val hexString = Integer.toHexString(frameHash)
@@ -265,7 +288,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     }
                 }
                 val frame = FrameLoader().load(frameMapDefinition, file.fileId, frameContents)
-                file.fileId to object : AnimationFrameDefinition {
+                file.fileId to object : AnimationFrameLegacyDefinition {
                     override val transformationCount: Int = frame.translatorCount
                     override val transformationGroupAccessIndices: IntArray = frame.indexFrameIds
                     override val transformationDeltaX: IntArray = frame.translator_x

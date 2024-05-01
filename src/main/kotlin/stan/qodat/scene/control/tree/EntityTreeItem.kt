@@ -10,7 +10,7 @@ import stan.qodat.Properties
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.export.ExportMenu
-import stan.qodat.scene.runescape.animation.Animation
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.util.setAndBind
@@ -98,7 +98,7 @@ class EntityTreeItem(
                     contextmenu {
                         item("Add empty") {
                             setOnAction {
-                                val newAnimation = Animation("10000").apply {
+                                val newAnimation = AnimationLegacy("10000").apply {
                                     idProperty.set(10_000)
                                 }
                                 val newAnimationTreeItem = AnimationTreeItem(newAnimation, entity, treeView,

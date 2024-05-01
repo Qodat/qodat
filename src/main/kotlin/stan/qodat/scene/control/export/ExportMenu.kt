@@ -9,6 +9,7 @@ import stan.qodat.javafx.onChange
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 
@@ -41,7 +42,7 @@ class ExportMenu<T : Exportable> : Menu("Export") {
         exportableProperty.set(exportable)
     }
 
-    fun setAnimation(animation: Animation) {
+    fun setAnimation(animation: AnimationLegacy) {
         animationProperty.set(animation)
     }
 
