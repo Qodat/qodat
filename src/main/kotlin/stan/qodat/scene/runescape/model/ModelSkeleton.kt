@@ -126,9 +126,9 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
 
         val duration = anim.duration
         for (vertex in 0 until getVertexCount()) {
-            val boneIndices = modelDefinition.animayaGroups[vertex]
+            val boneIndices = modelDefinition.mayaGroups[vertex]
             if (boneIndices != null && boneIndices.isNotEmpty()) {
-                val scales = modelDefinition.animayaScales[vertex]
+                val scales = modelDefinition.mayaScales[vertex]
                 field2703.zeroMatrix()
                 for ((index, boneIndex) in boneIndices.withIndex()) {
                     val bone = animSkeleton.getBone(boneIndex)

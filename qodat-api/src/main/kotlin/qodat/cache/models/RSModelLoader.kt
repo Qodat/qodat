@@ -54,8 +54,8 @@ class RSModelLoader {
                             setFaceTextureConfigs(it.textureCoords)
                             faceRenderPriorities = it.faceRenderPriorities
                             faceRenderTypes = it.faceRenderTypes
-                            setAnimayaGroups(it.animayaGroups)
-                            setAnimayaScales(it.animayaScales)
+                            setMayaGroups(it.animayaGroups)
+                            setMayaScales(it.animayaScales)
 
                         }
                     }

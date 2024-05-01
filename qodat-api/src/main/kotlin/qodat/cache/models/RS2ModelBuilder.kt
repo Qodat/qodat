@@ -22,6 +22,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private var copyFaceSkins = false
     private var copyFaceColors = true
     private var copyFaceTextures = false
+    private var copyMayaGroups = false
 
     private var vertexPositionsX : IntArray
     private var vertexPositionsY : IntArray
@@ -37,6 +38,8 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private val faceRenderPriorities: ByteArray?
     private val faceRenderTypes: ByteArray?
     private val faceSkins: IntArray?
+    private val mayaGroups: Array<IntArray?>?
+    private val mayaScales: Array<IntArray?>?
 
     init {
         for(definition in modelDefinitions){
@@ -50,6 +53,8 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
                 globalPriority = definition.getPriority()
             copyFaceSkins = copyFaceSkins or (definition.getFaceSkins() != null)
             copyFaceTextures = copyFaceTextures or (definition.getFaceTextures() != null)
+            if (definition is RS2Model)
+                copyMayaGroups = copyMayaGroups or (definition.mayaGroups != null)
         }
 
         vertexPositionsX = IntArray(vertexCount)
@@ -67,6 +72,13 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         faceColors = if(copyFaceColors) ShortArray(faceCount) else null
         faceSkins = if(copyFaceSkins) IntArray(faceCount) else null
         faceTextures = if(copyFaceTextures) ShortArray(faceCount) {(-1).toShort()} else null
+        if(copyMayaGroups) {
+            mayaGroups = arrayOfNulls(vertexCount)
+            mayaScales = arrayOfNulls(vertexCount)
+        } else {
+            mayaGroups = null
+            mayaScales = null
+        }
 
         for(definition in modelDefinitions){
             for(srcFaceIdx in 0 until definition.getFaceCount()){
@@ -101,6 +113,10 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         val skins = model.getVertexSkins()
         if (skins != null)
             vertexSkins[vertexIdx] = skins[localVertexIdx]
+        if (model is RS2Model) {
+            model.mayaGroups?.get(localVertexIdx)?.let { mayaGroups?.set(vertexIdx, it) }
+            model.mayaScales?.get(localVertexIdx)?.let { mayaScales?.set(vertexIdx, it) }
+        }
         return vertexIdx++
     }
 
@@ -121,6 +137,8 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         setFaceSkins(faceSkins)
         setFaceTextures(faceTextures)
         setPriority(globalPriority)
+        mayaGroups = this@RS2ModelBuilder.mayaGroups
+        mayaScales = this@RS2ModelBuilder.mayaScales
     }
 
     private fun ByteArray.tryCopy(srcIdx: Int, byteArray: ByteArray?) {

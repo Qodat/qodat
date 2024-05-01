@@ -583,19 +583,19 @@ public class RS2Model implements ModelDefinition
 		this.texturePrimaryColors = texturePrimaryColors;
 	}
 
-	public void setAnimayaGroups(int[][] animayaGroups) {
+	public void setMayaGroups(int[][] animayaGroups) {
 		this.animayaGroups = animayaGroups;
 	}
 
-	public void setAnimayaScales(int[][] animayaScales) {
+	public void setMayaScales(int[][] animayaScales) {
 		this.animayaScales = animayaScales;
 	}
 
-	public int[][] getAnimayaGroups() {
+	public int[][] getMayaGroups() {
 		return animayaGroups;
 	}
 
-	public int[][] getAnimayaScales() {
+	public int[][] getMayaScales() {
 		return animayaScales;
 	}
 
