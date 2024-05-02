@@ -4,6 +4,8 @@
 
 **Qodat** is a comprehensive toolkit designed for navigating and utilizing the Oldschool RuneScape (OSRS) cache. Initially developed with the ambition of becoming an animation editor, Qodat has evolved into a vital resource for OSRS content creators.
 
+You can download it here (comes with an auto-updater): https://qodat.github.io/qodat/download.html 
+
 ## Features
 
 - **Animation Export**: Seamlessly export OSRS monster, player, object, and SFX animations directly into Blender.
