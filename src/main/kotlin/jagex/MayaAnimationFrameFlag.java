@@ -1,6 +1,6 @@
 package jagex;
 
-public class MayaAnimationFrameFlag implements MouseWheel {
+public class MayaAnimationFrameFlag implements RSEnum {
 
    static final MayaAnimationFrameFlag NORMAL = new MayaAnimationFrameFlag(0, 0, -1);
    static final MayaAnimationFrameFlag field1559 = new MayaAnimationFrameFlag(1, 1, 0);

@@ -4,10 +4,15 @@ import qodat.cache.definition.AnimationFrameDefinition;
 
 public class MayaAnimationFrame implements AnimationFrameDefinition {
 
+   public static final float ULP = Math.ulp(1.0F);
+   public static final float DOUBLE_ULP = 2.0F * ULP;
+   public static float[] globalCoefficients = new float[4];
+   public static float[] globalRoots = new float[5];
+
    boolean isInitialised;
    boolean isProcessed;
-   AnimationState initialAnimationState;
-   AnimationState finalAnimationState;
+   MayaAnimationState initialAnimationState;
+   MayaAnimationState finalAnimationState;
    KeyFrame[] keyFrames;
    boolean isActive;
    float initialX;
@@ -31,22 +36,12 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
    MayaAnimationFrame() {
    }
 
-   static class134 validate(int var0) {
-      class134[] var1 = new class134[]{class134.field1621, class134.field1607, class134.field1608, class134.field1609, class134.field1610, class134.field1617, class134.field1612, class134.field1611, class134.field1614};
-      class134 var2 = (class134)class4.findEnumerated(var1, var0);
-      if (var2 == null) {
-         var2 = class134.field1614;
-      }
-
-      return var2;
-   }
-
    static float calculateFrameValue(MayaAnimationFrame frame, float currentFrame) {
       if (frame != null && frame.getLastFrameIndex() != 0) {
          if (currentFrame < (float)frame.keyFrames[0].frameNumber) {
-            return frame.initialAnimationState == AnimationState.DEFAULT ? frame.keyFrames[0].value : interpolate(frame, currentFrame, true);
+            return frame.initialAnimationState == MayaAnimationState.DEFAULT ? frame.keyFrames[0].value : interpolate(frame, currentFrame, true);
          } else if (currentFrame > (float)frame.keyFrames[frame.getLastFrameIndex() - 1].frameNumber) {
-            return frame.finalAnimationState == AnimationState.DEFAULT ? frame.keyFrames[frame.getLastFrameIndex() - 1].value : interpolate(frame, currentFrame, false);
+            return frame.finalAnimationState == MayaAnimationState.DEFAULT ? frame.keyFrames[frame.getLastFrameIndex() - 1].value : interpolate(frame, currentFrame, false);
          } else if (frame.isProcessed) {
             return frame.keyFrames[0].value;
          } else {
@@ -102,23 +97,23 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
 
                                  if (normalizedValues[0] > 1.0F || normalizedValues[1] > 1.0F) {
                                     float var23 = (float)(((double)normalizedValues[1] - 2.0) * (double)normalizedValues[1] + (double)((normalizedValues[1] + (normalizedValues[0] - 2.0F)) * normalizedValues[0]) + 1.0);
-                                    if (var23 + class121.field1479 > 0.0F) {
-                                       if (class121.field1479 + normalizedValues[0] < 1.3333334F) {
+                                    if (var23 + ULP > 0.0F) {
+                                       if (ULP + normalizedValues[0] < 1.3333334F) {
                                           float var24 = normalizedValues[0] - 2.0F;
                                           float var25 = normalizedValues[0] - 1.0F;
                                           float var26 = (float)Math.sqrt((double)(var24 * var24 - 4.0F * var25 * var25));
                                           float var27 = 0.5F * (-var24 + var26);
-                                          if (normalizedValues[1] + class121.field1479 > var27) {
-                                             normalizedValues[1] = var27 - class121.field1479;
+                                          if (normalizedValues[1] + ULP > var27) {
+                                             normalizedValues[1] = var27 - ULP;
                                           } else {
                                              var27 = (-var24 - var26) * 0.5F;
-                                             if (normalizedValues[1] < var27 + class121.field1479) {
-                                                normalizedValues[1] = class121.field1479 + var27;
+                                             if (normalizedValues[1] < var27 + ULP) {
+                                                normalizedValues[1] = ULP + var27;
                                              }
                                           }
                                        } else {
-                                          normalizedValues[0] = 1.3333334F - class121.field1479;
-                                          normalizedValues[1] = 0.33333334F - class121.field1479;
+                                          normalizedValues[0] = 1.3333334F - ULP;
+                                          normalizedValues[1] = 0.33333334F - ULP;
                                        }
                                     }
                                  }
@@ -197,14 +192,14 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
             float adjustedValue;
             float scale;
             if (useInitial) {
-               if (animationFrame.initialAnimationState == AnimationState.MIRROR) {
+               if (animationFrame.initialAnimationState == MayaAnimationState.MIRROR) {
                   if ((double)fractionalPart != 0.0) {
                      adjustedFrame += firstFrameNumber;
                   } else {
                      adjustedFrame = lastFrameNumber - adjustedFrame;
                   }
-               } else if (animationFrame.initialAnimationState != AnimationState.CUSTOM2 && animationFrame.initialAnimationState != AnimationState.REPEAT) {
-                  if (animationFrame.initialAnimationState == AnimationState.CUSTOM1) {
+               } else if (animationFrame.initialAnimationState != MayaAnimationState.CUSTOM2 && animationFrame.initialAnimationState != MayaAnimationState.REPEAT) {
+                  if (animationFrame.initialAnimationState == MayaAnimationState.CUSTOM1) {
                      adjustedFrame = firstFrameNumber - currentFrame;
                      adjustedValue = animationFrame.keyFrames[0].field1469;
                      scale = animationFrame.keyFrames[0].field1470;
@@ -218,14 +213,14 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
                } else {
                   adjustedFrame = lastFrameNumber - adjustedFrame;
                }
-            } else if (animationFrame.finalAnimationState == AnimationState.MIRROR) {
+            } else if (animationFrame.finalAnimationState == MayaAnimationState.MIRROR) {
                if (0.0 != (double)fractionalPart) {
                   adjustedFrame = lastFrameNumber - adjustedFrame;
                } else {
                   adjustedFrame += firstFrameNumber;
                }
-            } else if (animationFrame.finalAnimationState != AnimationState.CUSTOM2 && animationFrame.finalAnimationState != AnimationState.REPEAT) {
-               if (animationFrame.finalAnimationState == AnimationState.CUSTOM1) {
+            } else if (animationFrame.finalAnimationState != MayaAnimationState.CUSTOM2 && animationFrame.finalAnimationState != MayaAnimationState.REPEAT) {
+               if (animationFrame.finalAnimationState == MayaAnimationState.CUSTOM1) {
                   adjustedFrame = currentFrame - lastFrameNumber;
                   adjustedValue = animationFrame.keyFrames[animationFrame.getLastFrameIndex() - 1].controlPoint1;
                   scale = animationFrame.keyFrames[animationFrame.getLastFrameIndex() - 1].controlPoint2;
@@ -242,10 +237,10 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
 
             interpolateValue = calculateFrameValue(animationFrame, adjustedFrame);
             float rangeDifference;
-            if (useInitial && animationFrame.initialAnimationState == AnimationState.REPEAT) {
+            if (useInitial && animationFrame.initialAnimationState == MayaAnimationState.REPEAT) {
                rangeDifference = animationFrame.keyFrames[animationFrame.getLastFrameIndex() - 1].value - animationFrame.keyFrames[0].value;
                interpolateValue = (float)((double)interpolateValue - integerPart * (double)rangeDifference);
-            } else if (!useInitial && animationFrame.finalAnimationState == AnimationState.REPEAT) {
+            } else if (!useInitial && animationFrame.finalAnimationState == MayaAnimationState.REPEAT) {
                rangeDifference = animationFrame.keyFrames[animationFrame.getLastFrameIndex() - 1].value - animationFrame.keyFrames[0].value;
                interpolateValue = (float)((double)interpolateValue + integerPart * (double)rangeDifference);
             }
@@ -323,18 +318,18 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
          if (animationFrame.isActive) {
             calculatedValue = normalizedFrame;
          } else {
-            class121.field1477[3] = animationFrame.controlY;
-            class121.field1477[2] = animationFrame.controlZ;
-            class121.field1477[1] = animationFrame.controlW;
-            class121.field1477[0] = animationFrame.startY - normalizedFrame;
-            class121.field1485[0] = 0.0F;
-            class121.field1485[1] = 0.0F;
-            class121.field1485[2] = 0.0F;
-            class121.field1485[3] = 0.0F;
-            class121.field1485[4] = 0.0F;
-            int var4 = solvePolynomialEquation(class121.field1477, 3, 0.0F, true, 1.0F, true, class121.field1485);
+            globalCoefficients[3] = animationFrame.controlY;
+            globalCoefficients[2] = animationFrame.controlZ;
+            globalCoefficients[1] = animationFrame.controlW;
+            globalCoefficients[0] = animationFrame.startY - normalizedFrame;
+            globalRoots[0] = 0.0F;
+            globalRoots[1] = 0.0F;
+            globalRoots[2] = 0.0F;
+            globalRoots[3] = 0.0F;
+            globalRoots[4] = 0.0F;
+            int var4 = PolynomialSolver.solvePolynomialEquation(globalCoefficients, 3, 0.0F, true, 1.0F, true, globalRoots);
             if (var4 == 1) {
-               calculatedValue = class121.field1485[0];
+               calculatedValue = globalRoots[0];
             } else {
                calculatedValue = 0.0F;
             }
@@ -353,237 +348,17 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
       }
    }
 
-   public static int solvePolynomialEquation(float[] coefficients, int degree, float lowerBound, boolean isLowerInclusive, float upperBound, boolean isUpperInclusive, float[] roots) {
-      float totalCoefficientSum = 0.0F;
-
-      for(int i = 0; i < degree + 1; ++i) {
-         totalCoefficientSum += Math.abs(coefficients[i]);
-      }
-
-      float tolerance = (Math.abs(lowerBound) + Math.abs(upperBound)) * (float)(degree + 1) * class121.field1479;
-      if (totalCoefficientSum <= tolerance) {
-         return -1;
-      } else {
-         float[] normalizedCoefficients = new float[degree + 1];
-
-         int rootCount;
-         for(rootCount = 0; rootCount < degree + 1; ++rootCount) {
-            normalizedCoefficients[rootCount] = 1.0F / totalCoefficientSum * coefficients[rootCount];
-         }
-
-         while(Math.abs(normalizedCoefficients[degree]) < tolerance) {
-            --degree;
-         }
-
-         rootCount = 0;
-         if (degree == 0) {
-            return rootCount;
-         } else if (degree == 1) {
-            roots[0] = -normalizedCoefficients[0] / normalizedCoefficients[1];
-            boolean isRootBeyondLower = isLowerInclusive ? lowerBound < roots[0] + tolerance : lowerBound < roots[0] - tolerance;
-            boolean isRootBeyondUpper = isUpperInclusive ? upperBound > roots[0] - tolerance : upperBound > tolerance + roots[0];
-            rootCount = isRootBeyondLower && isRootBeyondUpper ? 1 : 0;
-            if (rootCount > 0) {
-               if (isLowerInclusive && roots[0] < lowerBound) {
-                  roots[0] = lowerBound;
-               } else if (isUpperInclusive && roots[0] > upperBound) {
-                  roots[0] = upperBound;
-               }
-            }
-
-            return rootCount;
-         } else {
-            PolynomialSolver polynomialSolver = new PolynomialSolver(normalizedCoefficients, degree);
-            float[] derivativeRoots = new float[degree + 1];
-
-            for(int var13 = 1; var13 <= degree; ++var13) {
-               derivativeRoots[var13 - 1] = (float)var13 * normalizedCoefficients[var13];
-            }
-
-            float[] tempRoots = new float[degree + 1];
-            int derivativeRootCount = solvePolynomialEquation(derivativeRoots, degree - 1, lowerBound, false, upperBound, false, tempRoots);
-            if (derivativeRootCount == -1) {
-               return 0;
-            } else {
-               boolean hasConverged = false;
-               float lastEvaluatedValue = 0.0F;
-               float nextEvaluatedValue = 0.0F;
-               float nextRoot = 0.0F;
-
-               for(int i = 0; i <= derivativeRootCount; ++i) {
-                  if (rootCount > degree) {
-                     return rootCount;
-                  }
-
-                  float root;
-                  if (i == 0) {
-                     root = lowerBound;
-                     nextEvaluatedValue = evaluatePolynomial(normalizedCoefficients, degree, lowerBound);
-                     if (Math.abs(nextEvaluatedValue) <= tolerance && isLowerInclusive) {
-                        roots[rootCount++] = lowerBound;
-                     }
-                  } else {
-                     root = nextRoot;
-                     nextEvaluatedValue = lastEvaluatedValue;
-                  }
-
-                  if (derivativeRootCount == i) {
-                     nextRoot = upperBound;
-                     hasConverged = false;
-                  } else {
-                     nextRoot = tempRoots[i];
-                  }
-
-                  lastEvaluatedValue = evaluatePolynomial(normalizedCoefficients, degree, nextRoot);
-                  if (hasConverged) {
-                     hasConverged = false;
-                  } else if (Math.abs(lastEvaluatedValue) < tolerance) {
-                     if (derivativeRootCount != i || isUpperInclusive) {
-                        roots[rootCount++] = nextRoot;
-                        hasConverged = true;
-                     }
-                  } else if (nextEvaluatedValue < 0.0F && lastEvaluatedValue > 0.0F || nextEvaluatedValue > 0.0F && lastEvaluatedValue < 0.0F) {
-                     int index = rootCount++;
-                     float startX = root;
-                     float endX = nextRoot;
-                     float startValue = evaluatePolynomial(polynomialSolver.coefficients, polynomialSolver.degree, root);
-                     float refinedRoot;
-                     if (Math.abs(startValue) < class121.field1479) {
-                        refinedRoot = root;
-                     } else {
-                        float endValue = evaluatePolynomial(polynomialSolver.coefficients, polynomialSolver.degree, nextRoot);
-                        if (Math.abs(endValue) < class121.field1479) {
-                           refinedRoot = nextRoot;
-                        } else {
-                           float var28 = 0.0F;
-                           float var29 = 0.0F;
-                           float var30 = 0.0F;
-                           float var35 = 0.0F;
-                           boolean var36 = true;
-                           boolean var37 = false;
-
-                           do {
-                              var37 = false;
-                              if (var36) {
-                                 var28 = startX;
-                                 var35 = startValue;
-                                 var29 = endX - startX;
-                                 var30 = var29;
-                                 var36 = false;
-                              }
-
-                              if (Math.abs(var35) < Math.abs(endValue)) {
-                                 startX = endX;
-                                 endX = var28;
-                                 var28 = startX;
-                                 startValue = endValue;
-                                 endValue = var35;
-                                 var35 = startValue;
-                              }
-
-                              float var38 = class121.field1480 * Math.abs(endX) + 0.0F;
-                              float var39 = (var28 - endX) * 0.5F;
-                              boolean var40 = Math.abs(var39) > var38 && 0.0F != endValue;
-                              if (var40) {
-                                 if (!(Math.abs(var30) < var38) && !(Math.abs(startValue) <= Math.abs(endValue))) {
-                                    float var34 = endValue / startValue;
-                                    float var31;
-                                    float var32;
-                                    if (var28 == startX) {
-                                       var31 = var39 * 2.0F * var34;
-                                       var32 = 1.0F - var34;
-                                    } else {
-                                       var32 = startValue / var35;
-                                       float var33 = endValue / var35;
-                                       var31 = ((var32 - var33) * var39 * 2.0F * var32 - (endX - startX) * (var33 - 1.0F)) * var34;
-                                       var32 = (var34 - 1.0F) * (var33 - 1.0F) * (var32 - 1.0F);
-                                    }
-
-                                    if ((double)var31 > 0.0) {
-                                       var32 = -var32;
-                                    } else {
-                                       var31 = -var31;
-                                    }
-
-                                    var34 = var30;
-                                    var30 = var29;
-                                    if (2.0F * var31 < var32 * 3.0F * var39 - Math.abs(var38 * var32) && var31 < Math.abs(var32 * 0.5F * var34)) {
-                                       var29 = var31 / var32;
-                                    } else {
-                                       var29 = var39;
-                                       var30 = var39;
-                                    }
-                                 } else {
-                                    var29 = var39;
-                                    var30 = var39;
-                                 }
-
-                                 startX = endX;
-                                 startValue = endValue;
-                                 if (Math.abs(var29) > var38) {
-                                    endX += var29;
-                                 } else if ((double)var39 > 0.0) {
-                                    endX += var38;
-                                 } else {
-                                    endX -= var38;
-                                 }
-
-                                 endValue = evaluatePolynomial(polynomialSolver.coefficients, polynomialSolver.degree, endX);
-                                 if ((double)(endValue * (var35 / Math.abs(var35))) > 0.0) {
-                                    var36 = true;
-                                    var37 = true;
-                                 } else {
-                                    var37 = true;
-                                 }
-                              }
-                           } while(var37);
-
-                           refinedRoot = endX;
-                        }
-                     }
-
-                     roots[index] = refinedRoot;
-                     if (rootCount > 1 && roots[rootCount - 2] >= roots[rootCount - 1] - tolerance) {
-                        roots[rootCount - 2] = 0.5F * (roots[rootCount - 1] + roots[rootCount - 2]);
-                        --rootCount;
-                     }
-                  }
-               }
-
-               return rootCount;
-            }
-         }
-      }
-   }
-
-   /**
-    * Evaluates a polynomial at a given point using Horner's method.
-    * @param coefficients An array of coefficients of the polynomial.
-    * @param degree The degree of the polynomial.
-    * @param x The point at which the polynomial is to be evaluated.
-    * @return The value of the polynomial at the given point.
-    */
-   static float evaluatePolynomial(float[] coefficients, int degree, float x) {
-      float result = coefficients[degree];
-
-      for(int i = degree - 1; i >= 0; --i) {
-         result = result * x + coefficients[i];
-      }
-
-      return result;
-   }
-
    int read(Buffer buffer, int version) {
       int numberOfFrames = buffer.readUnsignedShort();
-      validate(buffer.readUnsignedByte());
+      buffer.readUnsignedByte();
       int animationStateCode = buffer.readUnsignedByte();
-      AnimationState animationState = (AnimationState)class4.findEnumerated(AnimationState.method2852(), animationStateCode);
+      MayaAnimationState animationState = (MayaAnimationState) RSEnum.findEnumerated(MayaAnimationState.method2852(), animationStateCode);
       if (animationState == null) {
-         animationState = AnimationState.DEFAULT;
+         animationState = MayaAnimationState.DEFAULT;
       }
 
       this.initialAnimationState = animationState;
-      this.finalAnimationState = AnimationState.method2292(buffer.readUnsignedByte());
+      this.finalAnimationState = MayaAnimationState.method2292(buffer.readUnsignedByte());
       this.isInitialised = buffer.readUnsignedByte() != 0;
       this.keyFrames = new KeyFrame[numberOfFrames];
       KeyFrame previousFrame = null;

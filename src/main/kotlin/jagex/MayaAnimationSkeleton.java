@@ -3,53 +3,42 @@ package jagex;
 public class MayaAnimationSkeleton {
 
     Bone[] bones;
-    int boneCount;
+    int transformCount;
 
-    MayaAnimationSkeleton(Buffer buffer, int var2) {
-        this.bones = new Bone[var2];
-        this.boneCount = buffer.readUnsignedByte();
-
-        for (int var3 = 0; var3 < this.bones.length; ++var3) {
-            Bone frame = new Bone(this.boneCount, buffer, false);
-            this.bones[var3] = frame;
+    MayaAnimationSkeleton(Buffer buffer, int boneCount) {
+        bones = new Bone[boneCount];
+        transformCount = buffer.readUnsignedByte();
+        for (int i = 0; i < bones.length; ++i) {
+            final Bone frame = new Bone(transformCount, buffer, false);
+            bones[i] = frame;
         }
-
-        this.initializeBones();
+        initializeBones();
     }
 
-    void initializeBones() {
-        for (Bone frame : bones) {
-            if (frame.index >= 0) {
-                frame.parentBone = this.bones[frame.index];
-            }
-        }
+    private void initializeBones() {
+        for (Bone frame : bones)
+            if (frame.index >= 0)
+                frame.parentBone = bones[frame.index];
     }
 
-    public int frameCount() {
-        return this.bones.length;
-    }
-
-    public Bone getBone(int index) {
-        return index >= this.frameCount() ? null : this.bones[index];
-    }
-
-    public Bone[] getAllBones() {
-        return this.bones;
-    }
 
     public void applyAnimation(MayaAnimation animation, int frameIndex) {
-        this.applyAnimation(animation, frameIndex, (boolean[]) null, false);
+        applyAnimation(animation, frameIndex, null, false);
     }
 
     public void applyAnimation(MayaAnimation animation, int frameIndex, boolean[] affectedBones, boolean inverse) {
-        int animLength = animation.getDuration();
-        int boneIndex = 0;
-        Bone[] frames = this.getAllBones();
-        for (Bone frame : frames) {
-            if (affectedBones == null || inverse == affectedBones[boneIndex]) {
-                animation.apply(frameIndex, frame, boneIndex, animLength);
-            }
-            ++boneIndex;
+        for (int i = 0, bonesLength = bones.length; i < bonesLength; i++) {
+            final Bone frame = bones[i];
+            if (affectedBones == null || inverse == affectedBones[i])
+                animation.apply(frameIndex, frame, i);
         }
+    }
+
+    public Bone getBone(int index) {
+        return index >= getBoneCount() ? null : bones[index];
+    }
+
+    public int getBoneCount() {
+        return bones.length;
     }
 }

@@ -25,113 +25,94 @@ public class Bone {
       this.rotations = new float[this.boneTransforms.length][3];
 
       for(int i = 0; i < this.boneTransforms.length; ++i) {
-         this.boneTransforms[i] = new BoneTransform(buffer, readTransforms);
-         this.rotations[i][0] = buffer.readIntAsFloat();
-         this.rotations[i][1] = buffer.readIntAsFloat();
-         this.rotations[i][2] = buffer.readIntAsFloat();
+         boneTransforms[i] = new BoneTransform(buffer, readTransforms);
+         rotations[i][0] = buffer.readIntAsFloat();
+         rotations[i][1] = buffer.readIntAsFloat();
+         rotations[i][2] = buffer.readIntAsFloat();
       }
 
-      this.updateTransforms();
+      updateTransforms();
    }
 
    void updateTransforms() {
-      this.inverseBindMatrices = new float[this.boneTransforms.length][3];
-      this.bindMatrices = new float[this.boneTransforms.length][3];
-      this.positions = new float[this.boneTransforms.length][3];
-      BoneTransform tempTransform;
-      synchronized(BoneTransform.classPool) {
-         if (BoneTransform.poolSize == 0) {
-            tempTransform = new BoneTransform();
-         } else {
-            BoneTransform.classPool[--BoneTransform.poolSize].identityMatrix();
-            tempTransform = BoneTransform.classPool[BoneTransform.poolSize];
-         }
+      inverseBindMatrices = new float[boneTransforms.length][3];
+      bindMatrices = new float[boneTransforms.length][3];
+      positions = new float[boneTransforms.length][3];
+      final BoneTransform tempTransform = BoneTransform.pool();
+      for(int i = 0; i < boneTransforms.length; ++i) {
+         final BoneTransform transform = getBoneTransform(i);
+         tempTransform.copy(transform);
+         tempTransform.normalize();
+         inverseBindMatrices[i] = tempTransform.extractRotation();
+         bindMatrices[i][0] = transform.matrix[12];
+         bindMatrices[i][1] = transform.matrix[13];
+         bindMatrices[i][2] = transform.matrix[14];
+         positions[i] = transform.extractScale();
       }
-
-      BoneTransform transform = tempTransform;
-
-      for(int i = 0; i < this.boneTransforms.length; ++i) {
-         BoneTransform bone = this.getBoneTransform(i);
-         transform.copy(bone);
-         transform.normalize();
-         this.inverseBindMatrices[i] = transform.extractRotation();
-         this.bindMatrices[i][0] = bone.matrix[12];
-         this.bindMatrices[i][1] = bone.matrix[13];
-         this.bindMatrices[i][2] = bone.matrix[14];
-         this.positions[i] = bone.extractScale();
-      }
-
-      transform.release();
+      tempTransform.release();
    }
 
    BoneTransform getBoneTransform(int index) {
-      return this.boneTransforms[index];
+      return boneTransforms[index];
    }
 
    BoneTransform getComputedBoneTransform(int index) {
-      if (this.computedBoneTransforms[index] == null) {
-         this.computedBoneTransforms[index] = new BoneTransform(this.getBoneTransform(index));
-         if (this.parentBone != null) {
-            this.computedBoneTransforms[index].combine(this.parentBone.getComputedBoneTransform(index));
-         } else {
-            this.computedBoneTransforms[index].combine(BoneTransform.identity);
-         }
+      if (computedBoneTransforms[index] == null) {
+         computedBoneTransforms[index] = new BoneTransform(getBoneTransform(index));
+         if (parentBone != null)
+            computedBoneTransforms[index].combine(parentBone.getComputedBoneTransform(index));
+         else
+            computedBoneTransforms[index].combine(BoneTransform.IDENTITY);
       }
-
-      return this.computedBoneTransforms[index];
+      return computedBoneTransforms[index];
    }
 
    BoneTransform getFinalBoneTransform(int index) {
-      if (this.finalBoneTransforms[index] == null) {
-         this.finalBoneTransforms[index] = new BoneTransform(this.getComputedBoneTransform(index));
-         this.finalBoneTransforms[index].normalize();
+      if (finalBoneTransforms[index] == null) {
+         finalBoneTransforms[index] = new BoneTransform(getComputedBoneTransform(index));
+         finalBoneTransforms[index].normalize();
       }
-
-      return this.finalBoneTransforms[index];
+      return finalBoneTransforms[index];
    }
 
    void setBaseTransform(BoneTransform var1) {
-      this.baseTransform.copy(var1);
-      this.baseTransformUpdate = true;
-      this.globalTransformUpdated = true;
+      baseTransform.copy(var1);
+      baseTransformUpdate = true;
+      globalTransformUpdated = true;
    }
 
    BoneTransform getBaseTransform() {
-      return this.baseTransform;
+      return baseTransform;
    }
 
    BoneTransform getGlobalTransform() {
-      if (this.baseTransformUpdate) {
-         this.globalTransform.copy(this.getBaseTransform());
-         if (this.parentBone != null) {
-            this.globalTransform.combine(this.parentBone.getGlobalTransform());
-         }
-
-         this.baseTransformUpdate = false;
+      if (baseTransformUpdate) {
+         globalTransform.copy(getBaseTransform());
+         if (parentBone != null)
+            globalTransform.combine(parentBone.getGlobalTransform());
+         baseTransformUpdate = false;
       }
-
-      return this.globalTransform;
+      return globalTransform;
    }
 
    public BoneTransform getTransform(int index) {
-      if (this.globalTransformUpdated) {
-         this.localTransform.copy(this.getFinalBoneTransform(index));
-         this.localTransform.combine(this.getGlobalTransform());
-         this.globalTransformUpdated = false;
+      if (globalTransformUpdated) {
+         localTransform.copy(getFinalBoneTransform(index));
+         localTransform.combine(getGlobalTransform());
+         globalTransformUpdated = false;
       }
-
-      return this.localTransform;
+      return localTransform;
    }
 
    float[] getInverseBindMatrix(int index) {
-      return this.inverseBindMatrices[index];
+      return inverseBindMatrices[index];
    }
 
    float[] getBindMatrix(int index) {
-      return this.bindMatrices[index];
+      return bindMatrices[index];
    }
 
    float[] getPosition(int index) {
-      return this.positions[index];
+      return positions[index];
    }
 }

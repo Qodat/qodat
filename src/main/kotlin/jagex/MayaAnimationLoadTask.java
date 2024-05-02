@@ -9,7 +9,7 @@ record MayaAnimationLoadTask(
 ) implements Callable<Object> {
 
    public Object call() {
-      this.mayaAnimation.read(this.mayaAnimationBuffer, this.mayaAnimationVersion);
+      mayaAnimation.read(mayaAnimationBuffer, mayaAnimationVersion);
       return null;
    }
 }

@@ -21,7 +21,7 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
         if (frames.isEmpty()) {
             val animationsArchive: Index = OldschoolCacheRuneLite.store.getIndex(IndexType.ANIMATIONS)
             val framesArchive = OldschoolCacheRuneLite.store.getIndex(IndexType.SKELETONS)
-            val mayaAnimation = MayaAnimation.loadMayaAnimation(
+            val mayaAnimation = MayaAnimation.load(
                 animationsArchive,
                 framesArchive,
                 definition.animMayaID,

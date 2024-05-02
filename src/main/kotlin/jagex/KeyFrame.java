@@ -9,10 +9,7 @@ public class KeyFrame {
    float controlPoint2 = Float.MAX_VALUE;
    KeyFrame next;
 
-   KeyFrame() {
-   }
-
-   void read(Buffer var1, int var2) {
+   void read(Buffer var1, @SuppressWarnings("unused") int version) {
       this.frameNumber = var1.readShort();
       this.value = var1.readIntAsFloat();
       this.field1469 = var1.readIntAsFloat();

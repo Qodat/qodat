@@ -1,52 +1,48 @@
 package jagex;
 
-public class Skeleton  {
-   int id;
-   int count;
-   int[] transformTypes;
-   int[][] labels;
-   MayaAnimationSkeleton mayaAnimationSkeleton;
+public class Skeleton {
 
-   public Skeleton(int var1, byte[] var2) {
-      this.id = var1;
-      Buffer buffer = new Buffer(var2);
-      this.count = buffer.readUnsignedByte();
-      this.transformTypes = new int[this.count];
-      this.labels = new int[this.count][];
+    int id;
+    int count;
+    int[] transformTypes;
+    int[][] labels;
+    MayaAnimationSkeleton mayaAnimationSkeleton;
 
-      int var4;
-      for(var4 = 0; var4 < this.count; ++var4) {
-         this.transformTypes[var4] = buffer.readUnsignedByte();
-      }
+    public Skeleton(int skeletonId, byte[] skeletonData) {
+        this.id = skeletonId;
+        Buffer buffer = new Buffer(skeletonData);
+        this.count = buffer.readUnsignedByte();
+        this.transformTypes = new int[this.count];
+        this.labels = new int[this.count][];
 
-      for(var4 = 0; var4 < this.count; ++var4) {
-         this.labels[var4] = new int[buffer.readUnsignedByte()];
-      }
+        int i;
+        for (i = 0; i < count; ++i)
+            transformTypes[i] = buffer.readUnsignedByte();
 
-      for(var4 = 0; var4 < this.count; ++var4) {
-         for(int var5 = 0; var5 < this.labels[var4].length; ++var5) {
-            this.labels[var4][var5] = buffer.readUnsignedByte();
-         }
-      }
+        for (i = 0; i < count; ++i)
+            labels[i] = new int[buffer.readUnsignedByte()];
 
-      if (buffer.offset < buffer.array.length) {
-         var4 = buffer.readUnsignedShort();
-         if (var4 > 0) {
-            this.mayaAnimationSkeleton = new MayaAnimationSkeleton(buffer, var4);
-         }
-      }
-   }
+        for (i = 0; i < count; ++i)
+            for (int j = 0; j < labels[i].length; ++j)
+                labels[i][j] = buffer.readUnsignedByte();
 
-   public int getId() {
-      return this.id;
-   }
+        if (buffer.offset < buffer.array.length) {
+            final int boneCount = buffer.readUnsignedShort();
+            if (boneCount > 0)
+                mayaAnimationSkeleton = new MayaAnimationSkeleton(buffer, boneCount);
+        }
+    }
 
-   public int getCount() {
-      return this.count;
-   }
+    public int getId() {
+        return id;
+    }
 
-   public MayaAnimationSkeleton getMayaAnimationSkeleton() {
-      return this.mayaAnimationSkeleton;
-   }
+    public int getCount() {
+        return count;
+    }
+
+    public MayaAnimationSkeleton getMayaAnimationSkeleton() {
+        return mayaAnimationSkeleton;
+    }
 
 }

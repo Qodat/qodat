@@ -39,8 +39,8 @@ public class TransformationMatrix {
    }
 
    void rotateX(float angle) {
-      float cosAngle = (float)Math.cos((double)angle);
-      float sinAngle = (float)Math.sin((double)angle);
+      float cosAngle = (float)Math.cos(angle);
+      float sinAngle = (float)Math.sin(angle);
       float tempSkewYX = this.skewYX;
       float tempScaleY = this.scaleY;
       float tempSkewYZ = this.skewYZ;
@@ -56,8 +56,8 @@ public class TransformationMatrix {
    }
 
    void rotateY(float angle) {
-      float cosAngle = (float)Math.cos((double)angle);
-      float sinAngle = (float)Math.sin((double)angle);
+      float cosAngle = (float)Math.cos(angle);
+      float sinAngle = (float)Math.sin(angle);
       float tempScaleX = this.scaleX;
       float tempSkewXY = this.skewXY;
       float tempSkewXZ = this.skewXZ;
@@ -73,8 +73,8 @@ public class TransformationMatrix {
    }
 
    void rotateZ(float angle) {
-      float cosAngle = (float)Math.cos((double)angle);
-      float sinAngle = (float)Math.sin((double)angle);
+      float cosAngle = (float)Math.cos(angle);
+      float sinAngle = (float)Math.sin(angle);
       float tempScaleX = this.scaleX;
       float tempSkewXY = this.skewXY;
       float tempSkewXZ = this.skewXZ;

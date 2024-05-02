@@ -21,7 +21,7 @@ public class MayaAnimationFrameData implements Callable<Object> {
    public Object call() {
       this.animationFrame.initialiseKeyFrames();
       MayaAnimationFrame[][] var1;
-      if (this.animationFrameType == MayaAnimationFrameType.field1548) {
+      if (this.animationFrameType == MayaAnimationFrameType.USE_SECONDARY_FRAMES) {
          var1 = this.animation.secondaryFrames;
       } else {
          var1 = this.animation.primaryFrames;
