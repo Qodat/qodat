@@ -10,7 +10,7 @@ repositories {
     jcenter()
 }
 
-version = "0.3.0"
+version = "0.3.1"
 
 allprojects {
     group = "stan.qodat"
@@ -71,5 +71,6 @@ dependencies {
     implementation("org.joml:joml-primitives:1.10.0")
     implementation("org.joml:joml:1.10.5")
     implementation("no.tornado:tornadofx:1.7.20")
+    implementation("io.github.pdvrieze.xmlutil:serialization-jvm:0.86.3")
     testImplementation(kotlin("test-junit"))
 }
