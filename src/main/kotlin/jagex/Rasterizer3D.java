@@ -1,4 +1,4 @@
-package stan.qodat.scene.runescape;
+package jagex;
 
 public final class Rasterizer3D extends Rasterizer2D {
 

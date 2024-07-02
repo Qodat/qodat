@@ -1,5 +1,6 @@
 package stan.qodat.scene.runescape
 
+import jagex.Rasterizer3D
 import qodat.cache.models.VertexNormal
 import qodat.cache.definition.ModelDefinition
 import kotlin.math.absoluteValue

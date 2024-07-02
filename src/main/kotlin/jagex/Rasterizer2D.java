@@ -1,4 +1,4 @@
-package stan.qodat.scene.runescape;
+package jagex;
 
 import java.awt.*;
 import java.awt.geom.Arc2D;
@@ -321,7 +321,7 @@ public class Rasterizer2D {
         for (int i = 0; i < width; i++)
             Rasterizer2D_pixels[pixelIndex + i] = rgbColour;
     }
-    
+
     public static void drawHorizontalLine(int x, int y, int width, int color, int alpha) {
     	if (y < Rasterizer2D_yClipStart || y >= Rasterizer2D_yClipEnd)
             return;
@@ -344,7 +344,7 @@ public class Rasterizer2D {
             Rasterizer2D_pixels[pixelIndex++] = transparentColour;
         }
     }
-    
+
     public static void fillRectangle(int xPos, int yPos, int w, int h, int color) {
         if (xPos < Rasterizer2D_xClipStart) {
             w -= Rasterizer2D_xClipStart - xPos;
@@ -367,7 +367,7 @@ public class Rasterizer2D {
             l1 += k1;
         }
     }
-    
+
     public static void fillRectangle(int x, int y, int w, int h, int color, int alpha) {
         if (x < Rasterizer2D_xClipStart) {
             w -= Rasterizer2D_xClipStart - x;
@@ -547,7 +547,7 @@ public class Rasterizer2D {
             }
         }
     }
-    
+
     public static void fillGradientRectangle(int x, int y, int w, int h, int startColour, int endColour) {
 		int k1 = 0;
 		int l1 = 0x10000 / h;
