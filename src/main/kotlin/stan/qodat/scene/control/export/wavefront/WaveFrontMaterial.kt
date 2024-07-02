@@ -20,7 +20,7 @@ sealed class WaveFrontMaterial(private val alpha: Double) {
             mtlWriter.println("d $alpha")
     }
 
-    data class Color(private val r: Double, private val g: Double, private val b: Double, private val alpha: Double) : WaveFrontMaterial(alpha) {
+    data class Color(val r: Double, val g: Double, val b: Double, val alpha: Double) : WaveFrontMaterial(alpha) {
         override fun encodeMtl(mtlWriter: PrintWriter, directory: Path) {
             mtlWriter.println("Kd $r $g $b")
             tryEncodeAlpha(mtlWriter)
