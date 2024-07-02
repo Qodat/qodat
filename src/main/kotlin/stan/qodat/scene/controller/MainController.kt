@@ -20,6 +20,7 @@ import stan.qodat.util.bind
 import stan.qodat.util.createDragSpace
 import stan.qodat.util.createSelectTabListener
 import stan.qodat.util.setAndBind
+import java.awt.Desktop
 import java.net.URL
 import java.nio.file.Path
 import java.util.*
@@ -395,6 +396,14 @@ class MainController : SceneController("main-scene") {
             Properties.projectFilesPath.set(resolveAndMake(rootDir,"data"))
             Properties.defaultExportsPath.set(resolveAndMake(rootDir,"exports"))
             Properties.viewerCache.set(OldschoolCacheRuneLite)
+        }
+    }
+
+    @FXML
+    fun openQodatFolder() {
+        Properties.rootPath.get().toFile().apply {
+            if (exists())
+                Desktop.getDesktop().browseFileDirectory(this)
         }
     }
 

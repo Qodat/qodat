@@ -73,6 +73,7 @@
                                 <Menu mnemonicParsing="false" text="File">
                                     <items>
                                         <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Change Cache" />
+                                        <MenuItem mnemonicParsing="false" onAction="#openQodatFolder" text="Open .qodat Folder" />
                                     </items>
                                 </Menu>
                                 <Menu mnemonicParsing="false" text="Edit">
