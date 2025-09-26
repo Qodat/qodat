@@ -6,10 +6,10 @@ import javafx.collections.ObservableList
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import net.runelite.cache.IndexType
-import net.runelite.cache.fs.Index
 import qodat.cache.Cache
 import qodat.cache.definition.AnimationMayaDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
+import stan.qodat.cache.impl.displee.getIndex
 import stan.qodat.util.runCatchingWithDialog
 
 class AnimationMaya(label: String, override val definition: AnimationMayaDefinition, cache: Cache? = null) :
@@ -19,8 +19,13 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
 
     override fun getFrameList(): ObservableList<AnimationFrame> {
         if (frames.isEmpty()) {
-            val animationsArchive: Index = OldschoolCacheRuneLite.store.getIndex(IndexType.ANIMATIONS)
-            val framesArchive = OldschoolCacheRuneLite.store.getIndex(IndexType.SKELETONS)
+            val rev229 = DispleeCache.store.getIndex(IndexType.MODELS).revision >= 969
+            val animationsArchive = if (rev229)
+                DispleeCache.store.index(22)
+            else
+                DispleeCache.store.getIndex(IndexType.ANIMATIONS)
+            val framesArchive =
+                DispleeCache.store.getIndex(IndexType.SKELETONS)
             val mayaAnimation = MayaAnimation.load(
                 animationsArchive,
                 framesArchive,

@@ -15,7 +15,7 @@ import javafx.scene.text.Text
 import qodat.cache.definition.SpriteDefinition
 import qodat.cache.definition.TextureDefinition
 import stan.qodat.Qodat
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.util.DEFAULT
 import java.awt.image.BufferedImage
 import java.util.concurrent.TimeUnit
@@ -65,7 +65,7 @@ data class TextureMaterial(val definition: TextureDefinition) : Material {
 
 
     fun load() = try {
-        val textureSprite = OldschoolCacheRuneLite.getSprite(definition.fileIds[0], 0)
+        val textureSprite = DispleeCache.getSprite(definition.fileIds[0], 0)
         fxMaterial.diffuseMapProperty().bind(imageProperty)
         val textureSpriteImage = try {
             textureSprite.let {

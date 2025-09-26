@@ -15,7 +15,7 @@ import javafx.scene.text.FontPosture
 import javafx.scene.text.FontWeight
 import javafx.scene.text.Text
 import stan.qodat.Properties
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onSelected
 import stan.qodat.scene.SubScene3D
@@ -124,8 +124,8 @@ class AnimationFrameTreeItem(
 
     private fun updateFileAndFrameIdLabel(hash: Int): Pair<Int, Int> {
         val hexString = Integer.toHexString(hash)
-        val fileId = OldschoolCacheRuneLite.getFileId(hexString)
-        val frameId = OldschoolCacheRuneLite.getFrameId(hexString)
+        val fileId = DispleeCache.getFileId(hexString)
+        val frameId = DispleeCache.getFrameId(hexString)
         return fileId to frameId
     }
 

@@ -26,9 +26,6 @@ class SequenceLoader206 {
     private fun SequenceDefinition206.decodeValues(opcode: Int, stream: InputStream) {
         val length: Int
         var i: Int
-        if (id == "7981") {
-            println()
-        }
         when (opcode) {
             1 -> {
                 length = stream.readUnsignedShort()
@@ -79,7 +76,7 @@ class SequenceLoader206 {
                 stream.read24BitInt()
             }
             14 -> {
-                cachedModelId = stream.readInt()
+                animMayaId = stream.readInt()
             }
             15 -> {
                 repeat(stream.readUnsignedShort()) {

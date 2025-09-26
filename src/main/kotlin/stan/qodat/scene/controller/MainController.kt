@@ -9,7 +9,7 @@ import javafx.scene.control.*
 import javafx.scene.layout.*
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
@@ -395,7 +395,7 @@ class MainController : SceneController("main-scene") {
             Properties.legacyCachePath.set(resolveAndMake(rootDir,"cache/667"))
             Properties.projectFilesPath.set(resolveAndMake(rootDir,"data"))
             Properties.defaultExportsPath.set(resolveAndMake(rootDir,"exports"))
-            Properties.viewerCache.set(OldschoolCacheRuneLite)
+            Properties.viewerCache.set(DispleeCache)
         }
     }
 

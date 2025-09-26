@@ -5,7 +5,7 @@ import qodat.cache.EncodeResult
 import qodat.cache.Encoder
 import qodat.cache.definition.NPCDefinition
 import stan.qodat.Properties
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.Animation
 import java.io.UnsupportedEncodingException
 
@@ -16,7 +16,7 @@ import java.io.UnsupportedEncodingException
  * @since   28/01/2021
  */
 class NPC(
-    cache: Cache = OldschoolCacheRuneLite,
+    cache: Cache = DispleeCache,
     definition: NPCDefinition,
     animationProvider: NPCDefinition.() -> Array<Animation>
 ) : AnimatedEntity<NPCDefinition>(cache, definition, animationProvider, "npc"), Encoder {

@@ -7,14 +7,12 @@ import qodat.cache.definition.AnimatedEntityDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.EntityDefinition
 import stan.qodat.Properties
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.animation.AnimationMaya
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.task.BackgroundTasks
-import stan.qodat.util.createNpcAnimsJsonDir
-import stan.qodat.util.createObjectAnimsJsonDir
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Stream
 
@@ -36,19 +34,15 @@ class CacheAssetLoader(
     }
 
     fun loadObjects(onCompleted: (List<Object>) -> Unit) {
-        if (cache is OldschoolCacheRuneLite) {
+        if (cache is DispleeCache) {
             val objectAnimsDir = Properties.osrsCachePath.get().resolve("object_anims").toFile()
             if (!objectAnimsDir.exists()) {
                 println("Did not find object_anims dir, creating...")
                 objectAnimsDir.mkdir()
-                val task = createObjectAnimsJsonDir(
-                    store = OldschoolCacheRuneLite.store,
-                    objectManager = OldschoolCacheRuneLite.objectManager
-                )
-                task.setOnSucceeded {
+                cache.objectAnimParser.setOnSucceeded {
                     BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
                 }
-                BackgroundTasks.submit(addProgressIndicator = true, task)
+                BackgroundTasks.submit(addProgressIndicator = true, cache.npcAnimParser)
                 return
             }
         }
@@ -56,19 +50,15 @@ class CacheAssetLoader(
     }
 
     fun loadNpcs(onCompleted: (List<NPC>) -> Unit) {
-        if (cache is OldschoolCacheRuneLite) {
+        if (cache is DispleeCache) {
             val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
             if (!npcAnimsDir.exists()) {
                 println("Did not find npc_anims dir, creating...")
                 npcAnimsDir.mkdir()
-                val task = createNpcAnimsJsonDir(
-                    store = OldschoolCacheRuneLite.store,
-                    npcManager = OldschoolCacheRuneLite.npcManager
-                )
-                task.setOnSucceeded {
+                cache.npcAnimParser.setOnSucceeded {
                     BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
                 }
-                BackgroundTasks.submit(addProgressIndicator = true, task)
+                BackgroundTasks.submit(addProgressIndicator = true, cache.npcAnimParser)
                 return
             }
         }

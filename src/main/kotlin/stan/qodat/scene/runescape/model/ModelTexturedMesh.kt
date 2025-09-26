@@ -7,7 +7,7 @@ import fxyz3d.shapes.primitives.helper.TriangleMeshHelper
 import javafx.scene.paint.Color
 import javafx.scene.shape.MeshView
 import qodat.cache.definition.ModelDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.*
 import stan.qodat.util.ModelUtil
 
@@ -25,8 +25,8 @@ class ModelTexturedMesh(private val model: Model) : TexturedMesh(), ModelSkin {
     companion object {
         @JvmStatic
         fun main(args: Array<String>) {
-            val npc = OldschoolCacheRuneLite.npcManager.npcs.find { it.name.contains("abyssal demon", true) }!!
-            val model = OldschoolCacheRuneLite.getModelDefinition(npc.models.first().toString())
+            val npc = DispleeCache.npcManager.npcs.values.find { it.name.contains("abyssal demon", true) }!!
+            val model = DispleeCache.getModelDefinition(npc.models.first().toString())
 
             model.draw(false)
 

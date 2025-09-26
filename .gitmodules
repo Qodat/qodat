@@ -1,0 +1,3 @@
+[submodule "qodat-cache"]
+	path = qodat-cache
+	url = git@github.com:Qodat/rs-cache.git

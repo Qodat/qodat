@@ -8,11 +8,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import net.runelite.cache.fs.Archive;
-import net.runelite.cache.fs.ArchiveFiles;
-import net.runelite.cache.fs.FSFile;
-import net.runelite.cache.fs.Index;
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite;
+import com.displee.cache.index.Index;
+import com.displee.cache.index.archive.Archive;
+import com.displee.cache.index.archive.file.File;
 
 public class MayaAnimation {
 
@@ -27,25 +25,19 @@ public class MayaAnimation {
 
     public static MayaAnimation load(Index seqs, Index frames, int mayaAnimationId, boolean fileIndexOrGroupIndex) throws IOException {
         boolean var4 = true;
-        final Archive seqArchive = seqs.getArchive(mayaAnimationId >> 16 & '\uffff');
-        final byte[] seqData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(seqArchive);
-        final ArchiveFiles seqFiles = seqArchive.getFiles(seqData);
-        final FSFile seqFile = seqFiles.findFile(mayaAnimationId & '\uffff');
+        final Archive seqArchive = seqs.archive(mayaAnimationId >> 16 & '\uffff');
+        final File seqFile = seqArchive.file(mayaAnimationId & '\uffff');
 
-        byte[] mayaAnimationData = seqFile.getContents();
+        byte[] mayaAnimationData = seqFile.getData();
         int mayaAnimationFrameGroupId = (mayaAnimationData[1] & 255) << 8 | mayaAnimationData[2] & 255;
         byte[] mayaAnimationFrameGroupData;
         if (fileIndexOrGroupIndex) {
 
-            final Archive frameArchive = frames.getArchive(0);
-            final byte[] frameData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(frameArchive);
-            final ArchiveFiles frameFiles = frameArchive.getFiles(frameData);
-            mayaAnimationFrameGroupData = frameFiles.findFile(mayaAnimationFrameGroupId).getContents();
+            final Archive frameArchive = frames.archive(0);
+            mayaAnimationFrameGroupData = frameArchive.file(mayaAnimationFrameGroupId).getData();
         } else {
-            final Archive frameArchive = frames.getArchive(mayaAnimationFrameGroupId);
-            final byte[] frameData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(frameArchive);
-            final ArchiveFiles frameFiles = frameArchive.getFiles(frameData);
-            mayaAnimationFrameGroupData = frameFiles.findFile(0).getContents();
+            final Archive frameArchive = frames.archive(mayaAnimationFrameGroupId);
+            mayaAnimationFrameGroupData = frameArchive.file(0).getData();
         }
 
         if (mayaAnimationFrameGroupData == null)
@@ -71,26 +63,20 @@ public class MayaAnimation {
     MayaAnimation(Index seqs, Index frames, int mayaAnimationId, boolean fileIndexOrGroupIndex) throws IOException {
         this.id = mayaAnimationId;
 
-        final Archive seqArchive = seqs.getArchive(id >> 16 & '\uffff');
-        final byte[] seqData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(seqArchive);
-        final ArchiveFiles seqFiles = seqArchive.getFiles(seqData);
-        final FSFile seqFile = seqFiles.findFile(id & '\uffff');
+        final Archive seqArchive = seqs.archive(id >> 16 & '\uffff');
+        final File seqFile = seqArchive.file(id & '\uffff');
 
-        byte[] data = seqFile.getContents();
+        byte[] data = seqFile.getData();
         Buffer buffer = new Buffer(data);
         int version = buffer.readUnsignedByte();
         int frameGroupId = buffer.readUnsignedShort();
         byte[] frameGroupData;
         if (fileIndexOrGroupIndex) {
-            final Archive frameArchive = frames.getArchive(0);
-            final byte[] frameData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(frameArchive);
-            final ArchiveFiles frameFiles = frameArchive.getFiles(frameData);
-            frameGroupData = frameFiles.findFile(frameGroupId).getContents();
+            final Archive frameArchive = frames.archive(0);
+            frameGroupData = frameArchive.file(frameGroupId).getData();
         } else {
-            final Archive frameArchive = frames.getArchive(frameGroupId);
-            final byte[] frameData = OldschoolCacheRuneLite.INSTANCE.getStore().getStorage().loadArchive(frameArchive);
-            final ArchiveFiles frameFiles = frameArchive.getFiles(frameData);
-            frameGroupData = frameFiles.findFile(0).getContents();
+            final Archive frameArchive = frames.archive(frameGroupId);
+            frameGroupData = frameArchive.file(0).getData();
         }
 
         this.skeleton = new Skeleton(frameGroupId, frameGroupData);

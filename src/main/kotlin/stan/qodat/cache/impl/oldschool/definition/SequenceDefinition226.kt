@@ -1,8 +1,9 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.AnimationDefinition
+import stan.qodat.cache.impl.oldschool.loader.Sound
 
-class SequenceDefinition206(override val id: String) : AnimationDefinition {
+class SequenceDefinition226(override val id: String) : AnimationDefinition {
 
     var frameIDs : IntArray? = null
     var chatFrameIds: IntArray? = null
@@ -19,7 +20,9 @@ class SequenceDefinition206(override val id: String) : AnimationDefinition {
     var animMayaId = -1
     var animMayaStart = 0
     var animMayaEnd = 0
+    var animMayaMasks : BooleanArray? = null
     var name: String? = null
+    var sounds: Map<Int, Sound?>? = null
 
     override val frameHashes: IntArray get() = frameIDs!!
     override val frameLengths: IntArray get() = frameLenghts!!

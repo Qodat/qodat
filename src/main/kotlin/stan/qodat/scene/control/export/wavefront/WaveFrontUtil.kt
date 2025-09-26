@@ -1,7 +1,7 @@
 package stan.qodat.scene.control.export.wavefront
 
 import qodat.cache.definition.ModelDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import java.awt.Color
 
 fun ModelDefinition.getFaceMaterial(face: Int, recolorMap: Map<Short, Short>? = null): WaveFrontMaterial {
@@ -14,7 +14,7 @@ fun ModelDefinition.getFaceMaterial(face: Int, recolorMap: Map<Short, Short>? = 
         val b = color.blue / 255.0
         WaveFrontMaterial.Color(r, g, b, a)
     } else {
-        val texture = OldschoolCacheRuneLite.getTexture(textureId)
+        val texture = DispleeCache.getTexture(textureId)
         val spriteFileId = texture.fileIds[0]
         WaveFrontMaterial.Texture(spriteFileId, a)
     }

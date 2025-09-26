@@ -16,7 +16,7 @@ import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 import javafx.util.Duration
 import qodat.cache.definition.InterfaceDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.javafx.label
 import stan.qodat.javafx.text
 import stan.qodat.javafx.treeItem
@@ -168,7 +168,7 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
                         fill = ModelUtil.hsbToColor(def.textColor, def.opacity.toByte())
                     }
                     5 -> {
-                        val sprite = def.spriteId.takeIf { it > 0 }?.let { OldschoolCacheRuneLite.getSprite(it, 0) }?.let { Sprite(it) }
+                        val sprite = def.spriteId.takeIf { it > 0 }?.let { DispleeCache.getSprite(it, 0) }?.let { Sprite(it) }
                         ImageView(sprite?.image)
                     }
                     6 -> Group()

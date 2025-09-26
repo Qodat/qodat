@@ -10,7 +10,7 @@ import qodat.cache.EncodeResult
 import qodat.cache.definition.*
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.NPC
@@ -248,7 +248,7 @@ object QodatCache : Cache("qodat") {
         return models[id]!!
     }
 
-    override fun getAnimation(id: String) = OldschoolCacheRuneLite.getAnimation(id)
+    override fun getAnimation(id: String) = DispleeCache.getAnimation(id)
 
     override fun getNPCs(): Array<NPCDefinition> = npcs.toTypedArray()
 
@@ -259,15 +259,15 @@ object QodatCache : Cache("qodat") {
     override fun getSpotAnimations(): Array<SpotAnimationDefinition> = emptyArray()
 
     override fun getAnimationDefinitions(): Array<AnimationDefinition> {
-        return OldschoolCacheRuneLite.getAnimationDefinitions()
+        return DispleeCache.getAnimationDefinitions()
     }
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup {
-        return OldschoolCacheRuneLite.getAnimationSkeletonDefinition(frameHash)
+        return DispleeCache.getAnimationSkeletonDefinition(frameHash)
     }
 
     override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? {
-        return OldschoolCacheRuneLite.getFrameDefinition(frameHash)
+        return DispleeCache.getFrameDefinition(frameHash)
     }
 
     override fun getInterface(groupId: Int): Array<InterfaceDefinition> {

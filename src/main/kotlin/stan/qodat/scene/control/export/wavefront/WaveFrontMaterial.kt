@@ -4,7 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import qodat.cache.definition.SpriteDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import java.awt.image.BufferedImage
 import java.io.PrintWriter
 import java.nio.file.Path
@@ -35,7 +35,7 @@ sealed class WaveFrontMaterial(private val alpha: Double) {
 
         override fun encodeMtl(mtlWriter: PrintWriter, directory: Path) {
 
-            val spriteDefinition = OldschoolCacheRuneLite.getSprite(spriteFileId, 0)
+            val spriteDefinition = DispleeCache.getSprite(spriteFileId, 0)
             val relativePath = "sprites/$spriteFileId.png"
             val spritePath = directory.resolve(relativePath).toFile()
 

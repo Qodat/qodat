@@ -10,7 +10,7 @@ import javafx.scene.layout.VBox
 import javafx.stage.FileChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatNpcDefinition
 import stan.qodat.scene.control.AutoCompleteTextField
@@ -189,9 +189,9 @@ class EditorController : EntityViewController("editor-scene") {
                             }
                             button("Add Animation") {
                                 setOnAction {
-                                    val animationDefinition = OldschoolCacheRuneLite.getAnimationDefinitions().find { it.id == textField.text }
+                                    val animationDefinition = DispleeCache.getAnimationDefinitions().find { it.id == textField.text }
                                     if (animationDefinition != null) {
-                                        val animation = AnimationLegacy(animationDefinition.id, animationDefinition, OldschoolCacheRuneLite)
+                                        val animation = AnimationLegacy(animationDefinition.id, animationDefinition, DispleeCache)
                                         animationList.items.add(animation)
                                     }
                                 }

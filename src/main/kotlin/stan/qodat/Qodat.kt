@@ -10,7 +10,7 @@ import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
 import org.slf4j.LoggerFactory
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.javafx.JavaFXTrayIcon
 import stan.qodat.scene.SubScene3D
@@ -109,7 +109,7 @@ class Qodat : Application() {
                     propertiesManager.saveToFile()
                 }
             }
-            Properties.viewerCache.set(OldschoolCacheRuneLite)
+            Properties.viewerCache.set(DispleeCache)
             Properties.editorCache.set(QodatCache)
             propertiesManager.startSaveThread()
         }

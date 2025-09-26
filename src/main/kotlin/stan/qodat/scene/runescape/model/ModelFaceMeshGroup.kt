@@ -9,7 +9,7 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import qodat.cache.definition.ModelDefinition
-import stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.util.getMaterial
 import stan.qodat.util.setAndBind
 
@@ -122,7 +122,7 @@ class ModelFaceMeshGroup(
 
     private fun createMaterials(definition: ModelDefinition) : List<Material> {
         return MutableList(definition.getFaceCount()) { face ->
-            definition.getMaterial(face, OldschoolCacheRuneLite).fxMaterial
+            definition.getMaterial(face, DispleeCache).fxMaterial
         }
     }
 }
