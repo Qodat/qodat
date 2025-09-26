@@ -10,7 +10,7 @@ repositories {
     jcenter()
 }
 
-version = "0.3.1"
+version = "0.3.2"
 
 allprojects {
     group = "stan.qodat"
