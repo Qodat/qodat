@@ -72,27 +72,39 @@ class SequenceLoader206 {
                     ++i
                 }
             }
+
             13 -> frameSounds = IntArray(stream.readUnsignedByte()) {
                 stream.read24BitInt()
             }
+
             14 -> {
                 animMayaId = stream.readInt()
             }
+
             15 -> {
                 repeat(stream.readUnsignedShort()) {
                     stream.readUnsignedShort()
                     stream.read24BitInt()
                 }
             }
+
             16 -> {
                 stream.readUnsignedShort()
                 stream.readUnsignedShort()
             }
+
             17 -> {
                 repeat(stream.readUnsignedByte()) {
                     stream.readUnsignedByte()
                 }
             }
+
+            18 -> {
+                name = stream.readString()
+            }
+
+            19 -> Unit
+            else -> Unit
         }
     }
 }

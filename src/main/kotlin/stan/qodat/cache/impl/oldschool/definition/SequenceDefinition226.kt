@@ -5,7 +5,7 @@ import stan.qodat.cache.impl.oldschool.loader.Sound
 
 class SequenceDefinition226(override val id: String) : AnimationDefinition {
 
-    var frameIDs : IntArray? = null
+    var frameIDs: IntArray? = null
     var chatFrameIds: IntArray? = null
     var frameLenghts: IntArray? = null
     var frameSounds: IntArray? = null
@@ -20,9 +20,11 @@ class SequenceDefinition226(override val id: String) : AnimationDefinition {
     var animMayaId = -1
     var animMayaStart = 0
     var animMayaEnd = 0
-    var animMayaMasks : BooleanArray? = null
+    var verticalOffset = 0
+    var animMayaMasks: BooleanArray? = null
     var name: String? = null
     var sounds: Map<Int, Sound?>? = null
+    var soundsCrossWorldView = false
 
     override val frameHashes: IntArray get() = frameIDs!!
     override val frameLengths: IntArray get() = frameLenghts!!

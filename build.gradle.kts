@@ -57,6 +57,9 @@ val javaFXOptions = the<org.openjfx.gradle.JavaFXOptions>()
 
 dependencies {
     implementation(project("qodat-api"))
+    implementation("com.google.code.gson:gson:2.8.5")
+    implementation("com.google.guava:guava:23.2-jre")
+    implementation("org.apache.commons:commons-compress:1.10")
     implementation("org.jsoup:jsoup:1.17.2")
     implementation("us.ihmc:ihmc-javafx-toolkit:17-0.21.2")
     implementation("org.jcodec:jcodec:0.2.5")

@@ -49,11 +49,11 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     lateinit var frames: HashMap<Int, Map<Int, AnimationFrameLegacyDefinition>>
     lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
 
-    private lateinit var animations : Array<AnimationDefinition>
-    private lateinit var spotAnimations : Array<SpotAnimationDefinition>
+    private lateinit var animations: Array<AnimationDefinition>
+    private lateinit var spotAnimations: Array<SpotAnimationDefinition>
 
     private val gson = GsonBuilder().create()
-    private val intArrayType = object: TypeToken<IntArray>() {}.type
+    private val intArrayType = object : TypeToken<IntArray>() {}.type
 
     init {
         load()
@@ -96,15 +96,16 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             override var pixels: IntArray = def.getPixels()
         }
     }
-    fun getModelData(id: String) : ByteArray {
-        val modelId = id.toIntOrNull()?:throw IllegalArgumentException("Model id must be int-convertable $id")
+
+    fun getModelData(id: String): ByteArray {
+        val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
         val modelIndex = store.getIndex(IndexType.MODELS)
         val archive = modelIndex.getArchive(modelId)
         return archive.decompress(store.storage.loadArchive(archive))
     }
 
     override fun getModelDefinition(id: String): ModelDefinition {
-        val modelId = id.toIntOrNull()?:throw IllegalArgumentException("Model id must be int-convertable $id")
+        val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
         val modelIndex = store.getIndex(IndexType.MODELS)
         val archive = modelIndex.getArchive(modelId)
         return RSModelLoader().load(id, archive.decompress(store.storage.loadArchive(archive)))
@@ -118,7 +119,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
 
     override fun getNPCs(): Array<NPCDefinition> {
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
-        if (!npcAnimsDir.exists()){
+        if (!npcAnimsDir.exists()) {
             println("Did not find npc_anims dir, creating...")
             return emptyArray()
         }
@@ -137,7 +138,10 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                                     val data = npcAnimsDir
                                         .resolve("${npc.id}.json")
                                         .bufferedReader()
-                                        .use {gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }.toTypedArray() }
+                                        .use {
+                                            gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }
+                                                .toTypedArray()
+                                        }
                                     if (data.isEmpty()) {
                                         emptyArray()
                                     } else
@@ -162,7 +166,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             object : ObjectDefinition {
                 override fun getOptionalId() = OptionalInt.of(it.id)
                 override val name = it.name
-                override val modelIds = it.objectModels?.map { it.toString() }?.toTypedArray()?: emptyArray()
+                override val modelIds = it.objectModels?.map { it.toString() }?.toTypedArray() ?: emptyArray()
                 override val animationIds = if (it.animationID == -1)
                     emptyArray()
                 else
@@ -224,32 +228,35 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                     if (sequence.animMayaID >= 0)
                         object : AnimationMayaDefinition {
                             override val id: String = it.fileId.toString()
-                            override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
-                            override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                            override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
+                            override val frameLengths: IntArray = sequence.frameLengths ?: IntArray(0)
                             override val loopOffset: Int = sequence.frameStep
                             override val leftHandItem: Int = sequence.leftHandItem
                             override val rightHandItem: Int = sequence.rightHandItem
                             override val animMayaID: Int = sequence.animMayaID
-                            override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> = sequence.animMayaFrameSounds?: emptyMap()
+                            override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> =
+                                sequence.frameSounds.entries()
+                                    .filter { it.value != null }
+                                    .associate { it.key as Int to it.value as SequenceDefinition.Sound }
                             override val animMayaStart: Int = sequence.animMayaStart
                             override val animMayaEnd: Int = sequence.animMayaEnd
-                            override val animMayaMasks: BooleanArray = sequence.animMayaMasks?: BooleanArray(0)
+                            override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
                         }
                     else object : AnimationDefinition {
                         override val id: String = it.fileId.toString()
-                        override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
-                        override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                        override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
+                        override val frameLengths: IntArray = sequence.frameLengths ?: IntArray(0)
                         override val loopOffset: Int = sequence.frameStep
                         override val leftHandItem: Int = sequence.leftHandItem
                         override val rightHandItem: Int = sequence.rightHandItem
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    val sequence =  SequenceLoader206().load(it.fileId, it.contents)
+                    val sequence = SequenceLoader206().load(it.fileId, it.contents)
                     object : AnimationDefinition {
                         override val id: String = it.fileId.toString()
-                        override val frameHashes: IntArray = sequence.frameIDs?: IntArray(0)
-                        override val frameLengths: IntArray = sequence.frameLenghts?: IntArray(0)
+                        override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
+                        override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
                         override val loopOffset: Int = sequence.frameStep
                         override val leftHandItem: Int = sequence.leftHandItem
                         override val rightHandItem: Int = sequence.rightHandItem
@@ -272,9 +279,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             val frameArchive = frameIndex.getArchive(frameArchiveId)!!
             val frameArchiveContents = storage.loadArchive(frameArchive)
             val frameArchiveFiles = frameArchive.getFiles(frameArchiveContents)!!
-            val files = frameArchiveFiles.files
-            Array(files.size) {
-                val file = files[it]
+            frameArchiveFiles.files.map {
+                val file = it
                 val frameContents = file.contents
                 val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
                 val (frameMapDefinition, transformGroup) = frameMaps.getOrPut(frameMapArchiveId) {
@@ -318,7 +324,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition =
         RuneliteSpriteDefinition(spriteManager.findSprite(groupId, frameId))
 
-    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup=
+    override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup =
         getFrameDefinition(frameHash)!!.transformationGroup
 
     internal fun getFileId(hexString: String): Int =

@@ -2,7 +2,6 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.SequenceDefinition
 import net.runelite.cache.io.InputStream
-import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 
 /**
@@ -23,15 +22,14 @@ class SequenceLoader226 {
             if (opcode == 0) {
                 break
             }
-//            println("decoding[$id]: Found opcode $opcode")
             def.decodeValues(opcode, `is`)
         }
         return def
     }
 
     fun configureForRevision(revision: Int) {
-        this.rev220FrameSounds = revision > 1141;
-        this.rev226 = revision > 1268;
+        this.rev220FrameSounds = revision > REV_220_SEQ_ARCHIVE_REV
+        this.rev226 = revision > REV_226_SEQ_ARCHIVE_REV
     }
 
     private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputStream) {
@@ -83,6 +81,7 @@ class SequenceLoader226 {
                     ++i
                 }
             }
+
             13 -> {
                 if (rev226) {
                     animMayaId = stream.readInt()
@@ -94,6 +93,7 @@ class SequenceLoader226 {
                     }
                 }
             }
+
             14 -> {
                 if (rev226) {
                     sounds = buildMap {
@@ -106,6 +106,7 @@ class SequenceLoader226 {
                     animMayaId = stream.readInt()
                 }
             }
+
             15 -> {
                 if (rev226) {
                     animMayaStart = stream.readUnsignedShort()
@@ -119,12 +120,16 @@ class SequenceLoader226 {
                     }
                 }
             }
+
             16 -> {
                 if (!rev226) {
                     animMayaStart = stream.readUnsignedShort()
                     animMayaEnd = stream.readUnsignedShort()
+                } else {
+                    verticalOffset = stream.readByte().toInt()
                 }
             }
+
             17 -> {
                 animMayaMasks = BooleanArray(256) { false }
                 repeat(stream.readUnsignedByte()) {
@@ -132,9 +137,16 @@ class SequenceLoader226 {
                     animMayaMasks?.set(index, true)
                 }
             }
+
             18 -> {
                 name = stream.readString()
             }
+
+            19 -> {
+                soundsCrossWorldView = true
+            }
+
+            else -> Unit
         }
     }
 
@@ -169,5 +181,8 @@ class SequenceLoader226 {
 class Sound(val id: Int, val location: Int, val weight: Int, val loops: Int, val retain: Int) {
 
     fun toRuneliteSound() =
-        SequenceDefinition.Sound(id, loops, location, retain)
+        SequenceDefinition.Sound(id, loops, location, retain, weight)
 }
+
+private const val REV_220_SEQ_ARCHIVE_REV = 1141
+private const val REV_226_SEQ_ARCHIVE_REV = 1268
