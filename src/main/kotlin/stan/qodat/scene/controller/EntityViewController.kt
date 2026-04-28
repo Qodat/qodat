@@ -71,23 +71,31 @@ abstract class EntityViewController(name: String) : SceneController(name) {
 
     @FXML
     lateinit var itemList: ViewNodeListView<Item>
+
     @FXML
     lateinit var objectList: ViewNodeListView<Object>
+
     @FXML
     lateinit var spritesList: ViewNodeListView<Sprite>
+
     @FXML
     lateinit var spotAnimList: ViewNodeListView<SpotAnimation>
+
     @FXML
     lateinit var interfaceList: ViewNodeListView<InterfaceGroup>
 
     @FXML
     lateinit var sortNpcBox: ComboBox<SortType>
+
     @FXML
     lateinit var sortItemBox: ComboBox<SortType>
+
     @FXML
     lateinit var sortObjectBox: ComboBox<SortType>
+
     @FXML
     lateinit var sortSpotAnimBox: ComboBox<SortType>
+
     @FXML
     lateinit var sortSpritesBox: ComboBox<SortType>
 
@@ -250,12 +258,17 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                     Sprite(it)
                 })
                 spritesList.selectionModel.select(sprites.lastSelectedEntity(Properties.selectedSpriteName))
+            } catch (e: Exception) {
+                Qodat.logException("Failed to load sprites", e)
+            }
+
+            try {
                 interfaces.setAll(cache.getRootInterfaces().map {
                     InterfaceGroup(cache, it.key, it.value)
                 })
                 interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
             } catch (e: Exception) {
-                Qodat.logException("Failed to load sprites/interfaces", e)
+                Qodat.logException("Failed to load interfaces", e)
             } finally {
                 semaphore.release()
             }
@@ -319,7 +332,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         list: ViewNodeListView<N>,
         property: ObjectProperty<SortType>,
     ) = configureSortComboBox(box, list, property) {
-        when(it) {
+        when (it) {
             SortType.NAME -> Comparator.comparing(Entity<*>::getName)
             SortType.ID -> Comparator.comparing { it.definition.getOptionalId().orElse(0) }
         }
@@ -331,17 +344,18 @@ abstract class EntityViewController(name: String) : SceneController(name) {
         list: ViewNodeListView<Sprite>,
         property: ObjectProperty<SortType>,
     ) = configureSortComboBox(box, list, property) {
-        when(it) {
+        when (it) {
             SortType.NAME -> Comparator.comparing(Sprite::getName)
             SortType.ID -> Comparator.comparing { it.definition.id }
         }
     }
 
-    private fun<T : ViewNodeProvider> configureSortComboBox(box: ComboBox<SortType>,
-                                                            list: ViewNodeListView<T>,
-                                                            property: ObjectProperty<SortType>,
-                                                            comparator: (SortType) -> Comparator<T>
-    ){
+    private fun <T : ViewNodeProvider> configureSortComboBox(
+        box: ComboBox<SortType>,
+        list: ViewNodeListView<T>,
+        property: ObjectProperty<SortType>,
+        comparator: (SortType) -> Comparator<T>
+    ) {
         box.items.addAll(SortType.values())
         box.selectionModel.selectedItemProperty().onInvalidation {
             property.set(get())

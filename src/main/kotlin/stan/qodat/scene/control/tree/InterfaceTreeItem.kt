@@ -16,7 +16,6 @@ import javafx.scene.shape.Rectangle
 import javafx.scene.text.Text
 import javafx.util.Duration
 import qodat.cache.definition.InterfaceDefinition
-import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.javafx.label
 import stan.qodat.javafx.text
 import stan.qodat.javafx.treeItem
@@ -33,7 +32,8 @@ import stan.qodat.scene.runescape.widget.component.impl.Model
 import stan.qodat.util.ModelUtil
 import stan.qodat.util.onInvalidation
 
-class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleSelectionModel<TreeItem<Node>>) : TreeItem<Node>() {
+class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleSelectionModel<TreeItem<Node>>) :
+    TreeItem<Node>() {
 
     val do3d = CheckBox("3D")
 
@@ -90,13 +90,17 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
                 scrollX = 0
                 scrollY = 0
                 scrollHeight = base.scrollHeight
-                children.addAll(componentsById.values.filter { it.parentId.and(0xffff) == id }.map { convert(it, componentsById, it.id.and(0xffff))})
+                children.addAll(componentsById.values.filter { it.parentId.and(0xffff) == id }
+                    .map { convert(it, componentsById, it.id.and(0xffff)) })
             }
+
             2 -> Inventory().apply {
 
             }
+
             3 -> stan.qodat.scene.runescape.widget.component.impl.Rectangle().apply {
             }
+
             4 -> stan.qodat.scene.runescape.widget.component.impl.Text()
             5 -> Graphic()
             6 -> Model()
@@ -120,7 +124,7 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
         for (child in children) {
             if (child is InterfaceComponentTreeItem) {
                 val def = child.definition
-                val node = when(def.type) {
+                val node = when (def.type) {
                     0 -> Pane().apply {
 
                         borderProperty().bind(Bindings.createObjectBinding({
@@ -148,7 +152,7 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
                         translateX = def.originalX.toDouble()
                         translateY = def.originalY.toDouble()
                         do3d.selectedProperty().onInvalidation {
-                            if(get()) {
+                            if (get()) {
                                 val translateTransition = TranslateTransition(Duration.millis(500.0), this@apply)
                                 translateTransition.toZ = depth * -10.0
                                 translateTransition.play()
@@ -159,18 +163,25 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
                             }
                         }
                     }
+
                     3 -> Rectangle().apply {
                         width = def.originalWidth.toDouble()
                         height = def.originalHeight.toDouble()
                     }
+
                     4 -> Text().apply {
                         text = def.text
                         fill = ModelUtil.hsbToColor(def.textColor, def.opacity.toByte())
                     }
+
                     5 -> {
-                        val sprite = def.spriteId.takeIf { it > 0 }?.let { DispleeCache.getSprite(it, 0) }?.let { Sprite(it) }
+                        val sprite = def.spriteId
+                            .takeIf { it >= 0 }
+                            ?.let { runCatching { group.cache.getSprite(it, 0) }.getOrNull() }
+                            ?.let { Sprite(it) }
                         ImageView(sprite?.image)
                     }
+
                     6 -> Group()
                     9 -> Line()
                     else -> Group()
