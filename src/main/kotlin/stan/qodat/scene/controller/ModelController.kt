@@ -23,6 +23,7 @@ import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.onItemSelected
 import java.net.URL
+import java.nio.file.ClosedWatchServiceException
 import java.nio.file.FileSystems
 import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
@@ -149,46 +150,52 @@ class ModelController : Initializable {
 
         if (watchThread?.isAlive != true) {
             watchThread = Thread {
-                while (true) {
-                    var stop: Boolean
-                    if (Qodat.shutDown) {
-                        stop = true
-                    } else {
-                        Thread.sleep(500)
-                        val watchKey = watchService.poll() ?: continue
-                        for (event in watchKey.pollEvents()) {
-                            val context = event.context()
-                            if (context is Path) {
-                                val file = path.resolve(context).toFile()
-                                val name = file.nameWithoutExtension
-                                JavaFXExecutor.execute {
-                                    when (event.kind()) {
-                                        StandardWatchEventKinds.ENTRY_DELETE -> {
-                                            models.removeIf { it.getName() == name }
-                                        }
-                                        StandardWatchEventKinds.ENTRY_CREATE -> {
-                                            models.removeIf { it.getName() == name }
-                                            models.add(Model.fromFile(file))
-                                        }
-                                        StandardWatchEventKinds.ENTRY_MODIFY -> {
-                                            models.removeIf { it.getName() == name }
-                                            models.add(Model.fromFile(file))
+                try {
+                    while (true) {
+                        var stop: Boolean
+                        if (Qodat.shutDown) {
+                            stop = true
+                        } else {
+                            Thread.sleep(500)
+                            val watchKey = watchService.poll() ?: continue
+                            for (event in watchKey.pollEvents()) {
+                                val context = event.context()
+                                if (context is Path) {
+                                    val file = path.resolve(context).toFile()
+                                    val name = file.nameWithoutExtension
+                                    JavaFXExecutor.execute {
+                                        when (event.kind()) {
+                                            StandardWatchEventKinds.ENTRY_DELETE -> {
+                                                models.removeIf { it.getName() == name }
+                                            }
+                                            StandardWatchEventKinds.ENTRY_CREATE -> {
+                                                models.removeIf { it.getName() == name }
+                                                models.add(Model.fromFile(file))
+                                            }
+                                            StandardWatchEventKinds.ENTRY_MODIFY -> {
+                                                models.removeIf { it.getName() == name }
+                                                models.add(Model.fromFile(file))
+                                            }
                                         }
                                     }
                                 }
                             }
+                            stop = !watchKey.reset()
+                            if (stop)
+                                watchKey.cancel()
                         }
-                        stop = !watchKey.reset()
-                        if (stop)
-                            watchKey.cancel()
-                    }
 
-                    if (stop) {
-                        watchService.close()
-                        break
+                        if (stop)
+                            break
                     }
+                } catch (e: InterruptedException) {
+                    Thread.currentThread().interrupt()
+                } catch (e: ClosedWatchServiceException) {
+                } finally {
+                    runCatching { watchService.close() }
                 }
             }.also {
+                it.isDaemon = true
                 it.start()
             }
         }
