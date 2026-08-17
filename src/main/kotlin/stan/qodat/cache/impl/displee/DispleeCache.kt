@@ -41,12 +41,23 @@ object DispleeCache : Cache("Displee") {
     init {
         load()
         Properties.osrsCachePath.onInvalidation {
-            load()
+            reloadFromSource()
             fire(CacheReloadEvent(this@DispleeCache))
         }
     }
 
+    override fun reloadFromSource() {
+        load()
+    }
+
     private fun load() {
+        if (::store.isInitialized) {
+            try {
+                if (!store.closed)
+                    store.close()
+            } catch (_: Exception) {
+            }
+        }
         store = CacheLibrary(
             path = Properties.osrsCachePath.get().absolutePathString(),
             clearDataAfterUpdate = false,

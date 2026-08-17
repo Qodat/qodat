@@ -33,6 +33,13 @@ abstract class Cache(val name: String) {
         }
     }
 
+    /**
+     * Discard in-memory definitions and re-read them from the backing cache source.
+     * Implementations must not fire [qodat.cache.event.CacheReloadEvent]; callers notify listeners after reload.
+     */
+    open fun reloadFromSource() {
+    }
+
     abstract fun getModelDefinition(id: String) : ModelDefinition
 
     abstract fun getAnimation(id: String) : AnimationDefinition

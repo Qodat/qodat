@@ -43,4 +43,10 @@ class MaterialController : Initializable {
     fun bind(sceneContext: SceneContext) {
         sceneContextProperty.set(sceneContext)
     }
+
+    fun snapshotSearchText(): String = searchMaterialField.text.orEmpty()
+
+    fun restoreSearchText(text: String) {
+        searchMaterialField.text = text
+    }
 }

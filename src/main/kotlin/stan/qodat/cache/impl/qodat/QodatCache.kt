@@ -29,13 +29,13 @@ object QodatCache : Cache("qodat") {
         ignoreUnknownKeys = true
     }
 
-    private val npcs: MutableList<QodatNpcDefinition>
-    private val items: MutableList<QodatItemDefinition>
-    private val objects: MutableList<QodatObjectDefinition>
-    private val animations: MutableMap<String, QodatAnimationDefinition>
-    private val animationSkeletons: MutableList<QodatAnimationDefinition>
-    private val animationFrames: MutableMap<Int, List<QodatAnimationFrameDefinition>>
-    private val models: MutableMap<String, QodatModelDefinition>
+    private val npcs: MutableList<QodatNpcDefinition> = mutableListOf()
+    private val items: MutableList<QodatItemDefinition> = mutableListOf()
+    private val objects: MutableList<QodatObjectDefinition> = mutableListOf()
+    private val animations: MutableMap<String, QodatAnimationDefinition> = mutableMapOf()
+    private val animationSkeletons: MutableList<QodatAnimationDefinition> = mutableListOf()
+    private val animationFrames: MutableMap<Int, List<QodatAnimationFrameDefinition>> = mutableMapOf()
+    private val models: MutableMap<String, QodatModelDefinition> = mutableMapOf()
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -64,29 +64,38 @@ object QodatCache : Cache("qodat") {
     }
 
     init {
-        val qodatCachePath = Properties.qodatCachePath.get()
-        val qodatCacheDir = qodatCachePath.toFile()
+        reloadFromSource()
+    }
+
+    override fun reloadFromSource() {
+        val qodatCacheDir = Properties.qodatCachePath.get().toFile()
         if (!qodatCacheDir.exists())
             qodatCacheDir.mkdir()
 
-        npcs = qodatCacheDir.loadDefinitions("npcs")
-        items = qodatCacheDir.loadDefinitions("items")
-        objects = qodatCacheDir.loadDefinitions("objects")
-        animations = qodatCacheDir
-            .loadDefinitions<QodatAnimationDefinition>("animations")
-            .associateBy { it.id }
-            .toMutableMap()
-        animationSkeletons = qodatCacheDir.loadDefinitions("animation_skeletons")
-        animationFrames = qodatCacheDir
+        npcs.clear()
+        npcs.addAll(qodatCacheDir.loadDefinitions("npcs"))
+        items.clear()
+        items.addAll(qodatCacheDir.loadDefinitions("items"))
+        objects.clear()
+        objects.addAll(qodatCacheDir.loadDefinitions("objects"))
+        animations.clear()
+        animations.putAll(
+            qodatCacheDir
+                .loadDefinitions<QodatAnimationDefinition>("animations")
+                .associateBy { it.id }
+        )
+        animationSkeletons.clear()
+        animationSkeletons.addAll(qodatCacheDir.loadDefinitions("animation_skeletons"))
+        animationFrames.clear()
+        qodatCacheDir
             .resolve("animation_frames")
             .listFiles()
             ?.associate {
                 it.nameWithoutExtension.toInt() to it.loadDefinitions<QodatAnimationFrameDefinition>("animation_frames")
             }
-            ?.toMutableMap()
-            ?: mutableMapOf()
-
-        models = qodatCacheDir.loadModels("models")
+            ?.let(animationFrames::putAll)
+        models.clear()
+        models.putAll(qodatCacheDir.loadModels("models"))
     }
 
     override fun encode(any: Any): EncodeResult {

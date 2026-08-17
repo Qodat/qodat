@@ -99,6 +99,23 @@ open class TransformationTimer<R : Transformer<*>> {
         timeline.pause()
     }
 
+    fun isPlaying(): Boolean = timeline.status == Animation.Status.RUNNING
+
+    fun restorePlayback(playing: Boolean, frameIndex: Int) {
+        val transformer = transformerProperty.get() ?: return
+        val frameCount = transformer.getFrameList().size
+        if (frameCount <= 0)
+            return
+        try {
+            jumpToFrame(frameIndex.coerceIn(0, frameCount - 1))
+            if (playing)
+                play()
+            else
+                pause()
+        } catch (_: Exception) {
+        }
+    }
+
     init {
         timeline.cycleCount = Timeline.INDEFINITE
 

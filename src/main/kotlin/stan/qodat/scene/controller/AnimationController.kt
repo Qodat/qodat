@@ -15,6 +15,8 @@ import stan.qodat.Properties
 import stan.qodat.javafx.onChange
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
+import stan.qodat.scene.state.NamedIdentity
+import stan.qodat.scene.state.findByIdentity
 import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.setAndBind
 import java.net.URL
@@ -80,6 +82,29 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     fun clearAnimationCache(){
         animationMap.clear()
+    }
+
+    fun snapshotSearchText(): String = searchTextField.text.orEmpty()
+
+    fun snapshotSelectedIdentity(): NamedIdentity? {
+        val selected = animationsListView.selectionModel.selectedItem ?: return null
+        return NamedIdentity(
+            id = selected.definition?.id ?: selected.idProperty.get().toString(),
+            name = selected.getName()
+        )
+    }
+
+    fun restoreSearchText(text: String) {
+        searchTextField.text = text
+    }
+
+    fun restoreSelectedIdentity(identity: NamedIdentity?): Animation? {
+        val match = animations.findByIdentity(identity) {
+            it.definition?.id ?: it.idProperty.get().toString()
+        } ?: return null
+        animationsListView.selectionModel.select(match)
+        animationsListView.scrollTo(match)
+        return match
     }
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {

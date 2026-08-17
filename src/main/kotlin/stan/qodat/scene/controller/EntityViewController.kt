@@ -1,5 +1,6 @@
 package stan.qodat.scene.controller
 
+import javafx.application.Platform
 import javafx.beans.binding.Bindings
 import javafx.beans.property.*
 import javafx.beans.value.ObservableValue
@@ -33,6 +34,7 @@ import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.CacheAssetLoader
+import stan.qodat.scene.SubScene3D
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.Placement
@@ -44,6 +46,10 @@ import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.ui.InterfaceGroup
 import stan.qodat.scene.runescape.ui.Sprite
+import stan.qodat.scene.state.EntityViewState
+import stan.qodat.scene.state.NamedIdentity
+import stan.qodat.scene.state.ViewStateRestorable
+import stan.qodat.scene.state.findByIdentity
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.*
 import java.net.URL
@@ -55,7 +61,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-abstract class EntityViewController(name: String) : SceneController(name) {
+abstract class EntityViewController(name: String) : SceneController(name), ViewStateRestorable<EntityViewState> {
 
     @FXML
     lateinit var root: SplitPane
@@ -141,6 +147,8 @@ abstract class EntityViewController(name: String) : SceneController(name) {
     private val currentSelectedInterfaceProperty = SimpleObjectProperty<ViewNodeProvider>()
 
     lateinit var onEntitySelected: (Entity<*>) -> Unit
+
+    private var pendingViewState: EntityViewState? = null
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
@@ -257,7 +265,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 }.map {
                     Sprite(it)
                 })
-                spritesList.selectionModel.select(sprites.lastSelectedEntity(Properties.selectedSpriteName))
+                restoreSpriteSelection(sprites)
             } catch (e: Exception) {
                 Qodat.logException("Failed to load sprites", e)
             }
@@ -266,7 +274,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
                 interfaces.setAll(cache.getRootInterfaces().map {
                     InterfaceGroup(cache, it.key, it.value)
                 })
-                interfaceList.selectionModel.select(interfaces.lastSelectedEntity(Properties.selectedInterfaceName))
+                restoreInterfaceSelection(interfaces)
             } catch (e: Exception) {
                 Qodat.logException("Failed to load interfaces", e)
             } finally {
@@ -284,11 +292,98 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             }
             Thread.sleep(666L)
             GlobalScope.launch(Dispatchers.JavaFx) {
-                val animationToSelect =
-                    animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
-                animationController.animationsListView.selectionModel.select(animationToSelect)
+                val pending = pendingViewState
+                val animationToSelect = pending?.selectedAnimation?.let {
+                    animationController.animations.findByIdentity(it) { animation ->
+                        animation.definition?.id ?: animation.idProperty.get().toString()
+                    }
+                } ?: animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
+                if (animationToSelect != null)
+                    animationController.animationsListView.selectionModel.select(animationToSelect)
+                if (pending != null) {
+                    Platform.runLater {
+                        sceneContext.animationPlayer.restorePlayback(
+                            pending.animationPlaying,
+                            pending.animationFrameIndex
+                        )
+                        if (SubScene3D.contextProperty.get() == sceneContext)
+                            Qodat.mainController.playBtn.isSelected = pending.animationPlaying
+                        pendingViewState = null
+                    }
+                }
             }
         }.start()
+    }
+
+    override fun snapshotViewState(): EntityViewState {
+        val player = sceneContext.animationPlayer
+        return EntityViewState(
+            selectedTab = tabPane.selectionModel.selectedItem?.text,
+            searches = mapOf(
+                "npc" to searchNpcField.text.orEmpty(),
+                "item" to searchItemField.text.orEmpty(),
+                "object" to searchObjectField.text.orEmpty(),
+                "sprite" to searchSpritesField.text.orEmpty(),
+                "spotAnim" to searchSpotAnimField.text.orEmpty(),
+                "interface" to searchInterfaceField.text.orEmpty()
+            ),
+            selections = mapOf(
+                "npc" to identityOf(npcList.selectionModel.selectedItem ?: currentSelectedNpcProperty.get()),
+                "item" to identityOf(itemList.selectionModel.selectedItem ?: currentSelectedItemProperty.get()),
+                "object" to identityOf(objectList.selectionModel.selectedItem ?: currentSelectedObjectProperty.get()),
+                "sprite" to identityOf(spritesList.selectionModel.selectedItem ?: currentSelectedSpriteProperty.get()),
+                "spotAnim" to identityOf(spotAnimList.selectionModel.selectedItem ?: currentSelectedSpotAnimProperty.get()),
+                "interface" to identityOf(interfaceList.selectionModel.selectedItem ?: currentSelectedInterfaceProperty.get())
+            ),
+            animationSearch = if (::animationController.isInitialized) animationController.snapshotSearchText() else "",
+            selectedAnimation = if (::animationController.isInitialized) animationController.snapshotSelectedIdentity() else null,
+            modelSearch = if (::modelController.isInitialized) modelController.snapshotSearchText() else "",
+            selectedModelName = if (::modelController.isInitialized) modelController.snapshotSelectedName() else null,
+            materialSearch = if (::materialController.isInitialized) materialController.snapshotSearchText() else "",
+            animationPlaying = player.isPlaying(),
+            animationFrameIndex = player.frameIndexProperty.get()
+        )
+    }
+
+    override fun restoreViewState(state: EntityViewState) {
+        pendingViewState = state
+        searchNpcField.text = state.searches["npc"].orEmpty()
+        searchItemField.text = state.searches["item"].orEmpty()
+        searchObjectField.text = state.searches["object"].orEmpty()
+        searchSpritesField.text = state.searches["sprite"].orEmpty()
+        searchSpotAnimField.text = state.searches["spotAnim"].orEmpty()
+        searchInterfaceField.text = state.searches["interface"].orEmpty()
+        animationController.restoreSearchText(state.animationSearch)
+        if (::modelController.isInitialized)
+            modelController.restoreSearchText(state.modelSearch)
+        if (::materialController.isInitialized)
+            materialController.restoreSearchText(state.materialSearch)
+        state.selectedTab?.let { tabName ->
+            tabPane.tabs.find { it.text == tabName }?.let { tabPane.selectionModel.select(it) }
+        }
+        state.selections["npc"]?.name?.let { Properties.selectedNpcName.set(it) }
+        state.selections["item"]?.name?.let { Properties.selectedItemName.set(it) }
+        state.selections["object"]?.name?.let { Properties.selectedObjectName.set(it) }
+        state.selections["sprite"]?.name?.let { Properties.selectedSpriteName.set(it) }
+        state.selections["spotAnim"]?.name?.let { Properties.selectedSpotAnimName.set(it) }
+        state.selections["interface"]?.name?.let { Properties.selectedInterfaceName.set(it) }
+        state.selectedAnimation?.name?.let { Properties.selectedAnimationName.set(it) }
+    }
+
+    private fun identityOf(node: ViewNodeProvider?): NamedIdentity? = when (node) {
+        is Entity<*> -> NamedIdentity(
+            id = node.definition.getOptionalId().orElse(-1).takeIf { it >= 0 }?.toString(),
+            name = node.getName()
+        )
+        is Sprite -> NamedIdentity(
+            id = "${node.definition.id}:${node.definition.frame}",
+            name = node.getName()
+        )
+        is InterfaceGroup -> NamedIdentity(
+            id = node.idProperty.get().toString(),
+            name = node.getName()
+        )
+        else -> null
     }
 
     private inline fun <reified T : Entity<*>> handleLastSelectedEntity(
@@ -312,11 +407,44 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             SpotAnimation::class -> currentSelectedSpotAnimProperty
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
-        val entity = it.lastSelectedEntity(selectedEntityNameProperty)
+        val selectionKey = when (T::class) {
+            NPC::class -> "npc"
+            Item::class -> "item"
+            Object::class -> "object"
+            SpotAnimation::class -> "spotAnim"
+            else -> null
+        }
+        val identity = selectionKey?.let { pendingViewState?.selections?.get(it) }
+            ?: NamedIdentity(name = selectedEntityNameProperty.get())
+        val entity = it.findByIdentity(identity) { entity ->
+            entity.definition.getOptionalId().orElse(-1).takeIf { id -> id >= 0 }?.toString()
+        }
         if (selectedTabNodeProperty == selectedEntityProperty)
             view.selectionModel.select(entity)
         else
             selectedEntityProperty.set(entity)
+    }
+
+    private fun restoreSpriteSelection(loaded: List<Sprite>) {
+        val identity = pendingViewState?.selections?.get("sprite")
+            ?: NamedIdentity(name = Properties.selectedSpriteName.get())
+        val match = loaded.findByIdentity(identity) { "${it.definition.id}:${it.definition.frame}" }
+        val selectedTabNodeProperty = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it) }
+        if (selectedTabNodeProperty == currentSelectedSpriteProperty)
+            spritesList.selectionModel.select(match)
+        else
+            currentSelectedSpriteProperty.set(match)
+    }
+
+    private fun restoreInterfaceSelection(loaded: List<InterfaceGroup>) {
+        val identity = pendingViewState?.selections?.get("interface")
+            ?: NamedIdentity(name = Properties.selectedInterfaceName.get())
+        val match = loaded.findByIdentity(identity) { it.idProperty.get().toString() }
+        val selectedTabNodeProperty = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it) }
+        if (selectedTabNodeProperty == currentSelectedInterfaceProperty)
+            interfaceList.selectionModel.select(match)
+        else
+            currentSelectedInterfaceProperty.set(match)
     }
 
     private fun <T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty): T? {
@@ -592,6 +720,7 @@ abstract class EntityViewController(name: String) : SceneController(name) {
             Properties.selectedEntity.set(newNode)
             modelController.models.setAll(*newNode.getModels())
             materialController.materials.setAll(*newNode.getMaterials())
+            pendingViewState?.selectedModelName?.let { modelController.restoreSelectedName(it) }
             if (this::onEntitySelected.isInitialized)
                 onEntitySelected(newNode)
         }

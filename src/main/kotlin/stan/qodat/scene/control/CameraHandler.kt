@@ -10,6 +10,8 @@ import javafx.scene.input.ZoomEvent
 import javafx.scene.transform.Rotate
 import javafx.scene.transform.Translate
 import stan.qodat.Properties
+import stan.qodat.scene.state.CameraViewState
+import stan.qodat.scene.state.ViewStateRestorable
 import stan.qodat.util.onInvalidation
 import kotlin.math.max
 import kotlin.math.min
@@ -25,7 +27,7 @@ class CameraHandler(
         it.nearClipProperty().bind(Properties.cameraNearClip)
         it.farClipProperty().bind(Properties.cameraFarClip)
     }
-) {
+) : ViewStateRestorable<CameraViewState> {
 
     val pivot = Translate(0.0, 0.0, 0.0)
     val position = Translate(0.0, 0.0, -1000.0)
@@ -126,6 +128,28 @@ class CameraHandler(
             val newZ = position.z.div(it.zoomFactor)
             updateZValue(newZ)
         }
+    }
+
+    override fun snapshotViewState() = CameraViewState(
+        translateX = cameraTransformGroup.translate.x,
+        translateY = cameraTransformGroup.translate.y,
+        positionZ = position.z,
+        xRotate = cameraTransformGroup.xRotate.angle,
+        yRotate = cameraTransformGroup.yRotate.angle,
+        pivotX = pivot.x,
+        pivotY = pivot.y,
+        pivotZ = pivot.z
+    )
+
+    override fun restoreViewState(state: CameraViewState) {
+        cameraTransformGroup.translate.x = state.translateX
+        cameraTransformGroup.translate.y = state.translateY
+        cameraTransformGroup.xRotate.angle = state.xRotate
+        cameraTransformGroup.yRotate.angle = state.yRotate
+        pivot.x = state.pivotX
+        pivot.y = state.pivotY
+        pivot.z = state.pivotZ
+        updateZValue(state.positionZ)
     }
 
     private fun updateZValue(newZ: Double) {

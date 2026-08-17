@@ -49,8 +49,8 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     lateinit var frames: HashMap<Int, Map<Int, AnimationFrameLegacyDefinition>>
     lateinit var frameMaps: HashMap<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>
 
-    private lateinit var animations: Array<AnimationDefinition>
-    private lateinit var spotAnimations: Array<SpotAnimationDefinition>
+    private var animations: Array<AnimationDefinition>? = null
+    private var spotAnimations: Array<SpotAnimationDefinition>? = null
 
     private val gson = GsonBuilder().create()
     private val intArrayType = object : TypeToken<IntArray>() {}.type
@@ -58,10 +58,21 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     init {
         load()
         Properties.osrsCachePath.onInvalidation {
-            store = Store(get().toFile())
-            load()
+            reloadFromSource()
             fire(CacheReloadEvent(this@OldschoolCacheRuneLite))
         }
+    }
+
+    override fun reloadFromSource() {
+        try {
+            store.close()
+        } catch (_: Exception) {
+        }
+        store = Store(Properties.osrsCachePath.get().toFile())
+        animations = null
+        spotAnimations = null
+        animIdsCache.clear()
+        load()
     }
 
     private fun load() {
@@ -190,7 +201,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     }
 
     override fun getSpotAnimations(): Array<SpotAnimationDefinition> {
-        if (!this::spotAnimations.isInitialized) {
+        if (spotAnimations == null) {
             val storage = store.storage
             val index = store.getIndex(IndexType.CONFIGS)
             val spotAnimArchive = index.getArchive(ConfigType.SPOTANIM.id)
@@ -208,11 +219,11 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 }
             }.toTypedArray()
         }
-        return spotAnimations
+        return spotAnimations!!
     }
 
     override fun getAnimationDefinitions(): Array<AnimationDefinition> {
-        if (!this::animations.isInitialized) {
+        if (animations == null) {
             val storage = store.storage
             val index = store.getIndex(IndexType.CONFIGS)
 
@@ -264,7 +275,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 }
             }.toTypedArray()
         }
-        return animations
+        return animations!!
     }
 
     override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? {

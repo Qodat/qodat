@@ -8,6 +8,10 @@ import stan.qodat.cache.impl.legacy.storage.*
 object LegacyCache : Cache("Legacy") {
 
     init {
+        reloadFromSource()
+    }
+
+    override fun reloadFromSource() {
         val path = Properties.legacyCachePath.get()
         LegacyNpcStorage.load(path)
         LegacyObjectStorage.load(path)

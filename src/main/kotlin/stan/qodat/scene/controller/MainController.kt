@@ -1,5 +1,6 @@
 package stan.qodat.scene.controller
 
+import javafx.application.Platform
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.fxml.FXML
@@ -7,6 +8,7 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.*
+import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.displee.DispleeCache
@@ -16,6 +18,9 @@ import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.dialog.CacheChooserDialog
 import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
+import stan.qodat.scene.state.AppViewState
+import stan.qodat.scene.state.ViewStateRestorable
+import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.bind
 import stan.qodat.util.createDragSpace
 import stan.qodat.util.createSelectTabListener
@@ -32,7 +37,7 @@ import java.util.*
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-class MainController : SceneController("main-scene") {
+class MainController : SceneController("main-scene"), ViewStateRestorable<AppViewState> {
 
     @FXML
     lateinit var modelsContainer: VBox
@@ -140,6 +145,7 @@ class MainController : SceneController("main-scene") {
     private val divider2IndexProperty = SimpleIntegerProperty(1)
     private var lastLeftDividerPosition = 0.25
     private var lastRightDividerPosition = 0.75
+    private var reloadingCache = false
 
     override fun onSwitch(next: SceneController) {
     }
@@ -376,6 +382,80 @@ class MainController : SceneController("main-scene") {
     }
 
 
+
+    override fun snapshotViewState() = AppViewState(
+        camera = SubScene3D.cameraHandler.snapshotViewState(),
+        viewer = viewerController.snapshotViewState(),
+        editor = editorController.snapshotViewState(),
+        selectedScene = Properties.selectedScene.get(),
+        selectedRightTab = Properties.selectedRightTab.get(),
+        selectedLeftTab = Properties.selectedLeftTab.get(),
+        selectedBottomTab = Properties.selectedBottomTab.get(),
+        playButtonSelected = playBtn.isSelected
+    )
+
+    override fun restoreViewState(state: AppViewState) {
+        viewerController.restoreViewState(state.viewer)
+        editorController.restoreViewState(state.editor)
+        SubScene3D.cameraHandler.restoreViewState(state.camera)
+        restoreSelectedTabs(state)
+        restoreSelectedScene(state.selectedScene)
+        playBtn.isSelected = state.playButtonSelected
+    }
+
+    private fun restoreSelectedTabs(state: AppViewState) {
+        when (state.selectedRightTab) {
+            rightEditorTab.id -> rightEditorTab.selectedProperty().set(true)
+            rightViewerTab.id -> rightViewerTab.selectedProperty().set(true)
+            rightMainTab.id -> rightMainTab.selectedProperty().set(true)
+        }
+        when (state.selectedLeftTab) {
+            leftFilesTab.id -> leftFilesTab.selectedProperty().set(true)
+        }
+        when (state.selectedBottomTab) {
+            bottomFramesTab.id -> bottomFramesTab.selectedProperty().set(true)
+            bottomEventLogTab.id -> bottomEventLogTab.selectedProperty().set(true)
+        }
+    }
+
+    private fun restoreSelectedScene(selectedScene: String?) {
+        when (selectedScene) {
+            viewerController.name -> viewerController.selectThisContext()
+            editorController.name -> editorController.selectThisContext()
+            name -> selectThisContext()
+        }
+    }
+
+    @FXML
+    fun reloadCache() {
+        if (reloadingCache)
+            return
+        reloadingCache = true
+        val state = snapshotViewState()
+        BackgroundTasks.submit(addProgressIndicator = true) {
+            try {
+                Properties.viewerCache.get()?.reloadFromSource()
+                Properties.editorCache.get()?.reloadFromSource()
+            } catch (e: Exception) {
+                Qodat.logException("Failed to reload cache", e)
+            }
+            Platform.runLater {
+                try {
+                    viewerController.restoreViewState(state.viewer)
+                    editorController.restoreViewState(state.editor)
+                    Properties.viewerCache.get()?.let { it.fire(CacheReloadEvent(it)) }
+                    Properties.editorCache.get()?.let { it.fire(CacheReloadEvent(it)) }
+                    SubScene3D.cameraHandler.restoreViewState(state.camera)
+                    restoreSelectedTabs(state)
+                    restoreSelectedScene(state.selectedScene)
+                } catch (e: Exception) {
+                    Qodat.logException("Failed to restore view after cache reload", e)
+                } finally {
+                    reloadingCache = false
+                }
+            }
+        }
+    }
 
     @FXML
     fun setCachePath() {

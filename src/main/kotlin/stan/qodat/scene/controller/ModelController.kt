@@ -70,6 +70,22 @@ class ModelController : Initializable {
         sceneContextProperty.set(sceneContext)
     }
 
+    fun snapshotSearchText(): String = searchModelField.text.orEmpty()
+
+    fun snapshotSelectedName(): String? = modelListView.selectionModel.selectedItem?.getName()
+
+    fun restoreSearchText(text: String) {
+        searchModelField.text = text
+    }
+
+    fun restoreSelectedName(name: String?) {
+        if (name.isNullOrBlank())
+            return
+        val match = models.firstOrNull { it.getName() == name } ?: return
+        modelListView.selectionModel.select(match)
+        modelListView.scrollTo(match)
+    }
+
     fun enableDragAndDrop() {
         modelListView.enableDragAndDrop(
             toFile = { QodatCache.encode(this).file }, // currently only support json
