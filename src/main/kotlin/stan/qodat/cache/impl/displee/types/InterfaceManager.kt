@@ -2,21 +2,21 @@ package stan.qodat.cache.impl.displee.types
 
 import com.displee.cache.CacheLibrary
 import net.runelite.cache.definitions.InterfaceDefinition
-import net.runelite.cache.definitions.loaders.InterfaceLoader
+import org.slf4j.LoggerFactory
+import stan.qodat.cache.impl.oldschool.loader.InterfaceLoader237
 
 class InterfaceManager(private val cacheLibrary: CacheLibrary) {
 
     private lateinit var interfaces: Array<Array<InterfaceDefinition?>?>
 
     fun load() {
-        val loader = InterfaceLoader()
-
+        val loader = InterfaceLoader237()
         val interfaceIndex = cacheLibrary.index(3)
-        loader.configureForRevision(interfaceIndex.revision)
-
         val max = interfaceIndex.archiveIds().max()
 
         interfaces = arrayOfNulls(max + 1)
+        var loaded = 0
+        var skipped = 0
 
         interfaceIndex.archiveIds().forEach { archiveId ->
             val archive = interfaceIndex.archive(archiveId) ?: return@forEach
@@ -29,10 +29,16 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
             archive.files.forEach { (fileId, file) ->
                 val data = file.data ?: return@forEach
                 val widgetId = (archiveId shl 16) + fileId
-                val definition = loader.load(widgetId, data)
-                ifaces[fileId] = definition
+                try {
+                    ifaces[fileId] = loader.load(widgetId, data)
+                    loaded++
+                } catch (e: Exception) {
+                    skipped++
+                    logger.warn("Failed to unpack interface {}.{}: {}", archiveId, fileId, e.message)
+                }
             }
         }
+        logger.info("Loaded {} interfaces ({} skipped)", loaded, skipped)
     }
 
     fun getNumInterfaceGroups(): Int {
@@ -53,5 +59,9 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
 
     fun getInterfaces(): Array<Array<InterfaceDefinition?>?> {
         return interfaces
+    }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(InterfaceManager::class.java)
     }
 }
