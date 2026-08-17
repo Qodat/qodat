@@ -8,8 +8,12 @@ import kotlinx.coroutines.withTimeout
 import net.runelite.cache.IndexType
 import qodat.cache.Cache
 import qodat.cache.definition.AnimationMayaDefinition
+import stan.qodat.Properties
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.cache.impl.displee.getIndex
+import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.export.gif.AnimationToGifTask
+import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.runCatchingWithDialog
 
 class AnimationMaya(label: String, override val definition: AnimationMayaDefinition, cache: Cache? = null) :
@@ -59,5 +63,16 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
         AnimationLegacy(labelProperty.get(), definition, cache)
 
     override fun exportAsMp4() = TODO()
-    override fun exportAsGif() = TODO()
+
+    override fun exportAsGif() {
+        BackgroundTasks.submit(
+            addProgressIndicator = true,
+            AnimationToGifTask(
+                exportPath = Properties.defaultExportsPath.get().resolve("gifs"),
+                scene = SubScene3D.subSceneProperty.get(),
+                animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
+                animation = this
+            )
+        )
+    }
 }

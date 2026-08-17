@@ -88,7 +88,7 @@ class AnimationLegacy(
         BackgroundTasks.submit(
             addProgressIndicator = true,
             AnimationToGifTask(
-                exportPath = Properties.defaultExportsPath.get(),
+                exportPath = Properties.defaultExportsPath.get().resolve("gifs"),
                 scene = SubScene3D.subSceneProperty.get(),
                 animationPlayer = SubScene3D.contextProperty.get().animationPlayer,
                 animation = this

@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.ListView
 import javafx.scene.control.Menu
 import stan.qodat.javafx.onChange
+import stan.qodat.scene.control.export.gif.GifFormat
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
@@ -117,6 +118,19 @@ class ExportMenu<T : Exportable> : Menu("Export") {
             ).apply {
                 isDisable = disable
             })
+        })
+
+        items.add(Menu("gif (.gif)").apply {
+            isDisable = animation == null
+            if (animation != null) {
+                items.add(
+                    ExportMenuItem(
+                        context = animation,
+                        format = GifFormat(),
+                        prefixMenuItemName = "animation ${animation.getName()}"
+                    )
+                )
+            }
         })
     }
 }
