@@ -43,8 +43,8 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
         group.id = name
         val t = Translate(0.0, 0.0, 0.0)
         val childrenChangeListener = ListChangeListener<Node> {
-            if (activeContext.get()) {
-                while (it.next()) {
+            while (it.next()) {
+                if (activeContext.get()) {
                     it.addedSubList.forEach { node ->
                         val provider = nodeProviderMap[node]
                         if (provider is TreeItemProvider)
@@ -56,8 +56,10 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
                             Qodat.removeSceneTreeItem(provider)
                     }
                 }
-                t.y = -group.boundsInParent.centerY
             }
+            EntitySceneLayout.apply(group, nodeProviderMap)
+            if (activeContext.get() && group.children.isNotEmpty())
+                t.y = -group.boundsInLocal.centerY
         }
         group.transforms.add(t)
         group.children.addListener(childrenChangeListener)
