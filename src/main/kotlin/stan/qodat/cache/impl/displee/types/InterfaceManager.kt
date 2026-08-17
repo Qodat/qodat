@@ -5,7 +5,6 @@ import net.runelite.cache.definitions.InterfaceDefinition
 import org.slf4j.LoggerFactory
 import stan.qodat.cache.CacheParallel
 import stan.qodat.cache.impl.oldschool.loader.InterfaceLoader237
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 class InterfaceManager(private val cacheLibrary: CacheLibrary) {
@@ -21,34 +20,46 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
         val archiveIds = interfaceIndex.archiveIds()
         val max = archiveIds.max()
         val groups = arrayOfNulls<Array<InterfaceDefinition?>?>(max + 1)
-        val loadedCount = AtomicInteger()
-        val skipped = AtomicInteger()
-        val decoded = ConcurrentHashMap<Int, Array<InterfaceDefinition?>>()
+        val payloads = ArrayList<InterfaceArchivePayload>(archiveIds.size)
 
-        CacheParallel.forEachIndexed(archiveIds.size) { i ->
-            val archiveId = archiveIds[i]
-            val archive = interfaceIndex.archive(archiveId) ?: return@forEachIndexed
-            val maxFileId = archive.fileIds().maxOrNull() ?: return@forEachIndexed
-            val ifaces = arrayOfNulls<InterfaceDefinition>(maxFileId + 1)
-            val loader = InterfaceLoader237()
+        for (archiveId in archiveIds) {
+            val archive = interfaceIndex.archive(archiveId) ?: continue
+            val maxFileId = archive.fileIds().maxOrNull() ?: continue
+            val files = ArrayList<Pair<Int, ByteArray>>(archive.files.size)
             archive.files.forEach { (fileId, file) ->
                 val data = file.data ?: return@forEach
-                val widgetId = (archiveId shl 16) + fileId
+                files.add(fileId to data)
+            }
+            if (files.isNotEmpty()) {
+                payloads.add(InterfaceArchivePayload(archiveId, maxFileId, files))
+            }
+        }
+
+        val loadedCount = AtomicInteger()
+        val skipped = AtomicInteger()
+        val decoded = CacheParallel.decode(payloads.map { it.archiveId to it }) { _, payload ->
+            val loader = InterfaceLoader237()
+            val ifaces = arrayOfNulls<InterfaceDefinition>(payload.maxFileId + 1)
+            for ((fileId, data) in payload.files) {
+                val widgetId = (payload.archiveId shl 16) + fileId
                 try {
                     ifaces[fileId] = loader.load(widgetId, data)
                     loadedCount.incrementAndGet()
                 } catch (e: Exception) {
                     skipped.incrementAndGet()
-                    logger.warn("Failed to unpack interface {}.{}: {}", archiveId, fileId, e.message)
+                    logger.warn("Failed to unpack interface {}.{}: {}", payload.archiveId, fileId, e.message)
                 }
             }
-            decoded[archiveId] = ifaces
+            ifaces
         }
 
         decoded.forEach { (archiveId, group) -> groups[archiveId] = group }
         interfaces = groups
         loaded = true
         logger.info("Loaded {} interfaces ({} skipped)", loadedCount.get(), skipped.get())
+        if (loadedCount.get() == 0) {
+            throw IllegalStateException("Interface archive produced 0 widgets")
+        }
     }
 
     fun getNumInterfaceGroups(): Int {
@@ -75,6 +86,12 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
         load()
         return interfaces
     }
+
+    private class InterfaceArchivePayload(
+        val archiveId: Int,
+        val maxFileId: Int,
+        val files: List<Pair<Int, ByteArray>>
+    )
 
     companion object {
         private val logger = LoggerFactory.getLogger(InterfaceManager::class.java)

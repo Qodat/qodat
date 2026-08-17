@@ -22,7 +22,6 @@ import stan.qodat.util.DEFAULT
 import stan.qodat.util.LOG_ERROR
 import java.awt.Desktop
 import java.nio.file.Path
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.isRegularFile
 
 object BackgroundTasks {
@@ -52,7 +51,8 @@ object BackgroundTasks {
         mainPane: BorderPane,
         progressBox: HBox
     ) {
-        logger.info("Starting task {}", task.title)
+        val taskTitle = task.title
+        logger.info("Starting task {}", taskTitle)
 
         if (addProgressIndicator) {
             val stackPane = StackPane()
@@ -64,24 +64,27 @@ object BackgroundTasks {
                 stackPane.children.add(progressPane)
 
                 progressBox.children.add(stackPane)
-                withContext(Dispatchers.Default) {
-                    try {
+                try {
+                    withContext(Dispatchers.Default) {
                         task.run()
-                        launch(Dispatchers.IO) {
-                            when (val result  = task.get(240, TimeUnit.SECONDS)) {
-                                is ExportTaskResult.Success ->
-                                    showOpenFileOption(result.saveDir, progressBox)
-                                is Path ->
-                                    showOpenFileOption(result, progressBox)
-                            }
-                        }
-                    } catch (e: Exception) {
-                        logger.error("Failed to execute task {}", task, e)
-                    } finally {
-                        withContext(Dispatchers.JavaFx) {
-                            progressBox.children.remove(stackPane)
+                    }
+                    val failure = task.exception
+                    if (failure != null) {
+                        logger.error("Failed to execute task {}", taskTitle, failure)
+                        Qodat.logException("Failed to execute task $taskTitle", failure)
+                    } else {
+                        when (val result = task.value) {
+                            is ExportTaskResult.Success ->
+                                showOpenFileOption(result.saveDir, progressBox)
+                            is Path ->
+                                showOpenFileOption(result, progressBox)
                         }
                     }
+                } catch (e: Exception) {
+                    logger.error("Failed to execute task {}", taskTitle, e)
+                    Qodat.logException("Failed to execute task $taskTitle", e)
+                } finally {
+                    progressBox.children.remove(stackPane)
                 }
             }
         } else {
@@ -89,7 +92,8 @@ object BackgroundTasks {
                 try {
                     task.run()
                 } catch (e: Exception) {
-                    logger.error("Failed to execute task {}", task, e)
+                    logger.error("Failed to execute task {}", taskTitle, e)
+                    Qodat.logException("Failed to execute task $taskTitle", e)
                 }
             }
         }

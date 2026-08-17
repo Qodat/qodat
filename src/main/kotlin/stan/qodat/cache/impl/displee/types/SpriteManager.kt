@@ -9,7 +9,6 @@ import net.runelite.cache.util.Djb2
 import stan.qodat.cache.CacheParallel
 import java.awt.image.BufferedImage
 import java.util.Collections
-import java.util.concurrent.ConcurrentHashMap
 
 class SpriteManager(
     private val cacheLibrary: CacheLibrary
@@ -25,28 +24,30 @@ class SpriteManager(
         if (loaded) return
         val index = cacheLibrary.index(8)
         val archiveIds = index.archiveIds()
-        val decoded = ConcurrentHashMap<Int, Array<SpriteDefinition>>()
-        val nameHashes = ConcurrentHashMap<Int, Int>()
+        val payloads = ArrayList<SpriteArchivePayload>(archiveIds.size)
 
-        CacheParallel.forEachIndexed(archiveIds.size) { i ->
-            val archiveId = archiveIds[i]
-            val archive = index.archive(archiveId) ?: return@forEachIndexed
-            val contents = archive.file(0) ?: return@forEachIndexed
-            val data = contents.data ?: return@forEachIndexed
-            val defs = SpriteLoader().load(archive.id, data)
-            decoded[archiveId] = defs
-            nameHashes[archiveId] = archive.hashName
+        for (archiveId in archiveIds) {
+            val archive = index.archive(archiveId) ?: continue
+            val contents = archive.file(0) ?: continue
+            val data = contents.data ?: continue
+            payloads.add(SpriteArchivePayload(archive.id, archive.hashName, data))
+        }
+
+        val decoded = CacheParallel.decode(payloads.map { it.archiveId to it }) { _, payload ->
+            SpriteLoader().load(payload.archiveId, payload.data) to payload.hashName
         }
 
         for (archiveId in archiveIds) {
-            val defs = decoded[archiveId] ?: continue
-            val hashName = nameHashes[archiveId] ?: 0
+            val (defs, hashName) = decoded[archiveId] ?: continue
             for (sprite in defs) {
                 sprites.put(sprite.id, sprite)
                 spriteIdsByArchiveNameHash[hashName] = sprite.id
             }
         }
         loaded = true
+        if (sprites.isEmpty) {
+            throw IllegalStateException("Sprite archive produced 0 sprites")
+        }
     }
 
     fun getSprites(): Collection<SpriteDefinition> {
@@ -71,4 +72,10 @@ class SpriteManager(
         val spriteId = spriteIdsByArchiveNameHash[nameHash] ?: return null
         return findSprite(spriteId, frameId)
     }
+
+    private class SpriteArchivePayload(
+        val archiveId: Int,
+        val hashName: Int,
+        val data: ByteArray
+    )
 }

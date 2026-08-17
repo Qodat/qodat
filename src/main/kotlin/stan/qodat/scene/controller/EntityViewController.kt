@@ -25,8 +25,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Semaphore
+import java.util.concurrent.CountDownLatch
 import qodat.cache.Cache
 import qodat.cache.CacheEventListener
 import qodat.cache.definition.EntityDefinition
@@ -34,6 +33,7 @@ import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.CacheAssetLoader
+import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.SubScene3D
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
@@ -223,88 +223,66 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     }
 
     private fun loadAssets(cache: Cache) {
-        CacheAssetLoader(cache, animationController).run {
+        if (cache is DispleeCache) {
+            cache.ensureReady()
+        }
+        val pendingLoads = CountDownLatch(7)
+        loadLastSelectedAnimation(pendingLoads)
 
-            val pendingLoads = 7
-            val semaphore = Semaphore(1)
-            loadLastSelectedAnimation(pendingLoads + 1, semaphore)
-
-            val selectedTab = Properties.selectedViewerTab.get()
-            val submitters = linkedMapOf(
-                "NPC" to {
-                    loadNpcs {
-                        npcs.setAll(it)
-                        handleLastSelectedEntity(it, npcList)
-                        semaphore.release()
-                    }
-                },
-                "Object" to {
-                    loadObjects {
-                        objects.setAll(it)
-                        handleLastSelectedEntity(it, objectList)
-                        semaphore.release()
-                    }
-                },
-                "Item" to {
-                    loadItems {
-                        items.setAll(it)
-                        handleLastSelectedEntity(it, itemList)
-                        semaphore.release()
-                    }
-                },
-                "SpotAnim" to {
-                    loadSpotAnims {
-                        spotAnims.setAll(it)
-                        handleLastSelectedEntity(it, spotAnimList)
-                        semaphore.release()
-                    }
-                },
-                "Sprites" to {
-                    loadSprites {
-                        try {
-                            sprites.setAll(it)
-                            restoreSpriteSelection(it)
-                        } catch (e: Exception) {
-                            Qodat.logException("Failed to load sprites", e)
-                        } finally {
-                            semaphore.release()
-                        }
-                    }
-                },
-                "Interfaces" to {
-                    loadInterfaces {
-                        try {
-                            interfaces.setAll(it)
-                            restoreInterfaceSelection(it)
-                        } catch (e: Exception) {
-                            Qodat.logException("Failed to load interfaces", e)
-                        } finally {
-                            semaphore.release()
-                        }
-                    }
+        CacheAssetLoader(cache, animationController).loadAll(
+            selectedFirst = Properties.selectedViewerTab.get(),
+            onNpcs = {
+                npcs.setAll(it)
+                handleLastSelectedEntity(it, npcList)
+                pendingLoads.countDown()
+            },
+            onObjects = {
+                objects.setAll(it)
+                handleLastSelectedEntity(it, objectList)
+                pendingLoads.countDown()
+            },
+            onItems = {
+                items.setAll(it)
+                handleLastSelectedEntity(it, itemList)
+                pendingLoads.countDown()
+            },
+            onSpotAnims = {
+                spotAnims.setAll(it)
+                handleLastSelectedEntity(it, spotAnimList)
+                pendingLoads.countDown()
+            },
+            onSprites = {
+                try {
+                    sprites.setAll(it)
+                    restoreSpriteSelection(it)
+                } catch (e: Exception) {
+                    Qodat.logException("Failed to load sprites", e)
+                } finally {
+                    pendingLoads.countDown()
                 }
-            )
-
-            loadAnimations { animationList ->
+            },
+            onInterfaces = {
+                try {
+                    interfaces.setAll(it)
+                    restoreInterfaceSelection(it)
+                } catch (e: Exception) {
+                    Qodat.logException("Failed to load interfaces", e)
+                } finally {
+                    pendingLoads.countDown()
+                }
+            },
+            onAnimations = { animationList ->
                 animationController.clearAnimationCache()
                 animationController.animationsListView.selectionModel.clearSelection()
                 animationController.animations.setAll(animationList)
-                semaphore.release()
-            }
-            submitters[selectedTab]?.invoke()
-            submitters.forEach { (tab, submit) ->
-                if (tab != selectedTab) submit()
-            }
-        }
+                pendingLoads.countDown()
+            },
+        )
     }
 
-    private fun loadLastSelectedAnimation(requiredPermits: Int, semaphore: Semaphore) {
+    private fun loadLastSelectedAnimation(pendingLoads: CountDownLatch) {
         Thread {
-            runBlocking {
-                repeat(requiredPermits) {
-                    semaphore.acquire()
-                }
-            }
+            pendingLoads.await()
             Thread.sleep(666L)
             GlobalScope.launch(Dispatchers.JavaFx) {
                 val pending = pendingViewState

@@ -22,6 +22,7 @@ import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.util.onInvalidation
 import java.util.AbstractList
+import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.absolutePathString
 import kotlin.system.measureTimeMillis
 
@@ -42,7 +43,7 @@ object DispleeCache : Cache("Displee") {
     lateinit var npcAnimParser: NpcAnimParser
     lateinit var objectAnimParser: ObjectAnimParser
 
-    private val storeLock = Any()
+    private val storeLock = ReentrantLock()
 
     init {
         Properties.osrsCachePath.onInvalidation {
@@ -52,123 +53,115 @@ object DispleeCache : Cache("Displee") {
     }
 
     override fun reloadFromSource() {
-        openStore()
+        storeLock.lock()
+        try {
+            closeStore()
+            openStore()
+        } finally {
+            storeLock.unlock()
+        }
     }
 
-    internal fun ensureReady() = ensureStore()
+    internal fun ensureReady() {
+        storeLock.lock()
+        try {
+            if (!isOpen()) openStore()
+        } finally {
+            storeLock.unlock()
+        }
+    }
 
-    private fun ensureStore() {
-        if (!::store.isInitialized || store.closed) {
-            openStore()
+    private fun isOpen(): Boolean = ::store.isInitialized && !store.closed
+
+    private fun closeStore() {
+        if (!::store.isInitialized) return
+        try {
+            if (!store.closed) store.close()
+        } catch (_: Exception) {
         }
     }
 
     private fun openStore() {
-        synchronized(storeLock) {
-            if (::store.isInitialized) {
-                try {
-                    if (!store.closed)
-                        store.close()
-                } catch (_: Exception) {
-                }
-            }
-            val path = Properties.osrsCachePath.get().absolutePathString()
-            val elapsed = measureTimeMillis {
-                store = CacheLibrary(
-                    path = path,
-                    clearDataAfterUpdate = false,
-                    listener = object : ProgressListener {
-                        override fun notify(progress: Double, message: String?) {
-                            logger.debug("DispleeCache: {} {}", progress, message)
-                        }
+        val path = Properties.osrsCachePath.get().absolutePathString()
+        val elapsed = measureTimeMillis {
+            store = CacheLibrary(
+                path = path,
+                clearDataAfterUpdate = false,
+                listener = object : ProgressListener {
+                    override fun notify(progress: Double, message: String?) {
+                        logger.debug("DispleeCache: {} {}", progress, message)
                     }
-                )
-                animLoader = AnimManager(store)
-                spriteManager = SpriteManager(store)
-                interfaceManager = InterfaceManager(store)
-                npcManager = NpcManager(store)
-                objectManager = ObjectManager(store)
-                itemManager = ItemManager(store)
-                spotAnimManager = SpotAnimManager(store)
+                }
+            )
+            animLoader = AnimManager(store)
+            spriteManager = SpriteManager(store)
+            interfaceManager = InterfaceManager(store)
+            npcManager = NpcManager(store)
+            objectManager = ObjectManager(store)
+            itemManager = ItemManager(store)
+            spotAnimManager = SpotAnimManager(store)
+            npcAnimParser = NpcAnimParser(store, npcManager)
+            objectAnimParser = ObjectAnimParser(store, objectManager)
+        }
+        logger.info("Opened cache store in {}ms ({})", elapsed, path)
+    }
 
-                npcAnimParser = NpcAnimParser(store, npcManager)
-                objectAnimParser = ObjectAnimParser(store, objectManager)
-            }
-            logger.debug("Opened cache store in {}ms ({})", elapsed, path)
+    private inline fun <T> withOpenStore(block: () -> T): T {
+        storeLock.lock()
+        try {
+            if (!isOpen()) openStore()
+            return block()
+        } finally {
+            storeLock.unlock()
         }
     }
 
-    override fun getModelDefinition(id: String): ModelDefinition {
-        ensureStore()
+    override fun getModelDefinition(id: String): ModelDefinition = withOpenStore {
         val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
         val modelData = store.data(7, modelId) ?: throw IllegalArgumentException("Model not found $id")
-        return RSModelLoader().load(id, modelData)
+        RSModelLoader().load(id, modelData)
     }
 
-    override fun getAnimation(id: String): AnimationDefinition {
-        ensureStore()
-        return animLoader.getSeq(id)
+    override fun getAnimation(id: String): AnimationDefinition = withOpenStore {
+        animLoader.getSeq(id)
     }
 
-    override fun getNPCs(): Array<NPCDefinition> {
-        ensureStore()
-        lateinit var result: Array<NPCDefinition>
-        val elapsed = measureTimeMillis { result = npcManager.getNpcs() }
-        logger.debug("NPC list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+    override fun getNPCs(): Array<NPCDefinition> = withOpenStore {
+        timed("NPC", expectedMin = 1) { npcManager.getNpcs() }
     }
 
-    override fun getObjects(): Array<ObjectDefinition> {
-        ensureStore()
-        lateinit var result: Array<ObjectDefinition>
-        val elapsed = measureTimeMillis { result = objectManager.getObjects() }
-        logger.debug("Object list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+    override fun getObjects(): Array<ObjectDefinition> = withOpenStore {
+        timed("Object", expectedMin = 1) { objectManager.getObjects() }
     }
 
-    override fun getItems(): Array<ItemDefinition> {
-        ensureStore()
-        lateinit var result: Array<ItemDefinition>
-        val elapsed = measureTimeMillis { result = itemManager.getItems() }
-        logger.debug("Item list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+    override fun getItems(): Array<ItemDefinition> = withOpenStore {
+        timed("Item", expectedMin = 1) { itemManager.getItems() }
     }
 
-    override fun getSpotAnimations(): Array<SpotAnimationDefinition> {
-        ensureStore()
-        lateinit var result: Array<SpotAnimationDefinition>
-        val elapsed = measureTimeMillis { result = spotAnimManager.getSpotAnimations() }
-        logger.debug("SpotAnimation list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+    override fun getSpotAnimations(): Array<SpotAnimationDefinition> = withOpenStore {
+        timed("SpotAnimation", expectedMin = 1) { spotAnimManager.getSpotAnimations() }
     }
 
-    override fun getAnimationDefinitions(): Array<AnimationDefinition> {
-        ensureStore()
-        lateinit var result: Array<AnimationDefinition>
-        val elapsed = measureTimeMillis { result = animLoader.getSeqs() }
-        logger.debug("Animation list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+    override fun getAnimationDefinitions(): Array<AnimationDefinition> = withOpenStore {
+        timed("Animation", expectedMin = 1) { animLoader.getSeqs() }
     }
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup =
         getFrameDefinition(frameHash)!!.transformationGroup
 
-    override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? {
-        ensureStore()
-        return animLoader.getFrameDef(frameHash)
+    override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? = withOpenStore {
+        animLoader.getFrameDef(frameHash)
     }
 
-    override fun getInterface(groupId: Int): Array<InterfaceDefinition> {
-        ensureStore()
-        return interfaceManager
+    override fun getInterface(groupId: Int): Array<InterfaceDefinition> = withOpenStore {
+        interfaceManager
             .getIntefaceGroup(groupId)
             ?.mapNotNull { it?.let(::RuneliteIntefaceDefinition) }
             ?.toTypedArray()
             ?: emptyArray()
     }
 
-    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> {
-        ensureStore()
+    override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> = withOpenStore {
         lateinit var result: Map<Int, List<InterfaceDefinition>>
         val elapsed = measureTimeMillis {
             val raw = interfaceManager.getInterfaces()
@@ -180,40 +173,47 @@ object DispleeCache : Cache("Displee") {
             }
             result = groups
         }
-        logger.debug("Interface groups ready: {} groups in {}ms", result.size, elapsed)
-        return result
-    }
-
-    override fun getSprites(): Array<SpriteDefinition> {
-        ensureStore()
-        lateinit var result: Array<SpriteDefinition>
-        val elapsed = measureTimeMillis {
-            result = spriteManager.getSprites().map { RuneliteSpriteDefinition(it) }.toTypedArray()
+        if (result.isEmpty()) {
+            throw IllegalStateException("Displee cache returned 0 interface groups")
         }
-        logger.debug("Sprite list ready: {} entries in {}ms", result.size, elapsed)
-        return result
+        logger.debug("Interface groups ready: {} groups in {}ms", result.size, elapsed)
+        result
     }
 
-    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
-        ensureStore()
-        return RuneliteSpriteDefinition(
+    override fun getSprites(): Array<SpriteDefinition> = withOpenStore {
+        timed("Sprite", expectedMin = 1) {
+            spriteManager.getSprites().map { RuneliteSpriteDefinition(it) }.toTypedArray()
+        }
+    }
+
+    override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition = withOpenStore {
+        RuneliteSpriteDefinition(
             spriteManager.findSprite(groupId, frameId)
                 ?: throw IllegalArgumentException("Sprite not found $groupId:$frameId")
         )
     }
 
-    override fun getTexture(id: Int): TextureDefinition {
-        ensureStore()
+    override fun getTexture(id: Int): TextureDefinition = withOpenStore {
         val textureData = store.data(9, 0, id) ?: throw IllegalArgumentException("Texture not found $id")
         val texture = TextureLoader().load(id, textureData)
         texture.method2680(1.0, 128) { spriteId, frameId ->
             spriteManager.findSprite(spriteId, frameId)
         }
-        return object : TextureDefinition {
+        object : TextureDefinition {
             override var id: Int = id
             override val fileIds: IntArray = texture.fileIds!!
             override var pixels: IntArray = texture.getPixels()
         }
+    }
+
+    private inline fun <T> timed(kind: String, expectedMin: Int, block: () -> Array<T>): Array<T> {
+        lateinit var result: Array<T>
+        val elapsed = measureTimeMillis { result = block() }
+        if (result.size < expectedMin) {
+            throw IllegalStateException("Displee cache returned ${result.size} $kind entries")
+        }
+        logger.debug("{} list ready: {} entries in {}ms", kind, result.size, elapsed)
+        return result
     }
 
     internal fun getFileId(hexString: String): Int =
