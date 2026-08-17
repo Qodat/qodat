@@ -53,6 +53,7 @@ object SubScene3D : AbstractSubScene() {
             scalingGroup,
             ambientLight
         )
+        // TODO(scene-background): attach terrain as a sibling of sceneContents on scalingGroup, not inside SceneContext (that group recenters on bounds). See docs/TODO-scene-background-map.md
         contextProperty.addListener { _, oldValue, newValue ->
             if (oldValue != null)
                 scalingGroup.children.remove(oldValue.getSceneNode())
