@@ -60,6 +60,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
                     for (i in from until to){
                         val anim = list[i]
                         animationMap[anim.getName()] = anim
+                        anim.definition?.id?.let { animationMap[it] = anim }
                     }
                 }
             }
@@ -83,7 +84,10 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {
         return p1.animationIds
-            .mapNotNull { animationMap[it] }
+            .mapNotNull { id ->
+                animationMap[id]
+                    ?: animations.find { it.definition?.id == id || it.idProperty.get().toString() == id }
+            }
             .toTypedArray()
     }
 }

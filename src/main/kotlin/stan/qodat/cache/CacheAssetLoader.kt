@@ -39,11 +39,7 @@ class CacheAssetLoader(
             if (!objectAnimsDir.exists()) {
                 println("Did not find object_anims dir, creating...")
                 objectAnimsDir.mkdir()
-                cache.objectAnimParser.setOnSucceeded {
-                    BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
-                }
-                BackgroundTasks.submit(addProgressIndicator = true, cache.npcAnimParser)
-                return
+                BackgroundTasks.submit(addProgressIndicator = true, cache.objectAnimParser)
             }
         }
         BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
@@ -55,11 +51,7 @@ class CacheAssetLoader(
             if (!npcAnimsDir.exists()) {
                 println("Did not find npc_anims dir, creating...")
                 npcAnimsDir.mkdir()
-                cache.npcAnimParser.setOnSucceeded {
-                    BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
-                }
                 BackgroundTasks.submit(addProgressIndicator = true, cache.npcAnimParser)
-                return
             }
         }
         BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
@@ -71,15 +63,14 @@ class CacheAssetLoader(
             val animations = ArrayList<Animation>()
             for ((i, definition) in animationDefinitions.withIndex()) {
                 try {
+                    val animationId = definition.id.toIntOrNull() ?: i
                     if (definition is AnimationMayaDefinition) {
-                        animations += AnimationMaya("$i", definition, cache).apply {
-                            this.idProperty.set(i)
+                        animations += AnimationMaya(definition.id, definition, cache).apply {
+                            this.idProperty.set(animationId)
                         }
-                    } else {
-                        if (definition.frameHashes.isNotEmpty()) {
-                            animations += AnimationLegacy("$i", definition, cache).apply {
-                                this.idProperty.set(i)
-                            }
+                    } else if (definition.frameHashes.isNotEmpty()) {
+                        animations += AnimationLegacy(definition.id, definition, cache).apply {
+                            this.idProperty.set(animationId)
                         }
                     }
                     updateProgress((100.0 * i.div(animationDefinitions.size)), 100.0)

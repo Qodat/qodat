@@ -121,7 +121,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
         if (!npcAnimsDir.exists()) {
             println("Did not find npc_anims dir, creating...")
-            return emptyArray()
+            npcAnimsDir.mkdirs()
         }
 
         val animatedNpcs = runBlocking {
