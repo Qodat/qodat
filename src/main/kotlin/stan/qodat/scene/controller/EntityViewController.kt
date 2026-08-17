@@ -225,9 +225,65 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     private fun loadAssets(cache: Cache) {
         CacheAssetLoader(cache, animationController).run {
 
+            val pendingLoads = 7
             val semaphore = Semaphore(1)
+            loadLastSelectedAnimation(pendingLoads + 1, semaphore)
 
-            loadLastSelectedAnimation(7, semaphore)
+            val selectedTab = Properties.selectedViewerTab.get()
+            val submitters = linkedMapOf(
+                "NPC" to {
+                    loadNpcs {
+                        npcs.setAll(it)
+                        handleLastSelectedEntity(it, npcList)
+                        semaphore.release()
+                    }
+                },
+                "Object" to {
+                    loadObjects {
+                        objects.setAll(it)
+                        handleLastSelectedEntity(it, objectList)
+                        semaphore.release()
+                    }
+                },
+                "Item" to {
+                    loadItems {
+                        items.setAll(it)
+                        handleLastSelectedEntity(it, itemList)
+                        semaphore.release()
+                    }
+                },
+                "SpotAnim" to {
+                    loadSpotAnims {
+                        spotAnims.setAll(it)
+                        handleLastSelectedEntity(it, spotAnimList)
+                        semaphore.release()
+                    }
+                },
+                "Sprites" to {
+                    loadSprites {
+                        try {
+                            sprites.setAll(it)
+                            restoreSpriteSelection(it)
+                        } catch (e: Exception) {
+                            Qodat.logException("Failed to load sprites", e)
+                        } finally {
+                            semaphore.release()
+                        }
+                    }
+                },
+                "Interfaces" to {
+                    loadInterfaces {
+                        try {
+                            interfaces.setAll(it)
+                            restoreInterfaceSelection(it)
+                        } catch (e: Exception) {
+                            Qodat.logException("Failed to load interfaces", e)
+                        } finally {
+                            semaphore.release()
+                        }
+                    }
+                }
+            )
 
             loadAnimations { animationList ->
                 animationController.clearAnimationCache()
@@ -235,50 +291,9 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
                 animationController.animations.setAll(animationList)
                 semaphore.release()
             }
-
-            loadNpcs {
-                npcs.setAll(it)
-                handleLastSelectedEntity(it, npcList)
-                semaphore.release()
-            }
-
-            loadObjects {
-                objects.setAll(it)
-                handleLastSelectedEntity(it, objectList)
-                semaphore.release()
-            }
-
-            loadItems {
-                items.setAll(it)
-                handleLastSelectedEntity(it, itemList)
-                semaphore.release()
-            }
-
-            loadSpotAnims {
-                spotAnims.setAll(it)
-                handleLastSelectedEntity(it, spotAnimList)
-                semaphore.release()
-            }
-            try {
-                sprites.setAll(cache.getSprites().filter {
-                    it.width > 0 && it.height > 0
-                }.map {
-                    Sprite(it)
-                })
-                restoreSpriteSelection(sprites)
-            } catch (e: Exception) {
-                Qodat.logException("Failed to load sprites", e)
-            }
-
-            try {
-                interfaces.setAll(cache.getRootInterfaces().map {
-                    InterfaceGroup(cache, it.key, it.value)
-                })
-                restoreInterfaceSelection(interfaces)
-            } catch (e: Exception) {
-                Qodat.logException("Failed to load interfaces", e)
-            } finally {
-                semaphore.release()
+            submitters[selectedTab]?.invoke()
+            submitters.forEach { (tab, submit) ->
+                if (tab != selectedTab) submit()
             }
         }
     }

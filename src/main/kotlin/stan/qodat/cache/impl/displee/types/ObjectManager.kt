@@ -10,24 +10,30 @@ class ObjectManager(
 ) {
 
     val objects = mutableMapOf<Int, ObjectDefinition>()
+    @Volatile
+    private var loaded = false
 
+    @Synchronized
     fun load() {
-        val loader = ObjectLoader()
-        val archive = cacheLibrary.index(2).archive(6)?:error("Object archive not found")
-
-        loader.configureForRevision(archive.revision)
-
+        if (loaded) return
+        val archive = cacheLibrary.index(2).archive(6) ?: error("Object archive not found")
+        val loader = ObjectLoader().also { it.configureForRevision(archive.revision) }
         archive.files.forEach { (fileId, file) ->
-            objects.put(fileId, convert(loader.load(fileId, file.data)))
+            val data = file.data ?: return@forEach
+            objects[fileId] = convert(loader.load(fileId, data))
         }
+        loaded = true
     }
 
     fun getObject(id: Int): ObjectDefinition {
-        return objects[id]?:error("Object not found $id")
+        load()
+        return objects[id] ?: error("Object not found $id")
     }
 
-    fun getObjects() =
-        objects.values.toTypedArray()
+    fun getObjects(): Array<ObjectDefinition> {
+        load()
+        return objects.values.toTypedArray()
+    }
 
     private fun convert(definition: net.runelite.cache.definitions.ObjectDefinition): qodat.cache.definition.ObjectDefinition =
         object : ObjectDefinition {

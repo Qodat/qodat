@@ -2,10 +2,6 @@ package stan.qodat.cache.impl.oldschool
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.runBlocking
 import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.SequenceDefinition
@@ -134,42 +130,29 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             println("Did not find npc_anims dir, creating...")
             npcAnimsDir.mkdirs()
         }
-
-        val animatedNpcs = runBlocking {
-            npcManager.npcs
-                .filter { it.models != null && it.models.isNotEmpty() }
-                .map { npc ->
-                    async(Dispatchers.IO) {
-                        object : NPCDefinition {
-                            override fun getOptionalId() = OptionalInt.of(npc.id)
-                            override val name = npc.name.ifBlank { "null" }
-                            override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                            override val animationIds = try {
-                                animIdsCache.getOrPut(npc.standingAnimation) {
-                                    val data = npcAnimsDir
-                                        .resolve("${npc.id}.json")
-                                        .bufferedReader()
-                                        .use {
-                                            gson.fromJson<IntArray>(it, intArrayType).map { it.toString() }
-                                                .toTypedArray()
-                                        }
-                                    if (data.isEmpty()) {
-                                        emptyArray()
-                                    } else
-                                        data
-                                }
-                            } catch (ignored: Exception) {
-                                System.err.println("Failed to load anim data for npc ${npc.name} ${npc.standingAnimation}")
-                                emptyArray()
-                            }
-                            override val findColor = npc.recolorToFind
-                            override val replaceColor = npc.recolorToReplace
+        return npcManager.npcs.mapNotNull { npc ->
+            if (npc.models == null || npc.models.isEmpty()) return@mapNotNull null
+            object : NPCDefinition {
+                override fun getOptionalId() = OptionalInt.of(npc.id)
+                override val name = npc.name.ifBlank { "null" }
+                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                override val animationIds by lazy {
+                    animIdsCache.getOrPut(npc.id) {
+                        val file = npcAnimsDir.resolve("${npc.id}.json")
+                        if (!file.isFile) return@getOrPut emptyArray()
+                        try {
+                            file.bufferedReader().use {
+                                gson.fromJson<IntArray>(it, intArrayType)?.map { id -> id.toString() }?.toTypedArray()
+                            } ?: emptyArray()
+                        } catch (_: Exception) {
+                            emptyArray()
                         }
                     }
-                }.awaitAll()
-        }
-
-        return animatedNpcs.toTypedArray()
+                }
+                override val findColor = npc.recolorToFind
+                override val replaceColor = npc.recolorToReplace
+            }
+        }.toTypedArray()
     }
 
     override fun getObjects(): Array<ObjectDefinition> {

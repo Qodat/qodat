@@ -4,20 +4,24 @@ import com.displee.cache.CacheLibrary
 import net.runelite.cache.definitions.SpotAnimDefinition
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import qodat.cache.definition.SpotAnimationDefinition
-import stan.qodat.scene.runescape.entity.SpotAnimation
 import java.util.OptionalInt
 
 class SpotAnimManager(
     private val cacheLibrary: CacheLibrary
 ) {
     private val spotAnims = mutableMapOf<Int, SpotAnimationDefinition>()
+    @Volatile
+    private var loaded = false
 
+    @Synchronized
     fun load() {
+        if (loaded) return
+        val archive = cacheLibrary.index(2).archive(13) ?: error("SpotAnim archive not found")
         val loader = SpotAnimLoader()
-        val archive = cacheLibrary.index(2).archive(13)?:error("SpotAnim archive not found")
         archive.files.forEach { (fileId, file) ->
-            spotAnims.put(fileId, convert(loader.load(fileId, file.data)))
+            spotAnims[fileId] = convert(loader.load(fileId, file.data))
         }
+        loaded = true
     }
 
     private fun convert(spotAnim: SpotAnimDefinition): SpotAnimationDefinition {
@@ -31,7 +35,13 @@ class SpotAnimManager(
         }
     }
 
-    fun getSpotAnimations() = spotAnims.values.toTypedArray()
+    fun getSpotAnimations(): Array<SpotAnimationDefinition> {
+        load()
+        return spotAnims.values.toTypedArray()
+    }
 
-    fun getSpotAnimation(id: Int) = spotAnims[id]?: throw IllegalArgumentException("SpotAnimation $id not found")
+    fun getSpotAnimation(id: Int): SpotAnimationDefinition {
+        load()
+        return spotAnims[id] ?: throw IllegalArgumentException("SpotAnimation $id not found")
+    }
 }

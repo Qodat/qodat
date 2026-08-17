@@ -13,6 +13,7 @@ class NpcAnimParser(
 ) : AnimParser(cacheLibrary) {
 
     override fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>) {
+        npcManager.load()
         val total = npcManager.npcs.size
         val counter = AtomicInteger(0)
 

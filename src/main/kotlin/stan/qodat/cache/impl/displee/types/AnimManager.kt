@@ -22,22 +22,30 @@ class AnimManager(
     private val seqs = mutableMapOf<Int, AnimationDefinition>()
     private val frames = mutableMapOf<Int, Map<Int, AnimationFrameLegacyDefinition>>()
     private val frameMaps = mutableMapOf<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
+    @Volatile
+    private var loaded = false
 
+    @Synchronized
     fun load() {
+        if (loaded) return
         val archive = cacheLibrary.index(2).archive(12)!!
         val revision = archive.revision
         archive.files.forEach { (fileId, file) ->
-            seqs[fileId] = loadSeq(revision, fileId, file.data?:error("Frame data null"))
+            seqs[fileId] = loadSeq(revision, fileId, file.data ?: error("Frame data null"))
         }
+        loaded = true
     }
 
     fun getSeq(id: String): AnimationDefinition {
+        load()
         val seqId = id.toIntOrNull() ?: throw IllegalArgumentException("Animation id must be int-convertable $id")
         return seqs[seqId] ?: throw IllegalArgumentException("Animation not found $id")
     }
 
-    fun getSeqs(): Array<AnimationDefinition> =
-        seqs.values.toTypedArray()
+    fun getSeqs(): Array<AnimationDefinition> {
+        load()
+        return seqs.values.toTypedArray()
+    }
 
     fun getFrameDef(frameHash: Int): AnimationFrameLegacyDefinition? {
         val hexString = Integer.toHexString(frameHash)

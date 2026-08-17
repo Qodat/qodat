@@ -12,6 +12,7 @@ class ObjectAnimParser(
     private val objectManager: ObjectManager
 ) : AnimParser(cacheLibrary) {
     override fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>) {
+        objectManager.load()
         val total = objectManager.objects.size
         val counter = AtomicInteger(0)
         objectManager.objects.values.parallelStream().forEach { objectDefinition ->

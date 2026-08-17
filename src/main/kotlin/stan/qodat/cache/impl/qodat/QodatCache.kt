@@ -295,13 +295,19 @@ object QodatCache : Cache("qodat") {
         TODO("Not yet implemented")
     }
 
-    private inline fun<reified T> File.loadDefinitions(directoryName: String) = resolve(directoryName)
-        .listFiles()
-        ?.filterNotNull()
-        ?.filter { it.extension == "json" }
-        ?.map { json.decodeFromStream<T>(it.inputStream()) }
-        ?.toMutableList()
-        ?: mutableListOf()
+    private inline fun<reified T> File.loadDefinitions(directoryName: String): MutableList<T> {
+        val files = resolve(directoryName)
+            .listFiles()
+            ?.filter { it.extension == "json" }
+            ?: return mutableListOf()
+        if (files.size < 32) {
+            return files.map { json.decodeFromStream<T>(it.inputStream()) }.toMutableList()
+        }
+        return files.toList().parallelStream()
+            .map { json.decodeFromStream<T>(it.inputStream()) }
+            .toList()
+            .toMutableList()
+    }
 
     private fun File.loadModels(directoryName: String) = resolve(directoryName)
         .listFiles()
