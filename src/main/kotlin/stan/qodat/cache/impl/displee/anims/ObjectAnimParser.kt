@@ -16,9 +16,9 @@ class ObjectAnimParser(
         val total = objectManager.objects.size
         val counter = AtomicInteger(0)
         objectManager.objects.values.parallelStream().forEach { objectDefinition ->
-            val animationRef = objectDefinition.animationIds.first().toInt()
+            val animationRef = objectDefinition.animationIds.firstOrNull()?.toIntOrNull() ?: return@forEach
             if (animationRef > 0) {
-                val referenceFrames = skeletonIdsByAnimationId[animationRef]!!
+                val referenceFrames = skeletonIdsByAnimationId[animationRef] ?: return@forEach
                 val matches = skeletonIdsByAnimationId.filter { entry ->
                     entry.value.any { referenceFrames.any { reference -> reference == it } }
                 }
