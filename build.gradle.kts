@@ -1,3 +1,8 @@
+import org.openjfx.gradle.JavaFXModule
+import org.openjfx.gradle.JavaFXOptions
+import org.openjfx.gradle.JavaFXPlatform
+import java.io.File
+
 plugins {
     id("org.openjfx.javafxplugin") version "0.1.0"
     id("dev.hydraulic.conveyor") version "1.5"
@@ -55,6 +60,19 @@ javafx {
 
 val javaFXOptions = the<org.openjfx.gradle.JavaFXOptions>()
 
+// OpenJFX 0.1.0 only patches `:run`. IntelliJ's Application config launches
+// `:stan.qodat.Launcher.main()`, which needs the same --module-path treatment.
+tasks.withType<JavaExec>().configureEach {
+    // Skip `:run` so we do not stack a second, empty --module-path on the plugin's doFirst.
+    if (name == "run" || mainModule.isPresent) {
+        return@configureEach
+    }
+    val execTask = this
+    doFirst {
+        putJavaFXJarsOnModulePathForClasspathApplication(execTask, javaFXOptions)
+    }
+}
+
 dependencies {
     implementation(project("qodat-api"))
     implementation("com.google.code.gson:gson:2.8.5")
@@ -77,3 +95,27 @@ dependencies {
     implementation("io.github.pdvrieze.xmlutil:serialization-jvm:0.86.3")
     testImplementation(kotlin("test-junit"))
 }
+
+/**
+ * Mirrors [org.openjfx.gradle.JavaFXPlugin] so IntelliJ-generated `*.main()` JavaExec
+ * tasks get JavaFX on `--module-path` the same way `:run` does.
+ */
+fun putJavaFXJarsOnModulePathForClasspathApplication(execTask: JavaExec, javaFXOptions: JavaFXOptions) {
+    val platform = javaFXOptions.platform
+    val classpath = execTask.classpath
+    val fxJars = classpath.filter { isJavaFXJar(it, platform) }
+    if (fxJars.isEmpty) {
+        return
+    }
+    execTask.classpath = classpath.filter { !isJavaFXJar(it, platform) }
+    @Suppress("UNCHECKED_CAST")
+    val modules = (javaFXOptions.modules as List<String>).joinToString(",")
+    execTask.jvmArgumentProviders.add {
+        listOf("--module-path", fxJars.asPath, "--add-modules", modules)
+    }
+}
+
+fun isJavaFXJar(jar: File, platform: JavaFXPlatform): Boolean =
+    jar.isFile && JavaFXModule.values().any { module ->
+        module.compareJarFileName(platform, jar.name) || module.moduleJarFileName == jar.name
+    }
