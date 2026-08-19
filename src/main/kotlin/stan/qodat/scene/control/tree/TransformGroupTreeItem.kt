@@ -15,7 +15,7 @@ import org.joml.Vector3f
 import stan.qodat.scene.control.gizmo.GizmoStackoverflow
 import stan.qodat.javafx.label
 import stan.qodat.javafx.onExpanded
-import stan.qodat.javafx.onSelected
+import stan.qodat.javafx.onTreeSelected
 import stan.qodat.javafx.text
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.gizmo.toRay
@@ -48,7 +48,7 @@ class TransformGroupTreeItem(
                     index,
                     TransformTreeItem(entity, frame, transform, root, treeView.selectionModel))
         }
-        treeView.selectionModel.onSelected { oldValue, newValue ->
+        onTreeSelected(treeView.selectionModel) { oldValue, newValue ->
             if (newValue == this) {
                 entity.getSceneNode().children.addAll(getSelectionMesh())
                 selectGizmo()

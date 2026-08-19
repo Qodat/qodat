@@ -17,7 +17,7 @@ import javafx.scene.text.Text
 import stan.qodat.Properties
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.javafx.hBox
-import stan.qodat.javafx.onSelected
+import stan.qodat.javafx.onTreeSelected
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.runescape.animation.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
@@ -99,7 +99,7 @@ class AnimationFrameTreeItem(
             }
         }
 
-        treeView.selectionModel.onSelected { oldValue, newValue ->
+        onTreeSelected(treeView.selectionModel) { oldValue, newValue ->
             if (newValue == this) {
                 entity.animate(frame)
                 entity.getSceneNode().children.addAll(getSelectionMesh())

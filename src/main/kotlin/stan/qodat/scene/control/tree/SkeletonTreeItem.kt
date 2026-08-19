@@ -55,7 +55,7 @@ class SkeletonTreeItem(
                         }
                     }
                 }
-                selectionModel.onSelected { oldValue, newValue ->
+                onTreeSelected(selectionModel) { oldValue, newValue ->
                     if (newValue == this) animatedEntity.getSceneNode().children.add(getSelectionMesh(group))
                     else if (oldValue == this) animatedEntity.getSceneNode().children.remove(getSelectionMesh(group))
                 }

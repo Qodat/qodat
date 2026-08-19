@@ -9,7 +9,7 @@ import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.DrawMode
 import javafx.scene.text.TextFlow
 import stan.qodat.javafx.label
-import stan.qodat.javafx.onSelected
+import stan.qodat.javafx.onTreeSelected
 import stan.qodat.javafx.text
 import stan.qodat.javafx.treeItem
 import stan.qodat.scene.runescape.model.Model
@@ -40,7 +40,7 @@ class FaceGroupTreeItem(private val model: Model,
                     }
                 }
             }
-            selectionModel.onSelected { oldValue, newValue ->
+            onTreeSelected(selectionModel) { oldValue, newValue ->
                 model.apply {
                     if (newValue == this@FaceGroupTreeItem) {
                         if (oldValue !is FaceGroupTreeItem)
@@ -48,7 +48,7 @@ class FaceGroupTreeItem(private val model: Model,
                         getSceneNode().children.add(getSelectionMesh())
                     } else if (oldValue == this@FaceGroupTreeItem) {
                         if (newValue !is FaceGroupTreeItem)
-                            drawModeProperty.set(DrawMode.FILL)
+                            drawModeProperty.set(viewModeProperty.get().toDrawMode())
                         getSceneNode().children.remove(getSelectionMesh())
                     }
                 }

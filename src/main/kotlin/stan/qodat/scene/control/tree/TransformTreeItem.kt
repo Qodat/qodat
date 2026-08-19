@@ -64,7 +64,7 @@ open class TransformTreeItem(
             }
         }
 
-        selectionModel.onSelected { oldValue, newValue ->
+        onTreeSelected(selectionModel) { oldValue, newValue ->
             if (newValue == this) {
                 if (oldValue !is LineMode)
                     for (model in entity.getModels())
@@ -73,7 +73,7 @@ open class TransformTreeItem(
             } else if (oldValue == this) {
                 if (newValue !is LineMode)
                     for (model in entity.getModels())
-                        model.drawModeProperty.set(DrawMode.FILL)
+                        model.drawModeProperty.set(model.viewModeProperty.get().toDrawMode())
                 entity.getSceneNode().children.removeAll(getSelectionMesh())
             }
         }

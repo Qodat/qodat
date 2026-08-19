@@ -6,7 +6,6 @@ import javafx.scene.control.MenuItem
 import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
-import javafx.scene.shape.DrawMode
 import javafx.stage.FileChooser
 import net.runelite.cache.util.GZip
 import stan.qodat.Properties
@@ -14,6 +13,8 @@ import stan.qodat.util.export
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.export.ExportMenu
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.scene.runescape.model.ModelViewMode
+import stan.qodat.scene.runescape.model.distinctColor
 import tornadofx.FileChooserMode
 import tornadofx.chooseFile
 
@@ -61,11 +62,43 @@ class ModelTreeItem(
                 vBox {
                     checkBox("shading", model.shadingProperty, biDirectional = true)
                     checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true)
+                    checkBox("show vertex groups", model.displayVertexGroupsProperty, biDirectional = true)
                     checkBox("visible", model.visibleProperty, biDirectional = true)
-                    comboBox("Select draw mode", DrawMode.values(), model.drawModeProperty, biDirectional = true)
+                    comboBox("Select view mode", ModelViewMode.values(), model.viewModeProperty, biDirectional = true)
+                }
+            }
+            treeItem("Legend") {
+                onExpanded {
+                    if (this && children.isEmpty()) {
+                        val vertexGroups = model.getVertexGroups()
+                        if (vertexGroups.isNotEmpty()) {
+                            treeItem("Vertex skins") {
+                                for ((index, group) in vertexGroups.withIndex()) {
+                                    if (group.isEmpty()) continue
+                                    treeItem {
+                                        text("GROUP $index", distinctColor(index))
+                                        label("count = ${group.size}")
+                                    }
+                                }
+                            }
+                        }
+                        val faceGroups = model.getFaceGroups()
+                        if (faceGroups.isNotEmpty()) {
+                            treeItem("Face skins") {
+                                for ((index, group) in faceGroups.withIndex()) {
+                                    if (group.isEmpty()) continue
+                                    treeItem {
+                                        text("GROUP $index", distinctColor(index))
+                                        label("count = ${group.size}")
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
+        children += VertexGroupHierarchyTreeItem(model, selectionModel)
         treeItem("Details") {
             treeItem { label("vertexCount = ${model.modelDefinition.getVertexCount()}") }
             treeItem { label("faceCount = ${model.modelDefinition.getFaceCount()}") }
@@ -86,7 +119,7 @@ class ModelTreeItem(
                 }
             }
         }
-        selectionModel.onSelected { oldValue, newValue ->
+        onTreeSelected(selectionModel) { oldValue, newValue ->
             if (newValue == this) model.selectedProperty.set(true)
             else if (oldValue == this) model.selectedProperty.set(false)
         }
