@@ -276,7 +276,8 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             onAnimations = { animationList ->
                 animationController.clearAnimationCache()
                 animationController.animationsListView.selectionModel.clearSelection()
-                animationController.animations.setAll(animationList)
+                animationController.indexCatalog(animationList)
+                applySelectedEntityAnimations()
                 pendingLoads.countDown()
             },
         )
@@ -285,16 +286,16 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     private fun loadLastSelectedAnimation(pendingLoads: CountDownLatch) {
         Thread {
             pendingLoads.await()
-            Thread.sleep(666L)
             GlobalScope.launch(Dispatchers.JavaFx) {
+                applySelectedEntityAnimations()
                 val pending = pendingViewState
-                val animationToSelect = pending?.selectedAnimation?.let {
-                    animationController.animations.findByIdentity(it) { animation ->
-                        animation.definition?.id ?: animation.idProperty.get().toString()
-                    }
-                } ?: animationController.animations.lastSelectedEntity(Properties.selectedAnimationName)
-                if (animationToSelect != null)
-                    animationController.animationsListView.selectionModel.select(animationToSelect)
+                val identity = pending?.selectedAnimation
+                    ?: NamedIdentity(
+                        id = Properties.selectedAnimationId.get(),
+                        name = Properties.selectedAnimationName.get()
+                    )
+                animationController.restoreSelectedIdentity(identity)
+                scrollActiveEntityIntoView()
                 if (pending != null) {
                     Platform.runLater {
                         sceneContext.animationPlayer.restorePlayback(
@@ -308,6 +309,28 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
                 }
             }
         }.start()
+    }
+
+    private fun applySelectedEntityAnimations() {
+        if (!::animationController.isInitialized)
+            return
+        val entity = tabPane.selectionModel.selectedItem
+            ?.let { getNodeProperty(it).get() } as? AnimatedEntity<*>
+        if (entity != null)
+            animationController.showForEntity(entity)
+        else
+            animationController.showCatalog()
+    }
+
+    private fun scrollActiveEntityIntoView() {
+        when (val selected = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it).get() }) {
+            is NPC -> npcList.scrollToAfterLayout(selected)
+            is Item -> itemList.scrollToAfterLayout(selected)
+            is Object -> objectList.scrollToAfterLayout(selected)
+            is SpotAnimation -> spotAnimList.scrollToAfterLayout(selected)
+            is Sprite -> spritesList.scrollToAfterLayout(selected)
+            is InterfaceGroup -> interfaceList.scrollToAfterLayout(selected)
+        }
     }
 
     override fun snapshotViewState(): EntityViewState {
@@ -356,14 +379,47 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         state.selectedTab?.let { tabName ->
             tabPane.tabs.find { it.text == tabName }?.let { tabPane.selectionModel.select(it) }
         }
-        state.selections["npc"]?.name?.let { Properties.selectedNpcName.set(it) }
-        state.selections["item"]?.name?.let { Properties.selectedItemName.set(it) }
-        state.selections["object"]?.name?.let { Properties.selectedObjectName.set(it) }
-        state.selections["sprite"]?.name?.let { Properties.selectedSpriteName.set(it) }
-        state.selections["spotAnim"]?.name?.let { Properties.selectedSpotAnimName.set(it) }
-        state.selections["interface"]?.name?.let { Properties.selectedInterfaceName.set(it) }
-        state.selectedAnimation?.name?.let { Properties.selectedAnimationName.set(it) }
+        applyPersistedIdentity(state.selections["npc"], Properties.selectedNpcName, Properties.selectedNpcId)
+        applyPersistedIdentity(state.selections["item"], Properties.selectedItemName, Properties.selectedItemId)
+        applyPersistedIdentity(state.selections["object"], Properties.selectedObjectName, Properties.selectedObjectId)
+        applyPersistedIdentity(state.selections["sprite"], Properties.selectedSpriteName, Properties.selectedSpriteId)
+        applyPersistedIdentity(state.selections["spotAnim"], Properties.selectedSpotAnimName, Properties.selectedSpotAnimId)
+        applyPersistedIdentity(state.selections["interface"], Properties.selectedInterfaceName, Properties.selectedInterfaceId)
+        applyPersistedIdentity(state.selectedAnimation, Properties.selectedAnimationName, Properties.selectedAnimationId)
     }
+
+    private fun persistEntityIdentity(node: ViewNodeProvider) {
+        when (node) {
+            is NPC -> {
+                Properties.selectedNpcName.set(node.getName())
+                Properties.selectedNpcId.set(entityId(node))
+            }
+            is Item -> {
+                Properties.selectedItemName.set(node.getName())
+                Properties.selectedItemId.set(entityId(node))
+            }
+            is Object -> {
+                Properties.selectedObjectName.set(node.getName())
+                Properties.selectedObjectId.set(entityId(node))
+            }
+            is SpotAnimation -> {
+                Properties.selectedSpotAnimName.set(node.getName())
+                Properties.selectedSpotAnimId.set(entityId(node))
+            }
+            is Sprite -> {
+                Properties.selectedSpriteName.set(node.getName())
+                Properties.selectedSpriteId.set("${node.definition.id}:${node.definition.frame}")
+            }
+            is InterfaceGroup -> {
+                Properties.selectedInterfaceName.set(node.getName())
+                Properties.selectedInterfaceId.set(node.idProperty.get().toString())
+            }
+            is Entity<*> -> node.property().set(node.getName())
+        }
+    }
+
+    private fun entityId(entity: Entity<*>): String =
+        entity.definition.getOptionalId().orElse(-1).takeIf { it >= 0 }?.toString().orEmpty()
 
     private fun identityOf(node: ViewNodeProvider?): NamedIdentity? = when (node) {
         is Entity<*> -> NamedIdentity(
@@ -381,6 +437,16 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         else -> null
     }
 
+    private fun applyPersistedIdentity(
+        identity: NamedIdentity?,
+        name: StringProperty,
+        id: StringProperty,
+    ) {
+        identity ?: return
+        identity.name?.let { name.set(it) }
+        identity.id?.let { id.set(it) }
+    }
+
     private inline fun <reified T : Entity<*>> handleLastSelectedEntity(
         it: List<T>,
         view: ViewNodeListView<T>,
@@ -392,6 +458,14 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             Object::class -> Properties.selectedObjectName
             Sprite::class -> Properties.selectedSpriteName
             SpotAnimation::class -> Properties.selectedSpotAnimName
+            else -> throw Exception("Unsupported entity type ${T::class}")
+        }
+        val selectedEntityIdProperty = when (T::class) {
+            NPC::class -> Properties.selectedNpcId
+            Item::class -> Properties.selectedItemId
+            Object::class -> Properties.selectedObjectId
+            Sprite::class -> Properties.selectedSpriteId
+            SpotAnimation::class -> Properties.selectedSpotAnimId
             else -> throw Exception("Unsupported entity type ${T::class}")
         }
         val selectedEntityProperty = when (T::class) {
@@ -410,44 +484,45 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             else -> null
         }
         val identity = selectionKey?.let { pendingViewState?.selections?.get(it) }
-            ?: NamedIdentity(name = selectedEntityNameProperty.get())
+            ?: NamedIdentity(
+                id = selectedEntityIdProperty.get(),
+                name = selectedEntityNameProperty.get()
+            )
         val entity = it.findByIdentity(identity) { entity ->
             entity.definition.getOptionalId().orElse(-1).takeIf { id -> id >= 0 }?.toString()
         }
         if (selectedTabNodeProperty == selectedEntityProperty)
-            view.selectionModel.select(entity)
+            view.selectAndScrollTo(entity)
         else
             selectedEntityProperty.set(entity)
     }
 
     private fun restoreSpriteSelection(loaded: List<Sprite>) {
         val identity = pendingViewState?.selections?.get("sprite")
-            ?: NamedIdentity(name = Properties.selectedSpriteName.get())
+            ?: NamedIdentity(
+                id = Properties.selectedSpriteId.get(),
+                name = Properties.selectedSpriteName.get()
+            )
         val match = loaded.findByIdentity(identity) { "${it.definition.id}:${it.definition.frame}" }
         val selectedTabNodeProperty = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it) }
         if (selectedTabNodeProperty == currentSelectedSpriteProperty)
-            spritesList.selectionModel.select(match)
+            spritesList.selectAndScrollTo(match)
         else
             currentSelectedSpriteProperty.set(match)
     }
 
     private fun restoreInterfaceSelection(loaded: List<InterfaceGroup>) {
         val identity = pendingViewState?.selections?.get("interface")
-            ?: NamedIdentity(name = Properties.selectedInterfaceName.get())
+            ?: NamedIdentity(
+                id = Properties.selectedInterfaceId.get(),
+                name = Properties.selectedInterfaceName.get()
+            )
         val match = loaded.findByIdentity(identity) { it.idProperty.get().toString() }
         val selectedTabNodeProperty = tabPane.selectionModel.selectedItem?.let { getNodeProperty(it) }
         if (selectedTabNodeProperty == currentSelectedInterfaceProperty)
-            interfaceList.selectionModel.select(match)
+            interfaceList.selectAndScrollTo(match)
         else
             currentSelectedInterfaceProperty.set(match)
-    }
-
-    private fun <T : Searchable> List<T>.lastSelectedEntity(stringProperty: StringProperty): T? {
-        val lastSelectedName = stringProperty.get() ?: ""
-        return if (lastSelectedName.isBlank())
-            null
-        else
-            find { lastSelectedName == it.getName() }
     }
 
     private fun <D : EntityDefinition, N : Entity<D>> configureEntitySortComboBox(
@@ -568,10 +643,12 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         animationController.animationsListView.onItemSelected { old, new ->
             if (new == null && old != null) {
                 Properties.selectedAnimationName.set("")
+                Properties.selectedAnimationId.set("")
                 sceneContext.animationPlayer.transformerProperty.set(null)
 
             } else if (new != null) {
                 Properties.selectedAnimationName.set(new.getName())
+                Properties.selectedAnimationId.set(new.definition?.id ?: new.idProperty.get().toString())
                 sceneContext.animationPlayer.transformerProperty.set(new)
                 (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
             }
@@ -613,8 +690,21 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
 
     private fun <T : ViewNodeProvider> ViewNodeListView<T>.clearAndScrollToSelect(selectedNode: T?) {
         selectionModel.clearSelection()
-        selectionModel.select(selectedNode)
-        scrollTo(selectedNode)
+        selectAndScrollTo(selectedNode)
+    }
+
+    private fun <T> ListView<T>.selectAndScrollTo(item: T?) {
+        if (item == null)
+            return
+        selectionModel.select(item)
+        scrollToAfterLayout(item)
+    }
+
+    private fun <T> ListView<T>.scrollToAfterLayout(item: T) {
+        Platform.runLater {
+            scrollTo(item)
+            Platform.runLater { scrollTo(item) }
+        }
     }
 
     private fun getNodeProperty(previousTab: Tab): ObjectProperty<ViewNodeProvider> = when (previousTab.text) {
@@ -670,7 +760,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             }
             if (node is AnimatedEntity<*>) {
                 if (!event.hasNewValueOfSameType) {
-                    animationController.animationsListView.items = animationController.filteredAnimations
+                    animationController.showCatalog()
                     animationController.filteredAnimations.setPredicate { true }
                 }
                 sceneContext.animationPlayer.transformerProperty.set(null)
@@ -697,8 +787,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         val start = stan.qodat.util.PerfTrace.begin()
         selectionCoordinator.select(newNode)
 
-        if (newNode is Entity<*>)
-            newNode.property().set(newNode.getName())
+        persistEntityIdentity(newNode)
 
         if (newNode is Transformable)
             sceneContext.animationPlayer.transformableList.add(newNode)
@@ -733,12 +822,8 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             return
         stan.qodat.util.PerfTrace.span("select.settle ${node.getName()}") {
             materialController.materials.setAll(*node.getMaterials())
-            if (node is AnimatedEntity<*>) {
-                val primary = node.getPrimaryAnimations()
-                val extras = node.getAnimations().filter { it !in primary }
-                animationController.animations.setAll(primary.toList() + extras)
-                animationController.animationsListView.refresh()
-            }
+            if (node is AnimatedEntity<*>)
+                animationController.showForEntity(node)
             if (this::onEntitySelected.isInitialized)
                 onEntitySelected(node)
         }

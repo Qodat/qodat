@@ -1,5 +1,6 @@
 package stan.qodat.scene.controller
 
+import javafx.application.Platform
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
@@ -15,6 +16,7 @@ import stan.qodat.Properties
 import stan.qodat.javafx.onChange
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
+import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.state.NamedIdentity
 import stan.qodat.scene.state.findByIdentity
 import stan.qodat.util.configureSearchFilter
@@ -47,10 +49,11 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     lateinit var filteredAnimations: FilteredList<Animation>
 
     /**
-     * An [ObservableList] of all the [animations][AnimationLegacy] present in the loaded [Cache].
+     * The animations currently shown in the list (full cache catalog, or the selected entity's matches).
      */
     val animations: ObservableList<Animation> = FXCollections.observableArrayList()
 
+    private val catalog: ObservableList<Animation> = FXCollections.observableArrayList()
     private val animationMap = FXCollections.observableHashMap<String, Animation>()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
@@ -82,6 +85,33 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     fun clearAnimationCache(){
         animationMap.clear()
+        catalog.clear()
+    }
+
+    fun indexCatalog(loaded: List<Animation>) {
+        animationMap.clear()
+        catalog.setAll(loaded)
+        for (anim in loaded) {
+            animationMap[anim.getName()] = anim
+            anim.definition?.id?.let { animationMap[it] = anim }
+            val numericId = anim.idProperty.get()
+            if (numericId != 0)
+                animationMap[numericId.toString()] = anim
+        }
+    }
+
+    fun showCatalog() {
+        if (catalog.isEmpty())
+            return
+        animations.setAll(catalog)
+        animationsListView.refresh()
+    }
+
+    fun showForEntity(entity: AnimatedEntity<*>) {
+        val primary = entity.getPrimaryAnimations()
+        val extras = entity.getAnimations().filter { it !in primary }
+        animations.setAll(primary.toList() + extras)
+        animationsListView.refresh()
     }
 
     fun snapshotSearchText(): String = searchTextField.text.orEmpty()
@@ -103,7 +133,10 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             it.definition?.id ?: it.idProperty.get().toString()
         } ?: return null
         animationsListView.selectionModel.select(match)
-        animationsListView.scrollTo(match)
+        Platform.runLater {
+            animationsListView.scrollTo(match)
+            Platform.runLater { animationsListView.scrollTo(match) }
+        }
         return match
     }
 
@@ -112,7 +145,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             return emptyArray()
         return ids.mapNotNull { id ->
             animationMap[id]
-                ?: animations.find { it.definition?.id == id || it.idProperty.get().toString() == id }
+                ?: catalog.find { it.definition?.id == id || it.idProperty.get().toString() == id }
         }.toTypedArray()
     }
 
