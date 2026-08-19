@@ -6,6 +6,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.control.ListView
 import javafx.scene.control.Menu
 import stan.qodat.javafx.onChange
+import stan.qodat.scene.control.export.blender.BlenderFormat
 import stan.qodat.scene.control.export.gif.GifFormat
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
@@ -118,6 +119,17 @@ class ExportMenu<T : Exportable> : Menu("Export") {
             ).apply {
                 isDisable = disable
             })
+        })
+
+        items.add(Menu("blender (.glb)").apply {
+            styleClass += "blender-format-export-menu"
+            items.add(
+                ExportMenuItem(
+                    context = Triple(exportable, animation, null),
+                    format = BlenderFormat(),
+                    prefixMenuItemName = "rigged (vertex skins)"
+                )
+            )
         })
 
         items.add(Menu("gif (.gif)").apply {
