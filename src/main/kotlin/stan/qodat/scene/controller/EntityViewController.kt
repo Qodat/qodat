@@ -734,7 +734,9 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         stan.qodat.util.PerfTrace.span("select.settle ${node.getName()}") {
             materialController.materials.setAll(*node.getMaterials())
             if (node is AnimatedEntity<*>) {
-                animationController.animations.setAll(*node.getPrimaryAnimations())
+                val primary = node.getPrimaryAnimations()
+                val extras = node.getAnimations().filter { it !in primary }
+                animationController.animations.setAll(primary.toList() + extras)
                 animationController.animationsListView.refresh()
             }
             if (this::onEntitySelected.isInitialized)
