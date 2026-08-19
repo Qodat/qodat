@@ -8,8 +8,8 @@ import net.runelite.cache.definitions.NpcDefinition
  */
 object NpcPrimaryAnimations {
 
-    fun ids(npc: NpcDefinition): Array<String> =
-        listOf(
+    fun intIds(npc: NpcDefinition): IntArray =
+        intArrayOf(
             npc.standingAnimation,
             npc.walkingAnimation,
             npc.idleRotateLeftAnimation,
@@ -25,5 +25,8 @@ object NpcPrimaryAnimations {
             npc.crawlRotate180Animation,
             npc.crawlRotateLeftAnimation,
             npc.crawlRotateRightAnimation,
-        ).filter { it > 0 }.map { it.toString() }.distinct().toTypedArray()
+        ).filter { it > 0 }.distinct().toIntArray()
+
+    fun ids(npc: NpcDefinition): Array<String> =
+        intIds(npc).map { it.toString() }.toTypedArray()
 }

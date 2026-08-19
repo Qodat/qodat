@@ -1,86 +1,41 @@
 package stan.qodat.util
 
-import com.google.gson.GsonBuilder
-import jagex.Buffer
-import javafx.application.Platform
 import javafx.concurrent.Task
 import net.runelite.cache.ConfigType
 import net.runelite.cache.IndexType
 import net.runelite.cache.NpcManager
 import net.runelite.cache.ObjectManager
-import net.runelite.cache.definitions.loaders.SequenceLoader
-import net.runelite.cache.fs.Archive
-import net.runelite.cache.fs.ArchiveFiles
+import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
+import org.slf4j.LoggerFactory
 import stan.qodat.Properties
-import java.io.FileWriter
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.stream.Collectors
+import stan.qodat.cache.AnimationSkeletonIndex
+import stan.qodat.cache.AnimationSkeletonIndex.SequenceRef
+import stan.qodat.cache.NpcPrimaryAnimations
+import stan.qodat.cache.impl.oldschool.loader.SequenceLoader226
 
 /**
- * TODO: add documentation
- *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   04/09/2019
  * @version 1.0
  */
-
-private val gson = GsonBuilder().setPrettyPrinting().create()
 
 fun createNpcAnimsJsonDir(
     store: Store,
     npcManager: NpcManager,
 ) = object : LoadAnimationTask(store) {
     override fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>) {
-        val total = npcManager.npcs.size
-        val counter = AtomicInteger(0)
-        npcManager.npcs.parallelStream().forEach { npc ->
-            val animationRef = intArrayOf(
-                npc.walkingAnimation,
-                npc.standingAnimation,
-                npc.idleRotateLeftAnimation ,
-                npc.idleRotateRightAnimation ,
-                npc.rotateLeftAnimation ,
-                npc.rotateRightAnimation,
-                npc.rotate180Animation
-            ).filter { it > 0 }
-            try {
-
-                if (animationRef.isNotEmpty()) {
-
-                    val referenceFrames = animationRef.flatMap {
-                        requireNotNull(skeletonIdsByAnimationId[it]) {
-                            "Animation $it was null for npc ${npc.name}"
-                        }
-                    }.toSet()
-
-                    val matches = skeletonIdsByAnimationId.filter { entry ->
-                        entry.value.any {
-                            referenceFrames.any { reference ->
-                                reference == it
-                            }
-                        }
-                    }
-                    try {
-                        val file = Properties.osrsCachePath.get().resolve("npc_anims/${npc.id}.json").toFile()
-                        val writer = FileWriter(file)
-                        gson.toJson(matches.keys.toIntArray(), writer)
-                        writer.flush()
-                        writer.close()
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                    }
-                    Platform.runLater {
-                        val i = counter.incrementAndGet()
-                        val progress = (100.0 * i.toFloat().div(total))
-                        updateProgress(progress, 100.0)
-                        updateMessage("Parsed npc ($i / $total})")
-                    }
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
+        val entities = npcManager.npcs.mapNotNull { npc ->
+            val ids = NpcPrimaryAnimations.intIds(npc)
+            if (ids.isEmpty()) null else npc.id to ids
+        }
+        AnimationSkeletonIndex.writeMatchesForEntities(
+            outputDir = Properties.osrsCachePath.get().resolve("npc_anims"),
+            entities = entities,
+            skeletonIdsByAnimationId = skeletonIdsByAnimationId,
+        ) { done, total ->
+            updateProgress(done.toDouble(), total.toDouble())
+            updateMessage("Matched npc ($done / $total)")
         }
     }
 }
@@ -90,51 +45,28 @@ fun createObjectAnimsJsonDir(
     objectManager: ObjectManager,
 ) = object : LoadAnimationTask(store) {
     override fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>) {
-        val total = objectManager.objects.size
-        val counter = AtomicInteger(0)
-        objectManager.objects.parallelStream().forEach { objectDefinition ->
-            val animationRef = objectDefinition.animationID
-
-            if (animationRef > 0) {
-                val referenceFrames = skeletonIdsByAnimationId[animationRef]!!
-                val matches = skeletonIdsByAnimationId.filter { entry ->
-                    entry.value.any { referenceFrames.any { reference -> reference == it } }
-                }
-                try {
-                    val file =
-                        Properties.osrsCachePath.get().resolve("object_anims/${objectDefinition.id}.json").toFile()
-                    val writer = FileWriter(file)
-                    gson.toJson(matches.keys.toIntArray(), writer)
-                    writer.flush()
-                    writer.close()
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                }
-                Platform.runLater {
-                    val i = counter.incrementAndGet()
-                    val progress = (100.0 * i.toFloat().div(total))
-                    updateProgress(progress, 100.0)
-                    updateMessage("Parsed object ($i / $total})")
-                }
-            }
+        val entities = objectManager.objects.mapNotNull { objectDefinition ->
+            val animationId = objectDefinition.animationID.takeIf { it > 0 } ?: return@mapNotNull null
+            objectDefinition.id to intArrayOf(animationId)
+        }
+        AnimationSkeletonIndex.writeMatchesForEntities(
+            outputDir = Properties.osrsCachePath.get().resolve("object_anims"),
+            entities = entities,
+            skeletonIdsByAnimationId = skeletonIdsByAnimationId,
+        ) { done, total ->
+            updateProgress(done.toDouble(), total.toDouble())
+            updateMessage("Matched object ($done / $total)")
         }
     }
 }
-
-
 
 abstract class LoadAnimationTask(
     private val store: Store,
 ) : Task<Void?>() {
 
-    private val map = ConcurrentHashMap<Int, ArchiveFiles>()
     private val storage = store.storage
-    private val index by lazy { store.getIndex(IndexType.CONFIGS) }
-    private val seqArchive by lazy { index.getArchive(ConfigType.SEQUENCE.id) }
-    private val archiveData by lazy { storage.loadArchive(seqArchive) }
-    private val files by lazy { seqArchive.getFiles(archiveData) }
+    private val seqArchive by lazy { store.getIndex(IndexType.CONFIGS).getArchive(ConfigType.SEQUENCE.id) }
     private val animIndex by lazy { store.getIndex(IndexType.ANIMATIONS) }
-    private val animationFiles by lazy { files.files }
 
     override fun call(): Void? {
         val skeletonIdsByAnimationId = associateAnimationBySkeletonIds()
@@ -145,40 +77,131 @@ abstract class LoadAnimationTask(
 
     abstract fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>)
 
-    private fun associateAnimationBySkeletonIds() = animationFiles.parallelStream().map { file ->
-        val loader = SequenceLoader()
-        loader.configureForRevision(seqArchive.revision)
-        val anim = loader.load(file.fileId, file.contents)
-        Platform.runLater {
-            val progress = (100.0 * anim.id.toFloat().div(animationFiles.size))
-            updateProgress(progress, 100.0)
-            updateMessage("Parsed animation (${anim.id + 1} / ${animationFiles.size}})")
-        }
-        val frameGroupIds: Set<Int> = if (anim.animMayaID >= 0) {
-            val animArchive: Archive = animIndex.getArchive(anim.animMayaID shr 16 and '\uffff'.code)
-            val animData = store.storage.loadArchive(animArchive)
-            val animFiles = animArchive.getFiles(animData)
-            val animFile = animFiles.findFile(anim.animMayaID and '\uffff'.code)
-            val data = animFile.contents
-            val buffer = Buffer(data)
-            val version = buffer.readUnsignedByte()
-            val frameGroupId = buffer.readUnsignedShort()
-            setOf(frameGroupId)
-        } else anim.frameIDs?.map {
-            val frameArchiveId = it shr 16
-            val frameArchiveFileId = it and 65535
+    private fun associateAnimationBySkeletonIds(): Map<Int, Set<Int>> {
+        val refs = loadSequences()
+        val mayaRefs = refs.filter { it.mayaId >= 0 }
+        val legacyRefs = refs.filter { it.mayaId < 0 }
+        val skeletonIdByFrameHash = loadLegacySkeletonIds(legacyRefs)
+        val skeletonIdByMayaId = loadMayaSkeletonIds(mayaRefs)
+        return AnimationSkeletonIndex.mapAnimationsToSkeletons(
+            sequences = refs,
+            skeletonIdByFrameHash = skeletonIdByFrameHash,
+            skeletonIdByMayaId = skeletonIdByMayaId,
+        )
+    }
 
-            val frameArchive = requireNotNull(animIndex.getArchive(frameArchiveId))
-            { "Frame group null for $frameArchiveId file $frameArchiveFileId" }
-            val frameArchiveFiles = map.getOrPut(frameArchiveId) {
-                frameArchive.getFiles(storage.loadArchive(frameArchive))!!
+    private fun loadSequences(): List<SequenceRef> {
+        val archiveData = storage.loadArchive(seqArchive)
+        val files = seqArchive.getFiles(archiveData).files
+        val loader = SequenceLoader226().apply { configureForRevision(seqArchive.revision) }
+        val refs = ArrayList<SequenceRef>(files.size)
+        val updateFrequency = (files.size / 50).coerceAtLeast(1)
+        files.forEachIndexed { index, file ->
+            try {
+                val sequence = loader.load(file.fileId, file.contents)
+                refs.add(
+                    SequenceRef(
+                        animationId = sequence.id.toInt(),
+                        mayaId = sequence.animMayaId,
+                        frameHashes = sequence.frameIDs,
+                    )
+                )
+            } catch (e: Exception) {
+                logger.debug("Failed to decode sequence {}: {}", file.fileId, e.message)
             }
-            val frameFile = frameArchiveFiles.findFile(frameArchiveFileId)!!
-            val frameContents = frameFile.contents
+            if ((index + 1) % updateFrequency == 0 || index + 1 == files.size) {
+                updateProgress(index + 1.0, files.size.toDouble())
+                updateMessage("Parsed sequences (${index + 1} / ${files.size})")
+            }
+        }
+        return refs
+    }
 
-            val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
-            frameMapArchiveId
-        }?.toSet() ?: emptySet()
-        (anim.id to frameGroupIds)
-    }.collect(Collectors.toList()).toMap()
+    private fun loadLegacySkeletonIds(legacyRefs: List<SequenceRef>): Map<Int, Int> {
+        val hashesByArchive = HashMap<Int, MutableSet<Int>>()
+        for (ref in legacyRefs) {
+            val hashes = ref.frameHashes ?: continue
+            for (hash in hashes) {
+                hashesByArchive.getOrPut(hash ushr 16) { HashSet() }.add(hash)
+            }
+        }
+        if (hashesByArchive.isEmpty()) return emptyMap()
+
+        val result = HashMap<Int, Int>(hashesByArchive.values.sumOf { it.size })
+        val archives = hashesByArchive.entries.toList()
+        val updateFrequency = (archives.size / 50).coerceAtLeast(1)
+        archives.forEachIndexed { index, (archiveId, hashes) ->
+            val frameArchive = animIndex.getArchive(archiveId)
+            if (frameArchive != null) {
+                val frameFiles = try {
+                    frameArchive.getFiles(storage.loadArchive(frameArchive))
+                } catch (e: Exception) {
+                    logger.debug("Failed to open frame archive {}: {}", archiveId, e.message)
+                    null
+                }
+                if (frameFiles != null) {
+                    for (hash in hashes) {
+                        val fileId = hash and 0xFFFF
+                        val contents = frameFiles.findFile(fileId)?.contents ?: continue
+                        val skeletonId = AnimationSkeletonIndex.skeletonIdFromLegacyFrame(contents, archiveId)
+                            ?: continue
+                        result[hash] = skeletonId
+                    }
+                }
+            }
+            if ((index + 1) % updateFrequency == 0 || index + 1 == archives.size) {
+                updateProgress(index + 1.0, archives.size.toDouble())
+                updateMessage("Indexed frame archives (${index + 1} / ${archives.size})")
+            }
+        }
+        return result
+    }
+
+    private fun loadMayaSkeletonIds(mayaRefs: List<SequenceRef>): Map<Int, Int> {
+        val mayaIds = mayaRefs.map { it.mayaId }.toSet()
+        if (mayaIds.isEmpty()) return emptyMap()
+
+        val indexes = mayaIndexes()
+        val idsByArchive = mayaIds.groupBy { it ushr 16 and 0xFFFF }
+        val result = HashMap<Int, Int>(mayaIds.size)
+        val archives = idsByArchive.entries.toList()
+        val updateFrequency = (archives.size / 50).coerceAtLeast(1)
+        archives.forEachIndexed { index, (archiveId, ids) ->
+            val files = openMayaArchiveFiles(indexes, archiveId)
+            if (files != null) {
+                for (mayaId in ids) {
+                    val fileId = mayaId and 0xFFFF
+                    val contents = files.findFile(fileId)?.contents ?: continue
+                    val skeletonId = AnimationSkeletonIndex.skeletonIdFromMayaAnimation(contents)
+                        ?: continue
+                    result[mayaId] = skeletonId
+                }
+            }
+            if ((index + 1) % updateFrequency == 0 || index + 1 == archives.size) {
+                updateProgress(index + 1.0, archives.size.toDouble())
+                updateMessage("Indexed Maya archives (${index + 1} / ${archives.size})")
+            }
+        }
+        return result
+    }
+
+    private fun mayaIndexes(): List<Index> =
+        listOfNotNull(
+            store.getIndex(IndexType.ANIMAYAS),
+            animIndex,
+        ).distinct()
+
+    private fun openMayaArchiveFiles(indexes: List<Index>, archiveId: Int) =
+        indexes.firstNotNullOfOrNull { index ->
+            val archive = index.getArchive(archiveId) ?: return@firstNotNullOfOrNull null
+            try {
+                archive.getFiles(storage.loadArchive(archive))
+            } catch (_: Exception) {
+                null
+            }
+        }
+
+    companion object {
+        private val logger = LoggerFactory.getLogger(LoadAnimationTask::class.java)
+    }
 }
