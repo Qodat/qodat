@@ -3,8 +3,6 @@ package stan.qodat.scene.runescape.animation
 import jagex.MayaAnimation
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
 import net.runelite.cache.IndexType
 import qodat.cache.Cache
 import qodat.cache.definition.AnimationMayaDefinition
@@ -35,21 +33,16 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
                 framesArchive,
                 definition.animMayaID,
                 false
-            )
+            ) ?: return frames
             runCatchingWithDialog("Loading Maya Animation") {
-                runBlocking {
-                    withTimeout(5000) {
-                        while (!mayaAnimation.isAnimationLoaded) {
-                            Thread.sleep(100)
-                        }
-                    }
-                }
+                mayaAnimation.awaitLoaded(5000)
             }
-            val animMayaDuration = definition.animMayaEnd - definition.animMayaStart
+            val clipLength = definition.animMayaEnd - definition.animMayaStart
+            val animMayaDuration = if (clipLength > 0) clipLength else mayaAnimation.playbackLength
             repeat(animMayaDuration) { index ->
                 val frame = AnimationFrameMaya(
                     name = "frame[$index]",
-                    duration = 1, // TODO: figure out duration
+                    duration = 1,
                     index = index,
                     animation = mayaAnimation,
                 )

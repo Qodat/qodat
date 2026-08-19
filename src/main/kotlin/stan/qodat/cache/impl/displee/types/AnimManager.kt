@@ -3,15 +3,13 @@ package stan.qodat.cache.impl.displee.types
 import com.displee.cache.CacheLibrary
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.SequenceDefinition
-import net.runelite.cache.definitions.loaders.FrameLoader
-import net.runelite.cache.definitions.loaders.FramemapLoader
-import net.runelite.cache.definitions.loaders.SequenceLoader
 import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.displee.DispleeCache.getFileId
 import stan.qodat.cache.impl.displee.DispleeCache.getFrameId
+import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader226
 
@@ -55,25 +53,14 @@ class AnimManager(
             val frameArchive = cacheLibrary.index(0).archive(frameArchiveId)!!
             frameArchive.files().associate { file ->
                 val frameContents = file.data ?: error("Frame data null")
-                val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
+                val frameMapArchiveId = AnimationFrameCodec.framemapId(frameContents, frameArchiveId)
                 val (frameMapDefinition, transformGroup) = frameMaps.getOrPut(frameMapArchiveId) {
                     val frameMapContents = cacheLibrary.data(1, frameMapArchiveId)!!
-                    val frameMapDefinition = FramemapLoader().load(frameMapArchiveId, frameMapContents)
-                    frameMapDefinition to object : AnimationTransformationGroup {
-                        override val id: Int = frameMapArchiveId
-                        override val transformationTypes: IntArray = frameMapDefinition.types
-                        override val targetVertexGroupsIndices: Array<IntArray> = frameMapDefinition.frameMaps
-                    }
+                    val frameMapDefinition = AnimationFrameCodec.loadFramemap(frameMapArchiveId, frameMapContents)
+                    frameMapDefinition to AnimationFrameCodec.transformationGroup(frameMapArchiveId, frameMapDefinition)
                 }
-                val frame = FrameLoader().load(frameMapDefinition, file.id, frameContents)
-                file.id to object : AnimationFrameLegacyDefinition {
-                    override val transformationCount: Int = frame.translatorCount
-                    override val transformationGroupAccessIndices: IntArray = frame.indexFrameIds
-                    override val transformationDeltaX: IntArray = frame.translator_x
-                    override val transformationDeltaY: IntArray = frame.translator_y
-                    override val transformationDeltaZ: IntArray = frame.translator_z
-                    override val transformationGroup: AnimationTransformationGroup = transformGroup
-                }
+                val frame = AnimationFrameCodec.loadFrame(frameMapDefinition, file.id, frameContents)
+                file.id to AnimationFrameCodec.toDefinition(frame, transformGroup)
             }
         }[frameArchiveFileId]
     }

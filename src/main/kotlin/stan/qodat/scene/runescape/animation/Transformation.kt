@@ -45,6 +45,20 @@ open class Transformation(
     val enabledProperty = SimpleBooleanProperty(true)
     val labelProperty = SimpleStringProperty(name)
 
+    /**
+     * Snapshot of [groupIndices] for the animate hot path.
+     * Rebuilt only when the editor mutates the observable array.
+     */
+    @Volatile
+    var vertexGroupIndicesCache: IntArray = vertexGroupIndices.copyOf()
+        private set
+
+    init {
+        groupIndices.addListener { _, _, _, _ ->
+            vertexGroupIndicesCache = groupIndices.toArray(null)
+        }
+    }
+
     fun bind(frame: AnimationFrame, entity: AnimatedEntity<*>){
         Bindings.createBooleanBinding(
             {

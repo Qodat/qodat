@@ -162,6 +162,46 @@ public class MayaAnimation {
         }
     }
 
+    public void awaitLoaded(long timeoutMs) throws Exception {
+        if (animationLoadTask != null) {
+            animationLoadTask.get(timeoutMs, TimeUnit.MILLISECONDS);
+            animationLoadTask = null;
+        }
+        if (frameLoadTask != null) {
+            for (Future<Object> future : frameLoadTask) {
+                future.get(timeoutMs, TimeUnit.MILLISECONDS);
+            }
+            frameLoadTask = null;
+        }
+    }
+
+    public int getPlaybackLength() {
+        int max = totalDuration;
+        if (primaryFrames != null) {
+            for (MayaAnimationFrame[] track : primaryFrames) {
+                max = maxFrame(track, max);
+            }
+        }
+        if (secondaryFrames != null) {
+            for (MayaAnimationFrame[] track : secondaryFrames) {
+                max = maxFrame(track, max);
+            }
+        }
+        return Math.max(max, 1);
+    }
+
+    private static int maxFrame(MayaAnimationFrame[] track, int current) {
+        if (track == null) {
+            return current;
+        }
+        for (MayaAnimationFrame frame : track) {
+            if (frame != null) {
+                current = Math.max(current, frame.getLastFrame());
+            }
+        }
+        return current;
+    }
+
     public int getDuration() {
         return totalDuration;
     }

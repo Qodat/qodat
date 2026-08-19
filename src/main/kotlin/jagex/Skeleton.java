@@ -45,4 +45,12 @@ public class Skeleton {
         return mayaAnimationSkeleton;
     }
 
+    public int[] getTransformTypes() {
+        return transformTypes;
+    }
+
+    public int[][] getLabels() {
+        return labels;
+    }
+
 }

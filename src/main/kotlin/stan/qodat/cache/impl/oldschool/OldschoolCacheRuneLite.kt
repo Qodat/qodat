@@ -5,9 +5,8 @@ import com.google.gson.reflect.TypeToken
 import net.runelite.cache.*
 import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.SequenceDefinition
-import net.runelite.cache.definitions.loaders.FrameLoader
-import net.runelite.cache.definitions.loaders.FramemapLoader
 import net.runelite.cache.definitions.loaders.SequenceLoader
+import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
 import net.runelite.cache.fs.Index
 import net.runelite.cache.fs.Store
@@ -16,6 +15,8 @@ import qodat.cache.definition.*
 import qodat.cache.event.CacheReloadEvent
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
+import stan.qodat.cache.ModelDefinitionCache
+import stan.qodat.cache.NpcPrimaryAnimations
 import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
@@ -111,12 +112,13 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         return archive.decompress(store.storage.loadArchive(archive))
     }
 
-    override fun getModelDefinition(id: String): ModelDefinition {
-        val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
-        val modelIndex = store.getIndex(IndexType.MODELS)
-        val archive = modelIndex.getArchive(modelId)
-        return RSModelLoader().load(id, archive.decompress(store.storage.loadArchive(archive)))
-    }
+    override fun getModelDefinition(id: String): ModelDefinition =
+        ModelDefinitionCache.getOrLoad(name, id) {
+            val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
+            val modelIndex = store.getIndex(IndexType.MODELS)
+            val archive = modelIndex.getArchive(modelId)
+            RSModelLoader().load(id, archive.decompress(store.storage.loadArchive(archive)))
+        }
 
     override fun getAnimation(id: String): AnimationDefinition {
         return getAnimationDefinitions().find { it.id == id }!!
@@ -136,6 +138,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
                 override val animationIds by lazy {
                     animIdsCache.getOrPut(npc.id) {
                         val file = npcAnimsDir.resolve("${npc.id}.json")
@@ -276,26 +279,15 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             frameArchiveFiles.files.map {
                 val file = it
                 val frameContents = file.contents
-                val frameMapArchiveId = frameContents[0].toInt() and 0xff shl 8 or (frameContents[1].toInt() and 0xff)
+                val frameMapArchiveId = AnimationFrameCodec.framemapId(frameContents, frameArchiveId)
                 val (frameMapDefinition, transformGroup) = frameMaps.getOrPut(frameMapArchiveId) {
                     val frameMapArchive = framemapIndex.getArchive(frameMapArchiveId)
                     val frameMapContents = frameMapArchive.decompress(storage.loadArchive(frameMapArchive))
-                    val frameMapDefinition = FramemapLoader().load(frameMapArchive.archiveId, frameMapContents)
-                    frameMapDefinition to object : AnimationTransformationGroup {
-                        override val id: Int = frameMapArchiveId
-                        override val transformationTypes: IntArray = frameMapDefinition.types
-                        override val targetVertexGroupsIndices: Array<IntArray> = frameMapDefinition.frameMaps
-                    }
+                    val frameMapDefinition = AnimationFrameCodec.loadFramemap(frameMapArchive.archiveId, frameMapContents)
+                    frameMapDefinition to AnimationFrameCodec.transformationGroup(frameMapArchiveId, frameMapDefinition)
                 }
-                val frame = FrameLoader().load(frameMapDefinition, file.fileId, frameContents)
-                file.fileId to object : AnimationFrameLegacyDefinition {
-                    override val transformationCount: Int = frame.translatorCount
-                    override val transformationGroupAccessIndices: IntArray = frame.indexFrameIds
-                    override val transformationDeltaX: IntArray = frame.translator_x
-                    override val transformationDeltaY: IntArray = frame.translator_y
-                    override val transformationDeltaZ: IntArray = frame.translator_z
-                    override val transformationGroup: AnimationTransformationGroup = transformGroup
-                }
+                val frame = AnimationFrameCodec.loadFrame(frameMapDefinition, file.fileId, frameContents)
+                file.fileId to AnimationFrameCodec.toDefinition(frame, transformGroup)
             }.toMap()
         }[frameArchiveFileId]
     }
