@@ -146,6 +146,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     private var lastLeftDividerPosition = 0.25
     private var lastRightDividerPosition = 0.75
     private var reloadingCache = false
+    private var rescanningAnimations = false
 
     override fun onSwitch(next: SceneController) {
     }
@@ -455,6 +456,26 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
                 }
             }
         }
+    }
+
+    @FXML
+    fun rescanAnimations() {
+        if (rescanningAnimations) return
+        val cache = sequenceOf(Properties.viewerCache.get(), Properties.editorCache.get())
+            .filterIsInstance<DispleeCache>()
+            .firstOrNull()
+        if (cache == null) {
+            Alert(
+                Alert.AlertType.INFORMATION,
+                "Animation rescan is only available when the Displee OSRS cache is loaded."
+            ).showAndWait()
+            return
+        }
+        rescanningAnimations = true
+        BackgroundTasks.submit(
+            addProgressIndicator = true,
+            cache.createAnimationRescanTask { rescanningAnimations = false }
+        )
     }
 
     @FXML

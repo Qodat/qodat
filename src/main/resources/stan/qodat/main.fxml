@@ -74,6 +74,7 @@
                                     <items>
                                         <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Change Cache" />
                                         <MenuItem mnemonicParsing="false" onAction="#reloadCache" text="Reload Cache" />
+                                        <MenuItem mnemonicParsing="false" onAction="#rescanAnimations" text="Rescan Animations" />
                                         <MenuItem mnemonicParsing="false" onAction="#openQodatFolder" text="Open .qodat Folder" />
                                     </items>
                                 </Menu>

@@ -2,6 +2,8 @@ package stan.qodat.cache.impl.displee
 
 import com.displee.cache.CacheLibrary
 import com.displee.cache.ProgressListener
+import javafx.application.Platform
+import javafx.concurrent.Task
 import net.runelite.cache.definitions.loaders.TextureLoader
 import org.slf4j.LoggerFactory
 import qodat.cache.Cache
@@ -69,6 +71,54 @@ object DispleeCache : Cache("Displee") {
             if (!isOpen()) openStore()
         } finally {
             storeLock.unlock()
+        }
+    }
+
+    fun createAnimationRescanTask(onFinished: () -> Unit = {}): Task<Unit> {
+        storeLock.lock()
+        try {
+            if (!isOpen()) openStore()
+            resetAnimScanDirectories()
+            val npcParser = NpcAnimParser(store, npcManager)
+            val objectParser = ObjectAnimParser(store, objectManager)
+            npcAnimParser = npcParser
+            objectAnimParser = objectParser
+            return object : Task<Unit>() {
+                init {
+                    updateTitle("Rescanning animations")
+                }
+
+                override fun call() {
+                    try {
+                        val sink: (String, Double, Double) -> Unit = { message, work, total ->
+                            updateMessage(message)
+                            if (total > 0.0) updateProgress(work, total)
+                        }
+                        updateMessage("Scanning NPC animations...")
+                        npcParser.executeScan(sink)
+                        updateMessage("Scanning object animations...")
+                        objectParser.executeScan(sink)
+                        Platform.runLater {
+                            fire(CacheReloadEvent(this@DispleeCache))
+                            onFinished()
+                        }
+                    } catch (e: Exception) {
+                        Platform.runLater(onFinished)
+                        throw e
+                    }
+                }
+            }
+        } finally {
+            storeLock.unlock()
+        }
+    }
+
+    private fun resetAnimScanDirectories() {
+        val root = Properties.osrsCachePath.get()
+        for (name in listOf("npc_anims", "object_anims")) {
+            val dir = root.resolve(name).toFile()
+            if (dir.exists()) dir.deleteRecursively()
+            dir.mkdirs()
         }
     }
 
