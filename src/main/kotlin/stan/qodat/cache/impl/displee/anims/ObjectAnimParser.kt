@@ -10,7 +10,7 @@ class ObjectAnimParser(
     private val objectManager: ObjectManager
 ) : AnimParser(cacheLibrary) {
 
-    override fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>) {
+    override fun matchAnimationsToSkeletons(animationMap: AnimationSkeletonIndex.AnimationMap) {
         objectManager.load()
         val entities = objectManager.objects.mapNotNull { (id, definition) ->
             val animationId = definition.animationIds.firstOrNull()?.toIntOrNull()?.takeIf { it > 0 }
@@ -20,7 +20,8 @@ class ObjectAnimParser(
         AnimationSkeletonIndex.writeMatchesForEntities(
             outputDir = Properties.osrsCachePath.get().resolve("object_anims"),
             entities = entities,
-            skeletonIdsByAnimationId = skeletonIdsByAnimationId,
+            skeletonIdsByAnimationId = animationMap.skeletonIdsByAnimationId,
+            animationMap = animationMap,
         ) { done, total ->
             report("Matched object ($done / $total)", done.toDouble(), total.toDouble())
         }

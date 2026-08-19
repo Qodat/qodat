@@ -24,15 +24,15 @@ abstract class AnimParser(
     fun executeScan(sink: ((String, Double, Double) -> Unit)? = null) {
         progressSink = sink
         try {
-            val skeletonIdsByAnimationId = associateAnimationBySkeletonIds()
+            val animationMap = associateAnimationBySkeletonIds()
             report("Loaded all animation mappings!")
-            matchAnimationsToSkeletons(skeletonIdsByAnimationId)
+            matchAnimationsToSkeletons(animationMap)
         } finally {
             progressSink = null
         }
     }
 
-    abstract fun matchAnimationsToSkeletons(skeletonIdsByAnimationId: Map<Int, Set<Int>>)
+    abstract fun matchAnimationsToSkeletons(animationMap: AnimationSkeletonIndex.AnimationMap)
 
     protected fun report(message: String, work: Double = workDone, total: Double = totalWork.coerceAtLeast(1.0)) {
         updateMessage(message)
@@ -40,7 +40,7 @@ abstract class AnimParser(
         progressSink?.invoke(message, work, total)
     }
 
-    private fun associateAnimationBySkeletonIds(): Map<Int, Set<Int>> {
+    private fun associateAnimationBySkeletonIds(): AnimationSkeletonIndex.AnimationMap {
         report("Parsing sequences...")
         val sequences = loadSequences()
         val refs = sequences.map { sequence ->
@@ -64,6 +64,9 @@ abstract class AnimParser(
             skeletonIdByFrameHash = skeletonIdByFrameHash,
             skeletonIdByMayaId = skeletonIdByMayaId,
         )
+        val usedSkeletonIds = mapped.values.flatten().toSet()
+        report("Indexing skeleton signatures...")
+        val signatures = loadSkeletonSignatures(usedSkeletonIds)
         val mayaResolved = mayaRefs.count { mapped[it.animationId]?.isNotEmpty() == true }
         logger.info(
             "Indexed {} sequences ({} legacy, {} maya, {} maya resolved) across {} skeletons",
@@ -71,9 +74,34 @@ abstract class AnimParser(
             legacyRefs.size,
             mayaRefs.size,
             mayaResolved,
-            mapped.values.flatten().toSet().size,
+            usedSkeletonIds.size,
         )
-        return mapped
+        return AnimationSkeletonIndex.AnimationMap(
+            skeletonIdsByAnimationId = mapped,
+            signatureBySkeletonId = signatures,
+            mayaAnimationIds = mayaRefs.map { it.animationId }.toSet(),
+        )
+    }
+
+    private fun loadSkeletonSignatures(skeletonIds: Set<Int>): Map<Int, AnimationSkeletonIndex.SkeletonSignature> {
+        if (skeletonIds.isEmpty()) return emptyMap()
+        val result = HashMap<Int, AnimationSkeletonIndex.SkeletonSignature>(skeletonIds.size)
+        val ids = skeletonIds.toList()
+        val updateFrequency = (ids.size / 50).coerceAtLeast(1)
+        ids.forEachIndexed { index, skeletonId ->
+            val data = try {
+                cacheLibrary.data(1, skeletonId)
+            } catch (_: Exception) {
+                null
+            }
+            if (data != null) {
+                AnimationSkeletonIndex.skeletonSignature(data)?.let { result[skeletonId] = it }
+            }
+            if ((index + 1) % updateFrequency == 0 || index + 1 == ids.size) {
+                report("Indexed skeleton signatures (${index + 1} / ${ids.size})", index + 1.0, ids.size.toDouble())
+            }
+        }
+        return result
     }
 
     private fun loadSequences(): List<SequenceDefinition226> {

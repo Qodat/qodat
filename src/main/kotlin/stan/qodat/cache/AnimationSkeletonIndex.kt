@@ -22,6 +22,56 @@ object AnimationSkeletonIndex {
         val frameHashes: IntArray?,
     )
 
+    data class SkeletonSignature(
+        val mayaBoneCount: Int,
+        val labelKey: String,
+    )
+
+    class AnimationMap(
+        val skeletonIdsByAnimationId: Map<Int, Set<Int>>,
+        val signatureBySkeletonId: Map<Int, SkeletonSignature> = emptyMap(),
+        val mayaAnimationIds: Set<Int> = emptySet(),
+    ) {
+        val animationIdsBySkeletonId: Map<Int, IntArray> = invertToAnimsBySkeleton(skeletonIdsByAnimationId)
+        val skeletonIdsBySignature: Map<SkeletonSignature, IntArray> =
+            signatureBySkeletonId.entries.groupBy({ it.value }, { it.key })
+                .mapValues { (_, ids) -> ids.toIntArray() }
+    }
+
+    fun skeletonSignature(data: ByteArray): SkeletonSignature? {
+        if (data.isEmpty()) return null
+        var offset = 0
+        val count = data[offset++].toInt() and 0xff
+        if (offset + count > data.size) return null
+        offset += count
+        if (offset + count > data.size) return null
+        val labelLengths = IntArray(count) { data[offset++].toInt() and 0xff }
+        val labels = ArrayList<Int>(labelLengths.sum())
+        for (length in labelLengths) {
+            if (offset + length > data.size) return null
+            repeat(length) { labels.add(data[offset++].toInt() and 0xff) }
+        }
+        val mayaBoneCount = if (offset + 2 <= data.size) {
+            (data[offset].toInt() and 0xff shl 8) or (data[offset + 1].toInt() and 0xff)
+        } else 0
+        labels.sort()
+        return SkeletonSignature(mayaBoneCount, labels.joinToString(","))
+    }
+
+    fun expandSkeletonIds(
+        referenceSkeletonIds: Set<Int>,
+        animationMap: AnimationMap,
+    ): Set<Int> {
+        if (referenceSkeletonIds.isEmpty()) return emptySet()
+        val expanded = HashSet<Int>(referenceSkeletonIds)
+        for (skeletonId in referenceSkeletonIds) {
+            val signature = animationMap.signatureBySkeletonId[skeletonId] ?: continue
+            val aliases = animationMap.skeletonIdsBySignature[signature] ?: continue
+            for (id in aliases) expanded.add(id)
+        }
+        return expanded
+    }
+
     fun skeletonIdFromMayaAnimation(data: ByteArray): Int? {
         if (data.size < 3) return null
         return (data[1].toInt() and 0xff shl 8) or (data[2].toInt() and 0xff)
@@ -95,18 +145,23 @@ object AnimationSkeletonIndex {
         outputDir: Path,
         entities: List<Pair<Int, IntArray>>,
         skeletonIdsByAnimationId: Map<Int, Set<Int>>,
+        animationMap: AnimationMap = AnimationMap(skeletonIdsByAnimationId),
+        expandReferences: ((Int, IntArray) -> IntArray)? = null,
         onProgress: (done: Int, total: Int) -> Unit,
     ) {
         Files.createDirectories(outputDir)
-        val animationIdsBySkeletonId = invertToAnimsBySkeleton(skeletonIdsByAnimationId)
         val total = entities.size
         val counter = java.util.concurrent.atomic.AtomicInteger()
         val updateFrequency = (total / 100).coerceAtLeast(1)
         CacheParallel.forEachIndexed(entities.size) { index ->
-            val (entityId, referenceAnimationIds) = entities[index]
-            val skeletons = referenceSkeletonIds(referenceAnimationIds, skeletonIdsByAnimationId)
+            val (entityId, rawReferenceIds) = entities[index]
+            val referenceAnimationIds = expandReferences?.invoke(entityId, rawReferenceIds) ?: rawReferenceIds
+            val skeletons = expandSkeletonIds(
+                referenceSkeletonIds(referenceAnimationIds, animationMap.skeletonIdsByAnimationId),
+                animationMap,
+            )
             if (skeletons.isNotEmpty()) {
-                val matches = animationIdsSharingSkeletons(skeletons, animationIdsBySkeletonId)
+                val matches = animationIdsSharingSkeletons(skeletons, animationMap.animationIdsBySkeletonId)
                 if (matches.isNotEmpty()) {
                     try {
                         writeAnimationIds(outputDir.resolve("$entityId.json"), matches)

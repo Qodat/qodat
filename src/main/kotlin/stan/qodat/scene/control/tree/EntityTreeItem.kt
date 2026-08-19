@@ -135,23 +135,12 @@ class EntityTreeItem(
     ) {
         PerfTrace.span("tree.animations ${entity.getName()}") {
             val folder = this
-            val extras = entity.extraAnimationCount()
-            val shown = entity.getPrimaryAnimations()
-            for (animation in shown)
+            val primary = entity.getPrimaryAnimations().toSet()
+            for (animation in entity.getPrimaryAnimations())
                 folder.children.add(AnimationTreeItem(animation, entity, treeView))
-            if (extras > 0) {
-                val loadMore = TreeItem<Node>()
-                loadMore.button("Load remaining $extras animations") {
-                    folder.children.remove(loadMore)
-                    PerfTrace.span("tree.animationsAll ${entity.getName()}") {
-                        val existing = folder.children.mapNotNull { (it as? AnimationTreeItem)?.animation }.toSet()
-                        for (animation in entity.getAnimations()) {
-                            if (animation !in existing)
-                                folder.children.add(AnimationTreeItem(animation, entity, treeView))
-                        }
-                    }
-                }
-                folder.children.add(loadMore)
+            for (animation in entity.getAnimations()) {
+                if (animation !in primary)
+                    folder.children.add(AnimationTreeItem(animation, entity, treeView))
             }
             val listener = ChangeListener<Animation> { _, _, animation ->
                 if (animation != null) {
