@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Upload to GitHub Releases and gh-pages
+        type: boolean
+        default: false
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: qodat-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build JARs
+        run: ./gradlew jar
+
+      - name: Package with Conveyor
+        uses: hydraulic-software/conveyor/actions/build@v22.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          command: ${{ env.PUBLISH == 'true' && 'make copied-site' || 'make site' }}
+          signing_key: ${{ secrets.CONVEYOR_SIGNING_KEY }}
+          agree_to_license: "1"
+          conveyor_version: "16.0"
+          extra_flags: >-
+            --parallelism=2
+            --cache-limit=4
+            ${{ env.PUBLISH == 'true' && '' || '-Kapp.site.consistency-checks=warn' }}
