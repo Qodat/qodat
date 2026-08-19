@@ -26,6 +26,7 @@ import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.util.DEFAULT
+import stan.qodat.util.PerfTrace
 import stan.qodat.util.formatName
 import stan.qodat.util.getMaterial
 
@@ -71,43 +72,62 @@ abstract class Entity<D : EntityDefinition>(
 
     fun getModels(): Array<Model> {
         if (models == null) {
-            try {
-                val definitions = definition.modelIds.map { cache.getModelDefinition(it) }.toTypedArray()
-                models = if (definitions.size > 1 && mergeModelProperty.get()) {
-                    val multiModelName = "models_${
-                        definitions.joinToString {
-                            it.getName() + "_"
-                        }
-                    }"
-                    val modelDefinition = RS2ModelBuilder(*definitions).build()
-                    val model = Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor)
-                    arrayOf(model)
-                } else
-                    createDistinctModels()
-            } catch (e: Throwable) {
-                Qodat.logException("Could not get entity {${getName()}}'s models", e)
-                return emptyArray()
+            models = PerfTrace.span("entity.getModels ${getName()}") {
+                try {
+                    loadModels()
+                } catch (e: Throwable) {
+                    Qodat.logException("Could not get entity {${getName()}}'s models", e)
+                    emptyArray()
+                }
             }
         }
         return models!!
     }
 
+    private fun loadModels(): Array<Model> {
+        val definitions = definition.modelIds.mapNotNull { modelId ->
+            try {
+                PerfTrace.span("cache.model $modelId") {
+                    cache.getModelDefinition(modelId)
+                }
+            } catch (e: Throwable) {
+                Qodat.logException("Could not load model $modelId for entity {${getName()}}", e)
+                null
+            }
+        }.toTypedArray()
+        if (definitions.isEmpty())
+            return emptyArray()
+        return if (definitions.size > 1 && mergeModelProperty.get()) {
+            PerfTrace.span("entity.mergeModels ${getName()}") {
+                val multiModelName = "models_${
+                    definitions.joinToString {
+                        it.getName() + "_"
+                    }
+                }"
+                val modelDefinition = RS2ModelBuilder(*definitions).build()
+                arrayOf(Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor))
+            }
+        } else
+            createDistinctModels()
+    }
+
     fun getMaterials(): Array<Material> {
         if (!this::materials.isInitialized) {
-            try {
-                materials = getModels()
-                    .map { it.modelDefinition }
-                    .flatMap {
-                        (0 until it.getFaceCount())
-                            .map { face ->
-                                it.getMaterial(face, cache)
+            materials = PerfTrace.span("entity.getMaterials ${getName()}") {
+                try {
+                    getModels()
+                        .map { it.modelDefinition }
+                        .flatMap { definition ->
+                            (0 until definition.getFaceCount()).map { face ->
+                                definition.getMaterial(face, cache)
                             }
-                    }
-                    .toSet()
-                    .toTypedArray()
-            } catch (e: Throwable) {
-                Qodat.logException("Could not get entity {${getName()}}'s materials", e)
-                return emptyArray()
+                        }
+                        .toSet()
+                        .toTypedArray()
+                } catch (e: Throwable) {
+                    Qodat.logException("Could not get entity {${getName()}}'s materials", e)
+                    emptyArray()
+                }
             }
         }
         return materials
@@ -135,9 +155,14 @@ abstract class Entity<D : EntityDefinition>(
     else
         createDistinctModels()
 
-    private fun createDistinctModels() = definition.modelIds.map {
-        val modelDefinition = cache.getModelDefinition(it)
-        Model(it, modelDefinition, definition.findColor, definition.replaceColor)
+    private fun createDistinctModels() = definition.modelIds.mapNotNull { modelId ->
+        try {
+            val modelDefinition = cache.getModelDefinition(modelId)
+            Model(modelId, modelDefinition, definition.findColor, definition.replaceColor)
+        } catch (e: Throwable) {
+            Qodat.logException("Could not load model $modelId for entity {${getName()}}", e)
+            null
+        }
     }.toTypedArray()
 
     override fun getViewNode(): Node {
@@ -162,9 +187,11 @@ abstract class Entity<D : EntityDefinition>(
 
     override fun getSceneNode(): Group {
         if (modelGroup == null) {
-            modelGroup = Group().apply {
-                for (model in getModels())
-                    children.add(model.getSceneNode())
+            modelGroup = PerfTrace.span("entity.sceneNode ${getName()}") {
+                Group().apply {
+                    for (model in getModels())
+                        children.add(model.getSceneNode())
+                }
             }
         }
         return modelGroup!!
@@ -178,6 +205,7 @@ abstract class Entity<D : EntityDefinition>(
 
     override fun removeTreeItemReference() {
         treeItem = null
+        models?.forEach { it.removeTreeItemReference() }
     }
 
     override fun getTreeItem(treeView: TreeView<Node>): EntityTreeItem {

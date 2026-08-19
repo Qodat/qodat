@@ -31,6 +31,9 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
     private val group = Group()
 
     private val nodeProviderMap = HashMap<Node, SceneNodeProvider>()
+    private val providerNodeMap = HashMap<SceneNodeProvider, Node>()
+    private val suppressTree = HashSet<SceneNodeProvider>()
+    private var browseProvider: SceneNodeProvider? = null
 
     /**
      * Is this context the currently active context in the sub scene?
@@ -47,12 +50,12 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
                 if (activeContext.get()) {
                     it.addedSubList.forEach { node ->
                         val provider = nodeProviderMap[node]
-                        if (provider is TreeItemProvider)
+                        if (provider is TreeItemProvider && provider !in suppressTree)
                             Qodat.addSceneTreeItem(provider)
                     }
                     it.removed.forEach { node ->
                         val provider = nodeProviderMap[node]
-                        if (provider is TreeItemProvider)
+                        if (provider is TreeItemProvider && provider !in suppressTree)
                             Qodat.removeSceneTreeItem(provider)
                     }
                 }
@@ -66,7 +69,7 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
         activeContext.onInvalidation {
             group.children.forEach {
                 val provider = nodeProviderMap[it]
-                if (provider is TreeItemProvider) {
+                if (provider is TreeItemProvider && provider !in suppressTree) {
                     if (value)
                         Qodat.addSceneTreeItem(provider)
                     else
@@ -76,21 +79,71 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
         }
     }
 
-    fun addNode(nodeProvider: SceneNodeProvider) {
+    fun addNode(nodeProvider: SceneNodeProvider, attachTree: Boolean = true) {
         try {
+            if (!attachTree)
+                suppressTree.add(nodeProvider)
+            else
+                suppressTree.remove(nodeProvider)
             val sceneNode = nodeProvider.getSceneNode()
             nodeProviderMap[sceneNode] = nodeProvider
+            providerNodeMap[nodeProvider] = sceneNode
             group.children.add(sceneNode)
         } catch (e: Exception) {
+            suppressTree.remove(nodeProvider)
             Qodat.logException("Failed to add node {$nodeProvider} to scene $name", e)
         }
     }
 
+    /**
+     * Browse slot: at most one unlocked entity in the 3D view.
+     * Tree items are not attached until [attachBrowseTree].
+     */
+    fun replaceBrowseNode(nodeProvider: SceneNodeProvider) {
+        val previous = browseProvider
+        if (previous != null && previous !== nodeProvider) {
+            val locked = (previous as? Entity<*>)?.locked?.get() == true
+            if (!locked)
+                removeNode(previous)
+        }
+        if (browseProvider === nodeProvider && providerNodeMap.containsKey(nodeProvider))
+            return
+        browseProvider = nodeProvider
+        addNode(nodeProvider, attachTree = false)
+    }
+
+    fun removeBrowseNodeIfCurrent(nodeProvider: SceneNodeProvider) {
+        if (browseProvider !== nodeProvider)
+            return
+        val locked = (nodeProvider as? Entity<*>)?.locked?.get() == true
+        if (locked)
+            return
+        removeNode(nodeProvider)
+        if (browseProvider === nodeProvider)
+            browseProvider = null
+    }
+
+    fun attachBrowseTree(nodeProvider: SceneNodeProvider) {
+        if (browseProvider !== nodeProvider)
+            return
+        if (nodeProvider !is TreeItemProvider)
+            return
+        if (!suppressTree.remove(nodeProvider))
+            return
+        if (activeContext.get())
+            Qodat.addSceneTreeItem(nodeProvider)
+    }
+
     fun removeNode(nodeProvider: SceneNodeProvider) {
         try {
-            val sceneNode = nodeProvider.getSceneNode()
+            val sceneNode = providerNodeMap.remove(nodeProvider)
+                ?: nodeProviderMap.entries.find { it.value === nodeProvider }?.key
+                ?: nodeProvider.getSceneNode()
             group.children.remove(sceneNode)
             nodeProviderMap.remove(sceneNode)
+            suppressTree.remove(nodeProvider)
+            if (browseProvider === nodeProvider)
+                browseProvider = null
             nodeProvider.removeSceneNodeReference()
         } catch (e: Exception) {
             Qodat.logException("Failed to remove node {$nodeProvider} from scene $name", e)
@@ -98,8 +151,12 @@ abstract class SceneContext(val name: String) : SceneNodeProvider {
     }
 
     fun clear() {
+        nodeProviderMap.values.forEach { it.removeSceneNodeReference() }
         group.children.clear()
         nodeProviderMap.clear()
+        providerNodeMap.clear()
+        suppressTree.clear()
+        browseProvider = null
     }
 
     fun getModels(): List<Model> {

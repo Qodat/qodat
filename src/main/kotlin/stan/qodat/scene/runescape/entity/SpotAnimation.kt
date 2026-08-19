@@ -10,8 +10,8 @@ import stan.qodat.scene.runescape.animation.Animation
 class SpotAnimation(
     cache: Cache = DispleeCache,
     definition: SpotAnimationDefinition,
-    animationProvider: SpotAnimationDefinition.() -> Array<Animation>
-) : AnimatedEntity<SpotAnimationDefinition>(cache, definition, animationProvider, labelPrefix = "spot_anim"), Encoder {
+    resolveAnimations: (Array<String>) -> Array<Animation>
+) : AnimatedEntity<SpotAnimationDefinition>(cache, definition, resolveAnimations, labelPrefix = "spot_anim"), Encoder {
 
     override fun toString(): String = getName()
 

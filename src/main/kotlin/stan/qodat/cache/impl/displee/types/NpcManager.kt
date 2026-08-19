@@ -7,6 +7,7 @@ import net.runelite.cache.definitions.NpcDefinition
 import net.runelite.cache.definitions.loaders.NpcLoader
 import qodat.cache.definition.NPCDefinition
 import stan.qodat.Properties
+import stan.qodat.cache.NpcPrimaryAnimations
 import java.io.File
 import java.util.OptionalInt
 
@@ -52,45 +53,28 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                override val animationIds by lazy { animationIdsFor(npc, npcAnimsDir) }
+                override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
+                override val animationIds by lazy {
+                    (NpcPrimaryAnimations.ids(npc) + extraAnimationIds(npc, npcAnimsDir))
+                        .distinct()
+                        .toTypedArray()
+                }
                 override val findColor = npc.recolorToFind
                 override val replaceColor = npc.recolorToReplace
             }
         }.toTypedArray()
     }
 
-    private fun animationIdsFor(npc: NpcDefinition, npcAnimsDir: File): Array<String> {
-        val fromDefinition = listOf(
-            npc.standingAnimation,
-            npc.walkingAnimation,
-            npc.idleRotateLeftAnimation,
-            npc.idleRotateRightAnimation,
-            npc.rotateLeftAnimation,
-            npc.rotateRightAnimation,
-            npc.rotate180Animation,
-            npc.runAnimation,
-            npc.runRotate180Animation,
-            npc.runRotateLeftAnimation,
-            npc.runRotateRightAnimation,
-            npc.crawlAnimation,
-            npc.crawlRotate180Animation,
-            npc.crawlRotateLeftAnimation,
-            npc.crawlRotateRightAnimation,
-        ).filter { it > 0 }.map { it.toString() }
-
-        val fromJson = try {
+    private fun extraAnimationIds(npc: NpcDefinition, npcAnimsDir: File): Array<String> {
+        return try {
             val file = npcAnimsDir.resolve("${npc.id}.json")
-            if (file.isFile) {
-                file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
-                    ?.map { it.toString() }
-                    .orEmpty()
-            } else {
-                emptyList()
-            }
+            if (!file.isFile) return emptyArray()
+            file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
+                ?.map { it.toString() }
+                ?.toTypedArray()
+                ?: emptyArray()
         } catch (_: Exception) {
-            emptyList()
+            emptyArray()
         }
-
-        return (fromDefinition + fromJson).distinct().toTypedArray()
     }
 }

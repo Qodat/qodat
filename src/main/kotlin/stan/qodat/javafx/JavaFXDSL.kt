@@ -3,6 +3,8 @@ package stan.qodat.javafx
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.ObjectProperty
 import javafx.beans.property.StringProperty
+import javafx.beans.value.ChangeListener
+import javafx.beans.value.WeakChangeListener
 import javafx.collections.FXCollections
 import javafx.collections.ListChangeListener
 import javafx.collections.ObservableList
@@ -18,6 +20,7 @@ import javafx.scene.text.Text
 import javafx.scene.text.TextFlow
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
+import java.util.WeakHashMap
 
 fun ContextMenu.menu(name: String, init: Menu.() -> Unit) {
     val menu = Menu(name)
@@ -108,6 +111,25 @@ fun<T> SelectionModel<T>.onSelected(onSelected: (T?, T?) -> Unit) {
         onSelected.invoke(oldValue, newValue)
     }
 }
+
+/**
+ * Listen to [selectionModel] without pinning this item (or its model) to the
+ * shared TreeView after the item is discarded. Each tree item used to add a
+ * strong listener to the same selection model; expanding vertex groups and
+ * then browsing NPCs accumulated those listeners for the rest of the session.
+ */
+fun <T> TreeItem<T>.onTreeSelected(
+    selectionModel: SelectionModel<TreeItem<T>>,
+    onSelected: (TreeItem<T>?, TreeItem<T>?) -> Unit
+) {
+    val listener = ChangeListener<TreeItem<T>> { _, oldValue, newValue ->
+        onSelected(oldValue, newValue)
+    }
+    treeSelectionListeners[this] = listener
+    selectionModel.selectedItemProperty().addListener(WeakChangeListener(listener))
+}
+
+private val treeSelectionListeners = WeakHashMap<TreeItem<*>, ChangeListener<*>>()
 
 fun TextFlow.text(vararg pairs: Pair<String, Color>) {
     for ((string, color) in pairs) {

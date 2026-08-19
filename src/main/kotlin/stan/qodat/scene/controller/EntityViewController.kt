@@ -8,9 +8,7 @@ import javafx.collections.FXCollections
 import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.collections.transformation.SortedList
-import javafx.event.Event
 import javafx.event.EventHandler
-import javafx.event.EventType
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.scene.Node
@@ -22,11 +20,11 @@ import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.channels.actor
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
-import java.util.concurrent.CountDownLatch
+import stan.qodat.scene.EntitySelectionCoordinator
 import qodat.cache.Cache
+import java.util.concurrent.CountDownLatch
 import qodat.cache.CacheEventListener
 import qodat.cache.definition.EntityDefinition
 import qodat.cache.event.CacheReloadEvent
@@ -149,6 +147,10 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     lateinit var onEntitySelected: (Entity<*>) -> Unit
 
     private var pendingViewState: EntityViewState? = null
+    private val selectionCoordinator = EntitySelectionCoordinator(sceneContext).apply {
+        onPreview = { node, gen -> previewSelection(node, gen) }
+        onSettled = { node, gen -> settleSelection(node, gen) }
+    }
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
@@ -229,7 +231,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         val pendingLoads = CountDownLatch(7)
         loadLastSelectedAnimation(pendingLoads)
 
-        CacheAssetLoader(cache, animationController).loadAll(
+        CacheAssetLoader(cache, animationController::resolve).loadAll(
             selectedFirst = Properties.selectedViewerTab.get(),
             onNpcs = {
                 npcs.setAll(it)
@@ -574,12 +576,6 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
                 (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
             }
         }
-        Properties.selectedEntity.addListener { _, oldEntity, newEntity ->
-            if (newEntity is AnimatedEntity) {
-                animationController.animations.setAll(*newEntity.getAnimations())
-                animationController.animationsListView.refresh()
-            }
-        }
         return animationView
     }
 
@@ -655,8 +651,8 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     ) {
         val filteredList = FilteredList(backingList) { true }
         items = SortedList(filteredList, sortComparator)
-        on(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent::handle)
-        on(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent::handle)
+        addEventHandler(ViewNodeListView.UNSELECTED_EVENT_TYPE, onUnselectedEvent)
+        addEventHandler(ViewNodeListView.SELECTED_EVENT_TYPE, onSelectedEvent)
         if (searchField != null) {
             searchField.configureSearchFilter(filteredList)
             handleEmptySearchField(searchField)
@@ -664,13 +660,8 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     }
 
     val onUnselectedEvent = EventHandler<ViewNodeListView.UnselectedEvent> { event ->
-
         val node = event.viewNodeProvider
-
-        println("unselected $node")
-
-        if (node is SceneNodeProvider)
-            sceneContext.removeNode(node)
+        selectionCoordinator.unselect(node)
 
         if (node is Entity<*>) {
             if (!event.hasNewValueOfSameType) {
@@ -702,21 +693,12 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     }
 
     private val onSelectedEvent = EventHandler<ViewNodeListView.SelectedEvent> { event ->
-
         val newNode = event.newValue
+        val start = stan.qodat.util.PerfTrace.begin()
+        selectionCoordinator.select(newNode)
 
-        if (newNode is SceneNodeProvider)
-            sceneContext.addNode(newNode)
-
-        if (newNode is Entity<*>) {
+        if (newNode is Entity<*>)
             newNode.property().set(newNode.getName())
-            Properties.selectedEntity.set(newNode)
-            modelController.models.setAll(*newNode.getModels())
-            materialController.materials.setAll(*newNode.getMaterials())
-            pendingViewState?.selectedModelName?.let { modelController.restoreSelectedName(it) }
-            if (this::onEntitySelected.isInitialized)
-                onEntitySelected(newNode)
-        }
 
         if (newNode is Transformable)
             sceneContext.animationPlayer.transformableList.add(newNode)
@@ -729,6 +711,35 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             is SpotAnimation -> currentSelectedSpotAnimProperty.set(newNode)
             is InterfaceGroup -> currentSelectedInterfaceProperty.set(newNode)
         }
+        stan.qodat.util.PerfTrace.end("select.immediate", start)
+    }
+
+    private fun previewSelection(node: ViewNodeProvider, generation: Long) {
+        if (!selectionCoordinator.isCurrent(generation))
+            return
+        if (node !is Entity<*>)
+            return
+        stan.qodat.util.PerfTrace.span("select.previewLists ${node.getName()}") {
+            Properties.selectedEntity.set(node)
+            modelController.models.setAll(*node.getModels())
+            pendingViewState?.selectedModelName?.let { modelController.restoreSelectedName(it) }
+        }
+    }
+
+    private fun settleSelection(node: ViewNodeProvider, generation: Long) {
+        if (!selectionCoordinator.isCurrent(generation))
+            return
+        if (node !is Entity<*>)
+            return
+        stan.qodat.util.PerfTrace.span("select.settle ${node.getName()}") {
+            materialController.materials.setAll(*node.getMaterials())
+            if (node is AnimatedEntity<*>) {
+                animationController.animations.setAll(*node.getPrimaryAnimations())
+                animationController.animationsListView.refresh()
+            }
+            if (this::onEntitySelected.isInitialized)
+                onEntitySelected(node)
+        }
     }
 
     private fun handleEmptySearchField(searchField: TextField) {
@@ -740,15 +751,4 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
                 }
             }
     }
-}
-
-private fun <N : Event> Node.on(
-    unselectedEventType: EventType<N>,
-    action: suspend (N) -> Unit,
-) {
-    val eventActor = GlobalScope.actor<N>(Dispatchers.Main) {
-        for (event in channel) action(event) // pass event to action
-    }
-    // install a listener to offer events to this actor
-    addEventHandler(unselectedEventType, eventActor::trySend)
 }

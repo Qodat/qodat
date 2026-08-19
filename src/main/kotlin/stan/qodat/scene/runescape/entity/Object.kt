@@ -18,8 +18,8 @@ import java.io.UnsupportedEncodingException
 class Object(
     cache: Cache = DispleeCache,
     definition: ObjectDefinition,
-    animationProvider: ObjectDefinition.() -> Array<Animation>
-) : AnimatedEntity<ObjectDefinition>(cache, definition, animationProvider, "loc"), Encoder {
+    resolveAnimations: (Array<String>) -> Array<Animation>
+) : AnimatedEntity<ObjectDefinition>(cache, definition, resolveAnimations, "loc"), Encoder {
 
     override fun encode(format: Cache) : EncodeResult {
         throw UnsupportedEncodingException()

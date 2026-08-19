@@ -4,7 +4,6 @@ import javafx.application.Platform
 import javafx.concurrent.Task
 import org.slf4j.LoggerFactory
 import qodat.cache.Cache
-import qodat.cache.definition.AnimatedEntityDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.EntityDefinition
 import stan.qodat.Properties
@@ -22,7 +21,7 @@ import kotlin.system.measureTimeMillis
 
 class CacheAssetLoader(
     private val cache: Cache,
-    private val animationLoader: (AnimatedEntityDefinition) -> Array<Animation>
+    private val resolveAnimations: (Array<String>) -> Array<Animation>
 ) {
 
     fun loadAll(
@@ -127,12 +126,12 @@ class CacheAssetLoader(
 
     private fun loadNpcsNow(): List<NPC> = loadEntities(
         definitions = { cache.getNPCs() },
-        mapper = { NPC(cache, this, animationLoader) }
+        mapper = { NPC(cache, this, resolveAnimations) }
     )
 
     private fun loadObjectsNow(): List<Object> = loadEntities(
         definitions = { cache.getObjects() },
-        mapper = { Object(cache, this, animationLoader) }
+        mapper = { Object(cache, this, resolveAnimations) }
     )
 
     private fun loadItemsNow(): List<Item> = loadEntities(
@@ -142,7 +141,7 @@ class CacheAssetLoader(
 
     private fun loadSpotAnimsNow(): List<SpotAnimation> = loadEntities(
         definitions = { cache.getSpotAnimations() },
-        mapper = { SpotAnimation(cache, this, animationLoader) }
+        mapper = { SpotAnimation(cache, this, resolveAnimations) }
     )
 
     private fun loadAnimationsNow(): List<Animation> {
@@ -209,17 +208,17 @@ class CacheAssetLoader(
 
     private fun createObjectLoadTask(cache: Cache, onCompleted: (List<Object>) -> Unit) = createLoadTask(
         definitions = { cache.getObjects() },
-        mapper = { Object(cache, this, animationLoader) }
+        mapper = { Object(cache, this, resolveAnimations) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createNPCLoadTask(cache: Cache, onCompleted: (List<NPC>) -> Unit) = createLoadTask(
         definitions = { cache.getNPCs() },
-        mapper = { NPC(cache, this, animationLoader) }
+        mapper = { NPC(cache, this, resolveAnimations) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createSpotAnimsLoadTask(cache: Cache, onCompleted: (List<SpotAnimation>) -> Unit) = createLoadTask(
         definitions = { cache.getSpotAnimations() },
-        mapper = { SpotAnimation(cache, this, animationLoader) }
+        mapper = { SpotAnimation(cache, this, resolveAnimations) }
     ) { Platform.runLater { onCompleted(this) } }
 
     private fun createItemsLoadTask(cache: Cache, onCompleted: (List<Item>) -> Unit) = createLoadTask(

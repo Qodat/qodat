@@ -107,12 +107,14 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
         return match
     }
 
-    override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> {
-        return p1.animationIds
-            .mapNotNull { id ->
-                animationMap[id]
-                    ?: animations.find { it.definition?.id == id || it.idProperty.get().toString() == id }
-            }
-            .toTypedArray()
+    fun resolve(ids: Array<String>): Array<Animation> {
+        if (ids.isEmpty())
+            return emptyArray()
+        return ids.mapNotNull { id ->
+            animationMap[id]
+                ?: animations.find { it.definition?.id == id || it.idProperty.get().toString() == id }
+        }.toTypedArray()
     }
+
+    override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> = resolve(p1.animationIds)
 }

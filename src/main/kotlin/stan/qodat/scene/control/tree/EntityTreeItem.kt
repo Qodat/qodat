@@ -1,5 +1,7 @@
 package stan.qodat.scene.control.tree
 
+import javafx.beans.value.ChangeListener
+import javafx.beans.value.WeakChangeListener
 import javafx.scene.Node
 import javafx.scene.control.ContextMenu
 import javafx.scene.control.TreeItem
@@ -10,13 +12,14 @@ import stan.qodat.Properties
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.LockButton
 import stan.qodat.scene.control.export.ExportMenu
+import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.entity.Entity
+import stan.qodat.util.PerfTrace
 import stan.qodat.util.setAndBind
 import tornadofx.contextmenu
 import tornadofx.item
-import tornadofx.onChange
 import tornadofx.progressindicator
 
 /**
@@ -29,6 +32,8 @@ class EntityTreeItem(
     private val entity: Entity<*>,
     private val treeView: TreeView<Node>
 ) : TreeItem<Node>() {
+
+    private var selectedAnimationListener: ChangeListener<Animation>? = null
 
     init {
         label(entity.getName()) {
@@ -49,7 +54,7 @@ class EntityTreeItem(
             }
         }
 
-        treeView.selectionModel.onSelected { _, newValue ->
+        onTreeSelected(treeView.selectionModel) { _, newValue ->
             if (newValue != null) {
                 var selected = false
                 var parent = newValue
@@ -113,21 +118,50 @@ class EntityTreeItem(
                 onExpanded {
                     if (!this)
                         Properties.treeItemAnimationsExpanded.set(false)
-                    else if (children.remove(treeItemPlaceHolder)) {
-                        for (animation in entity.getAnimations())
-                            children.add(AnimationTreeItem(animation, entity, treeView))
-                        entity.selectedAnimation.onChange { animation ->
-                            if (animation != null) {
-                                children.removeIf { it is AnimationTreeItem && it.animation == animation }
-                                children.add(0, AnimationTreeItem(animation, entity, treeView))
-                            }
-                        }
+                    else {
+                        Properties.treeItemAnimationsExpanded.set(true)
+                        if (children.remove(treeItemPlaceHolder))
+                            populateAnimationChildren(entity, treeView)
                     }
                 }
-                expandedProperty().set(Properties.treeItemAnimationsExpanded.get())
             }
         }
         expandedProperty().set(entity.treeItemExpandedProperty().get())
+    }
+
+    private fun TreeItem<Node>.populateAnimationChildren(
+        entity: AnimatedEntity<*>,
+        treeView: TreeView<Node>,
+    ) {
+        PerfTrace.span("tree.animations ${entity.getName()}") {
+            val folder = this
+            val extras = entity.extraAnimationCount()
+            val shown = entity.getPrimaryAnimations()
+            for (animation in shown)
+                folder.children.add(AnimationTreeItem(animation, entity, treeView))
+            if (extras > 0) {
+                val loadMore = TreeItem<Node>()
+                loadMore.button("Load remaining $extras animations") {
+                    folder.children.remove(loadMore)
+                    PerfTrace.span("tree.animationsAll ${entity.getName()}") {
+                        val existing = folder.children.mapNotNull { (it as? AnimationTreeItem)?.animation }.toSet()
+                        for (animation in entity.getAnimations()) {
+                            if (animation !in existing)
+                                folder.children.add(AnimationTreeItem(animation, entity, treeView))
+                        }
+                    }
+                }
+                folder.children.add(loadMore)
+            }
+            val listener = ChangeListener<Animation> { _, _, animation ->
+                if (animation != null) {
+                    children.removeIf { it is AnimationTreeItem && it.animation == animation }
+                    children.add(0, AnimationTreeItem(animation, entity, treeView))
+                }
+            }
+            selectedAnimationListener = listener
+            entity.selectedAnimation.addListener(WeakChangeListener(listener))
+        }
     }
 
     private fun TreeItem<Node>.addPlaceHolder(): TreeItem<Node> {

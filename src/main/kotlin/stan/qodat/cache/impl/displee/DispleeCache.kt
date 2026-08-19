@@ -9,6 +9,7 @@ import qodat.cache.definition.*
 import qodat.cache.event.CacheReloadEvent
 import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
+import stan.qodat.cache.ModelDefinitionCache
 import stan.qodat.cache.impl.displee.anims.NpcAnimParser
 import stan.qodat.cache.impl.displee.anims.ObjectAnimParser
 import stan.qodat.cache.impl.displee.types.AnimManager
@@ -116,10 +117,23 @@ object DispleeCache : Cache("Displee") {
         }
     }
 
-    override fun getModelDefinition(id: String): ModelDefinition = withOpenStore {
-        val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
-        val modelData = store.data(7, modelId) ?: throw IllegalArgumentException("Model not found $id")
-        RSModelLoader().load(id, modelData)
+    override fun getModelDefinition(id: String): ModelDefinition =
+        ModelDefinitionCache.getOrLoad(name, id) {
+            withOpenStore {
+                val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
+                val modelData = readModelData(modelId)
+                    ?: throw IllegalArgumentException("Model not found $id")
+                RSModelLoader().load(id, modelData)
+            }
+        }
+
+    private fun readModelData(modelId: Int): ByteArray? {
+        repeat(2) {
+            store.data(7, modelId)?.let { return it }
+            val archive = store.index(7).archive(modelId) ?: return null
+            archive.files().firstOrNull { it.data != null }?.data?.let { return it }
+        }
+        return null
     }
 
     override fun getAnimation(id: String): AnimationDefinition = withOpenStore {

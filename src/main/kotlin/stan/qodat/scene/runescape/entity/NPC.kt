@@ -18,8 +18,8 @@ import java.io.UnsupportedEncodingException
 class NPC(
     cache: Cache = DispleeCache,
     definition: NPCDefinition,
-    animationProvider: NPCDefinition.() -> Array<Animation>
-) : AnimatedEntity<NPCDefinition>(cache, definition, animationProvider, "npc"), Encoder {
+    resolveAnimations: (Array<String>) -> Array<Animation>
+) : AnimatedEntity<NPCDefinition>(cache, definition, resolveAnimations, "npc"), Encoder {
 
     override fun encode(format: Cache) : EncodeResult {
         throw UnsupportedEncodingException()

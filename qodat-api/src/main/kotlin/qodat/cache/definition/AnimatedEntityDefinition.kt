@@ -10,4 +10,10 @@ interface AnimatedEntityDefinition : EntityDefinition {
 
     val animationIds: Array<String>
 
+    /**
+     * Stance / walk / turn ids that should resolve immediately.
+     * Extra skeleton-matched ids (humanoids) stay in [animationIds] and load on demand.
+     */
+    val primaryAnimationIds: Array<String>
+        get() = animationIds
 }

@@ -219,7 +219,7 @@ class EditorController : EntityViewController("editor-scene") {
                 result.models.forEach(cache::add)
 
                 val npcDefinition = QodatNpcDefinition(result.name, result.models.ids, result.animations.ids)
-                val npc = NPC(cache, npcDefinition, animationController)
+                val npc = NPC(cache, npcDefinition, animationController::resolve)
 
                 cache.add(npc)
                 npcs.add(npc)
