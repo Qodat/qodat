@@ -1,0 +1,44 @@
+---
+description: Agents commit their own work. Do not leave a dirty tree for the user to clean up.
+alwaysApply: true
+---
+
+# Committing
+
+When you **change the repo as part of a task**, you commit that work. Do not wait for "please commit." The user should not have to stage or write the message.
+
+## When
+
+- **Implementing, fixing, or refactoring**: commit when a coherent unit is done (one concern per commit). If the task has several units, commit incrementally — do not dump everything at the end.
+- **Before you stop** after making changes: `git status` must not show *your* edits as leftover unstaged/uncommitted work.
+- **Read-only / Q&A / exploration** with no intended edits: do not commit.
+
+## What not to include
+
+- Pre-existing dirty files that are not part of this task — leave them unstaged.
+- Secrets, `.env`, credentials, `qodat-api/build/`, `.idea/` unless the user named that file.
+- Unrelated WIP mixed into your commit.
+
+## Message style (match `git log`)
+
+```
+<type>(<scope>): <imperative description>
+```
+
+No trailing period. Subject ≤72 chars. Body only if the *why* is not obvious.
+
+Types: `feat` `fix` `perf` `refactor` `test` `docs` `build` `ci` `chore`
+
+Scopes used here: `cache` `models` `anims` `scene` `export` `interfaces` `npcs` `desktop` `tooling`
+
+```
+fix(anims): decode NR 317 frames and apply type-5 alpha
+perf(export): speed up animation GIF encoding
+```
+
+## Git safety
+
+- Never `git config`, `--no-verify`, force-push, or hard reset unless the user explicitly asks.
+- Never push unless the user asks.
+- Never amend a commit you did not just create in this conversation, or one that is already pushed.
+- If a hook fails, fix and make a **new** commit — do not amend.
