@@ -1,20 +1,11 @@
 package stan.qodat.scene.runescape
 
-import jagex.Rasterizer3D
-import qodat.cache.models.VertexNormal
 import qodat.cache.definition.ModelDefinition
-import kotlin.math.absoluteValue
+import qodat.cache.models.VertexNormal
 import kotlin.math.sqrt
 
 const val MAX_VIEW_DISTANCE = 8192
 const val DISTANCE_EPSILON = 0.98999999999999999
-
-private fun VertexNormal.add(dx: Int, dy: Int, dz: Int) {
-    x += dx
-    y += dy
-    z += dz
-    magnitude++
-}
 
 fun ModelDefinition.getPoints(face: Int): Triple<
         Triple<Int, Int, Int>,
@@ -67,135 +58,242 @@ fun ModelDefinition.calculateBounds() : Bounds {
     }
 }
 
-const val RENDER_SHADED_TRIANGLE = 0
+/**
+ * Per face render types, as stored in the cache.
+ *
+ * Anything other than [RENDER_GOURAUD_TRIANGLE] disables per vertex interpolation for that face.
+ */
+const val RENDER_GOURAUD_TRIANGLE = 0
 const val RENDER_FLAT_TRIANGLE = 1
-const val RENDER_TEXTURED_TRIANGLE = 2
+const val RENDER_HIDDEN_TRIANGLE = 2
+const val RENDER_UNLIT_TRIANGLE = 3
 
-fun ModelDefinition.calculateFaceColors(brightnessOffset: Int, shadowModifier: Int, sizeX: Int, sizeY: Int, sizeZ: Int, shade: Boolean) : Triple<IntArray, IntArray, IntArray> {
-    val area = sqrt((sizeX * sizeX + sizeY * sizeY + sizeZ * sizeZ).toDouble()).toInt()
-    val shadow = shadowModifier * area shr 8 // shr 8 means >> 8
+/**
+ * The lighting the client uses for actors: npcs, players and spot animations.
+ *
+ * Their definitions offset these with their own `ambient` and `contrast` fields.
+ */
+const val ACTOR_AMBIENT = 64
+const val ACTOR_CONTRAST = 850
+const val ACTOR_LIGHT_X = -30
+const val ACTOR_LIGHT_Y = -50
+const val ACTOR_LIGHT_Z = -30
 
-    val normals = Array(getVertexCount()) { VertexNormal() }
+/**
+ * The lighting the client uses for scenery: objects, items and interface models.
+ *
+ * The light comes in at a shallower angle than [ACTOR_LIGHT_Y], which is what keeps the tops of
+ * world objects from washing out.
+ */
+const val SCENERY_AMBIENT = 64
+const val SCENERY_CONTRAST = 768
+const val SCENERY_LIGHT_X = -50
+const val SCENERY_LIGHT_Y = -10
+const val SCENERY_LIGHT_Z = -50
+
+/**
+ * The colour the client gives faces it lights but does not shade.
+ */
+private const val UNLIT_COLOR = 128
+
+/**
+ * Whether the client discards this face before drawing.
+ *
+ * Faces are hidden either by carrying render type 2 or by being fully transparent, which the
+ * client folds into the same case. Hiding is a property of the model itself, so it applies whether
+ * or not the model is being shaded.
+ */
+fun ModelDefinition.isFaceHidden(face: Int): Boolean {
+    val alpha = getFaceAlphas()?.get(face)?.toInt()
+    if (alpha == -1)
+        return true
+    if (alpha == -2)
+        return false
+    val type = getFaceTypes()?.get(face)?.toInt() ?: RENDER_GOURAUD_TRIANGLE
+    return type != RENDER_GOURAUD_TRIANGLE &&
+        type != RENDER_FLAT_TRIANGLE &&
+        type != RENDER_UNLIT_TRIANGLE
+}
+
+/**
+ * The lit colour of every face corner, as packed 16 bit HSL values.
+ *
+ * Faces that the client shades flat (or does not shade at all) carry the same colour in all
+ * three corners, so consumers never have to branch on the render type.
+ */
+class FaceShading(
+    val corner1: IntArray,
+    val corner2: IntArray,
+    val corner3: IntArray
+) {
+    fun isFlat(face: Int) = corner1[face] == corner2[face] && corner2[face] == corner3[face]
+}
+
+/**
+ * Lights this model the way the client does.
+ *
+ * Vertex normals are the summed face normals of every adjoining Gouraud face, which is what makes
+ * curved surfaces read as smooth; flat faces use their own face normal instead. The resulting
+ * brightness only scales the lightness component of the face colour, leaving hue and saturation
+ * untouched.
+ *
+ * Lighting is baked once rather than re-evaluated per animation frame, matching the client.
+ */
+fun ModelDefinition.light(
+    ambient: Int = ACTOR_AMBIENT,
+    contrast: Int = ACTOR_CONTRAST,
+    lightX: Int = ACTOR_LIGHT_X,
+    lightY: Int = ACTOR_LIGHT_Y,
+    lightZ: Int = ACTOR_LIGHT_Z,
+    faceColors: IntArray? = null
+): FaceShading {
+
     val faceCount = getFaceCount()
-    val faceColors1 = IntArray(faceCount)
-    val faceColors2 = IntArray(faceCount)
-    val faceColors3 = IntArray(faceCount)
+    val corner1 = IntArray(faceCount)
+    val corner2 = IntArray(faceCount)
+    val corner3 = IntArray(faceCount)
+
+    val lightMagnitude = sqrt((lightX * lightX + lightY * lightY + lightZ * lightZ).toDouble()).toInt()
+    val attenuation = contrast * lightMagnitude shr 8
+    // Guards against a zero light vector, which would otherwise divide by zero below.
+    val safeAttenuation = if (attenuation == 0) 1 else attenuation
+
+    val (vertexNormals, faceNormals) = calculateNormals()
+    val faceTypes = getFaceTypes()
+    val faceAlphas = getFaceAlphas()
+    val colors = faceColors ?: IntArray(faceCount) { getFaceColors()[it].toInt() and 0xFFFF }
 
     for (face in 0 until faceCount) {
-        val (v1, v2, v3) = getVertices(face)
-        val dx1 = getX(v2) - getX(v1)
-        val dy1 = getY(v2) - getY(v1)
-        val dz1 = getZ(v2) - getZ(v1)
-        val dx2 = getX(v3) - getX(v1)
-        val dy2 = getY(v3) - getY(v1)
-        val dz2 = getZ(v3) - getZ(v1)
-        var d1: Int = dy1 * dz2 - dy2 * dz1
-        var d2: Int = dz1 * dx2 - dz2 * dx1
-        var d3: Int = dx1 * dy2 - dx2 * dy1
-        while (d1 > MAX_VIEW_DISTANCE || d2 > MAX_VIEW_DISTANCE || d3 > MAX_VIEW_DISTANCE
-            || d1 < -MAX_VIEW_DISTANCE || d2 < -MAX_VIEW_DISTANCE || d3 < -MAX_VIEW_DISTANCE
-        ) {
-            d1 = d1 shr 1 // shr 1 means >> 1
-            d2 = d2 shr 1
-            d3 = d3 shr 1
-        }
-        var distance = sqrt((d1 * d1 + d2 * d2 + d3 * d3).toDouble()).toInt()
-        if (distance <= 0) distance = 1
-        d1 = d1 * 256 / distance
-        d2 = d2 * 256 / distance
-        d3 = d3 * 256 / distance
-        // testures are always -1 at the moment
-        val texture = getFaceTextures()?.get(face)?.toInt()?:-1
-        var type = getFaceTypes()?.get(face)?.toInt()?:0
-        /*
-       the `type and 1 == 0` part functions as a `type % 2 == 0` check.
-       TODO: find out if type is ever more than 3 (this check can be replaced with just `type == RENDER_TEXTURED_TRIANGLE` instead.
-        */
-        if (type == RENDER_SHADED_TRIANGLE || type and 1 == 0) {
-            normals[v1].add(d1, d2, d3)
-            normals[v2].add(d1, d2, d3)
-            normals[v3].add(d1, d2, d3)
-            continue
-        }
-        if (texture != -1)
-            type = RENDER_TEXTURED_TRIANGLE
-        faceColors1[face] = applyLighting(
-            type = type,
-            color = getColor(face),
-            brightness = brightnessOffset + (sizeX * d1 + sizeY * d2 + sizeZ * d3) / (shadow + shadow / 2)
-        )
-    }
-    if (shade)
-        doShading(normals, faceColors1, faceColors2, faceColors3, brightnessOffset, shadow, sizeX, sizeY, sizeZ)
-    return Triple(faceColors1, faceColors2, faceColors3)
-}
 
-fun applyLighting(type: Int, color: Int, brightness: Int): Int {
-    if (color == 65535) return 0
-    if (type and 2 == 2) {
-        return when {
-            brightness < 0 -> 127
-            brightness > 127 -> 0
-            else -> 127 - brightness
+        val color = colors[face] and 0xFFFF
+        var type = faceTypes?.get(face)?.toInt() ?: RENDER_GOURAUD_TRIANGLE
+        // Alpha overrides the render type before anything is lit: 255 hides the face outright and
+        // 254 leaves it unshaded.
+        when (faceAlphas?.get(face)?.toInt()) {
+            -1 -> type = RENDER_HIDDEN_TRIANGLE
+            -2 -> type = RENDER_UNLIT_TRIANGLE
+        }
+
+        when (type) {
+            RENDER_UNLIT_TRIANGLE -> {
+                corner1[face] = UNLIT_COLOR
+                corner2[face] = UNLIT_COLOR
+                corner3[face] = UNLIT_COLOR
+            }
+            RENDER_GOURAUD_TRIANGLE -> {
+                val (v1, v2, v3) = getVertices(face)
+                corner1[face] = shade(color, ambient + vertexBrightness(vertexNormals[v1], lightX, lightY, lightZ, safeAttenuation))
+                corner2[face] = shade(color, ambient + vertexBrightness(vertexNormals[v2], lightX, lightY, lightZ, safeAttenuation))
+                corner3[face] = shade(color, ambient + vertexBrightness(vertexNormals[v3], lightX, lightY, lightZ, safeAttenuation))
+            }
+            RENDER_FLAT_TRIANGLE -> {
+                val normal = faceNormals[face] ?: VertexNormal()
+                // Flat faces are lit at 1.5x the attenuation of a Gouraud face.
+                val divisor = safeAttenuation / 2 + safeAttenuation
+                val brightness = ambient +
+                    (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / divisor
+                val lit = shade(color, brightness)
+                corner1[face] = lit
+                corner2[face] = lit
+                corner3[face] = lit
+            }
+            else -> {
+                corner1[face] = color
+                corner2[face] = color
+                corner3[face] = color
+            }
         }
     }
-    var colorBrightness = brightness * (color and 127) shr 7
-    if (colorBrightness < 2)
-        colorBrightness = 2
-    else if (colorBrightness > 126)
-        colorBrightness = 126
-    return (color and 65408) + colorBrightness
+
+    return FaceShading(corner1, corner2, corner3)
 }
 
-fun ModelDefinition.doShading(normals: Array<VertexNormal>, faceColors1: IntArray, faceColors2: IntArray, faceColors3: IntArray, brightnessOffset: Int, shadow: Int, sizeX: Int, sizeY: Int, sizeZ: Int) {
+/**
+ * Applies a brightness to a packed HSL colour by scaling its lightness component only.
+ *
+ * The lightness is never allowed to reach 0 or 127, because those are pure black and pure white
+ * and would lose the hue entirely.
+ */
+private fun shade(hsl: Int, brightness: Int): Int {
+    var lightness = brightness * (hsl and 127) shr 7
+    if (lightness < 2)
+        lightness = 2
+    else if (lightness > 126)
+        lightness = 126
+    return (hsl and 65408) + lightness
+}
+
+private fun vertexBrightness(normal: VertexNormal, lightX: Int, lightY: Int, lightZ: Int, attenuation: Int): Int {
+    if (normal.magnitude == 0)
+        return 0
+    return (lightX * normal.x + lightY * normal.y + lightZ * normal.z) / (attenuation * normal.magnitude)
+}
+
+/**
+ * Computes the vertex and face normals of this model.
+ *
+ * Only Gouraud faces contribute to vertex normals; flat faces get a normal of their own so that
+ * they keep a hard edge against their neighbours.
+ *
+ * Unlike [ModelDefinition.computeNormals] this does not cache, so it always reflects the current
+ * vertex positions.
+ */
+private fun ModelDefinition.calculateNormals(): Pair<Array<VertexNormal>, Array<VertexNormal?>> {
+
+    val vertexNormals = Array(getVertexCount()) { VertexNormal() }
+    val faceNormals = arrayOfNulls<VertexNormal>(getFaceCount())
+    val faceTypes = getFaceTypes()
+
     for (face in 0 until getFaceCount()) {
-        var skip = false
-        val type = if (getFaceTextures()?.get(face)?.toInt()?:-1 != -1)
-            RENDER_TEXTURED_TRIANGLE
-        else
-            getFaceTypes()
-                ?.get(face)?.toInt()?.also {
-                    if(it and 1 != 0)
-                        skip = true
+
+        val (v1, v2, v3) = getVertices(face)
+        val ax = getX(v2) - getX(v1)
+        val ay = getY(v2) - getY(v1)
+        val az = getZ(v2) - getZ(v1)
+        val bx = getX(v3) - getX(v1)
+        val by = getY(v3) - getY(v1)
+        val bz = getZ(v3) - getZ(v1)
+
+        var nx = ay * bz - by * az
+        var ny = az * bx - bz * ax
+        var nz = ax * by - bx * ay
+
+        // Keeps the following squares inside the range of a 32 bit integer.
+        while (nx > MAX_VIEW_DISTANCE || ny > MAX_VIEW_DISTANCE || nz > MAX_VIEW_DISTANCE ||
+            nx < -MAX_VIEW_DISTANCE || ny < -MAX_VIEW_DISTANCE || nz < -MAX_VIEW_DISTANCE
+        ) {
+            nx = nx shr 1
+            ny = ny shr 1
+            nz = nz shr 1
+        }
+
+        var length = sqrt((nx * nx + ny * ny + nz * nz).toDouble()).toInt()
+        if (length <= 0)
+            length = 1
+        nx = nx * 256 / length
+        ny = ny * 256 / length
+        nz = nz * 256 / length
+
+        when (faceTypes?.get(face)?.toInt() ?: RENDER_GOURAUD_TRIANGLE) {
+            RENDER_GOURAUD_TRIANGLE -> {
+                for (vertex in intArrayOf(v1, v2, v3)) {
+                    val normal = vertexNormals[vertex]
+                    normal.x += nx
+                    normal.y += ny
+                    normal.z += nz
+                    normal.magnitude++
                 }
-                ?:RENDER_FLAT_TRIANGLE
-        if (skip)
-            continue
-        val hsl = getFaceColors()[face].toInt() and 0xFFFF
-        val (v1, v2, v3) = getVertices(face)
-        val n1 = normals[v1]
-        val n2 = normals[v2]
-        val n3 = normals[v3]
-        faceColors1[face] = applyLighting(
-            type = type,
-            color = hsl,
-            brightness = brightnessOffset + (sizeX * n1.x + sizeY * n1.y + sizeZ * n1.z) / (shadow * n1.magnitude))
-        faceColors2[face] = applyLighting(
-            type = type,
-            color = hsl,
-            brightness = brightnessOffset + (sizeX * n2.x + sizeY * n2.y + sizeZ * n2.z) / (shadow * n2.magnitude))
-        faceColors3[face] = applyLighting(
-            type = type,
-            color = hsl,
-            brightness = brightnessOffset + (sizeX * n3.x + sizeY * n3.y + sizeZ * n3.z) / (shadow * n3.magnitude))
+            }
+            RENDER_FLAT_TRIANGLE -> {
+                faceNormals[face] = VertexNormal().apply {
+                    x = nx
+                    y = ny
+                    z = nz
+                    magnitude = 1
+                }
+            }
+        }
     }
-}
 
-fun ModelDefinition.draw(shade: Boolean = false) {
-    val (colors1, colors2, colors3) = calculateFaceColors(64, 850, -30, -50, -30, shade)
-    for (face in 0 until getFaceCount())
-        drawFace(face, colors1, colors2, colors3)
-}
-
-fun ModelDefinition.drawFace(face: Int, colors1: IntArray, colors2: IntArray, colors3: IntArray) {
-    val type = getFaceTypes()?.get(face)?.toInt()?.let { it and 3 }?:0
-    if (type == RENDER_SHADED_TRIANGLE) {
-        val (v1, v2, v3) = getVertices(face)
-        Rasterizer3D.drawGouraudTriangle(
-            getX(v1), getX(v2), getX(v3),
-            getY(v1), getY(v2), getY(v3),
-            getZ(v1).absoluteValue.toFloat(), getZ(v2).absoluteValue.toFloat(), getZ(v3).absoluteValue.toFloat(),
-            colors1[face], colors2[face], colors3[face]
-        )
-    }
+    return vertexNormals to faceNormals
 }

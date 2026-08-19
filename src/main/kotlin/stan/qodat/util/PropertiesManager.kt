@@ -57,15 +57,35 @@ class PropertiesManager(private val saveFilePath: Path) {
         }
     }
 
-    fun <T> bind(key: String, property: Property<T>, transformer: (String) -> T) {
+    /**
+     * Binds a property to a stored value.
+     *
+     * A stored value that cannot be parsed is discarded rather than propagated, so that a session
+     * file written by an older build can never stop the application from starting.
+     *
+     * @param serializer how to write the value back out; must round-trip through [transformer].
+     */
+    fun <T> bind(
+        key: String,
+        property: Property<T>,
+        serializer: (T) -> String = { it.toString() },
+        transformer: (String) -> T
+    ) {
         val value = properties.getProperty(key)
-        if (value != null)
-            property.value = transformer.invoke(value)
+        if (value != null) {
+            try {
+                property.value = transformer.invoke(value)
+            } catch (e: Exception) {
+                logger.warn("Discarding unreadable value '$value' for property '$key'", e)
+                properties.remove(key)
+            }
+        }
         property.addListener { _ ->
-            if (property.value == null)
+            val current = property.value
+            if (current == null)
                 properties.remove(key)
             else
-                properties.setProperty(key, property.value.toString())
+                properties.setProperty(key, serializer.invoke(current))
         }
     }
 
@@ -78,8 +98,15 @@ class PropertiesManager(private val saveFilePath: Path) {
     fun bindPath(key: String, property: ObjectProperty<Path?>) =
         bind(key, property) { Paths.get(it) }
 
+    /**
+     * Enums are stored under their constant name, because [Enum.toString] is often overridden to
+     * return a human readable label that will not parse back.
+     */
     inline fun <reified T : Enum<T>> bindEnum(key: String, property: ObjectProperty<T>) =
-        bind(key, property) { enumValueOf<T>(it) }
+        bind(key, property, serializer = { it.name }) { stored ->
+            enumValues<T>().firstOrNull { it.name == stored || it.toString() == stored }
+                ?: property.value
+        }
 
     fun bindColor(key: String, property: ObjectProperty<Color>) =
         bind(key, property) { Color.valueOf(it) }

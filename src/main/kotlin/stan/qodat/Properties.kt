@@ -10,6 +10,7 @@ import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.Entity
+import stan.qodat.scene.runescape.model.ModelViewMode
 import stan.qodat.util.PropertiesManager
 import tornadofx.booleanProperty
 import java.nio.file.Path
@@ -37,6 +38,7 @@ object Properties {
     }
 
     val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
+    val viewMode = SimpleObjectProperty(ModelViewMode.FILL)
 
     /**
      * Should MSAA anti-aliasing be used in render engine?
@@ -53,6 +55,8 @@ object Properties {
     val showAxis = SimpleBooleanProperty(true)
     val showFPS = SimpleBooleanProperty(true)
     val showPriorityLabels = SimpleBooleanProperty(false)
+    val showVertexGroups = SimpleBooleanProperty(false)
+    val shading = SimpleBooleanProperty(true)
     val showFramesTab = SimpleBooleanProperty(false)
     val expandSettings = SimpleBooleanProperty(true)
 
@@ -102,6 +106,7 @@ object Properties {
     val defaultExportsPath = SimpleObjectProperty(rootPath.get().resolve("exports"))
     val lastWaveFrontSingleExportPath = SimpleObjectProperty<Path?>(null)
     val lastWaveFrontSequenceExportPath = SimpleObjectProperty<Path?>(null)
+    val lastBlenderExportPath = SimpleObjectProperty<Path?>(null)
     val lastGIFExportPath = SimpleObjectProperty<Path?>(null)
     val lastSpriteExportPath = SimpleObjectProperty<Path?>(null)
 
@@ -133,7 +138,7 @@ object Properties {
     val treeItemAnimationFrameSelectedColor = SimpleObjectProperty(Color.web("#7e76aa"))
     val treeItemAnimationFrameColor = SimpleObjectProperty(Color.web("#bba5c7"))
 
-    val treeItemAnimationsExpanded = SimpleBooleanProperty(true)
+    val treeItemAnimationsExpanded = SimpleBooleanProperty(false)
     val treeItemModelsExpanded = SimpleBooleanProperty(true)
     val treeItemEntityExpanded = SimpleBooleanProperty(true)
     val treeItemInterfaceExpanded = SimpleBooleanProperty(true)
@@ -142,6 +147,9 @@ object Properties {
     val copyAnimationsFromNpc = SimpleBooleanProperty(true)
 
     val showIdAfterLabel = SimpleBooleanProperty(true)
+
+    /** Print selection / model-load span timings to the console. */
+    val logSelectionPerf = SimpleBooleanProperty(true)
 
     fun bind(sessionManager: PropertiesManager) {
 
@@ -214,9 +222,16 @@ object Properties {
 
         sessionManager.bindPath("last-wavefront-single-export-path", lastWaveFrontSingleExportPath)
         sessionManager.bindPath("last-wavefront-sequence-export-path", lastWaveFrontSequenceExportPath)
+        sessionManager.bindPath("last-blender-export-path", lastBlenderExportPath)
         sessionManager.bindPath("last-gif-export-path", lastGIFExportPath)
         sessionManager.bindPath("last-sprite-export-path", lastSpriteExportPath)
 
         sessionManager.bindBoolean("show-id-after-label", showIdAfterLabel)
+        sessionManager.bindBoolean("log-selection-perf", logSelectionPerf)
+        logSelectionPerf.addListener { _, _, value -> stan.qodat.util.PerfTrace.enabled = value }
+        stan.qodat.util.PerfTrace.enabled = logSelectionPerf.get()
+        sessionManager.bindBoolean("show-vertex-groups", showVertexGroups)
+        sessionManager.bindBoolean("shading", shading)
+        sessionManager.bindEnum("view-mode", viewMode)
     }
 }

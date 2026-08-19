@@ -15,8 +15,6 @@ enum class ModelMeshBuildType {
      */
     ATLAS,
 
-    TEXTURED_ATLAS,
-
     SKELETON_ATLAS,
 
     /**

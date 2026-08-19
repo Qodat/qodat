@@ -106,6 +106,13 @@ fun<P, O : Property<P>> O.setAndBind(newProperty: O, biDirectional: Boolean = fa
         bind(newProperty)
 }
 
+fun <P> Property<P>.unbindBidirectionalSafely(other: Property<P>) {
+    try {
+        unbindBidirectional(other)
+    } catch (_: IllegalArgumentException) {
+    }
+}
+
 fun<T, P : Property<T>> ComboBox<T>.bind(property: P) {
     selectionModel.selectedItemProperty().onInvalidation {
         property.value = value

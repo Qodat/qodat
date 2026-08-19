@@ -10,6 +10,12 @@ import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import qodat.cache.definition.ModelDefinition
 import stan.qodat.cache.impl.displee.DispleeCache
+import stan.qodat.scene.paint.AtlasMaterial
+import stan.qodat.scene.paint.ColorMaterial
+import stan.qodat.scene.paint.FaceTint
+import stan.qodat.scene.runescape.isFaceHidden
+import stan.qodat.scene.runescape.light
+import stan.qodat.util.ModelUtil
 import stan.qodat.util.getMaterial
 import stan.qodat.util.setAndBind
 
@@ -58,7 +64,9 @@ class ModelFaceMeshGroup(
             val definition = model.modelDefinition
             materials = createMaterials(definition)
             val faceMeshes = createMeshes(definition)
-            val faceMeshSceneNodes = faceMeshes.map {
+            val faceMeshSceneNodes = faceMeshes.filterNot {
+                definition.isFaceHidden(it.face)
+            }.map {
                 it.getSceneNode()
             }
             faceMeshGroup.children.addAll(faceMeshSceneNodes)
@@ -71,6 +79,7 @@ class ModelFaceMeshGroup(
         return MutableList(definition.getFaceCount()) { face ->
 
             val material = materials[face]
+            val shadedMaterial = material as? AtlasMaterial
             val mesh = ModelFaceMesh(face, material)
 
             mesh.visibleProperty.setAndBind(visibleProperty)
@@ -104,8 +113,17 @@ class ModelFaceMeshGroup(
                 )
             }
 
-            val u = definition.getFaceTextureUCoordinates()?.get(face) ?: floatArrayOf(-1f, -1f, -1f)
-            val v = definition.getFaceTextureVCoordinates()?.get(face) ?: floatArrayOf(-1f, -1f, -1f)
+            val u: FloatArray
+            val v: FloatArray
+            if (shadedMaterial != null) {
+                // The face carries a shading tile rather than a cache texture, so its UVs point
+                // at the corners of that tile instead of into the texture.
+                u = FloatArray(3) { shadedMaterial.getU(0, it) }
+                v = FloatArray(3) { shadedMaterial.getV(0, it) }
+            } else {
+                u = definition.getFaceTextureUCoordinates()?.get(face) ?: floatArrayOf(-1f, -1f, -1f)
+                v = definition.getFaceTextureVCoordinates()?.get(face) ?: floatArrayOf(-1f, -1f, -1f)
+            }
 
             val texIndex1 = mesh.addUV(u[0], v[0])
             val texIndex2 = mesh.addUV(u[1], v[1])
@@ -120,9 +138,29 @@ class ModelFaceMeshGroup(
         }
     }
 
+    /**
+     * Builds one material per face.
+     *
+     * Faces that carry a cache texture keep that texture; the rest get their lit colour, which for
+     * a shaded model means a private one-face [AtlasMaterial] holding the Gouraud gradient.
+     */
     private fun createMaterials(definition: ModelDefinition) : List<Material> {
+        val shading = if (model.shadingProperty.get())
+            definition.light()
+        else
+            null
         return MutableList(definition.getFaceCount()) { face ->
-            definition.getMaterial(face, DispleeCache).fxMaterial
+            val material = definition.getMaterial(face, DispleeCache)
+            if (shading == null || material !is ColorMaterial)
+                return@MutableList material.fxMaterial
+            val alpha = model.getRenderFaceAlphas()?.get(face)
+            AtlasMaterial().apply {
+                setFaceTints(arrayOf(FaceTint(
+                    ModelUtil.hsbToColor(shading.corner1[face], alpha),
+                    ModelUtil.hsbToColor(shading.corner2[face], alpha),
+                    ModelUtil.hsbToColor(shading.corner3[face], alpha)
+                )))
+            }
         }
     }
 }
