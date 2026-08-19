@@ -34,10 +34,12 @@ abstract class AnimParser(
 
     abstract fun matchAnimationsToSkeletons(animationMap: AnimationSkeletonIndex.AnimationMap)
 
-    protected fun report(message: String, work: Double = workDone, total: Double = totalWork.coerceAtLeast(1.0)) {
+    protected fun report(message: String, work: Double = 0.0, total: Double = 1.0) {
+        // Do not read Task.workDone / totalWork here: those getters must run on
+        // the FX thread, and both auto-scan and File→Rescan call this off-thread.
         updateMessage(message)
-        updateProgress(work, total)
-        progressSink?.invoke(message, work, total)
+        updateProgress(work, total.coerceAtLeast(1.0))
+        progressSink?.invoke(message, work, total.coerceAtLeast(1.0))
     }
 
     private fun associateAnimationBySkeletonIds(): AnimationSkeletonIndex.AnimationMap {

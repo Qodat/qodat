@@ -101,9 +101,9 @@ class CacheAssetLoader(
     private fun maybeSubmitNpcAnimParser() {
         if (cache !is DispleeCache) return
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
-        if (!npcAnimsDir.exists()) {
+        if (!npcAnimsDir.exists() || npcAnimsDir.listFiles().isNullOrEmpty()) {
             println("Did not find npc_anims dir, creating...")
-            npcAnimsDir.mkdir()
+            npcAnimsDir.mkdirs()
             cache.ensureReady()
             BackgroundTasks.submit(addProgressIndicator = true, cache.npcAnimParser)
         }
@@ -112,9 +112,9 @@ class CacheAssetLoader(
     private fun maybeSubmitObjectAnimParser() {
         if (cache !is DispleeCache) return
         val objectAnimsDir = Properties.osrsCachePath.get().resolve("object_anims").toFile()
-        if (!objectAnimsDir.exists()) {
+        if (!objectAnimsDir.exists() || objectAnimsDir.listFiles().isNullOrEmpty()) {
             println("Did not find object_anims dir, creating...")
-            objectAnimsDir.mkdir()
+            objectAnimsDir.mkdirs()
             cache.ensureReady()
             BackgroundTasks.submit(addProgressIndicator = true, cache.objectAnimParser)
         }
