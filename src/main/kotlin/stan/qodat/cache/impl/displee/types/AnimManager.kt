@@ -29,7 +29,12 @@ class AnimManager(
         val archive = cacheLibrary.index(2).archive(12)!!
         val revision = archive.revision
         archive.files.forEach { (fileId, file) ->
-            seqs[fileId] = loadSeq(revision, fileId, file.data ?: error("Frame data null"))
+            val data = file.data ?: return@forEach
+            try {
+                seqs[fileId] = loadSeq(revision, fileId, data)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
         loaded = true
     }
