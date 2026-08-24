@@ -8,6 +8,8 @@ import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
  */
 object NpcPrimaryAnimations {
 
+    private val EMPTY_INTS = IntArray(0)
+
     private enum class Family { IDLE, WALK, RUN, CRAWL }
 
     private enum class Role(val label: String, val family: Family, val head: Boolean) {
@@ -37,8 +39,8 @@ object NpcPrimaryAnimations {
         Role.ROTATE_180,
     )
 
-    fun intIds(npc: NpcDefinition): IntArray =
-        intArrayOf(
+    fun intIds(npc: NpcDefinition): IntArray {
+        val raw = intArrayOf(
             npc.standingAnimation,
             npc.walkingAnimation,
             npc.idleRotateLeftAnimation,
@@ -54,10 +56,20 @@ object NpcPrimaryAnimations {
             npc.crawlRotate180Animation,
             npc.crawlRotateLeftAnimation,
             npc.crawlRotateRightAnimation,
-        ).filter { it > 0 }.distinct().toIntArray()
+        )
+        var n = 0
+        outer@ for (i in raw.indices) {
+            val value = raw[i]
+            if (value <= 0) continue
+            for (j in 0 until n) {
+                if (raw[j] == value) continue@outer
+            }
+            raw[n++] = value
+        }
+        return if (n == 0) EMPTY_INTS else if (n == raw.size) raw else raw.copyOf(n)
+    }
 
-    fun ids(npc: NpcDefinition): Array<String> =
-        intIds(npc).map { it.toString() }.toTypedArray()
+    fun ids(npc: NpcDefinition): Array<String> = CacheIdStrings.of(intIds(npc))
 
     fun labels(npc: NpcDefinition): Map<String, String> {
         val rolesById = linkedMapOf<Int, MutableList<Role>>()

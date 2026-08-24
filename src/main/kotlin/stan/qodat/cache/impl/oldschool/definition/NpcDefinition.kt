@@ -1,6 +1,7 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.NPCDefinition
+import stan.qodat.cache.CacheIdStrings
 import stan.qodat.cache.NpcPrimaryAnimations
 import java.util.OptionalInt
 
@@ -63,7 +64,7 @@ class NpcDefinition(val id: Int) : NPCDefinition {
 
     override fun getOptionalId(): OptionalInt = OptionalInt.of(id)
     override val modelIds: Array<String>
-        get() = models?.map { it.toString() }?.toTypedArray() ?: emptyArray()
+        get() = models?.let { CacheIdStrings.of(it) } ?: CacheIdStrings.EMPTY
     override val findColor: ShortArray? get() = recolorToFind
     override val replaceColor: ShortArray? get() = recolorToReplace
     override val primaryAnimationIds: Array<String> get() = NpcPrimaryAnimations.ids(this)

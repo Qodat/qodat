@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import qodat.cache.definition.NPCDefinition
 import stan.qodat.Properties
+import stan.qodat.cache.CacheIdStrings
 import stan.qodat.cache.NpcPrimaryAnimations
 import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 import stan.qodat.cache.impl.oldschool.loader.NpcLoader
@@ -60,12 +61,14 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
             if (models == null || models.isEmpty()) return null
             return object : NPCDefinition {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
-                override val name = npc.name.ifBlank { "null" }
-                override val modelIds = models.map { it.toString() }.toTypedArray()
-                override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
-                override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
+                override val name = npc.name.ifBlank { NpcDefinition.NULL_NAME }
+                override val modelIds = CacheIdStrings.of(models)
+                override val primaryAnimationIds by lazy { NpcPrimaryAnimations.ids(npc) }
+                override val animationRoleLabels by lazy { NpcPrimaryAnimations.labels(npc) }
                 override val animationIds by lazy {
-                    (primaryAnimationIds + extraAnimationIds()).distinct().toTypedArray()
+                    val extra = extraAnimationIds()
+                    if (extra.isEmpty()) primaryAnimationIds
+                    else (primaryAnimationIds + extra).distinct().toTypedArray()
                 }
                 override val findColor = npc.recolorToFind
                 override val replaceColor = npc.recolorToReplace
@@ -77,9 +80,8 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
                 val file = npcAnimsDir.resolve("${npc.id}.json")
                 if (!file.isFile) return emptyArray()
                 file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
-                    ?.map { it.toString() }
-                    ?.toTypedArray()
-                    ?: emptyArray()
+                    ?.let { CacheIdStrings.of(it) }
+                    ?: CacheIdStrings.EMPTY
             } catch (_: Exception) {
                 emptyArray()
             }

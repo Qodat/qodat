@@ -27,18 +27,10 @@ class ObjectManager(
 
     fun getObjects(): Array<ObjectDefinition> {
         load()
-        return objects.values.map(::mapObject).toTypedArray()
+        return objects.values.toTypedArray()
     }
 
     companion object {
-        internal fun mapObject(definition: OsrsObjectDefinition): ObjectDefinition =
-            object : ObjectDefinition {
-                override fun getOptionalId() = definition.getOptionalId()
-                override val name = definition.name
-                override val modelIds = definition.modelIds
-                override val animationIds = definition.animationIds
-                override val findColor = definition.findColor
-                override val replaceColor = definition.replaceColor
-            }
+        internal fun mapObject(definition: OsrsObjectDefinition): ObjectDefinition = definition
     }
 }

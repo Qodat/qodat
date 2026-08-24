@@ -1,6 +1,7 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.ObjectDefinition
+import stan.qodat.cache.CacheIdStrings
 import java.util.OptionalInt
 
 class ObjectDefinition(val id: Int) : ObjectDefinition {
@@ -66,11 +67,27 @@ class ObjectDefinition(val id: Int) : ObjectDefinition {
 
     override fun getOptionalId(): OptionalInt = OptionalInt.of(id)
     override val modelIds: Array<String>
-        get() = objectModels?.map { it.toString() }?.toTypedArray() ?: emptyArray()
+        get() {
+            cachedModelIds?.let { return it }
+            val ids = objectModels
+            val mapped = if (ids == null || ids.isEmpty()) CacheIdStrings.EMPTY
+            else CacheIdStrings.of(ids)
+            cachedModelIds = mapped
+            return mapped
+        }
     override val findColor: ShortArray? get() = recolorToFind
     override val replaceColor: ShortArray? get() = recolorToReplace
     override val animationIds: Array<String>
-        get() = if (animationId == -1) emptyArray() else arrayOf(animationId.toString())
+        get() {
+            cachedAnimationIds?.let { return it }
+            val mapped = if (animationId == -1) CacheIdStrings.EMPTY
+            else arrayOf(CacheIdStrings.of(animationId))
+            cachedAnimationIds = mapped
+            return mapped
+        }
+
+    @Transient private var cachedModelIds: Array<String>? = null
+    @Transient private var cachedAnimationIds: Array<String>? = null
 }
 
 data class ObjectSubOp(val index: Int, val subId: Int, val text: String)
