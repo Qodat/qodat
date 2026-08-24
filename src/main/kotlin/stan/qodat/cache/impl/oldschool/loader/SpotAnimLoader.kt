@@ -1,6 +1,5 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import com.displee.io.impl.OutputBuffer
 import stan.qodat.cache.impl.oldschool.definition.SpotAnimDefinition
 
@@ -15,7 +14,7 @@ class SpotAnimLoader {
 
     fun load(id: Int, b: ByteArray): SpotAnimDefinition {
         val def = SpotAnimDefinition(id)
-        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        DecodeCursor(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         return def
     }
 
@@ -57,7 +56,7 @@ class SpotAnimLoader {
         return out.array()
     }
 
-    private fun SpotAnimDefinition.decodeValues(opcode: Int, stream: InputBuffer) {
+    private fun SpotAnimDefinition.decodeValues(opcode: Int, stream: DecodeCursor) {
         when (opcode) {
             1 -> modelId = stream.readUnsignedShort()
             2 -> animationId = stream.readUnsignedShort()
@@ -70,21 +69,25 @@ class SpotAnimLoader {
             9 -> debugName = stream.readString()
             40 -> {
                 val length = stream.readUnsignedByte()
-                recolorToFind = ShortArray(length)
-                recolorToReplace = ShortArray(length)
-                repeat(length) {
-                    recolorToFind!![it] = stream.readUnsignedShort().toShort()
-                    recolorToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                recolorToFind = find
+                recolorToReplace = replace
             }
             41 -> {
                 val length = stream.readUnsignedByte()
-                textureToFind = ShortArray(length)
-                textureToReplace = ShortArray(length)
-                repeat(length) {
-                    textureToFind!![it] = stream.readUnsignedShort().toShort()
-                    textureToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                textureToFind = find
+                textureToReplace = replace
             }
             else -> Unit
         }
