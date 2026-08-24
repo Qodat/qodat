@@ -179,8 +179,12 @@ class CacheAssetLoader(
         lateinit var values: List<Sprite>
         val elapsed = measureTimeMillis {
             val definitions = cache.getSprites()
-            values = definitions.mapNotNull { definition ->
-                if (definition.width > 0 && definition.height > 0) Sprite(definition) else null
+            val archives = definitions
+                .filter { it.width > 0 && it.height > 0 }
+                .groupBy { it.id }
+            values = archives.values.flatMap { frames ->
+                val ordered = frames.sortedBy { it.frame }
+                ordered.map { Sprite(it, ordered) }
             }
         }
         logger.debug("Wrapped {} sprites in {}ms", values.size, elapsed)

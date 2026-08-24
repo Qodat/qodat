@@ -113,6 +113,22 @@
 .menu-item:hover {
     -fx-background-color: #398291;
 }
+.menu-icon {
+    -fx-background-color: rgb(214, 214, 214);
+}
+.menu-item:focused .menu-icon,
+.menu-item:hover .menu-icon {
+    -fx-background-color: white;
+}
+.settings-dialog,
+.settings-root {
+    -fx-background-color: #3C3F41;
+}
+.settings-section-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: rgb(214, 214, 214);
+}
 .split-pane,
 .titled-pane,
 .scroll-bar,
@@ -567,6 +583,7 @@
     -fx-background-color: #3C3F41;
     -fx-border-color: rgb(50, 50, 50);
 }
+.planar-view-toggle-bar,
 .interface-view-toggle-bar {
     -fx-spacing: 0;
     -fx-background-color: rgba(44, 46, 47, 0.92);
@@ -574,6 +591,7 @@
     -fx-border-color: rgb(50, 50, 50);
     -fx-border-radius: 4;
 }
+.planar-view-toggle,
 .interface-view-toggle {
     -fx-background-color: transparent;
     -fx-text-fill: #828282;
@@ -582,9 +600,11 @@
     -fx-background-radius: 4;
     -fx-border-width: 0;
 }
+.planar-view-toggle:hover,
 .interface-view-toggle:hover {
     -fx-background-color: rgb(49, 52, 54);
 }
+.planar-view-toggle:selected,
 .interface-view-toggle:selected {
     -fx-background-color: rgb(60, 63, 65);
     -fx-text-fill: rgb(214, 214, 214);

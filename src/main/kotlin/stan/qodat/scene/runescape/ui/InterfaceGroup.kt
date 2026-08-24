@@ -3,7 +3,6 @@ package stan.qodat.scene.runescape.ui
 import javafx.beans.property.BooleanProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleStringProperty
-import javafx.beans.value.ChangeListener
 import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.control.TreeView
@@ -13,6 +12,7 @@ import qodat.cache.definition.InterfaceDefinition
 import stan.qodat.Properties
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.tree.InterfaceTreeItem
+import stan.qodat.scene.presentation.PlanarSceneHandle
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
@@ -31,8 +31,8 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
     }
 
     private var sceneBuilder: InterfaceSceneBuilder? = null
-    private val explodedListener = ChangeListener<Boolean> { _, _, exploded ->
-        sceneBuilder?.applyExploded(exploded, animate = true)
+    private val planar = PlanarSceneHandle { exploded, animate ->
+        sceneBuilder?.applyExploded(exploded, animate)
     }
 
     private val sceneGroup: Group by lazy {
@@ -45,8 +45,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
         )
         sceneBuilder = builder
         val content = builder.build()
-        builder.applyExploded(InterfacePresentation.exploded.get(), animate = false)
-        InterfacePresentation.exploded.addListener(explodedListener)
+        planar.bind()
         Group(content)
     }
 
@@ -54,9 +53,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
 
     override fun getSceneNode(): Group {
         val node = sceneGroup
-        InterfacePresentation.exploded.removeListener(explodedListener)
-        InterfacePresentation.exploded.addListener(explodedListener)
-        sceneBuilder?.applyExploded(InterfacePresentation.exploded.get(), animate = false)
+        planar.bind()
         return node
     }
 
@@ -69,7 +66,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
     }
 
     override fun removeSceneNodeReference() {
-        InterfacePresentation.exploded.removeListener(explodedListener)
+        planar.unbind()
     }
 
     override fun getName() = nameProperty.get()

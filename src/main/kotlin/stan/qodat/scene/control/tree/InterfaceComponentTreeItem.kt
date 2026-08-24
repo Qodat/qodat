@@ -32,7 +32,7 @@ class InterfaceComponentTreeItem(val cache: Cache, val definition: InterfaceDefi
             val spriteDefinition = runCatching { cache.getSprite(definition.spriteId, 0) }.getOrNull()
             if (spriteDefinition != null) {
                 val sprite = Sprite(spriteDefinition)
-                children.add(TreeItem<Node>(Label("Sprite ${sprite.nameProperty.get()}"), sprite.sceneNode))
+                children.add(TreeItem<Node>(Label("Sprite ${sprite.nameProperty.get()}"), sprite.preview))
             }
         }
     }

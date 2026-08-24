@@ -8,14 +8,11 @@ import javafx.geometry.VPos
 import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
-import javafx.scene.image.Image
 import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
-import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
-import javafx.scene.shape.TriangleMesh
 import javafx.scene.text.Font
 import javafx.scene.text.Text
 import javafx.scene.text.TextAlignment
@@ -23,6 +20,8 @@ import javafx.scene.transform.Scale
 import javafx.util.Duration
 import qodat.cache.Cache
 import qodat.cache.definition.InterfaceDefinition
+import stan.qodat.scene.presentation.PlanarQuad
+import stan.qodat.scene.presentation.PlanarView
 import stan.qodat.scene.runescape.widget.WidgetLayout
 import kotlin.math.ceil
 import kotlin.math.max
@@ -71,7 +70,7 @@ class InterfaceSceneBuilder(
             visual.isVisible = exploded
         for (node in nodesByChildId.values) {
             val depth = (node.properties["iface-depth"] as? Int) ?: 0
-            val targetZ = if (exploded && depth > 0) -LAYER_SPACING else 0.0
+            val targetZ = if (exploded && depth > 0) -PlanarView.LAYER_SPACING else 0.0
             if (!animate) {
                 node.translateZ = targetZ
                 continue
@@ -86,10 +85,10 @@ class InterfaceSceneBuilder(
 
     private fun rasterCanvas(): Node {
         val image = SwingFXUtils.toFXImage(InterfaceRaster.render(cache, definitions), null)
-        return texturedQuad(
+        return PlanarQuad.of(
             WidgetLayout.CANVAS_WIDTH.toDouble(),
             WidgetLayout.CANVAS_HEIGHT.toDouble(),
-            unlit(image),
+            PlanarQuad.unlit(image),
         ).also { rasterNode = it }
     }
 
@@ -167,7 +166,7 @@ class InterfaceSceneBuilder(
             ?: return null
         val sprite = Sprite(definition)
         val image = sprite.image
-        val material = unlit(image)
+        val material = PlanarQuad.unlit(image)
         val tileW = image.width
         val tileH = image.height
         val graphic = if (def.spriteTiling && tileW > 1 && tileH > 1) {
@@ -179,7 +178,7 @@ class InterfaceSceneBuilder(
                     val w = min(tileW, width - col * tileW)
                     val h = min(tileH, height - row * tileH)
                     if (w <= 0 || h <= 0) continue
-                    tiles.children.add(texturedQuad(w, h, material).apply {
+                    tiles.children.add(PlanarQuad.of(w, h, material).apply {
                         translateX = col * tileW
                         translateY = -row * tileH
                     })
@@ -187,7 +186,7 @@ class InterfaceSceneBuilder(
             }
             tiles
         } else {
-            texturedQuad(tileW, tileH, material).apply {
+            PlanarQuad.of(tileW, tileH, material).apply {
                 translateX = definition.offsetX.toDouble()
                 translateY = -definition.offsetY.toDouble()
             }
@@ -201,7 +200,7 @@ class InterfaceSceneBuilder(
     }
 
     private fun highlightOf(box: WidgetLayout.Box, childId: Int): MeshView {
-        return texturedQuad(
+        return PlanarQuad.of(
             box.width.toDouble(),
             box.height.toDouble(),
             PhongMaterial(Color.TRANSPARENT).apply { specularColor = Color.TRANSPARENT },
@@ -245,54 +244,13 @@ class InterfaceSceneBuilder(
     }
 
     companion object {
-        const val LAYER_SPACING = 56.0
-
         private fun colorQuad(width: Double, height: Double, color: Color, filled: Boolean): MeshView {
-            val quad = texturedQuad(width, height, PhongMaterial(color).apply {
+            val quad = PlanarQuad.of(width, height, PhongMaterial(color).apply {
                 specularColor = Color.BLACK
-                selfIlluminationMap = null
             })
             if (!filled)
                 quad.drawMode = DrawMode.LINE
             return quad
-        }
-
-        private fun unlit(image: Image): PhongMaterial = PhongMaterial(Color.WHITE).apply {
-            diffuseMap = image
-            selfIlluminationMap = image
-            specularColor = Color.BLACK
-        }
-
-        /**
-         * Quad in client space (X right, Y down mapped to -Y). Faces are CCW from the
-         * camera at -Z so the texture is not mirrored; V is flipped because JavaFX
-         * TriangleMesh uploads images with V=0 at the bottom.
-         */
-        private fun texturedQuad(width: Double, height: Double, material: PhongMaterial): MeshView {
-            val w = width.toFloat().coerceAtLeast(0.5f)
-            val h = height.toFloat().coerceAtLeast(0.5f)
-            val mesh = TriangleMesh()
-            mesh.points.setAll(
-                0f, 0f, 0f,
-                w, 0f, 0f,
-                w, -h, 0f,
-                0f, -h, 0f,
-            )
-            mesh.texCoords.setAll(
-                0f, 1f,
-                1f, 1f,
-                1f, 0f,
-                0f, 0f,
-            )
-            mesh.faces.setAll(
-                0, 0, 3, 3, 2, 2,
-                0, 0, 2, 2, 1, 1,
-            )
-            return MeshView(mesh).apply {
-                this.material = material
-                cullFace = CullFace.BACK
-                depthTest = DepthTest.ENABLE
-            }
         }
 
         private fun widgetColor(rgb: Int, opacity: Int): Color {

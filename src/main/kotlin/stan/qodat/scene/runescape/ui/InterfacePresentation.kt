@@ -1,16 +1,13 @@
 package stan.qodat.scene.runescape.ui
 
-import javafx.beans.binding.Bindings
-import javafx.beans.property.SimpleBooleanProperty
+import stan.qodat.scene.presentation.PlanarView
 
 /**
- * Viewport presentation for the selected interface: flat 2D (camera locked)
- * versus exploded 3D hierarchy (orbit enabled).
+ * @deprecated Use [PlanarView]. Kept so in-flight controller edits still compile.
  */
+@Deprecated("Use PlanarView", ReplaceWith("stan.qodat.scene.presentation.PlanarView"))
 object InterfacePresentation {
-
-    val active = SimpleBooleanProperty(false)
-    val exploded = SimpleBooleanProperty(false)
-
-    val cameraNavigationEnabled = Bindings.or(active.not(), exploded)!!
+    val active get() = PlanarView.active
+    val exploded get() = PlanarView.exploded
+    val cameraNavigationEnabled get() = PlanarView.cameraNavigationEnabled
 }
