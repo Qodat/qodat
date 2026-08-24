@@ -37,13 +37,15 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
             runCatchingWithDialog("Loading Maya Animation") {
                 mayaAnimation.awaitLoaded(5000)
             }
-            val clipLength = definition.animMayaEnd - definition.animMayaStart
+            val clipStart = definition.animMayaStart
+            val clipLength = definition.animMayaEnd - clipStart
             val animMayaDuration = if (clipLength > 0) clipLength else mayaAnimation.playbackLength
             repeat(animMayaDuration) { index ->
+                val step = clipStart + index
                 val frame = AnimationFrameMaya(
-                    name = "frame[$index]",
+                    name = "frame[$step]",
                     duration = 1,
-                    index = index,
+                    index = step,
                     animation = mayaAnimation,
                 )
                 frames.add(frame)

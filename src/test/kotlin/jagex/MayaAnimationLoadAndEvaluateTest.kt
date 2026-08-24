@@ -17,10 +17,10 @@ class MayaAnimationLoadAndEvaluateTest {
     fun linearCurveEvaluatesToKeyframeValue() {
         val frame = MayaAnimationSupport.linearCurve(0.25f, frameNumber = 3)
         assertEquals(0.25f, frame.evaluate(3))
-        // initialiseKeyFrames() clears keys before computing out-of-range bounds,
-        // so frames outside the baked window evaluate to 0.
-        assertEquals(0.0f, frame.evaluate(2))
-        assertEquals(0.0f, frame.evaluate(4))
+        // DEFAULT state holds the first/last key outside the baked window
+        // (NR RSMayaFrames.method4555 when field1916 == 0).
+        assertEquals(0.25f, frame.evaluate(2))
+        assertEquals(0.25f, frame.evaluate(4))
         assertEquals(3, frame.lastFrame)
     }
 

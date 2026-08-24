@@ -78,6 +78,8 @@ class AnimationMayaDefinitionFieldsTest {
     /**
      * [stan.qodat.scene.runescape.animation.AnimationMaya.getFrameList] clip rule:
      * `end - start` when positive, otherwise [jagex.MayaAnimation.getPlaybackLength].
+     * Playback steps are `start + localIndex` so non-zero [AnimationMayaDefinition.animMayaStart]
+     * evaluates the Maya curves in the same window as the client.
      */
     private fun mayaClipFrameCount(start: Int, end: Int, playbackLength: Int): Int {
         val clipLength = end - start

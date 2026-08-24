@@ -67,6 +67,33 @@ class ModelSkeletonMayaAnimateTest {
     }
 
     @Test
+    fun outOfRangeTranslateHoldsFirstKeyframeInsteadOfOrigin() {
+        MayaAnimationSupport.withStubIndex { index ->
+            val definition = syntheticRs2Model()
+            val skeleton = ModelSkeleton(definition)
+            val anim = MayaAnimationSupport.load(
+                index,
+                MayaAnimationSupport.identitySkeleton(),
+                MayaAnimationSupport.animationBytes(
+                    curves = listOf(
+                        MayaAnimationSupport.constantCurve(
+                            value = 10f,
+                            frameNumber = 3,
+                            type = TYPE_SECONDARY,
+                            trackIndex = 0,
+                            flag = FLAG_CHANNEL_TRANSLATE_X,
+                        ),
+                    ),
+                ),
+            )
+
+            skeleton.animate(mayaFrame(anim, index = 0))
+
+            assertEquals(listOf(10, 0, 0), skeleton.xyz(0))
+        }
+    }
+
+    @Test
     fun type5TransparencyAddsEvaluatedAmountToTargetFaceGroup() {
         MayaAnimationSupport.withStubIndex { index ->
             val definition = syntheticRs2Model()

@@ -386,9 +386,13 @@ public class MayaAnimationFrame implements AnimationFrameDefinition {
          this.frameValues[frame - this.getFirstFrame()] = calculateFrameValue(this, (float)frame);
       }
 
-      this.keyFrames = null;
+      // Bounds must be sampled while keys still exist. calculateFrameValue()
+      // (and NR's packed method4555) holds or extrapolates using the first/last
+      // key; after keyFrames is cleared it always returns 0, which skins the
+      // bone at the origin and looks like a stretch.
       this.lowerBoundFrameValue = calculateFrameValue(this, (float)(this.getFirstFrame() - 1));
       this.upperBoundFrameValue = calculateFrameValue(this, (float)(this.getLastFrame() + 1));
+      this.keyFrames = null;
    }
 
    public float evaluate(int frame) {
