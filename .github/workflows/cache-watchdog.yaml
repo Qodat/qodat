@@ -1,0 +1,263 @@
+name: OSRS cache watchdog
+
+# Downloads the latest published OSRS cache (archive.runestats.com, same
+# source as the desktop cache chooser) and smoke-decodes a sample of each
+# type. On failure, opens a GitHub issue. Optionally starts one Cursor
+# cloud agent to open a decoder-fix PR.
+#
+# Security — this workflow must stay abuse-proof (open source, paid agent):
+# - No pull_request trigger. Fork PRs cannot start the download or agent.
+# - Job `if:` requires github.repository == 'Qodat/qodat' and
+#   github.event_name != 'pull_request'.
+# - CURSOR_API_KEY is a repo secret and is never echoed. Forks do not
+#   receive it. The agent job also no-ops if the secret is empty.
+# - permissions: contents: write only on the agent job.
+# - Rate limit: one agent per failing archive name (issue label
+#   cursor-agent-dispatched). Re-runs of the same broken revision do not
+#   launch another agent.
+#
+# Secrets:
+#   CURSOR_API_KEY — Cursor user or team service-account key
+#     (Dashboard → Integrations). Optional; if unset, the failing check
+#     still opens an issue for a human.
+#
+# Official agent invoke (see .github/scripts/cursor-cache-patch.mjs):
+#   export CURSOR_API_KEY
+#   node .github/scripts/cursor-cache-patch.mjs
+
+on:
+  schedule:
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
+  push:
+    branches: [master]
+
+concurrency:
+  group: cache-watchdog
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  CANONICAL_REPO: Qodat/qodat
+
+jobs:
+  smoke:
+    if: github.repository == 'Qodat/qodat' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      archive: ${{ steps.download.outputs.archive }}
+      cache-dir: ${{ steps.download.outputs.cache-dir }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Download latest OSRS cache
+        id: download
+        run: |
+          DEST="${RUNNER_TEMP}/osrs-cache"
+          ./gradlew downloadLatestOsrsCache -Pqodat.cache.dest="$DEST"
+          ARCHIVE="$(cat "$DEST/archive-name.txt")"
+          CACHE_DIR="$(find "$DEST" -type d -name cache | head -n 1)"
+          if [ -z "$CACHE_DIR" ]; then
+            echo "Extracted archive had no cache/ directory" >&2
+            exit 1
+          fi
+          echo "archive=$ARCHIVE" >> "$GITHUB_OUTPUT"
+          echo "cache-dir=$CACHE_DIR" >> "$GITHUB_OUTPUT"
+          echo "Latest archive: $ARCHIVE"
+
+      - name: Decoder smoke
+        run: >
+          ./gradlew cacheSmoke
+          -Pqodat.cache.dir="${{ steps.download.outputs.cache-dir }}"
+
+      - name: Upload smoke logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cache-smoke-${{ steps.download.outputs.archive }}
+          path: |
+            build/reports/cache-smoke/
+            build/reports/tests/cacheSmoke/
+            build/test-results/cacheSmoke/
+          if-no-files-found: ignore
+
+  report:
+    needs: smoke
+    if: >
+      always() &&
+      needs.smoke.result == 'failure' &&
+      github.repository == 'Qodat/qodat' &&
+      github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      should_dispatch: ${{ steps.issue.outputs.should_dispatch }}
+      issue_number: ${{ steps.issue.outputs.issue_number }}
+      issue_url: ${{ steps.issue.outputs.issue_url }}
+    steps:
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: cache-smoke-${{ needs.smoke.outputs.archive }}
+          path: smoke-artifacts
+
+      - name: Open or reuse watchdog issue
+        id: issue
+        uses: actions/github-script@v7
+        env:
+          ARCHIVE: ${{ needs.smoke.outputs.archive }}
+        with:
+          script: |
+            const archive = process.env.ARCHIVE || 'unknown-archive';
+            const title = `cache-watchdog: decode failed for ${archive}`;
+            const body = [
+              'Scheduled decoder smoke failed on the latest published OSRS cache.',
+              '',
+              `Archive: \`${archive}\``,
+              `Workflow: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              'Artifacts from this run are attached to the workflow (cache is not committed).',
+            ].join('\n');
+
+            async function ensureLabel(name, color) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                  color,
+                });
+              } catch (_) { /* already exists */ }
+            }
+            await ensureLabel('cache-watchdog', 'd93f0b');
+            await ensureLabel('cursor-agent-dispatched', '5319e7');
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'cache-watchdog',
+              per_page: 50,
+            });
+            let issue = issues.find((i) => i.title === title);
+            if (!issue) {
+              try {
+                const created = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                  labels: ['cache-watchdog'],
+                });
+                issue = created.data;
+              } catch (err) {
+                // Label may not exist yet.
+                const created = await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title,
+                  body,
+                });
+                issue = created.data;
+                try {
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: issue.number,
+                    labels: ['cache-watchdog'],
+                  });
+                } catch (_) { /* ignore */ }
+              }
+            }
+            const labels = (issue.labels || []).map((l) => typeof l === 'string' ? l : l.name);
+            const alreadyDispatched = labels.includes('cursor-agent-dispatched');
+            core.setOutput('should_dispatch', alreadyDispatched ? 'false' : 'true');
+            core.setOutput('issue_number', String(issue.number));
+            core.setOutput('issue_url', issue.html_url);
+            core.info(`issue #${issue.number} dispatch=${!alreadyDispatched}`);
+
+  agent:
+    needs: [smoke, report]
+    # Hard gate: only this workflow, only maintainer schedule / dispatch / push
+    # on the canonical repo. Never pull_request. Never a fork.
+    if: >
+      always() &&
+      needs.smoke.result == 'failure' &&
+      needs.report.result == 'success' &&
+      needs.report.outputs.should_dispatch == 'true' &&
+      github.repository == 'Qodat/qodat' &&
+      github.event_name != 'pull_request' &&
+      (github.event_name == 'schedule' ||
+       github.event_name == 'workflow_dispatch' ||
+       github.event_name == 'push')
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: cache-smoke-${{ needs.smoke.outputs.archive }}
+          path: smoke-artifacts
+
+      - name: Install Cursor SDK and launch cloud agent
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          QODAT_REPO_URL: https://github.com/Qodat/qodat
+          QODAT_STARTING_REF: ${{ github.sha }}
+          QODAT_CACHE_ARCHIVE: ${{ needs.smoke.outputs.archive }}
+          QODAT_ISSUE_URL: ${{ needs.report.outputs.issue_url }}
+        run: |
+          if [ -z "$CURSOR_API_KEY" ]; then
+            echo "CURSOR_API_KEY is not configured; issue is open for a human."
+            exit 0
+          fi
+          if [ -f smoke-artifacts/summary.txt ]; then
+            export QODAT_SMOKE_SUMMARY="$(cat smoke-artifacts/summary.txt)"
+          elif [ -f smoke-artifacts/build/reports/cache-smoke/summary.txt ]; then
+            export QODAT_SMOKE_SUMMARY="$(cat smoke-artifacts/build/reports/cache-smoke/summary.txt)"
+          fi
+          mkdir -p "$RUNNER_TEMP/cursor-sdk"
+          cd "$RUNNER_TEMP/cursor-sdk"
+          printf '%s\n' '{"type":"module"}' > package.json
+          npm install @cursor/sdk
+          node "$GITHUB_WORKSPACE/.github/scripts/cursor-cache-patch.mjs"
+
+      - name: Mark issue as agent-dispatched
+        if: success() && secrets.CURSOR_API_KEY != ''
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ needs.report.outputs.issue_number }}
+        with:
+          script: |
+            const n = Number(process.env.ISSUE_NUMBER);
+            if (!n) return;
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: n,
+                labels: ['cursor-agent-dispatched'],
+              });
+            } catch (err) {
+              core.warning(String(err));
+            }
