@@ -12,8 +12,8 @@ import qodat.cache.definition.TextureDefinition as QodatTextureDefinition
  */
 class TextureDefinition(override var id: Int) : QodatTextureDefinition {
 
-    override var fileIds: IntArray = intArrayOf()
-    override var pixels: IntArray = intArrayOf()
+    override var fileIds: IntArray = EMPTY_INTS
+    override var pixels: IntArray = EMPTY_INTS
     override var animationDirection: Int = 0
     override var animationSpeed: Int = 0
 
@@ -65,6 +65,8 @@ class TextureDefinition(override var id: Int) : QodatTextureDefinition {
     }
 
     companion object {
+        private val EMPTY_INTS = IntArray(0)
+
         internal fun adjustRgb(rgb: Int, brightness: Double): Int {
             val r = Math.pow((rgb shr 16).toDouble() / 256.0, brightness)
             val g = Math.pow((rgb shr 8 and 255).toDouble() / 256.0, brightness)
