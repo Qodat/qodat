@@ -35,9 +35,7 @@ final class FastLzwEncoder {
 
     byte[] encode(byte[] indices) {
         ByteArrayOutputStream out = new ByteArrayOutputStream(indices.length);
-        int[] htab = new int[HASH_SIZE];
-        int[] codetab = new int[HASH_SIZE];
-        Arrays.fill(htab, -1);
+        CodeTables tables = new CodeTables();
 
         BitSink sink = new BitSink(out);
         int codeSize = minimumCodeSize + 1;
@@ -48,21 +46,21 @@ final class FastLzwEncoder {
         int prefix = indices[0] & 0xFF;
         for (int i = 1; i < indices.length; i++) {
             int suffix = indices[i] & 0xFF;
-            int existing = find(htab, codetab, prefix, suffix);
+            int existing = tables.find(prefix, suffix);
             if (existing >= 0) {
                 prefix = existing;
                 continue;
             }
             sink.write(prefix, codeSize);
             if (nextCode < MAX_CODE_TABLE_SIZE) {
-                put(htab, codetab, prefix, suffix, nextCode);
+                tables.put(prefix, suffix, nextCode);
                 if (nextCode == (1 << codeSize) && codeSize < 12) {
                     codeSize++;
                 }
                 nextCode++;
             } else {
                 sink.write(clearCode, codeSize);
-                Arrays.fill(htab, -1);
+                tables.reset();
                 nextCode = eoiCode + 1;
                 codeSize = minimumCodeSize + 1;
             }
@@ -74,38 +72,49 @@ final class FastLzwEncoder {
         return out.toByteArray();
     }
 
-    private static int find(int[] htab, int[] codetab, int prefix, int suffix) {
-        int key = (prefix << 8) | suffix;
-        int hash = ((suffix << 4) ^ prefix) % HASH_SIZE;
-        if (hash < 0) {
-            hash += HASH_SIZE;
-        }
-        while (htab[hash] != -1) {
-            if (htab[hash] == key) {
-                return codetab[hash];
-            }
-            hash++;
-            if (hash >= HASH_SIZE) {
-                hash = 0;
-            }
-        }
-        return -1;
-    }
+    private static final class CodeTables {
+        final int[] htab = new int[HASH_SIZE];
+        final int[] codetab = new int[HASH_SIZE];
 
-    private static void put(int[] htab, int[] codetab, int prefix, int suffix, int code) {
-        int key = (prefix << 8) | suffix;
-        int hash = ((suffix << 4) ^ prefix) % HASH_SIZE;
-        if (hash < 0) {
-            hash += HASH_SIZE;
+        CodeTables() {
+            reset();
         }
-        while (htab[hash] != -1) {
-            hash++;
-            if (hash >= HASH_SIZE) {
-                hash = 0;
+
+        void reset() {
+            Arrays.fill(htab, -1);
+        }
+
+        int find(int prefix, int suffix) {
+            int key = (prefix << 8) | suffix;
+            int hash = hash(prefix, suffix);
+            while (htab[hash] != -1) {
+                if (htab[hash] == key) {
+                    return codetab[hash];
+                }
+                hash++;
+                if (hash >= HASH_SIZE) {
+                    hash = 0;
+                }
             }
+            return -1;
         }
-        htab[hash] = key;
-        codetab[hash] = code;
+
+        void put(int prefix, int suffix, int code) {
+            int hash = hash(prefix, suffix);
+            while (htab[hash] != -1) {
+                hash++;
+                if (hash >= HASH_SIZE) {
+                    hash = 0;
+                }
+            }
+            htab[hash] = (prefix << 8) | suffix;
+            codetab[hash] = code;
+        }
+
+        private static int hash(int prefix, int suffix) {
+            int hash = ((suffix << 4) ^ prefix) % HASH_SIZE;
+            return hash < 0 ? hash + HASH_SIZE : hash;
+        }
     }
 
     private static final class BitSink {

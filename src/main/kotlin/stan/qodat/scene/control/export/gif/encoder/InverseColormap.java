@@ -32,11 +32,7 @@ final class InverseColormap {
         int best = opaqueStart < palette.length ? opaqueStart : 0;
         int bestDist = Integer.MAX_VALUE;
         for (int i = opaqueStart; i < palette.length; i++) {
-            int prgb = palette[i];
-            int dr = r - (prgb >>> 16);
-            int dg = g - ((prgb >>> 8) & 0xFF);
-            int db = b - (prgb & 0xFF);
-            int dist = dr * dr + dg * dg + db * db;
+            int dist = distanceSq(palette[i], r, g, b);
             if (dist < bestDist) {
                 bestDist = dist;
                 best = i;
@@ -46,5 +42,12 @@ final class InverseColormap {
             }
         }
         return best;
+    }
+
+    private static int distanceSq(int rgb, int r, int g, int b) {
+        int dr = (rgb >>> 16) - r;
+        int dg = ((rgb >>> 8) & 0xFF) - g;
+        int db = (rgb & 0xFF) - b;
+        return dr * dr + dg * dg + db * db;
     }
 }

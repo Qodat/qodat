@@ -47,15 +47,15 @@ object HslPalette {
      * The palette is not analytically invertible because of the gamma curve, so this searches
      * for the nearest entry to guarantee that encoding and decoding round-trip.
      */
-    // TODO(perf): O(65536) scan per colour. Build an inverse LUT or spatial index if recolor/export encode is hot.
+    // TODO(perf): nearest-neighbour scan of all 65536 entries per encode. Cache last-hit or build an inverse LUT if recolor/export encode is hot.
     fun encode(red: Int, green: Int, blue: Int): Int {
         var best = 0
         var bestDistance = Int.MAX_VALUE
         for (index in 0 until SIZE) {
             val rgb = palette[index]
-            val dr = (rgb shr 16 and 0xFF) - red
-            val dg = (rgb shr 8 and 0xFF) - green
-            val db = (rgb and 0xFF) - blue
+            val dr = red(rgb) - red
+            val dg = green(rgb) - green
+            val db = blue(rgb) - blue
             val distance = dr * dr + dg * dg + db * db
             if (distance < bestDistance) {
                 bestDistance = distance
@@ -88,10 +88,7 @@ object HslPalette {
                     green = hueToChannel(min, max, hue)
                     blue = hueToChannel(min, max, wrapHue(hue - 1.0 / 3.0))
                 }
-                val rgb = brighten(
-                    ((red * 256.0).toInt() shl 16) + ((green * 256.0).toInt() shl 8) + (blue * 256.0).toInt(),
-                    brightness
-                )
+                val rgb = brighten(packChannels(red, green, blue), brightness)
                 // The client reserves 0 to mean "transparent" while rasterizing.
                 palette[index++] = if (rgb == 0) 1 else rgb
             }
@@ -113,9 +110,16 @@ object HslPalette {
     }
 
     private fun brighten(rgb: Int, brightness: Double): Int {
-        val red = ((rgb shr 16 and 0xFF) / 256.0).pow(brightness)
-        val green = ((rgb shr 8 and 0xFF) / 256.0).pow(brightness)
-        val blue = ((rgb and 0xFF) / 256.0).pow(brightness)
-        return ((red * 256.0).toInt() shl 16) + ((green * 256.0).toInt() shl 8) + (blue * 256.0).toInt()
+        val red = (red(rgb) / 256.0).pow(brightness)
+        val green = (green(rgb) / 256.0).pow(brightness)
+        val blue = (blue(rgb) / 256.0).pow(brightness)
+        return packChannels(red, green, blue)
     }
+
+    private fun red(rgb: Int) = rgb shr 16 and 0xFF
+    private fun green(rgb: Int) = rgb shr 8 and 0xFF
+    private fun blue(rgb: Int) = rgb and 0xFF
+
+    private fun packChannels(red: Double, green: Double, blue: Double) =
+        ((red * 256.0).toInt() shl 16) + ((green * 256.0).toInt() shl 8) + (blue * 256.0).toInt()
 }

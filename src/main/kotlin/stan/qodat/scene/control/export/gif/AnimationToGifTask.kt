@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.io.path.extension
 import kotlin.io.path.isDirectory
-import kotlin.io.path.name
 
 class AnimationToGifTask(
     private val exportPath: Path,
@@ -59,14 +58,7 @@ class AnimationToGifTask(
         val wallStart = System.nanoTime()
 
         try {
-            val sampleCount = minOf(SAMPLE_FRAME_COUNT, totalFrames)
-            val sampleIndices = if (totalFrames <= SAMPLE_FRAME_COUNT) {
-                IntArray(totalFrames) { it }
-            } else {
-                IntArray(sampleCount) { it * (totalFrames - 1) / (sampleCount - 1) }
-                    .distinct()
-                    .toIntArray()
-            }
+            val sampleIndices = sampleIndices(totalFrames)
 
             val reusableImage = onFx { WritableImage(width, height) }
             val samplePixels = Array(sampleIndices.size) { IntArray(0) }
@@ -181,17 +173,24 @@ class AnimationToGifTask(
     }
 
     private fun resolveOutputFile(): java.io.File {
-        val animationName = animation.getName()
-        val file = when {
-            exportPath.name.endsWith(".gif", ignoreCase = true) && !exportPath.isDirectory() ->
-                exportPath.toFile()
-            exportPath.extension.equals("gif", ignoreCase = true) && !exportPath.isDirectory() ->
-                exportPath.toFile()
-            else ->
-                exportPath.resolve("$animationName.gif").toFile()
+        val file = if (!exportPath.isDirectory() && exportPath.extension.equals("gif", ignoreCase = true)) {
+            exportPath.toFile()
+        } else {
+            exportPath.resolve("${animation.getName()}.gif").toFile()
         }
         file.parentFile?.mkdirs()
         return file
+    }
+
+    private fun sampleIndices(totalFrames: Int): IntArray {
+        val sampleCount = minOf(SAMPLE_FRAME_COUNT, totalFrames)
+        return if (totalFrames <= SAMPLE_FRAME_COUNT) {
+            IntArray(totalFrames) { it }
+        } else {
+            IntArray(sampleCount) { it * (totalFrames - 1) / (sampleCount - 1) }
+                .distinct()
+                .toIntArray()
+        }
     }
 
     private fun captureFrame(

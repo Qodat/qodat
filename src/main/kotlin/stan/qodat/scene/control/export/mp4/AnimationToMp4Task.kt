@@ -60,8 +60,7 @@ class AnimationToMp4Task(
                     updateMessage("Capturing frame ${index + 1}/$totalFrames")
                     updateProgress(index.toLong(), totalFrames.toLong())
                     snapshots.set(index, duration to image)
-                } catch (e: Exception) {
-                    e.printStackTrace()
+                } catch (_: Exception) {
                 } finally {
                     semaphore.release()
                 }

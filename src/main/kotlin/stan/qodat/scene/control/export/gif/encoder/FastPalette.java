@@ -32,19 +32,12 @@ public final class FastPalette {
         this.reduced = reduced;
     }
 
-    // TODO(perf): HashMap over every pixel. Histogram in a 32k/64k table when sampling GIF frames.
+    // TODO(perf): HashMap merge per sample pixel. A 32k/64k quantized histogram (5–6 bits/channel) would avoid boxing when sampling GIF frames.
     static FastPalette fromFrames(int[][] frames, int maxColors) {
         if (maxColors < 2 || maxColors > MAX_COLORS) {
             throw new IllegalArgumentException("maxColors must be in [2, 256]");
         }
-        Map<Integer, Integer> counts = new HashMap<>();
-        for (int[] frame : frames) {
-            for (int argb : frame) {
-                int color = argb & 0xFFFFFF;
-                counts.merge(color, 1, Integer::sum);
-            }
-        }
-        counts.remove(TRANSPARENT_RGB);
+        Map<Integer, Integer> counts = histogram(frames);
 
         int maxOpaque = maxColors - 1;
         int[] opaque;
@@ -67,6 +60,17 @@ public final class FastPalette {
         palette[TRANSPARENT_INDEX] = TRANSPARENT_RGB;
         System.arraycopy(opaque, 0, palette, 1, opaque.length);
         return new FastPalette(palette, padded, TRANSPARENT_INDEX, reduced);
+    }
+
+    private static Map<Integer, Integer> histogram(int[][] frames) {
+        Map<Integer, Integer> counts = new HashMap<>();
+        for (int[] frame : frames) {
+            for (int argb : frame) {
+                counts.merge(argb & 0xFFFFFF, 1, Integer::sum);
+            }
+        }
+        counts.remove(TRANSPARENT_RGB);
+        return counts;
     }
 
     private static int[] medianCut(Map<Integer, Integer> counts, int maxColors) {
@@ -120,9 +124,9 @@ public final class FastPalette {
             int minR = 255, maxR = 0, minG = 255, maxG = 0, minB = 255, maxB = 0;
             for (int i = start; i < end; i++) {
                 int rgb = colors[i];
-                int r = rgb >>> 16;
-                int g = (rgb >>> 8) & 0xFF;
-                int b = rgb & 0xFF;
+                int r = red(rgb);
+                int g = green(rgb);
+                int b = blue(rgb);
                 if (r < minR) minR = r;
                 if (r > maxR) maxR = r;
                 if (g < minG) minG = g;
@@ -163,9 +167,9 @@ public final class FastPalette {
             for (int i = start; i < end; i++) {
                 int w = weights[i];
                 int rgb = colors[i];
-                r += (long) (rgb >>> 16) * w;
-                g += (long) ((rgb >>> 8) & 0xFF) * w;
-                b += (long) (rgb & 0xFF) * w;
+                r += (long) red(rgb) * w;
+                g += (long) green(rgb) * w;
+                b += (long) blue(rgb) * w;
                 n += w;
             }
             if (n == 0) {
@@ -191,5 +195,17 @@ public final class FastPalette {
         }
         System.arraycopy(sortedColors, 0, colors, start, length);
         System.arraycopy(sortedWeights, 0, weights, start, length);
+    }
+
+    private static int red(int rgb) {
+        return rgb >>> 16;
+    }
+
+    private static int green(int rgb) {
+        return (rgb >>> 8) & 0xFF;
+    }
+
+    private static int blue(int rgb) {
+        return rgb & 0xFF;
     }
 }

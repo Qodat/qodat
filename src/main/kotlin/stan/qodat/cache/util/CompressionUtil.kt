@@ -21,6 +21,7 @@ object CompressionUtil {
      */
     @Throws(IOException::class)
     fun uncompressGzip(compressed: ByteArray) = GZIPInputStream(ByteArrayInputStream(compressed)).use { `is` ->
+            // TODO(perf): 1KB copy buffer is small for frame archives; consider 8–16KB or a reused Inflater
             ByteArrayOutputStream().use { out ->
                 val buffer = ByteArray(1024)
 

@@ -104,61 +104,69 @@ public final class FastGifEncoder {
         }
     }
 
-    // TODO(perf): allocate 3 int[] + 1 boolean[] per frame. Reuse thread-local scratch for animation export.
+    // TODO(perf): DitherScratch is new int[n]*3 + boolean[n] per frame. Reuse ThreadLocal scratch sized to width*height for animation export.
     private void floydSteinberg(int[] argb, byte[] indices) {
-        int pixelCount = argb.length;
-        int[] red = new int[pixelCount];
-        int[] green = new int[pixelCount];
-        int[] blue = new int[pixelCount];
-        boolean[] transparent = new boolean[pixelCount];
-        for (int i = 0; i < pixelCount; i++) {
+        DitherScratch scratch = new DitherScratch(argb.length);
+        for (int i = 0; i < argb.length; i++) {
             int rgb = argb[i] & 0xFFFFFF;
             if (rgb == FastPalette.TRANSPARENT_RGB) {
-                transparent[i] = true;
+                scratch.transparent[i] = true;
                 indices[i] = (byte) palette.transparentIndex;
             } else {
-                red[i] = rgb >>> 16;
-                green[i] = (rgb >>> 8) & 0xFF;
-                blue[i] = rgb & 0xFF;
+                scratch.red[i] = rgb >>> 16;
+                scratch.green[i] = (rgb >>> 8) & 0xFF;
+                scratch.blue[i] = rgb & 0xFF;
             }
         }
         for (int y = 0; y < height; y++) {
             int row = y * width;
             for (int x = 0; x < width; x++) {
                 int i = row + x;
-                if (transparent[i]) {
+                if (scratch.transparent[i]) {
                     continue;
                 }
-                int r = clamp(red[i]);
-                int g = clamp(green[i]);
-                int b = clamp(blue[i]);
+                int r = clamp(scratch.red[i]);
+                int g = clamp(scratch.green[i]);
+                int b = clamp(scratch.blue[i]);
                 int idx = colormap.indexOf((r << 16) | (g << 8) | b);
                 indices[i] = (byte) idx;
                 int prgb = palette.rgb[idx];
                 int errR = r - (prgb >>> 16);
                 int errG = g - ((prgb >>> 8) & 0xFF);
                 int errB = b - (prgb & 0xFF);
-                distribute(red, green, blue, transparent, x + 1, y, errR, errG, errB, 7);
-                distribute(red, green, blue, transparent, x - 1, y + 1, errR, errG, errB, 3);
-                distribute(red, green, blue, transparent, x, y + 1, errR, errG, errB, 5);
-                distribute(red, green, blue, transparent, x + 1, y + 1, errR, errG, errB, 1);
+                scratch.distribute(x + 1, y, width, height, errR, errG, errB, 7);
+                scratch.distribute(x - 1, y + 1, width, height, errR, errG, errB, 3);
+                scratch.distribute(x, y + 1, width, height, errR, errG, errB, 5);
+                scratch.distribute(x + 1, y + 1, width, height, errR, errG, errB, 1);
             }
         }
     }
 
-    private void distribute(
-            int[] red, int[] green, int[] blue, boolean[] transparent,
-            int x, int y, int errR, int errG, int errB, int fraction) {
-        if (x < 0 || y < 0 || x >= width || y >= height) {
-            return;
+    private static final class DitherScratch {
+        final int[] red;
+        final int[] green;
+        final int[] blue;
+        final boolean[] transparent;
+
+        DitherScratch(int pixelCount) {
+            this.red = new int[pixelCount];
+            this.green = new int[pixelCount];
+            this.blue = new int[pixelCount];
+            this.transparent = new boolean[pixelCount];
         }
-        int i = y * width + x;
-        if (transparent[i]) {
-            return;
+
+        void distribute(int x, int y, int width, int height, int errR, int errG, int errB, int fraction) {
+            if (x < 0 || y < 0 || x >= width || y >= height) {
+                return;
+            }
+            int i = y * width + x;
+            if (transparent[i]) {
+                return;
+            }
+            red[i] += errR * fraction / 16;
+            green[i] += errG * fraction / 16;
+            blue[i] += errB * fraction / 16;
         }
-        red[i] += errR * fraction / 16;
-        green[i] += errG * fraction / 16;
-        blue[i] += errB * fraction / 16;
     }
 
     private static int clamp(int value) {
