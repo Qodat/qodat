@@ -17,8 +17,9 @@ import java.io.File
 import java.nio.file.Path
 
 /**
- * Export the current model (bind-pose definition + vertex skins) as a
- * Blender-ready .glb. Import is [Model.fromFile] on .glb / .gltf.
+ * Export the current model as a Blender-ready .glb: vertex skins, tile-metre
+ * scale (128 RS units = 1 m), plus idle / walk morph clips when the entity
+ * carries those sequences. Import is [Model.fromFile] on .glb / .gltf.
  */
 class BlenderFormat(
     override val lastSaveDestinationProperty: ObjectProperty<Path?> =
@@ -68,7 +69,13 @@ class BlenderFormat(
                 destination
             else
                 destination.resolve(getFileName(context))
-            GltfCodec.write(model.modelDefinition, file, model.getName().replace(" ", "_"))
+            val clips = GltfExportClips.resolve(exportable, context.second)
+            GltfCodec.write(
+                model.modelDefinition,
+                file,
+                model.getName().replace(" ", "_"),
+                clips,
+            )
         } catch (e: Exception) {
             Qodat.logException("Failed to export Blender glTF", e)
         }

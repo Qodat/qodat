@@ -5,6 +5,8 @@ import com.google.gson.JsonArray
 import com.google.gson.JsonObject
 import qodat.cache.definition.ModelDefinition
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
+import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.model.ModelSkeleton
 import stan.qodat.util.HslPalette
 import java.io.ByteArrayOutputStream
 import java.nio.ByteBuffer
@@ -16,16 +18,31 @@ import kotlin.math.roundToInt
 /**
  * glTF 2.0 interchange matching modelkit's writer.
  *
- * Coordinate space is qodat WaveFront: (x, -y, -z). Vertex skins become a
- * one-weight-per-vert armature (`vskin_N`). Face HSL / priorities / alphas
- * ride in `extras.rs` so Blender can round-trip them.
+ * Coordinate space is qodat WaveFront: (x, -y, -z), then scaled so **one RS
+ * tile (128 scene units) is one metre**. That matches the client
+ * (`Perspective.LOCAL_TILE_SIZE`, `RSModelData` resize `* n / 128`). Vertex
+ * skins become a one-weight-per-vert armature (`vskin_N`). Idle / walk clips
+ * bake as morph targets. Face HSL / priorities / alphas ride in `extras.rs`.
  */
 object GltfCodec {
 
+    /** Client local units per tile; identity NPC/object resize is also 128. */
+    const val RS_UNITS_PER_TILE = 128f
+
+    /** glTF / Blender metres per RS tile. */
+    const val METERS_PER_TILE = 1f
+
+    const val UNIT_SCALE = METERS_PER_TILE / RS_UNITS_PER_TILE
+
     private val gson = GsonBuilder().disableHtmlEscaping().create()
 
-    fun write(definition: ModelDefinition, destination: Path, name: String) {
-        val built = build(definition, name)
+    fun write(
+        definition: ModelDefinition,
+        destination: Path,
+        name: String,
+        clips: List<GltfAnimationClip> = emptyList(),
+    ) {
+        val built = build(definition, name, clips)
         Files.createDirectories(destination.parent)
         Files.write(destination, built)
     }
@@ -39,7 +56,11 @@ object GltfCodec {
         return decode(docAndBin.first, docAndBin.second, path.fileName.toString().substringBeforeLast('.'))
     }
 
-    private fun build(definition: ModelDefinition, name: String): ByteArray {
+    private fun build(
+        definition: ModelDefinition,
+        name: String,
+        clips: List<GltfAnimationClip> = emptyList(),
+    ): ByteArray {
         val nVert = definition.getVertexCount()
         val nFace = definition.getFaceCount()
         val vx = definition.getVertexPositionsX()
@@ -56,10 +77,9 @@ object GltfCodec {
 
         val pts = FloatArray(nVert * 3)
         for (i in 0 until nVert) {
-            pts[i * 3] = vx[i].toFloat()
-            pts[i * 3 + 1] = (-vy[i]).toFloat()
-            pts[i * 3 + 2] = (-vz[i]).toFloat()
+            writeBlenderPosition(pts, i, vx[i], vy[i], vz[i])
         }
+        val baked = bakeClips(definition, clips, pts)
         val vertRgb = FloatArray(nVert * 3)
         val hits = IntArray(nVert)
         for (f in 0 until nFace) {
@@ -181,9 +201,22 @@ object GltfCodec {
         }
         val ibmI = pushFloats(ibm, "MAT4", unique.size)
 
+        val targetAccessors = baked.targets.map { target ->
+            pushFloats(target.deltas, "VEC3", nVert)
+        }
+        val animationSamplers = baked.clips.map { clip ->
+            val timeI = pushFloats(clip.times, "SCALAR", clip.times.size)
+            val weightI = pushFloats(clip.weights, "SCALAR", clip.weights.size)
+            timeI to weightI
+        }
+
         val extras = JsonObject().apply {
             add("rs", JsonObject().apply {
                 addProperty("coordSpace", "qodat_wavefront")
+                addProperty("unit", "meter")
+                addProperty("rsUnitsPerTile", RS_UNITS_PER_TILE)
+                addProperty("metersPerTile", METERS_PER_TILE)
+                addProperty("unitScale", UNIT_SCALE)
                 addProperty("skeleton", "labels")
                 add("vertexSkins", jsonInts(skins))
                 add("faceColors", jsonShorts(colours))
@@ -243,11 +276,50 @@ object GltfCodec {
                             })
                             addProperty("indices", idxI)
                             addProperty("material", 0)
+                            if (targetAccessors.isNotEmpty()) {
+                                add("targets", JsonArray().apply {
+                                    targetAccessors.forEach { acc ->
+                                        add(JsonObject().apply { addProperty("POSITION", acc) })
+                                    }
+                                })
+                            }
                         })
                     })
+                    if (baked.targets.isNotEmpty()) {
+                        add("weights", jsonFloats(*FloatArray(baked.targets.size)))
+                        extras.add("targetNames", JsonArray().apply {
+                            baked.targets.forEach { add(it.name) }
+                        })
+                    }
                     add("extras", extras)
                 })
             })
+            if (baked.clips.isNotEmpty()) {
+                add("animations", JsonArray().apply {
+                    baked.clips.forEachIndexed { clipIndex, clip ->
+                        val (timeI, weightI) = animationSamplers[clipIndex]
+                        add(JsonObject().apply {
+                            addProperty("name", clip.name)
+                            add("samplers", JsonArray().apply {
+                                add(JsonObject().apply {
+                                    addProperty("input", timeI)
+                                    addProperty("output", weightI)
+                                    addProperty("interpolation", "STEP")
+                                })
+                            })
+                            add("channels", JsonArray().apply {
+                                add(JsonObject().apply {
+                                    addProperty("sampler", 0)
+                                    add("target", JsonObject().apply {
+                                        addProperty("node", 0)
+                                        addProperty("path", "weights")
+                                    })
+                                })
+                            })
+                        })
+                    }
+                })
+            }
             add("skins", JsonArray().apply {
                 add(JsonObject().apply {
                     addProperty("name", "labels")
@@ -296,13 +368,14 @@ object GltfCodec {
         val attrs = prim.getAsJsonObject("attributes")
         val ptsB = readF32(doc, blob, attrs.get("POSITION").asInt, 3)
         val nVert = ptsB.size / 3
+        val scale = extras?.get("unitScale")?.asFloat ?: 1f
         val vx = IntArray(nVert)
         val vy = IntArray(nVert)
         val vz = IntArray(nVert)
         for (i in 0 until nVert) {
-            vx[i] = ptsB[i * 3].roundToInt()
-            vy[i] = (-ptsB[i * 3 + 1]).roundToInt()
-            vz[i] = (-ptsB[i * 3 + 2]).roundToInt()
+            vx[i] = (ptsB[i * 3] / scale).roundToInt()
+            vy[i] = (-ptsB[i * 3 + 1] / scale).roundToInt()
+            vz[i] = (-ptsB[i * 3 + 2] / scale).roundToInt()
         }
         val idx = readU16(doc, blob, prim.get("indices").asInt)
         require(idx.size % 3 == 0) { "index count not divisible by 3" }
@@ -351,6 +424,69 @@ object GltfCodec {
         def.computeAnimationTables()
         return def
     }
+
+    private fun writeBlenderPosition(pts: FloatArray, vertex: Int, x: Int, y: Int, z: Int) {
+        pts[vertex * 3] = x * UNIT_SCALE
+        pts[vertex * 3 + 1] = -y * UNIT_SCALE
+        pts[vertex * 3 + 2] = -z * UNIT_SCALE
+    }
+
+    private data class BakedTarget(val name: String, val deltas: FloatArray)
+    private data class BakedClip(val name: String, val times: FloatArray, val weights: FloatArray)
+    private data class BakedClips(val targets: List<BakedTarget>, val clips: List<BakedClip>)
+
+    private fun bakeClips(
+        definition: ModelDefinition,
+        clips: List<GltfAnimationClip>,
+        bind: FloatArray,
+    ): BakedClips {
+        if (clips.isEmpty()) return BakedClips(emptyList(), emptyList())
+        val nVert = definition.getVertexCount()
+        val poser = ModelSkeleton(definition)
+        val targets = mutableListOf<BakedTarget>()
+        val pending = mutableListOf<Triple<String, FloatArray, IntRange>>()
+
+        for (clip in clips) {
+            val frames = clip.frames.take(GltfExportClips.MAX_FRAMES_PER_CLIP)
+            if (frames.isEmpty()) continue
+            val start = targets.size
+            val times = ArrayList<Float>(frames.size + 1)
+            var t = 0f
+            times.add(0f)
+            frames.forEachIndexed { index, frame ->
+                poser.animate(frame)
+                val deltas = FloatArray(nVert * 3)
+                for (i in 0 until nVert) {
+                    deltas[i * 3] = poser.getX(i) * UNIT_SCALE - bind[i * 3]
+                    deltas[i * 3 + 1] = -poser.getY(i) * UNIT_SCALE - bind[i * 3 + 1]
+                    deltas[i * 3 + 2] = -poser.getZ(i) * UNIT_SCALE - bind[i * 3 + 2]
+                }
+                targets += BakedTarget("${clip.name}_${index.toString().padStart(2, '0')}", deltas)
+                t += durationSeconds(frame)
+                times.add(t)
+            }
+            pending += Triple(clip.name, times.toFloatArray(), start until targets.size)
+        }
+
+        val totalTargets = targets.size
+        if (totalTargets == 0) return BakedClips(emptyList(), emptyList())
+
+        val bakedClips = pending.map { (name, times, range) ->
+            val weights = FloatArray(times.size * totalTargets)
+            for (key in times.indices) {
+                val target = if (key == times.lastIndex) range.first else range.first + key
+                weights[key * totalTargets + target] = 1f
+            }
+            BakedClip(name, times, weights)
+        }
+        return BakedClips(targets, bakedClips)
+    }
+
+    private fun durationSeconds(frame: AnimationFrame): Float =
+        (frame.getDuration().toMillis() / 1000.0).toFloat().coerceAtLeast(0.02f)
+
+    internal fun readDocument(path: Path): JsonObject =
+        parseGlb(Files.readAllBytes(path)).first
 
     private fun rsExtras(doc: JsonObject): JsonObject? {
         doc.getAsJsonObject("extras")?.getAsJsonObject("rs")?.let { return it }

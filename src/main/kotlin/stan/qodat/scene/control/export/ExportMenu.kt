@@ -11,7 +11,6 @@ import stan.qodat.scene.control.export.gif.GifFormat
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
-import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 
@@ -42,10 +41,6 @@ class ExportMenu<T : Exportable> : Menu("Export") {
 
     fun setExportable(exportable: T) {
         exportableProperty.set(exportable)
-    }
-
-    fun setAnimation(animation: AnimationLegacy) {
-        animationProperty.set(animation)
     }
 
     fun bindExportable(exportable: ReadOnlyObjectProperty<T>) {
@@ -127,7 +122,7 @@ class ExportMenu<T : Exportable> : Menu("Export") {
                 ExportMenuItem(
                     context = Triple(exportable, animation, null),
                     format = BlenderFormat(),
-                    prefixMenuItemName = "rigged (vertex skins)"
+                    prefixMenuItemName = "rigged + idle/walk"
                 )
             )
         })
