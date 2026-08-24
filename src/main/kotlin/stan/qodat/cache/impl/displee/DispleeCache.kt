@@ -21,7 +21,7 @@ import stan.qodat.cache.impl.displee.types.NpcManager
 import stan.qodat.cache.impl.displee.types.ObjectManager
 import stan.qodat.cache.impl.displee.types.SpotAnimManager
 import stan.qodat.cache.impl.displee.types.SpriteManager
-import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.util.onInvalidation
 import java.util.AbstractList
@@ -220,7 +220,7 @@ object DispleeCache : Cache("Displee") {
     override fun getInterface(groupId: Int): Array<InterfaceDefinition> = withOpenStore {
         interfaceManager
             .getIntefaceGroup(groupId)
-            ?.mapNotNull { it?.let(::RuneliteIntefaceDefinition) }
+            ?.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
             ?.toTypedArray()
             ?: emptyArray()
     }
@@ -290,7 +290,7 @@ object DispleeCache : Cache("Displee") {
         private val components: Array<net.runelite.cache.definitions.InterfaceDefinition?>
     ) : AbstractList<InterfaceDefinition>() {
         private val mapped: List<InterfaceDefinition> by lazy {
-            components.mapNotNull { it?.let(::RuneliteIntefaceDefinition) }
+            components.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
         }
 
         override val size: Int

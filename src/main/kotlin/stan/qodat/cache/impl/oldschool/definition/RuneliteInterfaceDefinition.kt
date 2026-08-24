@@ -4,7 +4,7 @@ import qodat.cache.definition.ClientScript1Instruction
 import qodat.cache.definition.ClientScript1Instruction.*
 import qodat.cache.definition.InterfaceDefinition
 
-class RuneliteIntefaceDefinition(definition: net.runelite.cache.definitions.InterfaceDefinition) : InterfaceDefinition {
+class RuneliteInterfaceDefinition(definition: net.runelite.cache.definitions.InterfaceDefinition) : InterfaceDefinition {
    
     override var id: Int = definition.id
     override var isIf3: Boolean = definition.isIf3

@@ -17,7 +17,7 @@ import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.ModelDefinitionCache
 import stan.qodat.cache.NpcPrimaryAnimations
-import stan.qodat.cache.impl.oldschool.definition.RuneliteIntefaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import stan.qodat.util.onInvalidation
@@ -295,13 +295,13 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
     override fun getInterface(groupId: Int): Array<InterfaceDefinition> =
         interfaceManager
             .getIntefaceGroup(groupId)
-            .map { RuneliteIntefaceDefinition(it) }
+            .map { RuneliteInterfaceDefinition(it) }
             .toTypedArray()
 
     override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> =
         interfaceManager.interfaces
             .filterNotNull()
-            .flatMap { components -> components.mapNotNull { RuneliteIntefaceDefinition(it) } }
+            .flatMap { components -> components.mapNotNull { RuneliteInterfaceDefinition(it) } }
             .groupBy { it.id.shr(16) }
 
     override fun getSprites(): Array<SpriteDefinition> =
