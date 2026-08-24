@@ -37,32 +37,6 @@ object QodatCache : Cache("qodat") {
     private val animationFrames: MutableMap<Int, List<QodatAnimationFrameDefinition>> = mutableMapOf()
     private val models: MutableMap<String, QodatModelDefinition> = mutableMapOf()
 
-    @JvmStatic
-    fun main(args: Array<String>) {
-
-//        val frameArchiveId = 2
-//        for (frameIndex in 0..15){
-//            val hash = ((frameArchiveId and  0xFFFF) shl 16) or (frameIndex and 0xFFFF)
-//            val hexString = Integer.toHexString(hash)
-//            assert(getFileId(hexString) == frameArchiveId)
-//            assert(getFrameId(hexString) == frameIndex)
-//            println("${hash},")
-//        }
-//        Paths.get("/Users/stanvanderbend/IdeaProjects/kotlin-qodat/exports/animation_frames/json/2")
-//            .toFile()
-//            .loadDefinitions<QodatAnimationFrameDefinition>("animation_frames/2")
-//            .forEach {
-//                it.frameHash
-//            }
-    }
-    internal fun getFileId(hexString: String): Int {
-        return Integer.parseInt(hexString.substring(0, hexString.length - 4), 16)
-    }
-
-    internal fun getFrameId(hexString: String): Int {
-        return Integer.parseInt(hexString.substring(hexString.length - 4), 16)
-    }
-
     init {
         reloadFromSource()
     }

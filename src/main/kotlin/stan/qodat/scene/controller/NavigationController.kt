@@ -28,7 +28,5 @@ class NavigationController : Initializable {
         zoomBar.valueProperty().setAndBind(SubScene3D.cameraHandler.position.zProperty())
 
         fpsLabel.isVisible = false
-//        fpsLabel.visibleProperty().setAndBind(Properties.showFPS)
-//        fpsLabel.textProperty().setAndBind(SubScene3D.animationPlayer.frameRateProperty)
     }
 }

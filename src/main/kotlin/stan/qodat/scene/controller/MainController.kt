@@ -79,13 +79,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     lateinit var mainPane: BorderPane
 
     @FXML
-    lateinit var searchModelsList: TextField
-
-    @FXML
     lateinit var menuBar: MenuBar
-
-    @FXML
-    lateinit var recentPathsMenu: Menu
 
     @FXML
     lateinit var leftTab: HBox

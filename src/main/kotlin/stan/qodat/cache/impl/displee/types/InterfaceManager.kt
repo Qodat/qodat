@@ -62,24 +62,9 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
         }
     }
 
-    fun getNumInterfaceGroups(): Int {
-        load()
-        return interfaces.size
-    }
-
-    fun getNumChildren(groupId: Int): Int {
-        load()
-        return interfaces[groupId]!!.size
-    }
-
-    fun getIntefaceGroup(groupId: Int): Array<InterfaceDefinition?>? {
+    fun getInterfaceGroup(groupId: Int): Array<InterfaceDefinition?>? {
         load()
         return interfaces[groupId]
-    }
-
-    fun getInterface(groupId: Int, childId: Int): InterfaceDefinition? {
-        load()
-        return interfaces[groupId]!![childId]
     }
 
     fun getInterfaces(): Array<Array<InterfaceDefinition?>?> {

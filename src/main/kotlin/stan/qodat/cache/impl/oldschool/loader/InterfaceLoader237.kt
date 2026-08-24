@@ -3,7 +3,6 @@ package stan.qodat.cache.impl.oldschool.loader
 import net.runelite.cache.definitions.ClientScript1Instruction
 import net.runelite.cache.definitions.InterfaceDefinition
 import net.runelite.cache.io.InputStream
-import java.util.Arrays
 
 /**
  * Interface decoder that understands Near Reality's rev237 IF3 prefix (`0xAABBCCDD`)
@@ -17,13 +16,11 @@ class InterfaceLoader237 {
 
         val rev237 = hasRev237Magic(data)
         val offset = if (rev237) MAGIC_SIZE else 0
+        val stream = InputStream(data)
+        stream.offset = offset
         if (data[offset] == (-1).toByte()) {
-            val stream = InputStream(data)
-            stream.offset = offset
             decodeIf3(iface, stream, rev237)
         } else {
-            val stream = InputStream(data)
-            stream.offset = offset
             decodeIf1(iface, stream)
         }
         return iface
@@ -39,17 +36,9 @@ class InterfaceLoader237 {
         iface.originalWidth = stream.readUnsignedShort()
         iface.originalHeight = stream.readUnsignedShort()
         iface.opacity = stream.readUnsignedByte()
-        iface.parentId = stream.readUnsignedShort()
-        if (iface.parentId == 0xFFFF) {
-            iface.parentId = -1
-        } else {
-            iface.parentId += iface.id and 0xFFFF.inv()
-        }
+        decodeParentId(iface, stream)
 
-        iface.hoveredSiblingId = stream.readUnsignedShort()
-        if (iface.hoveredSiblingId == 0xFFFF) {
-            iface.hoveredSiblingId = -1
-        }
+        iface.hoveredSiblingId = stream.readUnsignedShortOrNone()
 
         val alternateCount = stream.readUnsignedByte()
         if (alternateCount > 0) {
@@ -104,14 +93,7 @@ class InterfaceLoader237 {
                     iface.sprites[i] = -1
                 }
             }
-            iface.configActions = arrayOfNulls(5)
-            for (i in 0 until 5) {
-                val action = stream.readString()
-                if (action.isNotEmpty()) {
-                    iface.configActions[i] = action
-                    iface.clickMask = iface.clickMask or (1 shl i + 23)
-                }
-            }
+            decodeConfigActions(iface, stream)
         }
 
         if (iface.type == 3) {
@@ -122,8 +104,7 @@ class InterfaceLoader237 {
             iface.xTextAlignment = stream.readUnsignedByte()
             iface.yTextAlignment = stream.readUnsignedByte()
             iface.lineHeight = stream.readUnsignedByte()
-            iface.fontId = stream.readUnsignedShort()
-            if (iface.fontId == 0xFFFF) iface.fontId = -1
+            iface.fontId = stream.readUnsignedShortOrNone()
             iface.textShadowed = stream.readUnsignedByte() == 1
         }
 
@@ -149,14 +130,10 @@ class InterfaceLoader237 {
 
         if (iface.type == 6) {
             iface.modelType = 1
-            iface.modelId = stream.readUnsignedShort()
-            if (iface.modelId == 0xFFFF) iface.modelId = -1
-            iface.alternateModelId = stream.readUnsignedShort()
-            if (iface.alternateModelId == 0xFFFF) iface.alternateModelId = -1
-            iface.animation = stream.readUnsignedShort()
-            if (iface.animation == 0xFFFF) iface.animation = -1
-            iface.alternateAnimation = stream.readUnsignedShort()
-            if (iface.alternateAnimation == 0xFFFF) iface.alternateAnimation = -1
+            iface.modelId = stream.readUnsignedShortOrNone()
+            iface.alternateModelId = stream.readUnsignedShortOrNone()
+            iface.animation = stream.readUnsignedShortOrNone()
+            iface.alternateAnimation = stream.readUnsignedShortOrNone()
             iface.modelZoom = stream.readUnsignedShort()
             iface.rotationX = stream.readUnsignedShort()
             iface.rotationZ = stream.readUnsignedShort()
@@ -166,21 +143,13 @@ class InterfaceLoader237 {
             iface.itemIds = IntArray(iface.originalWidth * iface.originalHeight)
             iface.itemQuantities = IntArray(iface.originalWidth * iface.originalHeight)
             iface.xTextAlignment = stream.readUnsignedByte()
-            iface.fontId = stream.readUnsignedShort()
-            if (iface.fontId == 0xFFFF) iface.fontId = -1
+            iface.fontId = stream.readUnsignedShortOrNone()
             iface.textShadowed = stream.readUnsignedByte() == 1
             iface.textColor = stream.readInt()
             iface.xPitch = stream.readShort().toInt()
             iface.yPitch = stream.readShort().toInt()
             if (stream.readUnsignedByte() == 1) iface.clickMask = iface.clickMask or 1073741824
-            iface.configActions = arrayOfNulls(5)
-            for (i in 0 until 5) {
-                val action = stream.readString()
-                if (action.isNotEmpty()) {
-                    iface.configActions[i] = action
-                    iface.clickMask = iface.clickMask or (1 shl i + 23)
-                }
-            }
+            decodeConfigActions(iface, stream)
         }
 
         if (iface.type == 8) {
@@ -226,12 +195,7 @@ class InterfaceLoader237 {
         iface.heightMode = stream.readByte().toInt()
         iface.xPositionMode = stream.readByte().toInt()
         iface.yPositionMode = stream.readByte().toInt()
-        iface.parentId = stream.readUnsignedShort()
-        if (iface.parentId == 0xFFFF) {
-            iface.parentId = -1
-        } else {
-            iface.parentId += iface.id and 0xFFFF.inv()
-        }
+        decodeParentId(iface, stream)
         iface.isHidden = stream.readUnsignedByte() == 1
 
         if (iface.type == 0) {
@@ -256,8 +220,7 @@ class InterfaceLoader237 {
             if (rev237) {
                 iface.modelId = stream.readInt()
             } else {
-                iface.modelId = stream.readUnsignedShort()
-                if (iface.modelId == 0xFFFF) iface.modelId = -1
+                iface.modelId = stream.readUnsignedShortOrNone()
             }
             iface.offsetX2d = stream.readShort().toInt()
             iface.offsetY2d = stream.readShort().toInt()
@@ -265,8 +228,7 @@ class InterfaceLoader237 {
             iface.rotationZ = stream.readUnsignedShort()
             iface.rotationY = stream.readUnsignedShort()
             iface.modelZoom = stream.readUnsignedShort()
-            iface.animation = stream.readUnsignedShort()
-            if (iface.animation == 0xFFFF) iface.animation = -1
+            iface.animation = stream.readUnsignedShortOrNone()
             iface.orthogonal = stream.readUnsignedByte() == 1
             stream.readUnsignedShort()
             if (rev237 && (iface.widthMode != 0 || iface.heightMode != 0)) {
@@ -279,8 +241,7 @@ class InterfaceLoader237 {
         }
 
         if (iface.type == 4) {
-            iface.fontId = stream.readUnsignedShort()
-            if (iface.fontId == 0xFFFF) iface.fontId = -1
+            iface.fontId = stream.readUnsignedShortOrNone()
             iface.text = stream.readString()
             iface.lineHeight = stream.readUnsignedByte()
             iface.xTextAlignment = stream.readUnsignedByte()
@@ -378,11 +339,36 @@ class InterfaceLoader237 {
             instruction.opcode = opcodes[opcodeIndex]
             val argumentCount = instruction.opcode.argumentCount
             val end = (i + argumentCount).coerceAtMost(bytecode.size)
-            instruction.operands = Arrays.copyOfRange(bytecode, i, end)
+            instruction.operands = bytecode.copyOfRange(i, end)
             instructions.add(instruction)
             i += argumentCount
         }
         return instructions.toTypedArray()
+    }
+
+    private fun decodeParentId(iface: InterfaceDefinition, stream: InputStream) {
+        iface.parentId = stream.readUnsignedShort()
+        if (iface.parentId == 0xFFFF) {
+            iface.parentId = -1
+        } else {
+            iface.parentId += iface.id and 0xFFFF.inv()
+        }
+    }
+
+    private fun decodeConfigActions(iface: InterfaceDefinition, stream: InputStream) {
+        iface.configActions = arrayOfNulls(5)
+        for (i in 0 until 5) {
+            val action = stream.readString()
+            if (action.isNotEmpty()) {
+                iface.configActions[i] = action
+                iface.clickMask = iface.clickMask or (1 shl i + 23)
+            }
+        }
+    }
+
+    private fun InputStream.readUnsignedShortOrNone(): Int {
+        val value = readUnsignedShort()
+        return if (value == 0xFFFF) -1 else value
     }
 
     companion object {

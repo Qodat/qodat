@@ -219,7 +219,7 @@ object DispleeCache : Cache("Displee") {
 
     override fun getInterface(groupId: Int): Array<InterfaceDefinition> = withOpenStore {
         interfaceManager
-            .getIntefaceGroup(groupId)
+            .getInterfaceGroup(groupId)
             ?.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
             ?.toTypedArray()
             ?: emptyArray()

@@ -29,7 +29,6 @@ import java.nio.file.Path
 import java.nio.file.StandardWatchEventKinds
 import java.nio.file.WatchKey
 import java.util.*
-import java.util.concurrent.ConcurrentLinkedDeque
 
 /**
  * TODO: add documentation
@@ -44,7 +43,6 @@ class ModelController : Initializable {
     @FXML private lateinit var setLabel: MenuItem
 
     private var syncPath = SimpleObjectProperty<Path>()
-    private var ignorePaths = ConcurrentLinkedDeque<Path>()
 
     val models: ObservableList<Model> = FXCollections.observableArrayList()
     lateinit var filteredModels: FilteredList<Model>

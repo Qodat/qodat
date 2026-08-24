@@ -2,7 +2,6 @@ package stan.qodat.cache.impl.legacy.decoder
 
 import net.runelite.cache.io.InputStream
 import stan.qodat.cache.impl.legacy.LegacyObjectDefinition
-import java.util.*
 
 /**
  * TODO: add documentation
@@ -15,7 +14,6 @@ class LegacyObjectDecoder {
 
     fun load(id: Int, `is`: InputStream): LegacyObjectDefinition {
         val def = LegacyObjectBuilder()
-        def.type = id
         def.setDefaults()
         while (true) {
             val opcode = `is`.readUnsignedByte()
@@ -156,17 +154,6 @@ class LegacyObjectDecoder {
         def.objectModels = objectModels
     }
 
-    private fun readConfigChangeDest(
-        `is`: InputStream,
-        length: Int,
-        configChangeDest: IntArray
-    ) {
-        for (index in 0..length) {
-            configChangeDest[index] = `is`.readUnsignedShort()
-            if (0xFFFF == configChangeDest[index]) configChangeDest[index] = -1
-        }
-    }
-
     private fun readConfigBits(def: LegacyObjectBuilder, `is`: InputStream) {
         var varpID = `is`.readUnsignedShort()
         if (varpID == 0xFFFF) varpID = -1
@@ -174,14 +161,6 @@ class LegacyObjectDecoder {
         var configId = `is`.readUnsignedShort()
         if (configId == 0xFFFF) configId = -1
         def.varpID = configId
-    }
-    fun InputStream.readStringOld(): String {
-        val start = offset
-        while (true) {
-            if (readByte().toInt() == 10)
-                break
-        }
-        return String(array, start, offset - start - 1)
     }
 
     private companion object {
@@ -200,7 +179,6 @@ class LegacyObjectDecoder {
             var modelSizeX = 0
             var varpID = 0
             var rotated = false
-            var type = 0
             var blocksProjectile = true
             var mapSceneID = 0
             var configChangeDest: IntArray?= null
@@ -225,17 +203,6 @@ class LegacyObjectDecoder {
             var recolorToFind: ShortArray? = null
             var actions: Array<String?>? = arrayOfNulls(5)
             var interactiveType = -1
-            var interactType = 2
-            var retextureToFind: ShortArray? = null
-            var textureToReplace: ShortArray? = null
-            var anInt2110 = 0
-            var anInt2083 = 0
-            var anInt2112 = 0
-            var anInt2113 = 0
-            var anIntArray2084: IntArray? = null
-            var anInt2105 = 0
-            var mapAreaId = 0
-            var params: Map<Int, Any>? = null
 
             fun setDefaults() {
                 objectModels = null
@@ -274,17 +241,6 @@ class LegacyObjectDecoder {
                 varbitID = -1
                 varpID = -1
                 configChangeDest = null
-            }
-
-            override fun toString(): String {
-                return "ObjectDefinition{" +
-                        "name='" + name + '\'' +
-                        ", occludes=" + occludes +
-                        ", ethereal=" + ethereal +
-                        ", solid=" + solid +
-                        ", objectModels=" + Arrays.toString(objectModels) +
-                        ", animationID=" + animationID +
-                        '}'
             }
         }
     }

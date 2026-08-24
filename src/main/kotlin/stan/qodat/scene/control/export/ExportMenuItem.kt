@@ -23,15 +23,7 @@ class ExportMenuItem<C>(context: C, private val format: ExportFormat<C>, prefixM
     }
 
     private fun createSaveToPathMenuItem(context: C, objectProperty: ObjectExpression<Path?>): MenuItem {
-
-//        val fileName = format.getFileName(context)
         return MenuItem().apply {
-//            val transformedPathProperty =
-//                fileName?.let {
-//                    Bindings.createObjectBinding({
-//                        objectProperty.value?.resolve(it)
-//                    }, objectProperty)
-//                } ?: objectProperty
             visibleProperty().bind(objectProperty.isNotNull)
             textProperty().bind(
                 Bindings.createStringBinding(

@@ -77,24 +77,4 @@ sealed class SpriteExportFormat : ExportFormat<Sprite> {
         override val formatName: String = "PNG"
         override val extensions: List<String> = listOf("png")
     }
-
-    object JPEG : SpriteExportFormat() {
-        override val formatName: String = "JPEG"
-        override val extensions: List<String> = listOf("jpg", "jpeg")
-    }
-
-    object BMP : SpriteExportFormat() {
-        override val formatName: String = "BMP"
-        override val extensions: List<String> = listOf("bmp")
-    }
-
-    object WBMP : SpriteExportFormat() {
-        override val formatName: String = "WBMP"
-        override val extensions: List<String> = listOf("wbmp")
-    }
-
-    object GIF : SpriteExportFormat() {
-        override val formatName: String = "GIF"
-        override val extensions: List<String> = listOf("gif")
-    }
 }

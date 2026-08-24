@@ -17,6 +17,7 @@ class ItemManager(
         if (loaded) return
         val archive = cacheLibrary.index(2).archive(10)!!
         val loader = ItemLoader226()
+        // TODO(perf): decodes every item sequentially; archive is large and files are independent
         archive.files.forEach { (fileId, file) ->
             items[fileId] = loader.load(fileId, file.data ?: error("Item data null"))
         }

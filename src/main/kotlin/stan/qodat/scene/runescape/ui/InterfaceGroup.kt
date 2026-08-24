@@ -27,10 +27,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
         LabeledHBox(nameProperty, labelPrefix = "widget")
     }
 
-    private val sceneGroup: Group by lazy {
-        val group = Group()
-        group
-    }
+    private val sceneGroup: Group by lazy { Group() }
 
     private lateinit var treeItem: InterfaceTreeItem
 

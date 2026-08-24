@@ -1,11 +1,12 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.ClientScript1Instruction
-import qodat.cache.definition.ClientScript1Instruction.*
+import qodat.cache.definition.ClientScript1Instruction.Opcode
 import qodat.cache.definition.InterfaceDefinition
+import net.runelite.cache.definitions.ClientScript1Instruction as RuneliteClientScript1Instruction
 
 class RuneliteInterfaceDefinition(definition: net.runelite.cache.definitions.InterfaceDefinition) : InterfaceDefinition {
-   
+
     override var id: Int = definition.id
     override var isIf3: Boolean = definition.isIf3
     override var type: Int = definition.type
@@ -88,30 +89,7 @@ class RuneliteInterfaceDefinition(definition: net.runelite.cache.definitions.Int
     override var clientScripts = definition.clientScripts?.map { scripts ->
         Array(scripts.size) {
             val script = scripts[it]
-            val opcode = when(script.opcode) {
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.RETURN -> Opcode.RETURN
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.BOOSTED_SKILL_LEVELS -> Opcode.BOOSTED_SKILL_LEVELS
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.REAL_SKILL_LEVELS -> Opcode.REAL_SKILL_LEVELS
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.SKILL_EXPERIENCE -> Opcode.SKILL_EXPERIENCE
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY -> Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP -> Opcode.VARP
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL -> Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP_TIMES_469 -> Opcode.VARP_TIMES_469
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.COMBAT_LEVEL -> Opcode.COMBAT_LEVEL
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.TOTAL_LEVEL -> Opcode.TOTAL_LEVEL
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_STAR -> Opcode.WIDGET_CONTAINS_ITEM_STAR
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.RUN_ENERGY -> Opcode.RUN_ENERGY
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WEIGHT -> Opcode.WEIGHT
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARP_TESTBIT -> Opcode.VARP_TESTBIT
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.VARBIT -> Opcode.VARBIT
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.MINUS -> Opcode.MINUS
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.DIV -> Opcode.DIV
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.MUL -> Opcode.MUL
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WORLD_X -> Opcode.WORLD_X
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.WORLD_Y -> Opcode.WORLD_Y
-                net.runelite.cache.definitions.ClientScript1Instruction.Opcode.CONSTANT -> Opcode.CONSTANT
-                else -> null
-            }
+            val opcode = mapOpcode(script.opcode)
             ClientScript1Instruction(opcode, script.operands)
         }
     }?.toTypedArray()
@@ -132,4 +110,29 @@ class RuneliteInterfaceDefinition(definition: net.runelite.cache.definitions.Int
     override var alternateAnimation: Int = definition.alternateAnimation
     override var spellName: String? = definition.spellName
     override var tooltip: String? = definition.tooltip
+
+    private fun mapOpcode(opcode: RuneliteClientScript1Instruction.Opcode?): Opcode? = when (opcode) {
+        RuneliteClientScript1Instruction.Opcode.RETURN -> Opcode.RETURN
+        RuneliteClientScript1Instruction.Opcode.BOOSTED_SKILL_LEVELS -> Opcode.BOOSTED_SKILL_LEVELS
+        RuneliteClientScript1Instruction.Opcode.REAL_SKILL_LEVELS -> Opcode.REAL_SKILL_LEVELS
+        RuneliteClientScript1Instruction.Opcode.SKILL_EXPERIENCE -> Opcode.SKILL_EXPERIENCE
+        RuneliteClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY -> Opcode.WIDGET_CONTAINS_ITEM_GET_QUANTITY
+        RuneliteClientScript1Instruction.Opcode.VARP -> Opcode.VARP
+        RuneliteClientScript1Instruction.Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL -> Opcode.EXPERIENCE_AT_LEVEL_FOR_SKILL
+        RuneliteClientScript1Instruction.Opcode.VARP_TIMES_469 -> Opcode.VARP_TIMES_469
+        RuneliteClientScript1Instruction.Opcode.COMBAT_LEVEL -> Opcode.COMBAT_LEVEL
+        RuneliteClientScript1Instruction.Opcode.TOTAL_LEVEL -> Opcode.TOTAL_LEVEL
+        RuneliteClientScript1Instruction.Opcode.WIDGET_CONTAINS_ITEM_STAR -> Opcode.WIDGET_CONTAINS_ITEM_STAR
+        RuneliteClientScript1Instruction.Opcode.RUN_ENERGY -> Opcode.RUN_ENERGY
+        RuneliteClientScript1Instruction.Opcode.WEIGHT -> Opcode.WEIGHT
+        RuneliteClientScript1Instruction.Opcode.VARP_TESTBIT -> Opcode.VARP_TESTBIT
+        RuneliteClientScript1Instruction.Opcode.VARBIT -> Opcode.VARBIT
+        RuneliteClientScript1Instruction.Opcode.MINUS -> Opcode.MINUS
+        RuneliteClientScript1Instruction.Opcode.DIV -> Opcode.DIV
+        RuneliteClientScript1Instruction.Opcode.MUL -> Opcode.MUL
+        RuneliteClientScript1Instruction.Opcode.WORLD_X -> Opcode.WORLD_X
+        RuneliteClientScript1Instruction.Opcode.WORLD_Y -> Opcode.WORLD_Y
+        RuneliteClientScript1Instruction.Opcode.CONSTANT -> Opcode.CONSTANT
+        else -> null
+    }
 }

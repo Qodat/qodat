@@ -11,7 +11,6 @@ import javafx.collections.transformation.SortedList
 import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
-import javafx.scene.Node
 import javafx.scene.SnapshotParameters
 import javafx.scene.control.*
 import javafx.scene.layout.HBox
@@ -38,7 +37,6 @@ import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.Placement
 import stan.qodat.scene.control.SplitSceneDividerDragRegion.RelativeBounds
 import stan.qodat.scene.control.ViewNodeListView
-import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model

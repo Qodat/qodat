@@ -44,8 +44,6 @@ class EntitySelectionCoordinator(
         pending = node
         requestFlush()
         settle.playFromStart()
-        if (PerfTrace.enabled())
-            println("perf  select.generation=$generation ${node.javaClass.simpleName}")
     }
 
     fun unselect(node: ViewNodeProvider) {

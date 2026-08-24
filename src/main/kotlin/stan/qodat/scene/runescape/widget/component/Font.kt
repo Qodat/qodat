@@ -1,6 +1,6 @@
 package stan.qodat.scene.runescape.widget.component
 
-sealed class Font(val id: Int){
+sealed class Font(val id: Int) {
     object verdana_11pt_regular : Font(1442)
     object verdana_11pt_bold : Font(1443)
     object quill_oblique_large : Font(645)
@@ -17,20 +17,3 @@ sealed class Font(val id: Int){
     object surok_font : Font(819)
     object barbassault_font : Font(764)
 }
-/*
-1442	verdana_11pt_regular
-1443	verdana_11pt_bold
-645	    quill_oblique_large
-1445	verdana_13pt_regular
-646	    quill_caps_large
-1446	verdana_13pt_bold
-647	    lunar_alphabet
-1447	verdana_15pt_regular
-648	    lunar_alphabet_lrg
-494 	p11_full
-495	    p12_full
-496 	b12_full
-497	    q8_full
-819 	surok_font
-764	    barbassault_font
- */

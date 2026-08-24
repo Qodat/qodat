@@ -31,12 +31,8 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
 
     abstract fun getFileChooserTitle(context: C): String
 
-    open fun getFileChooserInitialFileName(context: C): String? = null
-
     open fun getFileChooserInitialDirectory(context: C): File? =
         (lastSaveDestinationProperty.value?:defaultSaveDestinationProperty.get())?.toFile()
-
-    open fun resolveFile(context: C, directory: File): File = directory
 
     override fun chooseSaveDestination(context: C): File? {
         val initialDirectory = getFileChooserInitialDirectory(context)
@@ -74,28 +70,6 @@ sealed class WaveFrontFormat<C> : ExportFormat<C> {
 
         override fun getFileChooserTitle(context: Triple<Searchable, Animation?, AnimationFrame?>) =
             "Export ${getFileName(context)} as WaveFront file"
-
-        override fun getFileChooserInitialFileName(context: Triple<Searchable, Animation?, AnimationFrame?>): String {
-            val (_, animation, animationFrame) = context
-            var base = getFileName(context)
-            if (animationFrame != null) {
-                if (animation != null) {
-                    base += "_${animation.getName()}_${animationFrame.getName()}"
-                }
-            }
-            return base
-        }
-
-        override fun resolveFile(context: Triple<Searchable, Animation?, AnimationFrame?>, directory: File): File {
-            val (searchable, animation, animationFrame) = context
-            var base = directory.resolve("${searchable.getName()}/still")
-            if (animationFrame != null) {
-                if (animation != null) {
-                    base = base.resolve("_A_${animation.getName()}_F_${animationFrame.getName()}")
-                }
-            }
-            return base
-        }
 
         override fun exportTo(
             context: Triple<Searchable, Animation?, AnimationFrame?>,

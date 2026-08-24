@@ -9,12 +9,6 @@ import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.Animation
 import java.io.UnsupportedEncodingException
 
-/**
- * TODO: add documentation
- *
- * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
- * @since   28/01/2021
- */
 class NPC(
     cache: Cache = DispleeCache,
     definition: NPCDefinition,

@@ -41,7 +41,6 @@ class ItemDefinition226(private val id: Int) : ItemDefinition {
 
     var shiftClickDropIndex = -1
 
-    var opId = -1
     var subOps: Array<Array<String?>?>? = null
 
     var isTradeable = false

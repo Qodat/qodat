@@ -6,15 +6,9 @@ import stan.qodat.cache.impl.oldschool.definition.ItemDefinition226
 class ItemLoader226 {
 
     fun load(id: Int, b: ByteArray): ItemDefinition226 {
+        // TODO(perf): opcode walk allocates InputStream per item; the items archive is large (~20k defs)
         val def = ItemDefinition226(id)
-        val `is` = InputStream(b)
-        while (true) {
-            val opcode = `is`.readUnsignedByte()
-            if (opcode == 0) {
-                break
-            }
-            def.decodeValues(opcode, `is`)
-        }
+        InputStream(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         def.post()
         return def
     }

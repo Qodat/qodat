@@ -15,11 +15,9 @@ class LegacyKitDecoder {
     fun load(id: Int, `is`: InputStream): LegacyKitDefinition {
 
         var bodyPartId = 0
-        var nonSelectable: Boolean = false
         var modelIds : Array<String>? = null
         val recolorToFind = ShortArray(9) { -1 }
         val recolorToReplace = ShortArray(9) { -1 }
-        val models = IntArray(9) { -1 } // idk what this is for
 
         while (true) {
             val opcode = `is`.readUnsignedByte()
@@ -34,10 +32,10 @@ class LegacyKitDecoder {
                         `is`.readUnsignedShort().toString()
                     }
                 }
-                3 -> nonSelectable = true
+                3 -> Unit
                 in 40..49 -> recolorToReplace[opcode - 40] = `is`.readUnsignedShort().toShort()
                 in 50..59 -> recolorToFind[opcode - 50] = `is`.readUnsignedShort().toShort()
-                in 60..69 -> models[opcode - 60] = `is`.readShort().toInt()
+                in 60..69 -> `is`.readShort()
             }
         }
 

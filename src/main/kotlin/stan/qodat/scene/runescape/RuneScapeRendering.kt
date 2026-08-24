@@ -5,58 +5,11 @@ import qodat.cache.models.VertexNormal
 import kotlin.math.sqrt
 
 const val MAX_VIEW_DISTANCE = 8192
-const val DISTANCE_EPSILON = 0.98999999999999999
-
-fun ModelDefinition.getPoints(face: Int): Triple<
-        Triple<Int, Int, Int>,
-        Triple<Int, Int, Int>,
-        Triple<Int, Int, Int>>
-{
-    val (v1, v2, v3) = getVertices(face)
-    return Triple(
-        Triple(getX(v1), getY(v1), getZ(v1)),
-        Triple(getX(v2), getY(v2), getZ(v2)),
-        Triple(getX(v3), getY(v3), getZ(v3)))
-}
 
 fun ModelDefinition.getVertices(face: Int) = Triple(getFaceVertexIndices1()[face], getFaceVertexIndices2()[face], getFaceVertexIndices3()[face])
 fun ModelDefinition.getX(vertex: Int) = getVertexPositionsX()[vertex]
 fun ModelDefinition.getY(vertex: Int) = getVertexPositionsY()[vertex]
 fun ModelDefinition.getZ(vertex: Int) = getVertexPositionsZ()[vertex]
-fun ModelDefinition.getColor(face: Int) = getFaceColors()[face].toInt()
-
-class Bounds {
-    var minY = 0
-    var distance2D = 0
-    var diagonal3DAboveOrigin = 0
-    var maxRenderDepth = 0
-    var minX = 999999
-    var maxX = -999999
-    var maxZ = -99999
-    var minZ = 99999
-    var maxY = 0
-}
-
-fun ModelDefinition.calculateBounds() : Bounds {
-    return Bounds().apply {
-        for (vertex in 0 until getVertexCount()) {
-            val x = getX(vertex)
-            val y = getY(vertex)
-            val z = getZ(vertex)
-            val distance2D = x * x + z * z
-            if (distance2D > this.distance2D) this.distance2D = distance2D
-            if (x < minX) minX = x
-            if (x > maxX) maxX = x
-            if (z < minZ) minZ = z
-            if (z > maxZ) maxZ = z
-            if (-y > minY) minY = -y
-            if (y > maxY) maxY = y
-        }
-        distance2D = (sqrt(distance2D.toDouble()) + DISTANCE_EPSILON).toInt()
-        diagonal3DAboveOrigin = (sqrt(distance2D.toDouble() * distance2D + minY * minY) + DISTANCE_EPSILON).toInt()
-        maxRenderDepth = (diagonal3DAboveOrigin + (sqrt((distance2D * distance2D + maxY * maxY).toDouble()) + DISTANCE_EPSILON).toInt())
-    }
-}
 
 /**
  * Per face render types, as stored in the cache.

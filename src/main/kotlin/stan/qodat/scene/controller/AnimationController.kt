@@ -10,7 +10,6 @@ import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
-import qodat.cache.Cache
 import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
 import stan.qodat.javafx.onChange

@@ -3,13 +3,6 @@ package stan.qodat.cache.impl.legacy.decoder
 import net.runelite.cache.io.InputStream
 import stan.qodat.cache.impl.legacy.LegacyNpcDefinition
 
-/**
- * TODO: add documentation
- *
- * @author Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
- * @version 1.0
- * @since 2019-01-11
- */
 class LegacyNpcDecoder {
 
     fun load(id: Int, `is`: InputStream): LegacyNpcDefinition {
@@ -28,7 +21,13 @@ class LegacyNpcDecoder {
         return LegacyNpcDefinition(
             name = def.name,
             modelIds = def.models?.map { it.toString() }?.toTypedArray()?: emptyArray(),
-            animationIds = arrayOf(def.walkAnimation, def.stanceAnimation, def.rotate90RightAnimation, def.rotate90RightAnimation, def.rotate180Animation).map { it.toString() }.toTypedArray(),
+            animationIds = arrayOf(
+                def.walkAnimation,
+                def.stanceAnimation,
+                def.rotate90LeftAnimation,
+                def.rotate90RightAnimation,
+                def.rotate180Animation,
+            ).map { it.toString() }.toTypedArray(),
             findColor = def.recolorToFind,
             replaceColor = def.recolorToReplace
         )
@@ -105,23 +104,12 @@ class LegacyNpcDecoder {
                 }
             }
             107 -> def.isClickable = false
-            else -> System.err.println("NpcDecoder: Unrecognized opcode $opcode")
+            else -> Unit
         }
     }
-    fun InputStream.readStringOld(): String {
-        val start = offset
-        while (true) {
-            if (readByte().toInt() == 10)
-                break
-        }
-        return String(array, start, offset - start - 1)
-    }
-
 
     companion object {
         private class LegacyNpcBuilder {
-
-            var id: Int = 0
             var recolorToFind: ShortArray? = null
             var rotation = 32
             var name = "null"
@@ -129,12 +117,9 @@ class LegacyNpcDecoder {
             var models: IntArray? = null
             var models_2: IntArray? = null
             var stanceAnimation = -1
-            var anInt2165 = -1
             var tileSpacesOccupied = 1
             var walkAnimation = -1
-            var retextureToReplace: ShortArray? = null
             var rotate90RightAnimation = -1
-            var aBool2170 = true
             var resizeX = 128
             var contrast = 0
             var rotate180Animation = -1
@@ -148,12 +133,8 @@ class LegacyNpcDecoder {
             var ambient = 0
             var headIcon = -1
             var configs: IntArray? = null
-            var retextureToFind: ShortArray? = null
             var varpIndex = -1
             var isClickable = true
-            var anInt2189 = -1
-            var aBool2190 = false
-            var params: Map<Int, Any>? = null
         }
     }
 }
