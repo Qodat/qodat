@@ -1,6 +1,6 @@
 package stan.qodat.scene.control.export.wavefront
 
-import stan.qodat.scene.runescape.model.Model
+import stan.qodat.scene.runescape.model.ModelSkeleton
 import java.io.FileWriter
 import java.io.PrintWriter
 import java.nio.file.Path
@@ -17,7 +17,7 @@ class WaveFrontWriter(private val saveDir: Path) {
     }
 
     fun writeObjFile(
-        model: Model,
+        model: ModelSkeleton,
         materials: Set<WaveFrontMaterial>,
         computeTextureUVCoordinate: Boolean = false,
         mtlFileNameWithoutExtension: String,
