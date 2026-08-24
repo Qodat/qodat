@@ -105,13 +105,6 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         }
     }
 
-    fun getModelData(id: String): ByteArray {
-        val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")
-        val modelIndex = store.getIndex(IndexType.MODELS)
-        val archive = modelIndex.getArchive(modelId)
-        return archive.decompress(store.storage.loadArchive(archive))
-    }
-
     override fun getModelDefinition(id: String): ModelDefinition =
         ModelDefinitionCache.getOrLoad(name, id) {
             val modelId = id.toIntOrNull() ?: throw IllegalArgumentException("Model id must be int-convertable $id")

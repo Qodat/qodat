@@ -28,9 +28,4 @@ class ItemManager(
         load()
         return items.values.toTypedArray()
     }
-
-    fun getItem(id: Int): ItemDefinition {
-        load()
-        return items[id] ?: throw IllegalArgumentException("Item $id not found")
-    }
 }

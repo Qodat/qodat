@@ -39,9 +39,4 @@ class SpotAnimManager(
         load()
         return spotAnims.values.toTypedArray()
     }
-
-    fun getSpotAnimation(id: Int): SpotAnimationDefinition {
-        load()
-        return spotAnims[id] ?: throw IllegalArgumentException("SpotAnimation $id not found")
-    }
 }

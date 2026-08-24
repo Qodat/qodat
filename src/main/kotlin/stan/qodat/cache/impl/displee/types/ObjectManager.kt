@@ -25,11 +25,6 @@ class ObjectManager(
         loaded = true
     }
 
-    fun getObject(id: Int): ObjectDefinition {
-        load()
-        return objects[id] ?: error("Object not found $id")
-    }
-
     fun getObjects(): Array<ObjectDefinition> {
         load()
         return objects.values.toTypedArray()
