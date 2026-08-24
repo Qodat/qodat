@@ -58,7 +58,7 @@ object MainMenuBar {
         actions: Actions,
         viewToggles: ViewToggles
     ) {
-        menuBar.isUseSystemMenuBar = true
+        menuBar.isUseSystemMenuBar = false
         menuBar.menus.setAll(buildMenus(actions, viewToggles))
     }
 

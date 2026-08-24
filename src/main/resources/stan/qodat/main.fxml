@@ -66,8 +66,8 @@
             <children>
                 <HBox prefHeight="30.0" prefWidth="900.0">
                     <children>
-                        <MenuBar fx:id="menuBar" prefHeight="30.0" />
-                        <ToolBar fx:id="playToolBar" maxHeight="30.0" HBox.hgrow="ALWAYS">
+                        <MenuBar fx:id="menuBar" prefHeight="30.0" HBox.hgrow="ALWAYS" />
+                        <ToolBar fx:id="playToolBar" maxHeight="30.0" HBox.hgrow="NEVER">
                             <items>
                                 <HBox id="playControls" fx:id="playControls" alignment="CENTER_RIGHT" prefHeight="17.0">
                                     <children>

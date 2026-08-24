@@ -17,6 +17,7 @@ import stan.qodat.Qodat
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.MacAppMenu
 import stan.qodat.scene.control.MainMenuBar
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.dialog.AboutDialog
@@ -360,22 +361,20 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     }
 
     private fun configureMenuBar() {
-        MainMenuBar.install(
-            menuBar,
-            MainMenuBar.Actions(
-                changeCache = ::setCachePath,
-                reloadCache = ::reloadCache,
-                rescanAnimations = ::rescanAnimations,
-                openQodatFolder = ::openQodatFolder,
-                openSettings = ::openSettings,
-                quit = ::quit,
-                undo = ActionCache::undoLast,
-                redo = ActionCache::redoLast,
-                clearScene = ::clearModels,
-                showAbout = ::showAbout
-            ),
-            MainMenuBar.ViewToggles.fromProperties()
+        val actions = MainMenuBar.Actions(
+            changeCache = ::setCachePath,
+            reloadCache = ::reloadCache,
+            rescanAnimations = ::rescanAnimations,
+            openQodatFolder = ::openQodatFolder,
+            openSettings = ::openSettings,
+            quit = ::quit,
+            undo = ActionCache::undoLast,
+            redo = ActionCache::redoLast,
+            clearScene = ::clearModels,
+            showAbout = ::showAbout
         )
+        MainMenuBar.install(menuBar, actions, MainMenuBar.ViewToggles.fromProperties())
+        MacAppMenu.install(actions)
     }
 
     private fun configureRightPane(initialContents: Node) {

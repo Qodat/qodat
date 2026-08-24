@@ -7,6 +7,7 @@ import javafx.event.ActionEvent
 import javafx.scene.SceneAntialiasing
 import javafx.scene.control.CheckMenuItem
 import javafx.scene.control.Menu
+import javafx.scene.control.MenuBar
 import javafx.scene.control.MenuItem
 import javafx.scene.control.SeparatorMenuItem
 import javafx.scene.input.KeyCode
@@ -22,6 +23,14 @@ class MainMenuBarTest {
 
     init {
         JFXPanel()
+    }
+
+    @Test
+    fun installKeepsTheMenuBarInsideTheWindow() {
+        val menuBar = MenuBar()
+        MainMenuBar.install(menuBar, recordingActions(), viewToggles())
+        assertFalse(menuBar.isUseSystemMenuBar)
+        assertEquals(4, menuBar.menus.size)
     }
 
     @Test
