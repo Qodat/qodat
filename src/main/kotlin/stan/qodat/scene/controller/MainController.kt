@@ -10,20 +10,25 @@ import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.*
+import javafx.stage.WindowEvent
 import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.MainMenuBar
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
+import stan.qodat.scene.control.dialog.AboutDialog
 import stan.qodat.scene.control.dialog.CacheChooserDialog
+import stan.qodat.scene.control.dialog.SettingsDialog
 import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
-import stan.qodat.scene.runescape.ui.InterfacePresentation
+import stan.qodat.scene.presentation.PlanarView
 import stan.qodat.scene.state.AppViewState
 import stan.qodat.scene.state.ViewStateRestorable
 import stan.qodat.task.BackgroundTasks
+import stan.qodat.util.ActionCache
 import stan.qodat.util.bind
 import stan.qodat.util.createDragSpace
 import stan.qodat.util.createSelectTabListener
@@ -50,9 +55,6 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
     @FXML
     lateinit var leftFilesTab: ToggleButton
-
-    @FXML
-    lateinit var rightMainTab: ToggleButton
 
     @FXML
     lateinit var rightPluginsTab: ToggleButton
@@ -133,7 +135,6 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     private val leftTabContents = SimpleObjectProperty<Node?>()
     private val bottomTabContents = SimpleObjectProperty<Node>()
 
-    lateinit var settingsController: SettingsController
     lateinit var viewerController: ViewerController
     lateinit var editorController: EditorController
     lateinit var eventLogController: EventLogController
@@ -144,6 +145,8 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     private var lastRightDividerPosition = 0.75
     private var reloadingCache = false
     private var rescanningAnimations = false
+    private val settingsDialog by lazy { SettingsDialog() }
+    private val aboutDialog by lazy { AboutDialog() }
 
     override fun onSwitch(next: SceneController) {
     }
@@ -172,11 +175,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         }
         modelsContainer.children.add(mainModelsView)
         addTabSelectedListener()
-
-        val settingsLoader = FXMLLoader(Qodat::class.java.getResource("settings.fxml"))
-        val settingsPane = settingsLoader.load<TitledPane>()
-        settingsController = settingsLoader.getController()
-        mainPanes.panes.add(settingsPane)
+        configureMenuBar()
 
         val viewerLoader = FXMLLoader(Qodat::class.java.getResource("viewer.fxml"))
         val viewerPane = viewerLoader.load<SplitPane>() // same as viewNode from controller
@@ -197,7 +196,6 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
         rightEditorTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, editorPane)
         rightViewerTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, viewerPane)
-        rightMainTab.createSelectTabListener(Properties.selectedRightTab, rightTabContents, mainPanes)
 
         leftFilesTab.createSelectTabListener(Properties.selectedLeftTab, leftTabContents, leftTab)
 
@@ -209,7 +207,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         configureCenterPane()
         configureBottomTab()
         configureLeftPane()
-        configureRightPane()
+        configureRightPane(viewerPane)
 
         configurePlayControls()
 
@@ -222,13 +220,11 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         }
         when (Properties.selectedRightTab.get()) {
             rightEditorTab.id -> rightEditorTab.selectedProperty().set(true)
-            rightViewerTab.id -> rightViewerTab.selectedProperty().set(true)
-            rightMainTab.id -> rightMainTab.selectedProperty().set(true)
             "null" -> {
                 rightEditorTab.isSelected = false
                 rightViewerTab.isSelected = false
-                rightMainTab.isSelected = false
             }
+            else -> rightViewerTab.selectedProperty().set(true)
         }
         when (Properties.selectedLeftTab.get()) {
             leftFilesTab.id -> leftFilesTab.selectedProperty().set(true)
@@ -268,7 +264,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
         val subScenePane = AutoScaleSubScenePane(parentWidthProperty = splitPlane.widthProperty())
         subScenePane.subSceneProperty.setAndBind(SubScene3D.subSceneProperty)
-        val viewToggle = createInterfaceViewToggle()
+        val viewToggle = createPlanarViewToggle()
         val sceneStack = StackPane(subScenePane, viewToggle).apply {
             StackPane.setAlignment(viewToggle, Pos.TOP_CENTER)
             StackPane.setMargin(viewToggle, Insets(10.0, 0.0, 0.0, 0.0))
@@ -280,7 +276,6 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         splitPlane.setDividerPositions(lastLeftDividerPosition, lastRightDividerPosition)
 
         SplitPane.setResizableWithParent(leftTab, false)
-        SplitPane.setResizableWithParent(mainPanes, false)
 
         subScenePane.leftOverlayGroup.children.add(
             splitPlane
@@ -292,27 +287,27 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         )
     }
 
-    private fun createInterfaceViewToggle(): HBox {
+    private fun createPlanarViewToggle(): HBox {
         val group = ToggleGroup()
         val twoD = ToggleButton("2D").apply {
             toggleGroup = group
-            isSelected = !InterfacePresentation.exploded.get()
-            styleClass += "interface-view-toggle"
+            isSelected = !PlanarView.exploded.get()
+            styleClass += "planar-view-toggle"
         }
         val threeD = ToggleButton("3D").apply {
             toggleGroup = group
-            isSelected = InterfacePresentation.exploded.get()
-            styleClass += "interface-view-toggle"
+            isSelected = PlanarView.exploded.get()
+            styleClass += "planar-view-toggle"
         }
         threeD.selectedProperty().addListener { _, _, selected ->
-            InterfacePresentation.exploded.set(selected)
+            PlanarView.exploded.set(selected)
         }
-        InterfacePresentation.exploded.addListener { _, _, exploded ->
+        PlanarView.exploded.addListener { _, _, exploded ->
             if (exploded) threeD.isSelected = true else twoD.isSelected = true
         }
         return HBox(twoD, threeD).apply {
-            styleClass += "interface-view-toggle-bar"
-            visibleProperty().bind(InterfacePresentation.active)
+            styleClass += "planar-view-toggle-bar"
+            visibleProperty().bind(PlanarView.active)
             managedProperty().bind(visibleProperty())
             isPickOnBounds = false
             maxWidth = Region.USE_PREF_SIZE
@@ -363,8 +358,32 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         }
     }
 
-    private fun configureRightPane() {
-        rightTabContents.set(mainPanes)
+    private fun configureMenuBar() {
+        MainMenuBar.install(
+            menuBar,
+            MainMenuBar.Actions(
+                changeCache = ::setCachePath,
+                reloadCache = ::reloadCache,
+                rescanAnimations = ::rescanAnimations,
+                openQodatFolder = ::openQodatFolder,
+                openSettings = ::openSettings,
+                quit = ::quit,
+                undo = ActionCache::undoLast,
+                redo = ActionCache::redoLast,
+                clearScene = ::clearModels,
+                showAbout = ::showAbout
+            ),
+            MainMenuBar.ViewToggles.fromProperties()
+        )
+    }
+
+    private fun configureRightPane(initialContents: Node) {
+        val mainIndex = splitPlane.items.indexOf(mainPanes)
+        if (mainIndex >= 0) {
+            splitPlane.items[mainIndex] = initialContents
+        }
+        SplitPane.setResizableWithParent(initialContents, false)
+        rightTabContents.set(initialContents)
         rightTabContents.addListener { _, oldValue: Node?, newValue: Node? ->
             if (oldValue !== newValue) {
                 if (newValue == null) {
@@ -409,7 +428,6 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
     fun postCacheLoading() {
         bottomFramesTab.selectedProperty().setAndBind(Properties.showFramesTab, biDirectional = true)
-        settingsController.root.expandedProperty().setAndBind(Properties.expandSettings, biDirectional = true)
     }
 
 
@@ -437,8 +455,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     private fun restoreSelectedTabs(state: AppViewState) {
         when (state.selectedRightTab) {
             rightEditorTab.id -> rightEditorTab.selectedProperty().set(true)
-            rightViewerTab.id -> rightViewerTab.selectedProperty().set(true)
-            rightMainTab.id -> rightMainTab.selectedProperty().set(true)
+            else -> rightViewerTab.selectedProperty().set(true)
         }
         when (state.selectedLeftTab) {
             leftFilesTab.id -> leftFilesTab.selectedProperty().set(true)
@@ -538,8 +555,31 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         }
     }
 
+    fun openSettings() {
+        if (Qodat.isStageInitialized()) {
+            settingsDialog.attachTo(Qodat.stage)
+        }
+        settingsDialog.showAndWait()
+    }
+
+    fun showAbout() {
+        if (Qodat.isStageInitialized()) {
+            aboutDialog.attachTo(Qodat.stage)
+        }
+        aboutDialog.showAndWait()
+    }
+
+    fun quit() {
+        if (Qodat.isStageInitialized()) {
+            Qodat.stage.fireEvent(WindowEvent(Qodat.stage, WindowEvent.WINDOW_CLOSE_REQUEST))
+        } else {
+            Platform.exit()
+        }
+    }
+
     @FXML
     fun clearModels() {
+        SubScene3D.contextProperty.get()?.clear()
     }
 
 }

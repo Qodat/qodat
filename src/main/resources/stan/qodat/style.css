@@ -110,14 +110,18 @@
     -fx-focus-color: #95fbf6;
 }
 
-.menu-item:hover {
+.menu-item:hover,
+.check-menu-item:hover,
+.check-menu-item:focused {
     -fx-background-color: #398291;
 }
 .menu-icon {
     -fx-background-color: rgb(214, 214, 214);
 }
 .menu-item:focused .menu-icon,
-.menu-item:hover .menu-icon {
+.menu-item:hover .menu-icon,
+.check-menu-item:focused .menu-icon,
+.check-menu-item:hover .menu-icon {
     -fx-background-color: white;
 }
 .settings-dialog,

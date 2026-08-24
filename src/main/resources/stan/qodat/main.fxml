@@ -7,9 +7,7 @@
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
 <?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.control.ToolBar?>
@@ -68,29 +66,8 @@
             <children>
                 <HBox prefHeight="30.0" prefWidth="900.0">
                     <children>
-                        <MenuBar fx:id="menuBar" prefHeight="30.0" HBox.hgrow="ALWAYS">
-                            <menus>
-                                <Menu mnemonicParsing="false" text="File">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" onAction="#setCachePath" text="Change Cache" />
-                                        <MenuItem mnemonicParsing="false" onAction="#reloadCache" text="Reload Cache" />
-                                        <MenuItem mnemonicParsing="false" onAction="#rescanAnimations" text="Rescan Animations" />
-                                        <MenuItem mnemonicParsing="false" onAction="#openQodatFolder" text="Open .qodat Folder" />
-                                    </items>
-                                </Menu>
-                                <Menu mnemonicParsing="false" text="Edit">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" onAction="#clearModels" text="Clear models" />
-                                    </items>
-                                </Menu>
-                                <Menu mnemonicParsing="false" text="Help">
-                                    <items>
-                                        <MenuItem mnemonicParsing="false" text="About" />
-                                    </items>
-                                </Menu>
-                            </menus>
-                        </MenuBar>
-                        <ToolBar maxHeight="30.0">
+                        <MenuBar fx:id="menuBar" prefHeight="30.0" />
+                        <ToolBar fx:id="playToolBar" maxHeight="30.0" HBox.hgrow="ALWAYS">
                             <items>
                                 <HBox id="playControls" fx:id="playControls" alignment="CENTER_RIGHT" prefHeight="17.0">
                                     <children>
@@ -178,8 +155,7 @@
                         <ToggleGroup fx:id="rightGroup" />
                     </fx:define>
                     <ToolBar rotate="90.0" styleClass="toggle-tab-pane">
-                        <ToggleButton fx:id="rightMainTab" focusTraversable="false" selected="true" styleClass="toggle-tab" text="Main" toggleGroup="${rightGroup}" />
-                        <ToggleButton fx:id="rightViewerTab" focusTraversable="false" styleClass="toggle-tab" text="Viewer" toggleGroup="${rightGroup}" />
+                        <ToggleButton fx:id="rightViewerTab" focusTraversable="false" selected="true" styleClass="toggle-tab" text="Viewer" toggleGroup="${rightGroup}" />
                         <ToggleButton fx:id="rightEditorTab" focusTraversable="false" styleClass="toggle-tab" text="Editor" toggleGroup="${rightGroup}" />
                         <ToggleButton fx:id="rightPluginsTab" focusTraversable="false" styleClass="toggle-tab" text="Plugins" toggleGroup="${rightGroup}" />
                     </ToolBar>

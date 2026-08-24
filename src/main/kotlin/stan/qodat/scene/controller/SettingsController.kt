@@ -5,22 +5,22 @@ import javafx.fxml.Initializable
 import javafx.scene.SceneAntialiasing
 import javafx.scene.control.CheckBox
 import javafx.scene.control.ColorPicker
-import javafx.scene.control.TitledPane
+import javafx.scene.layout.VBox
 import stan.qodat.Properties
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
 
 /**
- * TODO: add documentation
+ * Binds the settings dialog controls to [Properties].
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
 class SettingsController : Initializable {
 
-    @FXML lateinit var root: TitledPane
-    @FXML lateinit var showAxisCheckBox : CheckBox
+    @FXML lateinit var root: VBox
+    @FXML lateinit var showAxisCheckBox: CheckBox
     @FXML lateinit var msaaCheckBox: CheckBox
     @FXML lateinit var fpsCheckBox: CheckBox
     @FXML lateinit var showNullNamesCheckBox: CheckBox
@@ -32,10 +32,9 @@ class SettingsController : Initializable {
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         msaaCheckBox.selectedProperty().set(Properties.antialiasing.get() == SceneAntialiasing.BALANCED)
         msaaCheckBox.selectedProperty().addListener { _, _, newValue ->
-            if (newValue)
-                Properties.antialiasing.set(SceneAntialiasing.BALANCED)
-            else
-                Properties.antialiasing.set(SceneAntialiasing.DISABLED)
+            Properties.antialiasing.set(
+                if (newValue) SceneAntialiasing.BALANCED else SceneAntialiasing.DISABLED
+            )
         }
         showAxisCheckBox.selectedProperty().setAndBind(Properties.showAxis, true)
         fpsCheckBox.selectedProperty().setAndBind(Properties.showFPS, true)

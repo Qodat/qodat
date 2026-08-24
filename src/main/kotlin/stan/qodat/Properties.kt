@@ -55,7 +55,6 @@ object Properties {
     val showVertexGroups = SimpleBooleanProperty(false)
     val shading = SimpleBooleanProperty(true)
     val showFramesTab = SimpleBooleanProperty(false)
-    val expandSettings = SimpleBooleanProperty(true)
 
     val xAxisMaterial = SimpleObjectProperty(DEFAULT_X_AXIS_MATERIAL)
     val yAxisMaterial = SimpleObjectProperty(DEFAULT_Y_AXIS_MATERIAL)
@@ -195,7 +194,6 @@ object Properties {
         sessionManager.bindBoolean("show-null-named-entities", showNullNamedEntities)
         sessionManager.bindBoolean("show-fps", showFPS)
         sessionManager.bindBoolean("show-frames-tab", showFramesTab)
-        sessionManager.bindBoolean("expand-settings", expandSettings)
         sessionManager.bindBoolean("lock-scene", lockScene)
         sessionManager.bindBoolean("copy-models-from-npc", copyModelsFromNpc)
         sessionManager.bindBoolean("copy-animations-from-npc", copyAnimationsFromNpc)

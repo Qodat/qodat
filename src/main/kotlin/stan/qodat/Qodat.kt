@@ -144,6 +144,8 @@ class Qodat : Application() {
 
         lateinit var stage: Stage
 
+        fun isStageInitialized(): Boolean = ::stage.isInitialized
+
         /**
          * Starting point of the application.
          */
