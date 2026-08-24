@@ -169,10 +169,13 @@ tasks.register<Test>("cacheSmoke") {
     filter {
         includeTestsMatching("stan.qodat.cache.LatestOsrsCacheSmokeTest")
     }
+    // Resolve here: Test.systemProperty(String, Object) stringifies the value.
+    // Passing the Provider itself made the JVM see
+    // "or(or(or(provider(?), ...), fixed()))" instead of the cache path.
     val cacheDir = providers.gradleProperty("qodat.cache.dir")
         .orElse(providers.systemProperty("qodat.cache.dir"))
         .orElse(providers.environmentVariable("QODAT_CACHE_DIR"))
         .orElse("")
-    systemProperty("qodat.cache.dir", cacheDir)
+    systemProperty("qodat.cache.dir", cacheDir.get())
     systemProperty("qodat.cache.required", "true")
 }
