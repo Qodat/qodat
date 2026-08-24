@@ -36,7 +36,7 @@ object LegacyFrameStorage {
             try {
 
                 val compressedData = Files.readAllBytes(cachePath.resolve("frames").resolve("$fileId.gz"))
-                val uncompressedData = CompressionUtil.uncrompressGzip(compressedData)
+                val uncompressedData = CompressionUtil.uncompressGzip(compressedData)
 
                 val `in` = InputStream(uncompressedData)
 

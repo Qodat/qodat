@@ -20,7 +20,7 @@ object CompressionUtil {
      * @throws IOException If there is an error decompressing the buffer.
      */
     @Throws(IOException::class)
-    fun uncrompressGzip(compressed: ByteArray) = GZIPInputStream(ByteArrayInputStream(compressed)).use { `is` ->
+    fun uncompressGzip(compressed: ByteArray) = GZIPInputStream(ByteArrayInputStream(compressed)).use { `is` ->
             ByteArrayOutputStream().use { out ->
                 val buffer = ByteArray(1024)
 

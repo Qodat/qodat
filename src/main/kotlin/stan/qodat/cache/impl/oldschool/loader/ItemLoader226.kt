@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
+import net.runelite.cache.io.InputStream
 import stan.qodat.cache.impl.oldschool.definition.ItemDefinition226
-import stan.qodat.cache.util.InputStream
 
 class ItemLoader226 {
 
