@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory
 import qodat.cache.definition.InterfaceDefinition as QodatInterfaceDefinition
 import stan.qodat.cache.CacheParallel
 import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.loader.InterfaceLoader237
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -108,13 +107,5 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
             }
             return groups
         }
-
-        internal fun mapOldschoolRootInterfaces(
-            interfaces: Array<Array<net.runelite.cache.definitions.InterfaceDefinition>?>,
-        ): Map<Int, List<QodatInterfaceDefinition>> =
-            interfaces
-                .filterNotNull()
-                .flatMap { components -> components.map { RuneliteInterfaceDefinition(it) } }
-                .groupBy { it.id.shr(16) }
     }
 }

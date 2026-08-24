@@ -1,8 +1,7 @@
 package stan.qodat.scene.runescape.ui
 
-import net.runelite.cache.definitions.SpriteDefinition
 import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
+import stan.qodat.cache.impl.oldschool.definition.SpriteDefinition
 import stan.qodat.scene.runescape.widget.WidgetLayout
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -112,7 +111,7 @@ class InterfaceRasterTest {
         }
 
     private fun sprite(width: Int, height: Int, offsetX: Int, offsetY: Int, vararg pixels: Int) =
-        RuneliteSpriteDefinition(SpriteDefinition().also {
+        SpriteDefinition().also {
             it.id = 1
             it.width = width
             it.height = height
@@ -123,5 +122,5 @@ class InterfaceRasterTest {
             it.pixels = pixels
             it.pixelIdx = ByteArray(pixels.size)
             it.palette = IntArray(0)
-        })
+        }
 }

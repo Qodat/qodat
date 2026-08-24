@@ -1,12 +1,10 @@
 package stan.qodat.cache.impl.displee.types
 
-import net.runelite.cache.definitions.InterfaceDefinition as RuneLiteInterfaceDefinition
 import stan.qodat.cache.impl.displee.CacheIdPackingTest
 import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.getInterfaceGroup
 import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.interfaceGroupName
 import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.mapDispleeInterface
 import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.mapDispleeRootInterfaces
-import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.mapOldschoolRootInterfaces
 import stan.qodat.cache.impl.displee.types.InterfaceManager.Companion.widgetId
 import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import kotlin.test.Test
@@ -69,21 +67,5 @@ class InterfaceManagerMappingTest {
     fun emptyRootInterfaceMapMatchesDispleeErrorCondition() {
         assertTrue(mapDispleeRootInterfaces(emptyArray()).isEmpty())
         assertTrue(mapDispleeRootInterfaces(arrayOf(null, arrayOf(null))).isEmpty())
-    }
-
-    @Test
-    fun oldschoolRootInterfacesGroupByHighWidgetBits() {
-        val a = RuneLiteInterfaceDefinition().apply { id = CacheIdPackingTest.packWidgetId(5, 0) }
-        val b = RuneLiteInterfaceDefinition().apply { id = CacheIdPackingTest.packWidgetId(5, 1) }
-        val c = RuneLiteInterfaceDefinition().apply { id = CacheIdPackingTest.packWidgetId(9, 0) }
-        val raw = arrayOf(
-            null,
-            arrayOf(a, b),
-            arrayOf(c),
-        )
-        val grouped = mapOldschoolRootInterfaces(raw)
-        assertEquals(listOf(5, 9), grouped.keys.toList())
-        assertEquals(2, grouped.getValue(5).size)
-        assertEquals(1, grouped.getValue(9).size)
     }
 }

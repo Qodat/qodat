@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 /**
- * Frame-hash and widget-id packing used by [DispleeCache], [stan.qodat.cache.impl.oldschool.OldschoolCacheRuneLite],
+ * Frame-hash and widget-id packing used by [DispleeCache],
  * [stan.qodat.cache.impl.displee.types.AnimManager], and [stan.qodat.cache.impl.qodat.QodatCache].
  */
 class CacheIdPackingTest {
