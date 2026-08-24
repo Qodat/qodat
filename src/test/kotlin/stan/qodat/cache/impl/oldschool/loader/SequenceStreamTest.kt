@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import net.runelite.cache.io.InputStream
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.InputStream
+import qodat.cache.io.OutputStream
 import kotlin.test.Test
 import kotlin.test.assertTrue
 

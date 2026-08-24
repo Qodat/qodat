@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.SequenceDefinition
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 
 /**
