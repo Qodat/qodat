@@ -1,6 +1,9 @@
 package stan.qodat.cache
 
-import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asExecutor
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.IntStream
 
@@ -8,12 +11,17 @@ import java.util.stream.IntStream
  * Parallel decode helpers. Callers must extract raw bytes first; do not share
  * [java.nio.ByteBuffer]s or call Displee [com.displee.cache.index.ReferenceTable.archive]
  * from these workers — the index is not safe for concurrent archive reads.
+ *
+ * Large batches run on [Dispatchers.Default] (same pool as
+ * [stan.qodat.Qodat.applicationScope]), not [java.util.concurrent.ForkJoinPool.commonPool].
  */
 object CacheParallel {
 
     const val SEQUENTIAL_THRESHOLD = 32
 
     val parallelism: Int = Runtime.getRuntime().availableProcessors().coerceAtLeast(1)
+
+    val decodeExecutor: Executor = Dispatchers.Default.asExecutor()
 
     inline fun <V, T> decode(
         files: List<Pair<Int, V>>,
@@ -27,9 +35,14 @@ object CacheParallel {
             }
             return result
         }
-        val result = ConcurrentHashMap<Int, T>(files.size)
-        files.parallelStream().forEach { (id, data) ->
-            result[id] = decodeFile(id, data)
+        val futures = Array(files.size) { index ->
+            val (id, data) = files[index]
+            CompletableFuture.supplyAsync({ id to decodeFile(id, data) }, decodeExecutor)
+        }
+        val result = LinkedHashMap<Int, T>(files.size)
+        for (future in futures) {
+            val (id, value) = future.join()
+            result[id] = value
         }
         return result
     }
