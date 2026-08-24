@@ -6,13 +6,13 @@ import java.io.File
 plugins {
     id("org.openjfx.javafxplugin") version "0.1.0"
     id("dev.hydraulic.conveyor") version "1.5"
-    kotlin("jvm") version "1.9.10"
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("jvm") version "1.9.25"
+    kotlin("plugin.serialization") version "1.9.25"
     application
 }
 
 repositories {
-    jcenter()
+    mavenCentral()
 }
 
 version = "0.4.0"
@@ -75,19 +75,19 @@ tasks.withType<JavaExec>().configureEach {
 
 dependencies {
     implementation(project("qodat-api"))
-    implementation("com.google.code.gson:gson:2.8.5")
+    implementation("com.google.code.gson:gson:2.11.0")
     implementation("com.google.guava:guava:23.2-jre")
-    implementation("org.apache.commons:commons-compress:1.10")
-    implementation("org.jsoup:jsoup:1.17.2")
+    implementation("org.apache.commons:commons-compress:1.27.1")
+    implementation("org.jsoup:jsoup:1.18.3")
     implementation("us.ihmc:ihmc-javafx-toolkit:17-0.21.2")
     implementation("org.jcodec:jcodec:0.2.5")
     implementation("org.jcodec:jcodec-javase:0.2.5")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
     implementation("org.orbisgis:poly2tri-core:0.1.2")
-    implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.9")
+    implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.13")
     implementation("com.displee:rs-cache-library:7.1.3")
     implementation("org.joml:joml-primitives:1.10.0")
     implementation("org.joml:joml:1.10.5")
