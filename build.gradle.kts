@@ -52,6 +52,26 @@ application {
     applicationName = "Qodat"
 }
 
+tasks {
+    processResources {
+        val appVersion = version.toString()
+        inputs.property("appVersion", appVersion)
+        filesMatching("stan/qodat/version.properties") {
+            filter { line ->
+                if (line.startsWith("version=")) "version=$appVersion" else line
+            }
+        }
+    }
+    jar {
+        manifest {
+            attributes(
+                "Implementation-Title" to "Qodat",
+                "Implementation-Version" to version
+            )
+        }
+    }
+}
+
 javafx {
     version = libs.versions.javafx.get()
     modules(

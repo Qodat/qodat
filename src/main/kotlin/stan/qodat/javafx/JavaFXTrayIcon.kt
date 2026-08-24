@@ -3,6 +3,7 @@ package stan.qodat.javafx
 import javafx.application.Platform
 import javafx.embed.swing.SwingFXUtils
 import javafx.stage.Stage
+import stan.qodat.AppVersion
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -36,6 +37,7 @@ object JavaFXTrayIcon {
             val tray = SystemTray.getSystemTray()
 
             val trayIcon = TrayIcon(SwingFXUtils.fromFXImage(icon, null))
+            trayIcon.toolTip = AppVersion.windowTitle
             this.trayIcon = trayIcon
 
             trayIcon.addMouseListener(object : MouseAdapter() {

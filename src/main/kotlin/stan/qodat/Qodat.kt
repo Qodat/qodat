@@ -61,7 +61,7 @@ class Qodat : Application() {
         mainController = mainLoader.getController()
 
         primaryStage.apply {
-            title = "Qodat"
+            title = AppVersion.windowTitle
             val icon = Image(Qodat::class.java.getResourceAsStream("images/icon.png"))
             icons.add(icon)
             SwingUtilities.invokeLater {

@@ -3,13 +3,14 @@ package stan.qodat.scene.control.dialog
 import javafx.scene.control.Alert
 import javafx.scene.control.ButtonType
 import javafx.stage.Window
+import stan.qodat.AppVersion
 import stan.qodat.Qodat
 
 class AboutDialog : Alert(AlertType.INFORMATION) {
 
     init {
         title = "About Qodat"
-        headerText = "Qodat"
+        headerText = AppVersion.windowTitle
         contentText = "A RuneScape cache explorer for models, animations, and interfaces."
         dialogPane.buttonTypes.setAll(ButtonType.CLOSE)
         dialogPane.styleClass.add("myDialog")
