@@ -60,6 +60,16 @@ class SpriteLoader {
         return sprites
     }
 
+    fun loadInflated(id: Int, b: ByteArray): Int {
+        val sprites = load(id, b)
+        var sink = sprites.size
+        for (sprite in sprites) {
+            sprite.inflatePixels()
+            sink += sprite.width
+        }
+        return sink
+    }
+
     companion object {
         const val FLAG_VERTICAL = 0b01
         const val FLAG_ALPHA = 0b10

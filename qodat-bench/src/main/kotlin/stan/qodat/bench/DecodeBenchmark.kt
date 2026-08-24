@@ -98,18 +98,12 @@ private fun sprite(args: BenchArgs, sink: BenchSink) {
     val rl = RuneLiteSpriteLoader()
     val smallIters = (args.iters / 4).coerceAtLeast(50)
     val small = args.copy(iters = smallIters)
-    compare("sprite", "1x1", args, sink, SyntheticPayloads.spriteSingle(), { ours.load(1, it).also { inflateAll(it) } }, { rl.load(1, it) })
-    compare("sprite", "vertical-2x2", args, sink, SyntheticPayloads.spriteVertical(), { ours.load(2, it).also { inflateAll(it) } }, { rl.load(2, it) })
-    compare("sprite", "alpha", args, sink, SyntheticPayloads.spriteAlpha(), { ours.load(3, it).also { inflateAll(it) } }, { rl.load(3, it) })
-    compare("sprite", "multi-frame", args, sink, SyntheticPayloads.spriteMultiFrame(), { ours.load(4, it).also { inflateAll(it) } }, { rl.load(4, it) })
-    compare("sprite", "32x32", small, sink, SyntheticPayloads.sprite32(), { ours.load(5, it).also { inflateAll(it) } }, { rl.load(5, it) })
+    compare("sprite", "1x1", args, sink, SyntheticPayloads.spriteSingle(), { ours.loadInflated(1, it) }, { rl.load(1, it) })
+    compare("sprite", "vertical-2x2", args, sink, SyntheticPayloads.spriteVertical(), { ours.loadInflated(2, it) }, { rl.load(2, it) })
+    compare("sprite", "alpha", args, sink, SyntheticPayloads.spriteAlpha(), { ours.loadInflated(3, it) }, { rl.load(3, it) })
+    compare("sprite", "multi-frame", args, sink, SyntheticPayloads.spriteMultiFrame(), { ours.loadInflated(4, it) }, { rl.load(4, it) })
+    compare("sprite", "32x32", small, sink, SyntheticPayloads.sprite32(), { ours.loadInflated(5, it) }, { rl.load(5, it) })
     oursOnly("sprite", "32x32-header", small, sink, SyntheticPayloads.sprite32()) { ours.load(5, it) }
-}
-
-private fun inflateAll(sprites: Array<stan.qodat.cache.impl.oldschool.definition.SpriteDefinition>) {
-    for (sprite in sprites) {
-        sprite.inflatePixels()
-    }
 }
 
 private fun item(args: BenchArgs, sink: BenchSink) {

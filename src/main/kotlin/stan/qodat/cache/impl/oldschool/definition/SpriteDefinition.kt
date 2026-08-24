@@ -54,7 +54,7 @@ class SpriteDefinition(
     internal val isPixelDataInflated: Boolean
         get() = inflated
 
-    fun inflatePixels() {
+    internal fun inflatePixels() {
         if (inflated) return
         val source = pixelSource
         if (source == null) {
