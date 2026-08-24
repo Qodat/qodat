@@ -955,8 +955,6 @@ class RSModelLoader {
         var vertex3 = 0
         var vertexOffset = 0
 
-        val c = 6397
-        var fail1 = 0;var fail2 = 0;var fail3 = 0;var fail4 = 0
         for (i in 0 until faceCount) {
 
             val triangleMask = input2.readUnsignedByte()
@@ -973,8 +971,6 @@ class RSModelLoader {
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
                     faceVertexIndices3[i] = vertex3
-                    if(vertex1 >= c || vertex2 >= c || vertex3 >= c)
-                        fail1++
                 }
                 2 -> {
                     vertex2 = vertex3
@@ -983,8 +979,6 @@ class RSModelLoader {
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
                     faceVertexIndices3[i] = vertex3
-                    if(vertex3 >= c)
-                        fail2++
                 }
                 3 -> {
                     vertex1 = vertex3
@@ -993,8 +987,6 @@ class RSModelLoader {
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
                     faceVertexIndices3[i] = vertex3
-                    if(vertex3 >= c)
-                        fail3++
                 }
                 4 -> {
                     val vertex1Copy = vertex1
@@ -1005,12 +997,9 @@ class RSModelLoader {
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex1Copy
                     faceVertexIndices3[i] = vertex3
-                    if(vertex3 >= c)
-                        fail4++
                 }
             }
         }
-        println("$fail1 $fail2  $fail3  $fail4")
     }
     private fun readVertexIndices(
         input1: InputStream,
