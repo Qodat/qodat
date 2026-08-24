@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 

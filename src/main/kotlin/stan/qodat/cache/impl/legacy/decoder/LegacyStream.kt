@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 
 internal fun InputStream.readStringOld(): String {
     val start = offset

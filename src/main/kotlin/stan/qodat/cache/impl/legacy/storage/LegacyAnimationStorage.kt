@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 import stan.qodat.cache.impl.legacy.LegacyAnimationDefinition
 import stan.qodat.cache.impl.legacy.decoder.LegacySequenceDecoder
 

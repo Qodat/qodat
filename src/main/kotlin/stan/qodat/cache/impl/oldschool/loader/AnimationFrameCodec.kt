@@ -2,7 +2,7 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.FrameDefinition
 import net.runelite.cache.definitions.FramemapDefinition
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationTransformationGroup
 

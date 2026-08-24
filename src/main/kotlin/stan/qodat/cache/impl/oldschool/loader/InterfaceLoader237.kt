@@ -2,7 +2,7 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.ClientScript1Instruction
 import net.runelite.cache.definitions.InterfaceDefinition
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 
 /**
  * Interface decoder that understands Near Reality's rev237 IF3 prefix (`0xAABBCCDD`)

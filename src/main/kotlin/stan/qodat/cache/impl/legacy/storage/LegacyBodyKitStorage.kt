@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import net.runelite.cache.io.InputStream
+import qodat.cache.io.InputStream
 import stan.qodat.cache.impl.legacy.LegacyKitDefinition
 import stan.qodat.cache.impl.legacy.decoder.LegacyKitDecoder
 import java.io.IOException

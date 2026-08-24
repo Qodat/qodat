@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import net.runelite.cache.io.InputStream
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.InputStream
+import qodat.cache.io.OutputStream
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
