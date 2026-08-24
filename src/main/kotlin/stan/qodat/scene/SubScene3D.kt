@@ -11,6 +11,7 @@ import javafx.scene.input.MouseEvent
 import stan.qodat.Properties
 import stan.qodat.scene.control.CameraHandler
 import stan.qodat.scene.runescape.animation.AnimationPlayer
+import stan.qodat.scene.runescape.ui.InterfacePresentation
 import stan.qodat.scene.shape.AxisView
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
@@ -73,7 +74,21 @@ object SubScene3D : AbstractSubScene() {
 
         rebuildSubScene()
         rebuildAxis()
+        wireInterfaceCamera()
+    }
 
+    private fun wireInterfaceCamera() {
+        val sync = {
+            val active = InterfacePresentation.active.get()
+            val exploded = InterfacePresentation.exploded.get()
+            cameraHandler.navigationEnabled = InterfacePresentation.cameraNavigationEnabled.get()
+            if (active) {
+                if (exploded) cameraHandler.applyExplodedPreview()
+                else cameraHandler.resetFrontView()
+            }
+        }
+        InterfacePresentation.active.addListener { _, _, _ -> sync() }
+        InterfacePresentation.exploded.addListener { _, _, _ -> sync() }
     }
 
     override val mouseEventHandler = EventHandler<MouseEvent> {

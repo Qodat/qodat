@@ -41,6 +41,7 @@ import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.ui.InterfaceGroup
+import stan.qodat.scene.runescape.ui.InterfacePresentation
 import stan.qodat.scene.runescape.ui.Sprite
 import stan.qodat.scene.state.EntityViewState
 import stan.qodat.scene.state.NamedIdentity
@@ -775,7 +776,10 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
                 is Object -> currentSelectedObjectProperty.set(null)
                 is Sprite -> currentSelectedSpriteProperty.set(null)
                 is SpotAnimation -> currentSelectedSpotAnimProperty.set(null)
-                is InterfaceGroup -> currentSelectedObjectProperty.set(null)
+                is InterfaceGroup -> {
+                    currentSelectedInterfaceProperty.set(null)
+                    InterfacePresentation.active.set(false)
+                }
             }
         }
     }
@@ -798,6 +802,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
             is SpotAnimation -> currentSelectedSpotAnimProperty.set(newNode)
             is InterfaceGroup -> currentSelectedInterfaceProperty.set(newNode)
         }
+        InterfacePresentation.active.set(newNode is InterfaceGroup)
         stan.qodat.util.PerfTrace.end("select.immediate", start)
     }
 

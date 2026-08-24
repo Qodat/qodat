@@ -68,7 +68,11 @@ class CameraHandler(
     private var lastMouseX = 0.0
     private var lastMouseY = 0.0
 
+    var navigationEnabled = true
+
     val mouseEventHandler = EventHandler<MouseEvent> {
+        if (!navigationEnabled)
+            return@EventHandler
 
         lastMouseX = if (firstEvent) it.sceneX else mouseX
         lastMouseY = if (firstEvent) it.sceneY else mouseY
@@ -115,6 +119,8 @@ class CameraHandler(
 
     val scrollEventHandler = EventHandler<ScrollEvent> {
         if (it.touchCount > 0){
+            if (!navigationEnabled)
+                return@EventHandler
             cameraTransformGroup.translate.x -= it.deltaX.times(0.01)
             cameraTransformGroup.translate.y += it.deltaY.times(0.01)
         } else {
@@ -140,6 +146,18 @@ class CameraHandler(
         pivotY = pivot.y,
         pivotZ = pivot.z
     )
+
+    fun resetFrontView() {
+        cameraTransformGroup.xRotate.angle = 0.0
+        cameraTransformGroup.yRotate.angle = 0.0
+        cameraTransformGroup.translate.x = 0.0
+        cameraTransformGroup.translate.y = 0.0
+    }
+
+    fun applyExplodedPreview() {
+        cameraTransformGroup.xRotate.angle = -24.0
+        cameraTransformGroup.yRotate.angle = -28.0
+    }
 
     override fun restoreViewState(state: CameraViewState) {
         cameraTransformGroup.translate.x = state.translateX

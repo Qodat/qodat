@@ -5,6 +5,8 @@ import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
+import javafx.geometry.Insets
+import javafx.geometry.Pos
 import javafx.scene.Node
 import javafx.scene.control.*
 import javafx.scene.layout.*
@@ -18,6 +20,7 @@ import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.dialog.CacheChooserDialog
 import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
+import stan.qodat.scene.runescape.ui.InterfacePresentation
 import stan.qodat.scene.state.AppViewState
 import stan.qodat.scene.state.ViewStateRestorable
 import stan.qodat.task.BackgroundTasks
@@ -265,10 +268,15 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
         val subScenePane = AutoScaleSubScenePane(parentWidthProperty = splitPlane.widthProperty())
         subScenePane.subSceneProperty.setAndBind(SubScene3D.subSceneProperty)
+        val viewToggle = createInterfaceViewToggle()
+        val sceneStack = StackPane(subScenePane, viewToggle).apply {
+            StackPane.setAlignment(viewToggle, Pos.TOP_CENTER)
+            StackPane.setMargin(viewToggle, Insets(10.0, 0.0, 0.0, 0.0))
+        }
 
         mainPane.center = splitPlane
         splitPlane.items.remove(canvasPlaceHolder)
-        splitPlane.items.add(1, subScenePane)
+        splitPlane.items.add(1, sceneStack)
         splitPlane.setDividerPositions(lastLeftDividerPosition, lastRightDividerPosition)
 
         SplitPane.setResizableWithParent(leftTab, false)
@@ -282,6 +290,34 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
             splitPlane
                 .createDragSpace(Properties.centerDivider2Position, divider2IndexProperty)
         )
+    }
+
+    private fun createInterfaceViewToggle(): HBox {
+        val group = ToggleGroup()
+        val twoD = ToggleButton("2D").apply {
+            toggleGroup = group
+            isSelected = !InterfacePresentation.exploded.get()
+            styleClass += "interface-view-toggle"
+        }
+        val threeD = ToggleButton("3D").apply {
+            toggleGroup = group
+            isSelected = InterfacePresentation.exploded.get()
+            styleClass += "interface-view-toggle"
+        }
+        threeD.selectedProperty().addListener { _, _, selected ->
+            InterfacePresentation.exploded.set(selected)
+        }
+        InterfacePresentation.exploded.addListener { _, _, exploded ->
+            if (exploded) threeD.isSelected = true else twoD.isSelected = true
+        }
+        return HBox(twoD, threeD).apply {
+            styleClass += "interface-view-toggle-bar"
+            visibleProperty().bind(InterfacePresentation.active)
+            managedProperty().bind(visibleProperty())
+            isPickOnBounds = false
+            maxWidth = Region.USE_PREF_SIZE
+            maxHeight = Region.USE_PREF_SIZE
+        }
     }
 
     private fun configureBottomTab() {

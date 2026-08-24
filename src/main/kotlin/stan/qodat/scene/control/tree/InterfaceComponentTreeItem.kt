@@ -15,7 +15,8 @@ class InterfaceComponentTreeItem(val cache: Cache, val definition: InterfaceDefi
         val textId = Label("${definition.id.and(0xffff)}")
         val typeString = when(definition.type) {
             0 -> "Layer"
-            3 -> "Rectangle"
+            2 -> "Inventory"
+            3, 10 -> "Rectangle"
             4 -> "Text"
             5 -> "Graphic"
             6 -> "Model"
@@ -27,11 +28,12 @@ class InterfaceComponentTreeItem(val cache: Cache, val definition: InterfaceDefi
         }
         value = textId
         graphic = textType
-        if (definition.spriteId != -1) {
-            val spriteDefinition = cache.getSprite(definition.spriteId, 0)
-            val sprite = Sprite(spriteDefinition)
-            val tree = TreeItem<Node>(Label("Sprite ${sprite.nameProperty.get()}"), sprite.sceneNode)
-            children.add(tree)
+        if (definition.spriteId >= 0) {
+            val spriteDefinition = runCatching { cache.getSprite(definition.spriteId, 0) }.getOrNull()
+            if (spriteDefinition != null) {
+                val sprite = Sprite(spriteDefinition)
+                children.add(TreeItem<Node>(Label("Sprite ${sprite.nameProperty.get()}"), sprite.sceneNode))
+            }
         }
     }
 }
