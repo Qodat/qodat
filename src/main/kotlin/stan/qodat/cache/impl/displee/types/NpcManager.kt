@@ -47,6 +47,7 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
                 override val name = npc.name.ifBlank { "null" }
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
+                override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
                 override val animationIds by lazy {
                     (primaryAnimationIds + extraAnimationIds(npc, npcAnimsDir))
                         .distinct()

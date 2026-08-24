@@ -6,19 +6,21 @@ import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
 import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
+import javafx.util.Callback
 import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
 import stan.qodat.javafx.onChange
+import stan.qodat.scene.control.AnimationRoleLabel
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.state.NamedIdentity
 import stan.qodat.scene.state.findByIdentity
-import stan.qodat.util.configureSearchFilter
 import stan.qodat.util.setAndBind
 import java.net.URL
 import java.util.*
@@ -54,6 +56,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     private val catalog: ObservableList<Animation> = FXCollections.observableArrayList()
     private val animationMap = FXCollections.observableHashMap<String, Animation>()
+    private var roleLabels: Map<String, String> = emptyMap()
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
 
@@ -72,17 +75,28 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
         filteredAnimations = FilteredList(animations) { true }
         animationsListView.apply {
             VBox.setVgrow(this, Priority.ALWAYS)
-            cellFactory = Animation.createCellFactory()
+            cellFactory = Callback<ListView<Animation>, ListCell<Animation>> {
+                object : ListCell<Animation>() {
+                    override fun updateItem(item: Animation?, empty: Boolean) {
+                        super.updateItem(item, empty)
+                        graphic = if (empty || item == null) null
+                        else AnimationRoleLabel.wrap(item, roleFor(item))
+                    }
+                }
+            }
             items = filteredAnimations
             disableProperty().setAndBind(Properties.disableAnimationsView)
         }
         searchTextField.apply {
             disableProperty().setAndBind(Properties.disableAnimationsView)
-            configureSearchFilter(filteredAnimations)
+            textProperty().addListener { _, _, query ->
+                filteredAnimations.setPredicate { matchesSearch(it, query) }
+            }
         }
     }
 
     fun clearAnimationCache(){
+        roleLabels = emptyMap()
         animationMap.clear()
         catalog.clear()
     }
@@ -100,6 +114,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     }
 
     fun showCatalog() {
+        roleLabels = emptyMap()
         if (catalog.isEmpty())
             return
         animations.setAll(catalog)
@@ -107,6 +122,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     }
 
     fun showForEntity(entity: AnimatedEntity<*>) {
+        roleLabels = entity.definition.animationRoleLabels
         val primary = entity.getPrimaryAnimations()
         val extras = entity.getAnimations().filter { it !in primary }
         animations.setAll(primary.toList() + extras)
@@ -149,4 +165,21 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     }
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> = resolve(p1.animationIds)
+
+    private fun roleFor(animation: Animation): String? {
+        val id = animation.definition?.id ?: animation.idProperty.get().toString()
+        return roleLabels[id]
+    }
+
+    private fun matchesSearch(animation: Animation, query: String?): Boolean {
+        if (query.isNullOrEmpty())
+            return true
+        if (animation.getName().contains(query, ignoreCase = true))
+            return true
+        val id = animation.definition?.id ?: animation.idProperty.get().toString()
+        if (id.contains(query))
+            return true
+        val role = roleLabels[id]
+        return role != null && role.contains(query, ignoreCase = true)
+    }
 }

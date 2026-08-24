@@ -10,6 +10,7 @@ import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onChange
 import stan.qodat.javafx.onExpanded
+import stan.qodat.scene.control.AnimationRoleLabel
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
@@ -39,6 +40,9 @@ class AnimationTreeItem(
         hBox(isGraphic = false) {
             children += Text("ANIMATION").apply {
                 fill = Color.web("#FFC66D")
+            }
+            roleLabel(entity, animation)?.let { role ->
+                children += AnimationRoleLabel.text(role)
             }
             children += Label().apply {
                 textProperty().setAndBind(animation.labelProperty)
@@ -139,5 +143,10 @@ class AnimationTreeItem(
 
     companion object {
         val transformsContextMenuMap = HashMap<AnimationFrame, TreeItemListContextMenu<Transformation>>()
+
+        fun roleLabel(entity: AnimatedEntity<*>, animation: Animation): String? {
+            val id = animation.definition?.id ?: animation.idProperty.get().toString()
+            return entity.definition.animationRoleLabels[id]
+        }
     }
 }

@@ -16,4 +16,11 @@ interface AnimatedEntityDefinition : EntityDefinition {
      */
     val primaryAnimationIds: Array<String>
         get() = animationIds
+
+    /**
+     * Known stance / locomotion names keyed by animation id, e.g. `"808" -> "Idle"`.
+     * Empty for entities that do not carry those fields.
+     */
+    val animationRoleLabels: Map<String, String>
+        get() = emptyMap()
 }

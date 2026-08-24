@@ -5,6 +5,7 @@ import kotlinx.serialization.Transient
 import qodat.cache.definition.*
 import qodat.cache.models.FaceNormal
 import qodat.cache.models.VertexNormal
+import stan.qodat.cache.NpcPrimaryAnimations
 
 @Serializable
 data class LegacyNpcDefinition(
@@ -13,7 +14,10 @@ data class LegacyNpcDefinition(
     override val animationIds: Array<String>,
     override val findColor: ShortArray? = null,
     override val replaceColor: ShortArray? = null,
-) : NPCDefinition
+) : NPCDefinition {
+    override val animationRoleLabels: Map<String, String>
+        get() = NpcPrimaryAnimations.legacyLabels(animationIds)
+}
 
 @Serializable
 data class LegacyObjectDefinition(

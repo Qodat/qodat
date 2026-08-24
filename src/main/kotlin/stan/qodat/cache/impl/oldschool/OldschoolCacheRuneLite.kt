@@ -139,6 +139,7 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                 override val name = npc.name.ifBlank { "null" }
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
+                override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
                 override val animationIds by lazy {
                     animIdsCache.getOrPut(npc.id) {
                         val file = npcAnimsDir.resolve("${npc.id}.json")
