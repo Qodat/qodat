@@ -241,9 +241,8 @@ object QodatCache : Cache("qodat") {
 
     override fun getSpotAnimations(): Array<SpotAnimationDefinition> = emptyArray()
 
-    override fun getAnimationDefinitions(): Array<AnimationDefinition> {
-        return DispleeCache.getAnimationDefinitions()
-    }
+    override fun getAnimationDefinitions(): Array<AnimationDefinition> =
+        animations.values.toTypedArray()
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup {
         return DispleeCache.getAnimationSkeletonDefinition(frameHash)
@@ -264,6 +263,13 @@ object QodatCache : Cache("qodat") {
     override fun getSprites(): Array<SpriteDefinition> {
         return emptyArray()
     }
+
+    override fun populatedListKinds(): Set<String> = qodatPopulatedKinds(
+        npcCount = npcs.size,
+        objectCount = objects.size,
+        itemCount = items.size,
+        animationCount = animations.size,
+    )
 
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition {
         TODO("Not yet implemented")
@@ -297,4 +303,16 @@ object QodatCache : Cache("qodat") {
         ?.associateBy { it.getName() }
         ?.toMutableMap()
         ?: mutableMapOf()
+}
+
+internal fun qodatPopulatedKinds(
+    npcCount: Int,
+    objectCount: Int,
+    itemCount: Int,
+    animationCount: Int,
+): Set<String> = buildSet {
+    if (npcCount > 0) add(Cache.LIST_NPC)
+    if (objectCount > 0) add(Cache.LIST_OBJECT)
+    if (itemCount > 0) add(Cache.LIST_ITEM)
+    if (animationCount > 0) add(Cache.LIST_ANIMATIONS)
 }

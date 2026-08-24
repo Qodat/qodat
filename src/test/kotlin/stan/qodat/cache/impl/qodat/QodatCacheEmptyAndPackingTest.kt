@@ -11,6 +11,16 @@ import kotlin.test.assertTrue
 class QodatCacheEmptyAndPackingTest {
 
     @Test
+    fun emptyQodatCacheHasNoListKinds() {
+        assertTrue(qodatPopulatedKinds(0, 0, 0, 0).isEmpty())
+        assertEquals(setOf(qodat.cache.Cache.LIST_NPC), qodatPopulatedKinds(1, 0, 0, 0))
+        assertEquals(
+            setOf(qodat.cache.Cache.LIST_ITEM, qodat.cache.Cache.LIST_ANIMATIONS),
+            qodatPopulatedKinds(0, 0, 2, 3),
+        )
+    }
+
+    @Test
     fun emptyCollectionsMatchQodatCacheStubs() {
         assertTrue(getInterface(0).isEmpty())
         assertTrue(getRootInterfaces().isEmpty())

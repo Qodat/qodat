@@ -40,14 +40,24 @@ class CacheAssetLoader(
         onAnimations: (List<Animation>) -> Unit,
     ) {
         maybeSubmitMissingAnimParsers()
+        val present = cache.populatedListKinds()
         val jobs = linkedMapOf(
-            "NPC" to suspend { applyOnFx(loadNpcsNow(), onNpcs) },
-            "Object" to suspend { applyOnFx(loadObjectsNow(), onObjects) },
-            "Item" to suspend { applyOnFx(loadItemsNow(), onItems) },
-            "SpotAnim" to suspend { applyOnFx(loadSpotAnimsNow(), onSpotAnims) },
-            "Sprites" to suspend { applyOnFx(loadSpritesNow(), onSprites) },
-            "Interfaces" to suspend { applyOnFx(loadInterfacesNow(), onInterfaces) },
-            "Animations" to suspend { applyOnFx(loadAnimationsNow(), onAnimations) },
+            Cache.LIST_NPC to suspend { applyOnFx(loadNpcsNow(), onNpcs) },
+            Cache.LIST_OBJECT to suspend { applyOnFx(loadObjectsNow(), onObjects) },
+            Cache.LIST_ITEM to suspend { applyOnFx(loadItemsNow(), onItems) },
+            Cache.LIST_SPOT_ANIM to suspend { applyOnFx(loadSpotAnimsNow(), onSpotAnims) },
+            Cache.LIST_SPRITES to suspend { applyOnFx(loadSpritesNow(), onSprites) },
+            Cache.LIST_INTERFACES to suspend { applyOnFx(loadInterfacesNow(), onInterfaces) },
+            Cache.LIST_ANIMATIONS to suspend { applyOnFx(loadAnimationsNow(), onAnimations) },
+        )
+        val empties = linkedMapOf(
+            Cache.LIST_NPC to suspend { applyOnFx(emptyList(), onNpcs) },
+            Cache.LIST_OBJECT to suspend { applyOnFx(emptyList(), onObjects) },
+            Cache.LIST_ITEM to suspend { applyOnFx(emptyList(), onItems) },
+            Cache.LIST_SPOT_ANIM to suspend { applyOnFx(emptyList(), onSpotAnims) },
+            Cache.LIST_SPRITES to suspend { applyOnFx(emptyList(), onSprites) },
+            Cache.LIST_INTERFACES to suspend { applyOnFx(emptyList(), onInterfaces) },
+            Cache.LIST_ANIMATIONS to suspend { applyOnFx(emptyList(), onAnimations) },
         )
         val order = buildList {
             if (selectedFirst != null && selectedFirst in jobs) add(selectedFirst)
@@ -55,6 +65,11 @@ class CacheAssetLoader(
         }
         for (name in order) {
             coroutineContext.ensureActive()
+            if (name !in present) {
+                logger.debug("Skipping empty {} list for cache {}", name, cache.name)
+                empties.getValue(name).invoke()
+                continue
+            }
             onProgress("Loading $name from cache ${cache.name}")
             jobs.getValue(name).invoke()
         }

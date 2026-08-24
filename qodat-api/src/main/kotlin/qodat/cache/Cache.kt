@@ -71,4 +71,25 @@ abstract class Cache(val name: String) {
     open fun add(any: Any) {
         TODO("not implemented")
     }
+
+    /**
+     * List-load kinds this cache actually has. [CacheAssetLoader] skips the
+     * rest so an empty qodat cache does not walk NPC/Object/Item/… no-ops
+     * or re-wrap another cache's animations.
+     */
+    open fun populatedListKinds(): Set<String> = ALL_LIST_KINDS
+
+    companion object {
+        const val LIST_NPC = "NPC"
+        const val LIST_OBJECT = "Object"
+        const val LIST_ITEM = "Item"
+        const val LIST_SPOT_ANIM = "SpotAnim"
+        const val LIST_SPRITES = "Sprites"
+        const val LIST_INTERFACES = "Interfaces"
+        const val LIST_ANIMATIONS = "Animations"
+        val ALL_LIST_KINDS: Set<String> = linkedSetOf(
+            LIST_NPC, LIST_OBJECT, LIST_ITEM, LIST_SPOT_ANIM,
+            LIST_SPRITES, LIST_INTERFACES, LIST_ANIMATIONS,
+        )
+    }
 }
