@@ -1,6 +1,7 @@
 package stan.qodat.cache.impl.displee.types
 
-import qodat.cache.definition.ItemDefinition
+import stan.qodat.cache.impl.displee.types.ItemManager.Companion.getItems
+import stan.qodat.cache.impl.displee.types.ItemManager.Companion.mapOldschoolItem
 import stan.qodat.cache.impl.oldschool.definition.ItemDefinition226
 import java.util.OptionalInt
 import kotlin.test.Test
@@ -57,24 +58,5 @@ class ItemManagerMappingTest {
         assertTrue(mapped.modelIds.contentEquals(arrayOf("28000")))
         assertTrue(mapped.findColor!!.contentEquals(shortArrayOf(10, 11)))
         assertTrue(mapped.replaceColor!!.contentEquals(shortArrayOf(20, 21)))
-    }
-
-    companion object {
-        internal fun getItems(items: Map<Int, ItemDefinition>): Array<ItemDefinition> =
-            items.values.toTypedArray()
-
-        internal fun mapOldschoolItem(
-            id: Int,
-            name: String,
-            inventoryModel: Int,
-            colorFind: ShortArray?,
-            colorReplace: ShortArray?,
-        ): ItemDefinition = object : ItemDefinition {
-            override fun getOptionalId() = OptionalInt.of(id)
-            override val name = name
-            override val modelIds = arrayOf(inventoryModel.toString())
-            override val findColor = colorFind
-            override val replaceColor = colorReplace
-        }
     }
 }

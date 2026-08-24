@@ -2,9 +2,12 @@ package stan.qodat.cache.impl.displee.types
 
 import net.runelite.cache.definitions.FrameDefinition
 import net.runelite.cache.definitions.FramemapDefinition
-import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import stan.qodat.cache.impl.displee.CacheIdPackingTest
+import stan.qodat.cache.impl.displee.types.AnimManager.Companion.getSeq
+import stan.qodat.cache.impl.displee.types.AnimManager.Companion.getSeqs
+import stan.qodat.cache.impl.displee.types.AnimManager.Companion.mapFallback206
+import stan.qodat.cache.impl.displee.types.AnimManager.Companion.mapSeq
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
@@ -134,54 +137,5 @@ class AnimManagerMappingTest {
         assertTrue(mapped.transformationDeltaY.contentEquals(intArrayOf(0, 30)))
         assertTrue(mapped.transformationDeltaZ.contentEquals(intArrayOf(0, 40)))
         assertEquals(group, mapped.transformationGroup)
-    }
-
-    companion object {
-        internal fun getSeq(seqs: Map<Int, AnimationDefinition>, id: String): AnimationDefinition {
-            val seqId = id.toIntOrNull()
-                ?: throw IllegalArgumentException("Animation id must be int-convertable $id")
-            return seqs[seqId] ?: throw IllegalArgumentException("Animation not found $id")
-        }
-
-        internal fun getSeqs(seqs: Map<Int, AnimationDefinition>): Array<AnimationDefinition> =
-            seqs.values.toTypedArray()
-
-        internal fun mapSeq(sequence: SequenceDefinition226): AnimationDefinition =
-            if (sequence.animMayaId >= 0)
-                object : AnimationMayaDefinition {
-                    override val id: String = sequence.id
-                    override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                    override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
-                    override val loopOffset: Int = sequence.frameStep
-                    override val leftHandItem: Int = sequence.leftHandItem
-                    override val rightHandItem: Int = sequence.rightHandItem
-                    override val animMayaID: Int = sequence.animMayaId
-                    override val animMayaFrameSounds =
-                        sequence.sounds?.entries
-                            ?.filter { it.value != null }
-                            ?.associate { it.key to it.value!!.toRuneliteSound() }
-                            ?: emptyMap()
-                    override val animMayaStart: Int = sequence.animMayaStart
-                    override val animMayaEnd: Int = sequence.animMayaEnd
-                    override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
-                }
-            else object : AnimationDefinition {
-                override val id: String = sequence.id
-                override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
-                override val loopOffset: Int = sequence.frameStep
-                override val leftHandItem: Int = sequence.leftHandItem
-                override val rightHandItem: Int = sequence.rightHandItem
-            }
-
-        internal fun mapFallback206(sequence: SequenceDefinition206): AnimationDefinition =
-            object : AnimationDefinition {
-                override val id: String = sequence.id
-                override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
-                override val loopOffset: Int = sequence.frameStep
-                override val leftHandItem: Int = sequence.leftHandItem
-                override val rightHandItem: Int = sequence.rightHandItem
-            }
     }
 }

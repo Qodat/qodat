@@ -1,11 +1,8 @@
 package stan.qodat.cache.impl.displee.types
 
-import com.google.gson.GsonBuilder
-import com.google.gson.reflect.TypeToken
 import net.runelite.cache.definitions.NpcDefinition
-import qodat.cache.definition.NPCDefinition
-import stan.qodat.cache.NpcPrimaryAnimations
-import java.io.File
+import stan.qodat.cache.impl.displee.types.NpcManager.Companion.extraAnimationIds
+import stan.qodat.cache.impl.displee.types.NpcManager.Companion.mapNpc
 import java.util.OptionalInt
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
@@ -87,41 +84,6 @@ class NpcManagerMappingTest {
             assertTrue(extraAnimationIds(NpcDefinition(9), dir).isEmpty())
         } finally {
             dir.deleteRecursively()
-        }
-    }
-
-    companion object {
-        private val gson = GsonBuilder().create()
-        private val intArrayType = object : TypeToken<IntArray>() {}.type
-
-        internal fun mapNpc(
-            npc: NpcDefinition,
-            extraAnimationIds: Array<String> = emptyArray(),
-        ): NPCDefinition? {
-            if (npc.models == null || npc.models.isEmpty()) return null
-            return object : NPCDefinition {
-                override fun getOptionalId() = OptionalInt.of(npc.id)
-                override val name = npc.name.ifBlank { "null" }
-                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
-                override val animationIds =
-                    (primaryAnimationIds + extraAnimationIds).distinct().toTypedArray()
-                override val findColor = npc.recolorToFind
-                override val replaceColor = npc.recolorToReplace
-            }
-        }
-
-        internal fun extraAnimationIds(npc: NpcDefinition, npcAnimsDir: File): Array<String> {
-            return try {
-                val file = npcAnimsDir.resolve("${npc.id}.json")
-                if (!file.isFile) return emptyArray()
-                file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
-                    ?.map { it.toString() }
-                    ?.toTypedArray()
-                    ?: emptyArray()
-            } catch (_: Exception) {
-                emptyArray()
-            }
         }
     }
 }

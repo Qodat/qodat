@@ -1,7 +1,5 @@
 package qodat.cache.definition
 
-import qodat.cache.definition.EntityDefinition
-
 /**
  * TODO: add documentation
  *

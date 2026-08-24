@@ -9,6 +9,8 @@ import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.displee.DispleeCache.getFileId
 import stan.qodat.cache.impl.displee.DispleeCache.getFrameId
+import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
+import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader226
@@ -41,13 +43,12 @@ class AnimManager(
 
     fun getSeq(id: String): AnimationDefinition {
         load()
-        val seqId = id.toIntOrNull() ?: throw IllegalArgumentException("Animation id must be int-convertable $id")
-        return seqs[seqId] ?: throw IllegalArgumentException("Animation not found $id")
+        return getSeq(seqs, id)
     }
 
     fun getSeqs(): Array<AnimationDefinition> {
         load()
-        return seqs.values.toTypedArray()
+        return getSeqs(seqs)
     }
 
     fun getFrameDef(frameHash: Int): AnimationFrameLegacyDefinition? {
@@ -81,38 +82,57 @@ class AnimManager(
         val sequence = SequenceLoader226().apply {
             configureForRevision(revision)
         }.load(seqId, seqData)
-        if (sequence.animMayaId >= 0)
-            object : AnimationMayaDefinition {
-                override val id: String = seqId.toString()
+        mapSeq(sequence)
+    } catch (_: Exception) {
+        mapFallback206(SequenceLoader206().load(seqId, seqData))
+    }
+
+    companion object {
+        internal fun getSeq(seqs: Map<Int, AnimationDefinition>, id: String): AnimationDefinition {
+            val seqId = id.toIntOrNull()
+                ?: throw IllegalArgumentException("Animation id must be int-convertable $id")
+            return seqs[seqId] ?: throw IllegalArgumentException("Animation not found $id")
+        }
+
+        internal fun getSeqs(seqs: Map<Int, AnimationDefinition>): Array<AnimationDefinition> =
+            seqs.values.toTypedArray()
+
+        internal fun mapSeq(sequence: SequenceDefinition226): AnimationDefinition =
+            if (sequence.animMayaId >= 0)
+                object : AnimationMayaDefinition {
+                    override val id: String = sequence.id
+                    override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
+                    override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
+                    override val loopOffset: Int = sequence.frameStep
+                    override val leftHandItem: Int = sequence.leftHandItem
+                    override val rightHandItem: Int = sequence.rightHandItem
+                    override val animMayaID: Int = sequence.animMayaId
+                    override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> =
+                        sequence.sounds?.entries
+                            ?.filter { it.value != null }
+                            ?.associate { it.key to it.value!!.toRuneliteSound() }
+                            ?: emptyMap()
+                    override val animMayaStart: Int = sequence.animMayaStart
+                    override val animMayaEnd: Int = sequence.animMayaEnd
+                    override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
+                }
+            else object : AnimationDefinition {
+                override val id: String = sequence.id
                 override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
                 override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
                 override val loopOffset: Int = sequence.frameStep
                 override val leftHandItem: Int = sequence.leftHandItem
                 override val rightHandItem: Int = sequence.rightHandItem
-                override val animMayaID: Int = sequence.animMayaId
-                override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> =
-                    sequence.sounds?.entries?.filter { it.value != null }?.associate { it.key to it.value?.toRuneliteSound()!! } ?: emptyMap()
-                override val animMayaStart: Int = sequence.animMayaStart
-                override val animMayaEnd: Int = sequence.animMayaEnd
-                override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
             }
-        else object : AnimationDefinition {
-            override val id: String = seqId.toString()
-            override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-            override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
-            override val loopOffset: Int = sequence.frameStep
-            override val leftHandItem: Int = sequence.leftHandItem
-            override val rightHandItem: Int = sequence.rightHandItem
-        }
-    } catch (_: Exception) {
-        val sequence = SequenceLoader206().load(seqId, seqData)
-        object : AnimationDefinition {
-            override val id: String = seqId.toString()
-            override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-            override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
-            override val loopOffset: Int = sequence.frameStep
-            override val leftHandItem: Int = sequence.leftHandItem
-            override val rightHandItem: Int = sequence.rightHandItem
-        }
+
+        internal fun mapFallback206(sequence: SequenceDefinition206): AnimationDefinition =
+            object : AnimationDefinition {
+                override val id: String = sequence.id
+                override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
+                override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
+                override val loopOffset: Int = sequence.frameStep
+                override val leftHandItem: Int = sequence.leftHandItem
+                override val rightHandItem: Int = sequence.rightHandItem
+            }
     }
 }

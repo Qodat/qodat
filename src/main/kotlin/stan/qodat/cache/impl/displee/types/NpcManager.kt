@@ -14,8 +14,6 @@ import java.util.OptionalInt
 class NpcManager(private val cacheLibrary: CacheLibrary) {
 
     val npcs = mutableMapOf<Int, NpcDefinition>()
-    private val gson = GsonBuilder().create()
-    private val intArrayType = object : TypeToken<IntArray>() {}.type
     @Volatile
     private var loaded = false
 
@@ -41,34 +39,49 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
             npcAnimsDir.mkdirs()
         }
         return npcs.values.mapNotNull { npc ->
-            if (npc.models == null || npc.models.isEmpty()) return@mapNotNull null
-            object : NPCDefinition {
+            mapNpc(npc) { extraAnimationIds(npc, npcAnimsDir) }
+        }.toTypedArray()
+    }
+
+    companion object {
+        private val gson = GsonBuilder().create()
+        private val intArrayType = object : TypeToken<IntArray>() {}.type
+
+        internal fun mapNpc(
+            npc: NpcDefinition,
+            extraAnimationIds: Array<String>,
+        ): NPCDefinition? = mapNpc(npc) { extraAnimationIds }
+
+        internal fun mapNpc(
+            npc: NpcDefinition,
+            extraAnimationIds: () -> Array<String> = { emptyArray() },
+        ): NPCDefinition? {
+            if (npc.models == null || npc.models.isEmpty()) return null
+            return object : NPCDefinition {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
                 override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
                 override val animationIds by lazy {
-                    (primaryAnimationIds + extraAnimationIds(npc, npcAnimsDir))
-                        .distinct()
-                        .toTypedArray()
+                    (primaryAnimationIds + extraAnimationIds()).distinct().toTypedArray()
                 }
                 override val findColor = npc.recolorToFind
                 override val replaceColor = npc.recolorToReplace
             }
-        }.toTypedArray()
-    }
+        }
 
-    private fun extraAnimationIds(npc: NpcDefinition, npcAnimsDir: File): Array<String> {
-        return try {
-            val file = npcAnimsDir.resolve("${npc.id}.json")
-            if (!file.isFile) return emptyArray()
-            file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
-                ?.map { it.toString() }
-                ?.toTypedArray()
-                ?: emptyArray()
-        } catch (_: Exception) {
-            emptyArray()
+        internal fun extraAnimationIds(npc: NpcDefinition, npcAnimsDir: File): Array<String> {
+            return try {
+                val file = npcAnimsDir.resolve("${npc.id}.json")
+                if (!file.isFile) return emptyArray()
+                file.bufferedReader().use { gson.fromJson<IntArray>(it, intArrayType) }
+                    ?.map { it.toString() }
+                    ?.toTypedArray()
+                    ?: emptyArray()
+            } catch (_: Exception) {
+                emptyArray()
+            }
         }
     }
 }

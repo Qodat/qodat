@@ -3,6 +3,7 @@ package stan.qodat.cache.impl.displee.types
 import com.displee.cache.CacheLibrary
 import qodat.cache.definition.ItemDefinition
 import stan.qodat.cache.impl.oldschool.loader.ItemLoader226
+import java.util.OptionalInt
 
 class ItemManager(
     private val cacheLibrary: CacheLibrary
@@ -26,6 +27,25 @@ class ItemManager(
 
     fun getItems(): Array<ItemDefinition> {
         load()
-        return items.values.toTypedArray()
+        return getItems(items)
+    }
+
+    companion object {
+        internal fun getItems(items: Map<Int, ItemDefinition>): Array<ItemDefinition> =
+            items.values.toTypedArray()
+
+        internal fun mapOldschoolItem(
+            id: Int,
+            name: String,
+            inventoryModel: Int,
+            colorFind: ShortArray?,
+            colorReplace: ShortArray?,
+        ): ItemDefinition = object : ItemDefinition {
+            override fun getOptionalId() = OptionalInt.of(id)
+            override val name = name
+            override val modelIds = arrayOf(inventoryModel.toString())
+            override val findColor = colorFind
+            override val replaceColor = colorReplace
+        }
     }
 }
