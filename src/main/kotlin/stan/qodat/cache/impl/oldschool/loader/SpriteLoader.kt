@@ -9,6 +9,10 @@ import stan.qodat.cache.impl.oldschool.definition.SpriteDefinition
  * length, then per-frame offsets/sizes sit at the end of the archive. Pixel
  * rows start at offset 0. [FLAG_VERTICAL] and [FLAG_ALPHA] coexist so a newer
  * decoder reads older caches that omit alpha.
+ *
+ * [load] records header, palette, and per-frame pixel offsets only. ARGB and
+ * indexed rows are inflated on first [SpriteDefinition.pixels] /
+ * [SpriteDefinition.pixelIdx] access.
  */
 class SpriteLoader {
 
@@ -42,19 +46,40 @@ class SpriteLoader {
 
         input.offset = 0
         for (sprite in sprites) {
+            val flags = input.readUnsignedByte()
             val dimension = sprite.width * sprite.height
+            sprite.flags = flags
+            sprite.pixelSource = b
+            sprite.pixelDataOffset = input.offset
+            sprite.palette = palette
+            input.offset += dimension
+            if (flags and FLAG_ALPHA != 0) {
+                input.offset += dimension
+            }
+        }
+        return sprites
+    }
+
+    companion object {
+        const val FLAG_VERTICAL = 0b01
+        const val FLAG_ALPHA = 0b10
+
+        internal fun inflate(sprite: SpriteDefinition, source: ByteArray) {
+            val dimension = sprite.width * sprite.height
+            if (dimension <= 0) {
+                sprite.assignInflated(SpriteDefinition.EMPTY_INTS, SpriteDefinition.EMPTY_BYTES)
+                return
+            }
+            val input = DecodeCursor(source)
+            input.offset = sprite.pixelDataOffset
             val pixelIdx = ByteArray(dimension)
             val pixelAlphas = ByteArray(dimension)
-            sprite.pixelIdx = pixelIdx
-            sprite.palette = palette
-
-            val flags = input.readUnsignedByte()
-            val vertical = flags and FLAG_VERTICAL != 0
+            val vertical = sprite.flags and FLAG_VERTICAL != 0
             readIndexed(input, pixelIdx, sprite.width, sprite.height, vertical)
-            if (flags and FLAG_ALPHA != 0) {
+            if (sprite.flags and FLAG_ALPHA != 0) {
                 readIndexed(input, pixelAlphas, sprite.width, sprite.height, vertical)
             }
-
+            val palette = sprite.palette
             val pixels = IntArray(dimension)
             for (j in 0 until dimension) {
                 val idxByte = pixelIdx[j]
@@ -62,34 +87,28 @@ class SpriteLoader {
                 val alpha = if (idxByte.toInt() != 0) 0xFF else pixelAlphas[j].toInt()
                 pixels[j] = palette[index] or (alpha shl 24)
             }
-            sprite.pixels = pixels
+            sprite.assignInflated(pixels, pixelIdx)
         }
-        return sprites
-    }
 
-    private fun readIndexed(
-        input: DecodeCursor,
-        dest: ByteArray,
-        width: Int,
-        height: Int,
-        vertical: Boolean,
-    ) {
-        if (!vertical) {
-            input.readBytes(dest)
-            return
-        }
-        val raw = input.raw()
-        var o = input.offset
-        for (x in 0 until width) {
-            for (y in 0 until height) {
-                dest[width * y + x] = raw[o++]
+        private fun readIndexed(
+            input: DecodeCursor,
+            dest: ByteArray,
+            width: Int,
+            height: Int,
+            vertical: Boolean,
+        ) {
+            if (!vertical) {
+                input.readBytes(dest)
+                return
             }
+            val raw = input.raw()
+            var o = input.offset
+            for (x in 0 until width) {
+                for (y in 0 until height) {
+                    dest[width * y + x] = raw[o++]
+                }
+            }
+            input.offset = o
         }
-        input.offset = o
-    }
-
-    companion object {
-        const val FLAG_VERTICAL = 0b01
-        const val FLAG_ALPHA = 0b10
     }
 }
