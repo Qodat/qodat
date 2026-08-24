@@ -14,10 +14,10 @@ import javafx.scene.input.TransferMode
 import javafx.scene.paint.Paint
 import javafx.scene.text.TextFlow
 import javafx.util.Callback
-import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import kotlinx.serialization.*
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
@@ -63,6 +63,7 @@ class EventLogController : Initializable {
 
     override fun initialize(location: URL?, resources: ResourceBundle?) {
         exceptionListView.items = exceptions
+        // TODO(perf): updateItem rebuilds a TreeView + drag handlers on every cell recycle; reuse one per cell.
         exceptionListView.cellFactory = Callback {
             val listCell = object : ListCell<TitledThrowable>() {
                 override fun updateItem(item: TitledThrowable?, empty: Boolean) {

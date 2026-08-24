@@ -1,13 +1,15 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.openjfx.gradle.JavaFXModule
 import org.openjfx.gradle.JavaFXOptions
 import org.openjfx.gradle.JavaFXPlatform
 import java.io.File
 
 plugins {
-    id("org.openjfx.javafxplugin") version "0.1.0"
-    id("dev.hydraulic.conveyor") version "1.5"
-    kotlin("jvm") version "1.9.25"
-    kotlin("plugin.serialization") version "1.9.25"
+    alias(libs.plugins.javafx)
+    alias(libs.plugins.conveyor)
+    alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     application
 }
 
@@ -15,7 +17,9 @@ repositories {
     mavenCentral()
 }
 
-version = "0.4.0"
+version = "0.4.1"
+
+val javaVersion = libs.versions.java.get()
 
 allprojects {
     group = "stan.qodat"
@@ -25,7 +29,7 @@ allprojects {
         mavenCentral()
     }
     java {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+        toolchain.languageVersion.set(JavaLanguageVersion.of(javaVersion))
     }
     sourceSets {
         named("main") {
@@ -33,8 +37,8 @@ allprojects {
         }
     }
     tasks {
-        withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-            kotlinOptions.jvmTarget = "17"
+        withType<KotlinCompile>().configureEach {
+            compilerOptions.jvmTarget.set(JvmTarget.fromTarget(javaVersion))
         }
 
         jar {
@@ -49,7 +53,7 @@ application {
 }
 
 javafx {
-    version = "17.0.16"
+    version = libs.versions.javafx.get()
     modules(
         "javafx.controls",
         "javafx.fxml",
@@ -75,24 +79,26 @@ tasks.withType<JavaExec>().configureEach {
 
 dependencies {
     implementation(project("qodat-api"))
-    implementation("com.google.code.gson:gson:2.11.0")
-    implementation("com.google.guava:guava:23.2-jre")
-    implementation("org.apache.commons:commons-compress:1.27.1")
-    implementation("org.jsoup:jsoup:1.18.3")
-    implementation("us.ihmc:ihmc-javafx-toolkit:17-0.21.2")
-    implementation("org.jcodec:jcodec:0.2.5")
-    implementation("org.jcodec:jcodec-javase:0.2.5")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-javafx:1.8.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
-    implementation("org.orbisgis:poly2tri-core:0.1.2")
-    implementation(group = "ch.qos.logback", name = "logback-classic", version = "1.2.13")
-    implementation("com.displee:rs-cache-library:7.1.3")
-    implementation("org.joml:joml-primitives:1.10.0")
-    implementation("org.joml:joml:1.10.5")
-    implementation("no.tornado:tornadofx:1.7.20")
-    implementation("io.github.pdvrieze.xmlutil:serialization-jvm:0.86.3")
+    implementation(libs.gson)
+    implementation(libs.guava)
+    implementation(libs.commons.compress)
+    implementation(libs.jsoup)
+    implementation(libs.ihmc.javafx.toolkit)
+    implementation(libs.jcodec)
+    implementation(libs.jcodec.javase)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.javafx)
+    implementation(libs.kotlinx.datetime)
+    implementation(libs.poly2tri.core)
+    implementation(libs.logback.classic)
+    implementation(libs.rs.cache.library)
+    implementation(libs.joml.primitives)
+    implementation(libs.joml)
+    implementation(libs.tornadofx) {
+        exclude(group = "org.openjfx")
+    }
+    implementation(libs.xmlutil.serialization)
     testImplementation(kotlin("test-junit"))
 }
 

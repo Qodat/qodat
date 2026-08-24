@@ -56,24 +56,29 @@ fun TreeItem<*>.text(text: String, color: Color, init: Text.() -> Unit = {}) {
         init()
     }
 }
+@Suppress("UNCHECKED_CAST")
+private fun TreeItem<*>.setAnyValue(newValue: Any?) {
+    (this as TreeItem<Any?>).value = newValue
+}
+
 fun TreeItem<*>.button(text: String, action: () -> Unit = {}) {
-    value = Button(text).apply { setOnAction { action.invoke() } }
+    setAnyValue(Button(text).apply { setOnAction { action.invoke() } })
 }
 fun TreeItem<*>.label(text: String, init: Label.() -> Unit = {}) {
-    value = Label(text).apply { init() }
+    setAnyValue(Label(text).apply { init() })
 }
 fun TreeItem<*>.label(textProperty: StringProperty, init: Label.() -> Unit = {}) {
-    value = Label().apply {
+    setAnyValue(Label().apply {
         textProperty().setAndBind(textProperty)
         init()
-    }
+    })
 }
 fun TreeItem<*>.checkBox(text: String, booleanProperty: BooleanProperty, biDirectional: Boolean = false) {
-    value = CheckBox(text).apply { selectedProperty().setAndBind(booleanProperty, biDirectional) }
+    setAnyValue(CheckBox(text).apply { selectedProperty().setAndBind(booleanProperty, biDirectional) })
 }
 
 fun<E> TreeItem<*>.comboBox(text: String, values: Array<E>, bindProperty: ObjectProperty<E>, biDirectional: Boolean = false, init: ComboBox<E>.() -> Unit = {}) {
-    value = createComboBox(text, values, bindProperty, biDirectional, init)
+    setAnyValue(createComboBox(text, values, bindProperty, biDirectional, init))
 }
 
 fun TreeItem<*>.hBox(isGraphic: Boolean = false, spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: HBox.() -> Unit) {
@@ -84,14 +89,14 @@ fun TreeItem<*>.hBox(isGraphic: Boolean = false, spacing: Double = 5.0, alignmen
     if (isGraphic)
         graphic = box
     else
-        value = box
+        setAnyValue(box)
 }
 
 fun TreeItem<*>.vBox(spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: VBox.() -> Unit) {
-    value = VBox(spacing).apply {
+    setAnyValue(VBox(spacing).apply {
         this.alignment = alignment
         init()
-    }
+    })
 }
 
 fun TreeItem<*>.onExpanded(action: Boolean.() -> Unit) {

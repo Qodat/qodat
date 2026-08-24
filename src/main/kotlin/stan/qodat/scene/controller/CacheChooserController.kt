@@ -146,7 +146,7 @@ class CacheChooserController : Initializable {
         txtFilter.textProperty()
             .addListener { _: ObservableValue<out String>?, _: String?, newVal: String ->
                 filterableEntries.setPredicate { obj ->
-                    newVal.isEmpty() || obj.toString().toLowerCase().contains(newVal.toLowerCase())
+                    newVal.isEmpty() || obj.lowercase().contains(newVal.lowercase())
                 }
             }
 

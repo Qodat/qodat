@@ -1,0 +1,50 @@
+[versions]
+kotlin = "2.4.10"
+java = "25"
+javafx = "26.0.2"
+javafxPlugin = "0.1.0"
+conveyor = "2.0"
+gson = "2.14.0"
+guava = "33.7.1-jre"
+commonsCompress = "1.28.0"
+jsoup = "1.23.1"
+ihmcJavafxToolkit = "17-0.22.12"
+jcodec = "0.2.5"
+serializationJson = "1.11.0"
+coroutines = "1.11.0"
+datetime = "0.8.0"
+poly2tri = "0.1.2"
+logback = "1.6.3"
+rsCacheLibrary = "7.3.0"
+joml = "1.10.9"
+jomlPrimitives = "1.10.0"
+tornadofx = "2.1.0"
+xmlutil = "1.0.1"
+runeliteCache = "1.12.30"
+
+[libraries]
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+commons-compress = { module = "org.apache.commons:commons-compress", version.ref = "commonsCompress" }
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+ihmc-javafx-toolkit = { module = "us.ihmc:ihmc-javafx-toolkit", version.ref = "ihmcJavafxToolkit" }
+jcodec = { module = "org.jcodec:jcodec", version.ref = "jcodec" }
+jcodec-javase = { module = "org.jcodec:jcodec-javase", version.ref = "jcodec" }
+kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serializationJson" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
+kotlinx-coroutines-javafx = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-javafx", version.ref = "coroutines" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "datetime" }
+poly2tri-core = { module = "org.orbisgis:poly2tri-core", version.ref = "poly2tri" }
+logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+rs-cache-library = { module = "com.displee:rs-cache-library", version.ref = "rsCacheLibrary" }
+joml = { module = "org.joml:joml", version.ref = "joml" }
+joml-primitives = { module = "org.joml:joml-primitives", version.ref = "jomlPrimitives" }
+tornadofx = { module = "com.googlecode.blaisemath.tornado:tornadofx-fx21k19", version.ref = "tornadofx" }
+xmlutil-serialization = { module = "io.github.pdvrieze.xmlutil:serialization", version.ref = "xmlutil" }
+runelite-cache = { module = "net.runelite:cache", version.ref = "runeliteCache" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+javafx = { id = "org.openjfx.javafxplugin", version.ref = "javafxPlugin" }
+conveyor = { id = "dev.hydraulic.conveyor", version.ref = "conveyor" }

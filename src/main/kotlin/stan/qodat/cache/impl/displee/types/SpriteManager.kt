@@ -14,7 +14,7 @@ class SpriteManager(
     private val cacheLibrary: CacheLibrary
 ) {
 
-    private val sprites: Multimap<Int?, SpriteDefinition> = LinkedListMultimap.create<Int, SpriteDefinition>()
+    private val sprites: Multimap<Int, SpriteDefinition> = LinkedListMultimap.create()
     private val spriteIdsByArchiveNameHash: MutableMap<Int, Int> = HashMap()
     @Volatile
     private var loaded = false

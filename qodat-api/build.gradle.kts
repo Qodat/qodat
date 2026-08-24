@@ -1,7 +1,7 @@
 version = "0.0.2"
 
 dependencies {
-    api(group = "net.runelite", name = "cache", version = "1.12.24") {
-        exclude(group = "com.google.common")
+    api(libs.runelite.cache) {
+        exclude(group = "com.google.guava")
     }
 }
