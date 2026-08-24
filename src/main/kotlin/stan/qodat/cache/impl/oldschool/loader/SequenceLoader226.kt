@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import net.runelite.cache.definitions.SequenceDefinition
+import qodat.cache.definition.AnimationSound
 import qodat.cache.io.InputStream
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 
@@ -89,7 +89,7 @@ class SequenceLoader226 {
         }
     }
 
-    private fun readFrameSound(stream: InputStream): Sound? {
+    private fun readFrameSound(stream: InputStream): AnimationSound? {
         val location: Int
         var weight: Int = -1
         val loops: Int
@@ -111,16 +111,10 @@ class SequenceLoader226 {
             retain = stream.readUnsignedByte()
         }
         return if (id >= 1 && loops >= 1 && location >= 0 && retain >= 0)
-            Sound(id, location, weight, loops, retain)
+            AnimationSound(id, loops, location, retain, weight)
         else
             null
     }
-}
-
-class Sound(val id: Int, val location: Int, val weight: Int, val loops: Int, val retain: Int) {
-
-    fun toRuneliteSound() =
-        SequenceDefinition.Sound(id, loops, location, retain, weight)
 }
 
 private const val REV_220_SEQ_ARCHIVE_REV = 1141

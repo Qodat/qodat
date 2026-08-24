@@ -2,10 +2,10 @@ package stan.qodat.cache.impl.displee.types
 
 import com.displee.cache.CacheLibrary
 import net.runelite.cache.definitions.FramemapDefinition
-import net.runelite.cache.definitions.SequenceDefinition
 import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationMayaDefinition
+import qodat.cache.definition.AnimationSound
 import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.displee.DispleeCache.getFileId
 import stan.qodat.cache.impl.displee.DispleeCache.getFrameId
@@ -107,10 +107,10 @@ class AnimManager(
                     override val leftHandItem: Int = sequence.leftHandItem
                     override val rightHandItem: Int = sequence.rightHandItem
                     override val animMayaID: Int = sequence.animMayaId
-                    override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> =
+                    override val animMayaFrameSounds: Map<Int, AnimationSound> =
                         sequence.sounds?.entries
-                            ?.filter { it.value != null }
-                            ?.associate { it.key to it.value!!.toRuneliteSound() }
+                            ?.mapNotNull { (frame, sound) -> sound?.let { frame to it } }
+                            ?.toMap()
                             ?: emptyMap()
                     override val animMayaStart: Int = sequence.animMayaStart
                     override val animMayaEnd: Int = sequence.animMayaEnd

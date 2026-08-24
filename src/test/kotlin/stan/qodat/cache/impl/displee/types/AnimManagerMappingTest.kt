@@ -3,6 +3,7 @@ package stan.qodat.cache.impl.displee.types
 import net.runelite.cache.definitions.FrameDefinition
 import net.runelite.cache.definitions.FramemapDefinition
 import qodat.cache.definition.AnimationMayaDefinition
+import qodat.cache.definition.AnimationSound
 import stan.qodat.cache.impl.displee.CacheIdPackingTest
 import stan.qodat.cache.impl.displee.types.AnimManager.Companion.getSeq
 import stan.qodat.cache.impl.displee.types.AnimManager.Companion.getSeqs
@@ -11,7 +12,6 @@ import stan.qodat.cache.impl.displee.types.AnimManager.Companion.mapSeq
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
-import stan.qodat.cache.impl.oldschool.loader.Sound
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -59,7 +59,7 @@ class AnimManagerMappingTest {
 
     @Test
     fun mapsMayaSequenceAndDropsNullSounds() {
-        val keep = Sound(3, 4, 5, 2, 1)
+        val keep = AnimationSound(id = 3, loops = 2, location = 4, retain = 1, weight = 5)
         val sequence = SequenceDefinition226("9").apply {
             frameIDs = intArrayOf(0x00010002)
             frameLenghts = intArrayOf(5)

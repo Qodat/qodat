@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.AnimationDefinition
-import stan.qodat.cache.impl.oldschool.loader.Sound
+import qodat.cache.definition.AnimationSound
 
 class SequenceDefinition226(override val id: String) : AnimationDefinition, SequenceCommonFields {
 
@@ -23,7 +23,7 @@ class SequenceDefinition226(override val id: String) : AnimationDefinition, Sequ
     var verticalOffset = 0
     var animMayaMasks: BooleanArray? = null
     override var name: String? = null
-    var sounds: Map<Int, Sound?>? = null
+    var sounds: Map<Int, AnimationSound?>? = null
     var soundsCrossWorldView = false
 
     override val frameHashes: IntArray get() = frameIDs!!

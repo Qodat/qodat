@@ -2,6 +2,7 @@ package stan.qodat.cache.definition
 
 import jagex.MayaAnimationSupport
 import qodat.cache.definition.AnimationMayaDefinition
+import qodat.cache.definition.AnimationSound
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 import stan.qodat.scene.runescape.animation.AnimationFrameMaya
@@ -39,7 +40,7 @@ class AnimationMayaDefinitionFieldsTest {
             override val leftHandItem = -1
             override val rightHandItem = -1
             override val animMayaID = 77
-            override val animMayaFrameSounds = emptyMap<Int, net.runelite.cache.definitions.SequenceDefinition.Sound>()
+            override val animMayaFrameSounds = emptyMap<Int, AnimationSound>()
             override val animMayaStart = 2
             override val animMayaEnd = 8
             override val animMayaMasks = booleanArrayOf(true, false, true)

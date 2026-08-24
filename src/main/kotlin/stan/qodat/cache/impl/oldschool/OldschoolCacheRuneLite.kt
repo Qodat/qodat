@@ -225,10 +225,19 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
                             override val leftHandItem: Int = sequence.leftHandItem
                             override val rightHandItem: Int = sequence.rightHandItem
                             override val animMayaID: Int = sequence.animMayaID
-                            override val animMayaFrameSounds: Map<Int, SequenceDefinition.Sound> =
+                            override val animMayaFrameSounds: Map<Int, AnimationSound> =
                                 sequence.frameSounds.entries()
-                                    .filter { it.value != null }
-                                    .associate { it.key as Int to it.value as SequenceDefinition.Sound }
+                                    .mapNotNull { entry ->
+                                        val rl = entry.value as? SequenceDefinition.Sound ?: return@mapNotNull null
+                                        (entry.key as Int) to AnimationSound(
+                                            id = rl.id,
+                                            loops = rl.loops,
+                                            location = rl.location,
+                                            retain = rl.retain,
+                                            weight = rl.weight,
+                                        )
+                                    }
+                                    .toMap()
                             override val animMayaStart: Int = sequence.animMayaStart
                             override val animMayaEnd: Int = sequence.animMayaEnd
                             override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
