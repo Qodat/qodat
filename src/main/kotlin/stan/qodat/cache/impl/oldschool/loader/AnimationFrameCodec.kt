@@ -1,10 +1,10 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import net.runelite.cache.definitions.FrameDefinition
-import net.runelite.cache.definitions.FramemapDefinition
 import com.displee.io.impl.InputBuffer
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationTransformationGroup
+import stan.qodat.cache.impl.oldschool.definition.FrameDefinition
+import stan.qodat.cache.impl.oldschool.definition.FramemapDefinition
 
 /**
  * Frame / framemap decode that matches the NR 235 client:

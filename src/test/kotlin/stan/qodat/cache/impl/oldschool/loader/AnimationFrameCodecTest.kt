@@ -76,6 +76,19 @@ class AnimationFrameCodecTest {
         assertEquals(30, frame.translator_y[1])
         assertEquals(40, frame.translator_z[1])
         assertFalse(frame.showing)
+
+        val mapped = AnimationFrameCodec.toDefinition(
+            frame,
+            AnimationFrameCodec.transformationGroup(9, framemap),
+        )
+        assertEquals(2, mapped.transformationCount)
+        assertTrue(mapped.transformationGroupAccessIndices.contentEquals(intArrayOf(0, 1)))
+        assertTrue(mapped.transformationDeltaX.contentEquals(intArrayOf(10, 20)))
+        assertTrue(mapped.transformationDeltaY.contentEquals(intArrayOf(0, 30)))
+        assertTrue(mapped.transformationDeltaZ.contentEquals(intArrayOf(0, 40)))
+        assertEquals(9, mapped.transformationGroup.id)
+        assertTrue(mapped.transformationGroup.transformationTypes.contentEquals(intArrayOf(0, 3)))
+        assertTrue(mapped.transformationGroup.targetVertexGroupsIndices[0].contentEquals(intArrayOf(1, 2)))
     }
 
     @Test
@@ -113,5 +126,15 @@ class AnimationFrameCodecTest {
         assertEquals(0, frame.translator_y[1])
         assertEquals(0, frame.translator_z[1])
         assertTrue(frame.showing)
+
+        val mapped = AnimationFrameCodec.toDefinition(
+            frame,
+            AnimationFrameCodec.transformationGroup(3, framemap),
+        )
+        assertEquals(2, mapped.transformationCount)
+        assertTrue(mapped.transformationGroupAccessIndices.contentEquals(intArrayOf(0, 1)))
+        assertTrue(mapped.transformationDeltaX.contentEquals(intArrayOf(0, 12)))
+        assertEquals(5, mapped.transformationGroup.transformationTypes[1])
+        assertTrue(mapped.transformationGroup.targetVertexGroupsIndices[0].contentEquals(intArrayOf(4)))
     }
 }

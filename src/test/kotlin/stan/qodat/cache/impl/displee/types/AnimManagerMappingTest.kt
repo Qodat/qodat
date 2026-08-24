@@ -1,8 +1,8 @@
 package stan.qodat.cache.impl.displee.types
 
-import net.runelite.cache.definitions.FrameDefinition
-import net.runelite.cache.definitions.FramemapDefinition
 import qodat.cache.definition.AnimationMayaDefinition
+import stan.qodat.cache.impl.oldschool.definition.FrameDefinition
+import stan.qodat.cache.impl.oldschool.definition.FramemapDefinition
 import qodat.cache.definition.AnimationSound
 import stan.qodat.cache.impl.displee.CacheIdPackingTest
 import stan.qodat.cache.impl.displee.types.AnimManager.Companion.getSeq

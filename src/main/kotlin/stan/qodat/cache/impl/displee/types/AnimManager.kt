@@ -1,7 +1,6 @@
 package stan.qodat.cache.impl.displee.types
 
 import com.displee.cache.CacheLibrary
-import net.runelite.cache.definitions.FramemapDefinition
 import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationMayaDefinition
@@ -9,6 +8,7 @@ import qodat.cache.definition.AnimationSound
 import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.displee.DispleeCache.getFileId
 import stan.qodat.cache.impl.displee.DispleeCache.getFrameId
+import stan.qodat.cache.impl.oldschool.definition.FramemapDefinition
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
@@ -21,7 +21,7 @@ class AnimManager(
 
     private val seqs = mutableMapOf<Int, AnimationDefinition>()
     private val frames = mutableMapOf<Int, Map<Int, AnimationFrameLegacyDefinition>>()
-    private val frameMaps = mutableMapOf<Int, Pair<FramemapDefinition, AnimationTransformationGroup>>()
+    private val frameMaps = mutableMapOf<Int, FramemapDefinition>()
     @Volatile
     private var loaded = false
 
@@ -61,13 +61,12 @@ class AnimManager(
             frameArchive.files().associate { file ->
                 val frameContents = file.data ?: error("Frame data null")
                 val frameMapArchiveId = AnimationFrameCodec.framemapId(frameContents, frameArchiveId)
-                val (frameMapDefinition, transformGroup) = frameMaps.getOrPut(frameMapArchiveId) {
+                val frameMapDefinition = frameMaps.getOrPut(frameMapArchiveId) {
                     val frameMapContents = cacheLibrary.data(1, frameMapArchiveId)!!
-                    val frameMapDefinition = AnimationFrameCodec.loadFramemap(frameMapArchiveId, frameMapContents)
-                    frameMapDefinition to AnimationFrameCodec.transformationGroup(frameMapArchiveId, frameMapDefinition)
+                    AnimationFrameCodec.loadFramemap(frameMapArchiveId, frameMapContents)
                 }
                 val frame = AnimationFrameCodec.loadFrame(frameMapDefinition, file.id, frameContents)
-                file.id to AnimationFrameCodec.toDefinition(frame, transformGroup)
+                file.id to AnimationFrameCodec.toDefinition(frame, frameMapDefinition)
             }
         }[frameArchiveFileId]
     }

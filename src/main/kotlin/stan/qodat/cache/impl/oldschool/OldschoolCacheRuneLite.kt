@@ -3,8 +3,8 @@ package stan.qodat.cache.impl.oldschool
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
 import net.runelite.cache.*
-import net.runelite.cache.definitions.FramemapDefinition
 import net.runelite.cache.definitions.SequenceDefinition
+import stan.qodat.cache.impl.oldschool.definition.FramemapDefinition
 import net.runelite.cache.definitions.loaders.SequenceLoader
 import stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec
 import net.runelite.cache.definitions.loaders.SpotAnimLoader
