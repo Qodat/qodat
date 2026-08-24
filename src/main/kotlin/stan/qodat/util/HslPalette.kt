@@ -15,7 +15,7 @@ import kotlin.math.pow
  * over-saturated and too bright, especially in the mid tones where Gouraud shading spends most
  * of its range.
  *
- * @see jagex.Rasterizer3D.Rasterizer3D_buildPalette
+ * Matches the OSRS client's precomputed HSL palette (6/3/7-bit hue/sat/light + gamma).
  */
 object HslPalette {
 
