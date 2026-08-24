@@ -1,7 +1,7 @@
 package qodat.cache.models;
 
 import net.runelite.cache.definitions.ModelDefinition;
-import net.runelite.cache.io.InputStream;
+import qodat.cache.io.InputStream;
 
 public class ModelLoader
 {

@@ -1,6 +1,6 @@
 package stan.qodat.util
 
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.OutputStream
 
 /**
  * TODO: add documentation

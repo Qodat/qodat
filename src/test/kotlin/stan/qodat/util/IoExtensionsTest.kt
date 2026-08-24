@@ -1,6 +1,6 @@
 package stan.qodat.util
 
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.OutputStream
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue

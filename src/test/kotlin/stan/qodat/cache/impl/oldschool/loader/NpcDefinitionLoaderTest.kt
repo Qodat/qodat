@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.loaders.NpcLoader
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.OutputStream
 import stan.qodat.cache.NpcPrimaryAnimations
 import kotlin.test.Test
 import kotlin.test.assertEquals

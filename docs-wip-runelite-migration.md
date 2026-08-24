@@ -23,10 +23,7 @@ No other `net.runelite:*` artifacts.
 
 ### Types we actually use
 
-**IO**
-
-- `net.runelite.cache.io.InputStream` — most of our own loaders + all legacy decoders
-- `net.runelite.cache.io.OutputStream` — tests + `io_extensions.kt` + `model_exporter.kt`
+**IO** — **Phase A complete.** No remaining `net.runelite.cache.io` in source. Owned loaders, legacy decoders, `io_extensions`, `model_exporter`, `ModelLoader.java`, and tests use `qodat.cache.io.*`.
 
 **FS (OldschoolCacheRuneLite + AnimationExporter only)**
 
@@ -106,7 +103,7 @@ No other `net.runelite:*` artifacts.
 
 - `.../oldschool/OldschoolCacheRuneLite.kt` — star-import `net.runelite.cache.*`, Store, SequenceLoader, SpotAnimLoader, Framemap, Sequence
 - `.../animation/AnimationExporter.kt` — ConfigType, IndexType, ArchiveFiles, Container, FSFile, FileData; writes via `OldschoolCacheRuneLite.store`
-- `.../util/io_extensions.kt`, `model_exporter.kt` — RL `OutputStream`
+- `.../util/io_extensions.kt`, `model_exporter.kt` — **Phase A remainder: now `qodat.cache.io.OutputStream`**
 - `.../scene/control/tree/ModelTreeItem.kt` — `GZip`
 
 **Legacy (317 DAT/IDX)** — **Phase A frames/interfaces/legacy: now `qodat.cache.io.InputStream`**
@@ -118,7 +115,7 @@ No other `net.runelite:*` artifacts.
 
 - `src/main/kotlin/stan/qodat/cache/impl/displee/DispleeMain.kt` — `ConfigType`, `IndexType`
 
-**Tests** (all synthesize via RL `OutputStream` unless noted)
+**Tests** (all synthesize via `qodat.cache.io.OutputStream` unless noted)
 
 - Item / Sequence 206 / 226 / SequenceStream / AnimationFrameCodec / InterfaceLoader237
 - NpcLoader / ObjectLoader / SpriteLoader / TextureLoader
@@ -142,9 +139,9 @@ No other `net.runelite:*` artifacts.
 | `InterfaceLoader237` | **RL** `InterfaceDefinition` | defs only (IO swapped) |
 | `AnimationFrameCodec` | maps to our frame/skeleton interfaces; internals are RL Frame/Framemap | defs only (IO swapped) |
 | Legacy `*Decoder` / `*Storage` | our builders | no (IO swapped) |
-| `RSModelLoader` | our `RS2Model` | OSRS type1/2/3 still delegates to `ModelLoader.java` (RL) |
-| `qodat.cache.io.InputStream` | copy of RL InputStream (Adam BSD header) | item/seq + frames/interfaces/legacy; `RSModelLoader` |
-| `qodat.cache.io.OutputStream` | pair of RL OutputStream (Adam BSD header; no Guava) | item/seq + frame/interface/legacy tests |
+| `RSModelLoader` | our `RS2Model` | OSRS type1/2/3 still delegates to `ModelLoader.java` (now `qodat.cache.io`) |
+| `qodat.cache.io.InputStream` | copy of RL InputStream (Adam BSD header) | all owned + legacy loaders; `RSModelLoader`; `ModelLoader.java` |
+| `qodat.cache.io.OutputStream` | pair of RL OutputStream (Adam BSD header; no Guava) | tests + `io_extensions` + `model_exporter` |
 
 ### Cache implementations — who is production?
 
@@ -289,7 +286,7 @@ Stay on `qodat-api` interfaces the whole way. Do not delete RL usage until a rep
 1. ~~Add `qodat.cache.io.OutputStream` with the methods tests use (`writeByte`, `writeShort`, `writeInt`, `writeString`, `flip`).~~
 2. ~~Retarget owned loaders + tests from `net.runelite.cache.io.*` → `qodat.cache.io.*` (item + seq).~~
 3. ~~Same IO swap for `AnimationFrameCodec`, `InterfaceLoader237`, and legacy decoders/storage.~~
-4. Then the same IO swap for `io_extensions` and `model_exporter`.
+4. ~~Same IO swap for `io_extensions`, `model_exporter`, `ModelLoader.java`, and remaining loader tests.~~ **Phase A IO complete.** Zero `net.runelite.cache.io` in source.
 
 `qodat-api` still depends on RL after this phase (defs/loaders). That is OK.
 
@@ -383,6 +380,23 @@ Changed imports only in:
 Same definition classes. No DispleeCache / submodule / RL deletion elsewhere. `DispleeMain.kt` left dirty.
 
 **Out of slice:** `io_extensions.kt`, `model_exporter.kt`, `RSModelLoader*` tests, `AnimationMayaDefinition` sound type, `ModelLoader.java`, NPC/object/sprite/texture, `OldschoolCacheRuneLite`, gradle coord removal.
+
+---
+
+## Third implementation slice — **done** (remaining Phase A IO)
+
+**Scope: Phase A step 4.** Import-only swap onto `qodat.cache.io.*`. Compiled and tested. No remaining `net.runelite.cache.io` in source.
+
+Changed imports only in:
+
+- `ModelLoader.java`
+- `io_extensions.kt`, `model_exporter.kt`, `IoExtensionsTest.kt`
+- `RSModelLoaderDecodeTest.kt`
+- `NpcDefinitionLoaderTest.kt`, `ObjectDefinitionLoaderTest.kt`, `SpriteDefinitionLoaderTest.kt`, `TextureDefinitionLoaderTest.kt`
+
+Same definition classes. No DispleeCache / submodule / RL deletion elsewhere. `DispleeMain.kt` left dirty.
+
+**Out of slice:** Phase B Sound/Maya, `OldschoolCacheRuneLite`, gradle coord removal.
 
 ---
 

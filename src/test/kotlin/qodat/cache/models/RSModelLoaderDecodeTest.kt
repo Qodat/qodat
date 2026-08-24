@@ -1,6 +1,6 @@
 package qodat.cache.models
 
-import net.runelite.cache.io.OutputStream
+import qodat.cache.io.OutputStream
 import qodat.cache.definition.ModelDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
