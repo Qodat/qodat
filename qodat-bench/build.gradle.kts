@@ -1,10 +1,22 @@
 // Isolated decode harness. Not on the desktop classpath.
-// `./gradlew test` stays unit tests: this module has no src/test and :test is disabled.
+// `./gradlew test` stays unit tests: this module has no src/test and is skipped
+// unless a :qodat-bench:* or benchDecode task is requested.
 // Do not add JMH / kotlinx-benchmark here — qodat-cache already pins an older plugin.
 
 tasks.named("test") {
     enabled = false
     setDependsOn(emptyList<Any>())
+}
+
+gradle.taskGraph.whenReady {
+    val benchRequested = gradle.startParameter.taskNames.any {
+        it.contains("qodat-bench", ignoreCase = true) || it.contains("benchDecode", ignoreCase = true)
+    }
+    if (!benchRequested) {
+        tasks.matching { it.name != "clean" }.configureEach {
+            enabled = false
+        }
+    }
 }
 
 dependencies {
