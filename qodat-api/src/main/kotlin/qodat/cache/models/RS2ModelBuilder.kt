@@ -124,25 +124,27 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         return vertexIdx++
     }
 
-    fun build() = RS2Model().apply {
-        setVertexCount(vertexCount)
-        setVertexPositionsX(vertexPositionsX)
-        setVertexPositionsY(vertexPositionsY)
-        setVertexPositionsZ(vertexPositionsZ)
-        setVertexSkins(vertexSkins)
-        setFaceCount(faceCount)
-        setFaceVertexIndices1(faceVertexIndices1)
-        setFaceVertexIndices2(faceVertexIndices2)
-        setFaceVertexIndices3(faceVertexIndices3)
-        faceRenderPriorities = this@RS2ModelBuilder.faceRenderPriorities
-        faceRenderTypes = this@RS2ModelBuilder.faceRenderTypes
-        setFaceAlphas(faceAlphas)
-        setFaceColors(faceColors)
-        setFaceSkins(faceSkins)
-        setFaceTextures(faceTextures)
-        setPriority(globalPriority)
-        mayaGroups = this@RS2ModelBuilder.mayaGroups
-        mayaScales = this@RS2ModelBuilder.mayaScales
+    fun build(): RS2Model {
+        val definition = RS2Model()
+        definition.setVertexCount(vertexCount)
+        definition.setVertexPositionsX(vertexPositionsX)
+        definition.setVertexPositionsY(vertexPositionsY)
+        definition.setVertexPositionsZ(vertexPositionsZ)
+        definition.setVertexSkins(vertexSkins)
+        definition.setFaceCount(faceCount)
+        definition.setFaceVertexIndices1(faceVertexIndices1)
+        definition.setFaceVertexIndices2(faceVertexIndices2)
+        definition.setFaceVertexIndices3(faceVertexIndices3)
+        definition.faceRenderPriorities = faceRenderPriorities
+        definition.faceRenderTypes = faceRenderTypes
+        definition.setFaceAlphas(faceAlphas)
+        definition.setFaceColors(faceColors)
+        definition.setFaceSkins(faceSkins)
+        definition.setFaceTextures(faceTextures)
+        definition.setPriority(globalPriority)
+        definition.mayaGroups = mayaGroups
+        definition.mayaScales = mayaScales
+        return definition
     }
 
     private fun ByteArray.tryCopy(srcIdx: Int, byteArray: ByteArray?) {

@@ -2,9 +2,12 @@ package qodat.cache.models
 
 import com.displee.io.impl.OutputBuffer
 import qodat.cache.definition.ModelDefinition
+import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
+import stan.qodat.scene.runescape.model.ModelSkeleton
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -211,6 +214,24 @@ class RSModelLoaderDecodeTest {
     }
 
     @Test
+    fun decodedVertexArraysAreNonNullAndAnimateSafe() {
+        val bytes = OutputBuffer(16).apply {
+            writeTriangleBody()
+            writeType3Header(priority = 5)
+        }.array()
+
+        val model = RSModelLoader().load("61522", bytes)
+        assertGeometryArraysPresent(model)
+
+        val merged = RS2ModelBuilder(model, model).build()
+        assertGeometryArraysPresent(merged)
+        assertTrue(merged.getVertexCount() > 0)
+        assertTrue(merged.getVertexPositionsX().isNotEmpty())
+
+        ModelSkeleton(merged).animate(AnimationFrameLegacy("idle", definition = null, duration = 1))
+    }
+
+    @Test
     fun decodesEmptyTypeTrailerModels() {
         val type1 = OutputBuffer(16).apply { writeType1Header(vertexCount = 0, faceCount = 0) }.array()
         val type2 = OutputBuffer(16).apply { writeType2Header(vertexCount = 0, faceCount = 0) }.array()
@@ -227,6 +248,16 @@ class RSModelLoaderDecodeTest {
             assertTrue(model.vertexPositionsX.isEmpty(), "id=$id")
             assertTrue(model.faceColors.isEmpty(), "id=$id")
         }
+    }
+
+    private fun assertGeometryArraysPresent(model: ModelDefinition) {
+        assertNotNull(model.getVertexPositionsX())
+        assertNotNull(model.getVertexPositionsY())
+        assertNotNull(model.getVertexPositionsZ())
+        assertNotNull(model.getFaceVertexIndices1())
+        assertNotNull(model.getFaceVertexIndices2())
+        assertNotNull(model.getFaceVertexIndices3())
+        assertNotNull(model.getFaceColors())
     }
 
     private fun assertTriangle(model: ModelDefinition, id: String, priority: Int) {

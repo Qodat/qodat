@@ -37,17 +37,17 @@ public class RS2Model implements ModelDefinition
 
 	private int format = 0;
 	int vertexCount = 0;
-	int[] vertexPositionsX;
-	int[] vertexPositionsY;
-	int[] vertexPositionsZ;
+	int[] vertexPositionsX = new int[0];
+	int[] vertexPositionsY = new int[0];
+	int[] vertexPositionsZ = new int[0];
 	public transient VertexNormal[] vertexNormals;
 
 	int faceCount;
-	int[] faceVertexIndices1;
-	int[] faceVertexIndices2;
-	int[] faceVertexIndices3;
+	int[] faceVertexIndices1 = new int[0];
+	int[] faceVertexIndices2 = new int[0];
+	int[] faceVertexIndices3 = new int[0];
 	byte[] faceAlphas;
-	short[] faceColors;
+	short[] faceColors = new short[0];
 	byte[] faceRenderPriorities;
 	byte[] faceRenderTypes;
 	public transient FaceNormal[] faceNormals;
@@ -320,19 +320,19 @@ public class RS2Model implements ModelDefinition
 	@NotNull
 	@Override
 	public int[] getVertexPositionsX() {
-		return vertexPositionsX;
+		return vertexPositionsX != null ? vertexPositionsX : new int[0];
 	}
 
 	@NotNull
 	@Override
 	public int[] getVertexPositionsY() {
-		return vertexPositionsY;
+		return vertexPositionsY != null ? vertexPositionsY : new int[0];
 	}
 
 	@NotNull
 	@Override
 	public int[] getVertexPositionsZ() {
-		return vertexPositionsZ;
+		return vertexPositionsZ != null ? vertexPositionsZ : new int[0];
 	}
 
 	@Nullable
@@ -353,19 +353,19 @@ public class RS2Model implements ModelDefinition
 	@NotNull
 	@Override
 	public int[] getFaceVertexIndices1() {
-		return faceVertexIndices1;
+		return faceVertexIndices1 != null ? faceVertexIndices1 : new int[0];
 	}
 
 	@NotNull
 	@Override
 	public int[] getFaceVertexIndices2() {
-		return faceVertexIndices2;
+		return faceVertexIndices2 != null ? faceVertexIndices2 : new int[0];
 	}
 
 	@NotNull
 	@Override
 	public int[] getFaceVertexIndices3() {
-		return faceVertexIndices3;
+		return faceVertexIndices3 != null ? faceVertexIndices3 : new int[0];
 	}
 
 	@Nullable
@@ -383,7 +383,7 @@ public class RS2Model implements ModelDefinition
 	@NotNull
 	@Override
 	public short[] getFaceColors() {
-		return faceColors;
+		return faceColors != null ? faceColors : new short[0];
 	}
 
 	@Nullable
