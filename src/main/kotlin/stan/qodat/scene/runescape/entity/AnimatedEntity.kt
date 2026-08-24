@@ -22,8 +22,10 @@ abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
 ) : Entity<D>(cache, definition, labelPrefix), Transformable, GroupableTransformable {
 
     private lateinit var animations: Array<Animation>
+    private var selectedAnimationProp: SimpleObjectProperty<Animation>? = null
 
-    val selectedAnimation = SimpleObjectProperty<Animation>()
+    val selectedAnimation: SimpleObjectProperty<Animation>
+        get() = selectedAnimationProp ?: SimpleObjectProperty<Animation>().also { selectedAnimationProp = it }
 
     fun getAnimations(): Array<Animation> {
         if (!this::animations.isInitialized) {

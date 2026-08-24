@@ -32,7 +32,8 @@ import stan.qodat.util.formatName
 import stan.qodat.util.getMaterial
 
 /**
- * TODO: add documentation
+ * JavaFX properties are created on first access so wrapping tens of thousands
+ * of cache entities does not allocate property objects per row.
  *
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   29/01/2021
@@ -52,27 +53,35 @@ abstract class Entity<D : EntityDefinition>(
     private lateinit var viewBox: HBox
     private var treeItem: EntityTreeItem? = null
 
-    val locked = SimpleBooleanProperty(false).apply {
-        addListener { _, oldValue, newValue ->
-            if (oldValue == true && newValue == false) {
-                (SubScene3D.contextProperty.get()?.getController() as? EntityViewController)
-                    ?.onUnselectedEvent
-                    ?.handle(
-                        ViewNodeListView.UnselectedEvent(
-                            viewNodeProvider = this@Entity,
-                            hasNewValueOfSameType = false,
-                            causedByTabSwitch = false
+    private var lockedProp: SimpleBooleanProperty? = null
+    private var labelProp: SimpleStringProperty? = null
+    private var mergeModelProp: SimpleBooleanProperty? = null
+
+    val locked: SimpleBooleanProperty
+        get() = lockedProp ?: SimpleBooleanProperty(false).also { prop ->
+            lockedProp = prop
+            prop.addListener { _, oldValue, newValue ->
+                if (oldValue == true && newValue == false) {
+                    (SubScene3D.contextProperty.get()?.getController() as? EntityViewController)
+                        ?.onUnselectedEvent
+                        ?.handle(
+                            ViewNodeListView.UnselectedEvent(
+                                viewNodeProvider = this@Entity,
+                                hasNewValueOfSameType = false,
+                                causedByTabSwitch = false
+                            )
                         )
-                    )
+                }
             }
         }
-    }
-    val labelProperty = SimpleStringProperty(definition.name)
-    val mergeModelProperty = SimpleBooleanProperty(true)
+    val labelProperty: SimpleStringProperty
+        get() = labelProp ?: SimpleStringProperty(definition.name).also { labelProp = it }
+    val mergeModelProperty: SimpleBooleanProperty
+        get() = mergeModelProp ?: SimpleBooleanProperty(true).also { mergeModelProp = it }
 
     abstract fun property(): SimpleStringProperty
 
-    override fun getName() = labelProperty.get()
+    override fun getName() = labelProp?.get() ?: definition.name
 
     /**
      * Decode and merge cache models without creating JavaFX [Group]/[Mesh] nodes.
@@ -85,7 +94,7 @@ abstract class Entity<D : EntityDefinition>(
             try {
                 val loaded = loadModelDefinitions()
                 preparedDefinitions = loaded
-                if (loaded.size > 1 && mergeModelProperty.get()) {
+                if (loaded.size > 1 && mergeModelsEnabled()) {
                     preparedMerged = PerfTrace.span("entity.mergeModels ${getName()}") {
                         RS2ModelBuilder(*loaded.map { it.second }.toTypedArray()).build()
                     }
@@ -138,7 +147,7 @@ abstract class Entity<D : EntityDefinition>(
         return if (merged != null) {
             val multiModelName = "models_${loaded.joinToString { it.second.getName() + "_" }}"
             arrayOf(Model(multiModelName, merged, definition.findColor, definition.replaceColor))
-        } else if (loaded.size > 1 && mergeModelProperty.get()) {
+        } else if (loaded.size > 1 && mergeModelsEnabled()) {
             PerfTrace.span("entity.mergeModels ${getName()}") {
                 val modelDefinition = RS2ModelBuilder(*loaded.map { it.second }.toTypedArray()).build()
                 preparedMerged = modelDefinition
@@ -153,16 +162,7 @@ abstract class Entity<D : EntityDefinition>(
         if (!this::materials.isInitialized) {
             materials = PerfTrace.span("entity.getMaterials ${getName()}") {
                 try {
-                    // TODO(perf): unique-by texture/color id; getMaterial allocates Texture/ColorMaterial per face.
-                    getModels()
-                        .map { it.modelDefinition }
-                        .flatMap { definition ->
-                            (0 until definition.getFaceCount()).map { face ->
-                                definition.getMaterial(face, cache)
-                            }
-                        }
-                        .toSet()
-                        .toTypedArray()
+                    uniqueMaterials()
                 } catch (e: Throwable) {
                     Qodat.logException("Could not get entity {${getName()}}'s materials", e)
                     emptyArray()
@@ -170,6 +170,32 @@ abstract class Entity<D : EntityDefinition>(
             }
         }
         return materials
+    }
+
+    private fun mergeModelsEnabled(): Boolean = mergeModelProp?.get() ?: true
+
+    private fun uniqueMaterials(): Array<Material> {
+        val out = LinkedHashMap<Long, Material>()
+        for (model in getModels()) {
+            val modelDefinition = model.modelDefinition
+            val colors = modelDefinition.getFaceColors()
+            val alphas = modelDefinition.getFaceAlphas()
+            val textures = modelDefinition.getFaceTextures()
+            for (face in 0 until modelDefinition.getFaceCount()) {
+                val textureId = textures?.getOrNull(face)?.toInt() ?: -1
+                val key = if (textureId != -1) {
+                    1L shl 32 or (textureId.toLong() and 0xffffffffL)
+                } else {
+                    val color = colors[face].toInt() and 0xffff
+                    val alpha = (alphas?.getOrNull(face)?.toInt() ?: 256) and 0xffff
+                    color.toLong() shl 16 or alpha.toLong()
+                }
+                if (key !in out) {
+                    out[key] = modelDefinition.getMaterial(face, cache)
+                }
+            }
+        }
+        return out.values.toTypedArray()
     }
 
     fun getRecolorMap(): Map<Short, Short>? = definition.let {
@@ -188,7 +214,7 @@ abstract class Entity<D : EntityDefinition>(
         definition.replaceColor
     )
 
-    fun getDistinctModels() = if (!mergeModelProperty.get() || definition.modelIds.size == 1)
+    fun getDistinctModels() = if (!mergeModelsEnabled() || definition.modelIds.size == 1)
         getModels()
     else
         createDistinctModels()
