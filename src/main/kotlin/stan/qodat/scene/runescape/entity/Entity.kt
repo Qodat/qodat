@@ -45,6 +45,9 @@ abstract class Entity<D : EntityDefinition>(
 
     private var modelGroup: Group? = null
     private var models: Array<Model>? = null
+    private var preparedDefinitions: List<Pair<String, ModelDefinition>>? = null
+    private var preparedMerged: ModelDefinition? = null
+    private val modelLock = Any()
     private lateinit var materials: Array<Material>
     private lateinit var viewBox: HBox
     private var treeItem: EntityTreeItem? = null
@@ -71,18 +74,43 @@ abstract class Entity<D : EntityDefinition>(
 
     override fun getName() = labelProperty.get()
 
+    /**
+     * Decode and merge cache models without creating JavaFX [Group]/[Mesh] nodes.
+     * Safe on Default/IO; [getSceneNode] still applies the scene graph on the FX thread.
+     */
+    fun prepareModels() {
+        synchronized(modelLock) {
+            if (models != null || preparedDefinitions != null)
+                return
+            try {
+                val loaded = loadModelDefinitions()
+                preparedDefinitions = loaded
+                if (loaded.size > 1 && mergeModelProperty.get()) {
+                    preparedMerged = PerfTrace.span("entity.mergeModels ${getName()}") {
+                        RS2ModelBuilder(*loaded.map { it.second }.toTypedArray()).build()
+                    }
+                }
+            } catch (e: Throwable) {
+                Qodat.logException("Could not prepare entity {${getName()}}'s models", e)
+                preparedDefinitions = emptyList()
+            }
+        }
+    }
+
     fun getModels(): Array<Model> {
-        if (models == null) {
+        models?.let { return it }
+        synchronized(modelLock) {
+            models?.let { return it }
             models = PerfTrace.span("entity.getModels ${getName()}") {
                 try {
-                    loadModels()
+                    wrapPreparedModels()
                 } catch (e: Throwable) {
                     Qodat.logException("Could not get entity {${getName()}}'s models", e)
                     emptyArray()
                 }
             }
+            return models!!
         }
-        return models!!
     }
 
     private fun loadModelDefinition(modelId: String) = try {
@@ -97,21 +125,24 @@ abstract class Entity<D : EntityDefinition>(
     private fun modelFromDefinition(modelId: String, modelDefinition: ModelDefinition) =
         Model(modelId, modelDefinition, definition.findColor, definition.replaceColor)
 
-    private fun loadModels(): Array<Model> {
-        val loaded = definition.modelIds.mapNotNull { modelId ->
+    private fun loadModelDefinitions(): List<Pair<String, ModelDefinition>> =
+        definition.modelIds.mapNotNull { modelId ->
             loadModelDefinition(modelId)?.let { modelId to it }
         }
+
+    private fun wrapPreparedModels(): Array<Model> {
+        val loaded = preparedDefinitions ?: loadModelDefinitions().also { preparedDefinitions = it }
         if (loaded.isEmpty())
             return emptyArray()
-        return if (loaded.size > 1 && mergeModelProperty.get()) {
+        val merged = preparedMerged
+        return if (merged != null) {
+            val multiModelName = "models_${loaded.joinToString { it.second.getName() + "_" }}"
+            arrayOf(Model(multiModelName, merged, definition.findColor, definition.replaceColor))
+        } else if (loaded.size > 1 && mergeModelProperty.get()) {
             PerfTrace.span("entity.mergeModels ${getName()}") {
-                val definitions = loaded.map { it.second }.toTypedArray()
-                val multiModelName = "models_${
-                    definitions.joinToString {
-                        it.getName() + "_"
-                    }
-                }"
-                val modelDefinition = RS2ModelBuilder(*definitions).build()
+                val modelDefinition = RS2ModelBuilder(*loaded.map { it.second }.toTypedArray()).build()
+                preparedMerged = modelDefinition
+                val multiModelName = "models_${loaded.joinToString { it.second.getName() + "_" }}"
                 arrayOf(Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor))
             }
         } else
@@ -202,6 +233,8 @@ abstract class Entity<D : EntityDefinition>(
         modelGroup = null
         models?.forEach(Model::removeSceneNodeReference)
         models = null
+        preparedDefinitions = null
+        preparedMerged = null
     }
 
     override fun removeTreeItemReference() {
