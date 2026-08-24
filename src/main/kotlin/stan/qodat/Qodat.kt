@@ -157,12 +157,6 @@ class Qodat : Application() {
          */
         fun logException(title: String, e: Throwable) {
             logger.error(title, e)
-//            Platform.runLater {
-//                System.err.println(title + " - " + e.localizedMessage + " - \n" + e.stackTrace?.let {
-//                    it.copyOfRange(0, 5.coerceAtMost(it.size))
-//                }?.joinToString("\n"))
-//                mainController.eventLogController.add(title, e)
-//            }
         }
     }
 }

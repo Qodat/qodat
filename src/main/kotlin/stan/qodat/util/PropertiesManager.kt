@@ -2,8 +2,6 @@ package stan.qodat.util
 
 import javafx.beans.property.*
 import javafx.scene.paint.Color
-import javafx.scene.paint.Material
-import javafx.scene.paint.PhongMaterial
 import org.slf4j.LoggerFactory
 import stan.qodat.Qodat
 import java.nio.file.Path
@@ -89,12 +87,6 @@ class PropertiesManager(private val saveFilePath: Path) {
         }
     }
 
-    /**
-     * TODO: finish
-     */
-    fun bindMaterial(key: String, property: ObjectProperty<Material>) =
-        bind(key, property) { PhongMaterial() }
-
     fun bindPath(key: String, property: ObjectProperty<Path?>) =
         bind(key, property) { Paths.get(it) }
 
@@ -116,9 +108,6 @@ class PropertiesManager(private val saveFilePath: Path) {
 
     fun bindDouble(key: String, property: DoubleProperty) =
         bind(key, property) { java.lang.Double.parseDouble(it) }
-
-    fun bindInt(key: String, property: IntegerProperty) =
-        bind(key, property) { Integer.parseInt(it) }
 
     fun bindString(key: String, property: StringProperty) =
         bind(key, property) { it }

@@ -2,7 +2,6 @@ package stan.qodat.scene.control
 
 import javafx.collections.ObservableList
 import javafx.scene.control.*
-import stan.qodat.Qodat
 import stan.qodat.javafx.menu
 import stan.qodat.javafx.menuItem
 import stan.qodat.scene.control.TreeItemListContextMenu.CreateActionType.*

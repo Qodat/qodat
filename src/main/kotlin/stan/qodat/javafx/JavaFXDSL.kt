@@ -61,9 +61,6 @@ private fun TreeItem<*>.setAnyValue(newValue: Any?) {
     (this as TreeItem<Any?>).value = newValue
 }
 
-fun TreeItem<*>.button(text: String, action: () -> Unit = {}) {
-    setAnyValue(Button(text).apply { setOnAction { action.invoke() } })
-}
 fun TreeItem<*>.label(text: String, init: Label.() -> Unit = {}) {
     setAnyValue(Label(text).apply { init() })
 }
@@ -72,13 +69,6 @@ fun TreeItem<*>.label(textProperty: StringProperty, init: Label.() -> Unit = {})
         textProperty().setAndBind(textProperty)
         init()
     })
-}
-fun TreeItem<*>.checkBox(text: String, booleanProperty: BooleanProperty, biDirectional: Boolean = false) {
-    setAnyValue(CheckBox(text).apply { selectedProperty().setAndBind(booleanProperty, biDirectional) })
-}
-
-fun<E> TreeItem<*>.comboBox(text: String, values: Array<E>, bindProperty: ObjectProperty<E>, biDirectional: Boolean = false, init: ComboBox<E>.() -> Unit = {}) {
-    setAnyValue(createComboBox(text, values, bindProperty, biDirectional, init))
 }
 
 fun TreeItem<*>.hBox(isGraphic: Boolean = false, spacing: Double = 5.0, alignment: Pos = Pos.CENTER_LEFT, init: HBox.() -> Unit) {
@@ -151,7 +141,7 @@ fun TextFlow.menloText(vararg pairs: Pair<String, Color>) {
     children.addAll(creeateMenloText(*pairs))
 }
 
-fun creeateMenloText(vararg pairs: Pair<String, Color>) =
+private fun creeateMenloText(vararg pairs: Pair<String, Color>) =
     pairs.map { (string, color) ->
         Text(string).apply {
             font = Font.font("Menlo", 13.0)

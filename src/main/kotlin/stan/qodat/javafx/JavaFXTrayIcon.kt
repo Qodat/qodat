@@ -6,7 +6,6 @@ import javafx.stage.Stage
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.awt.event.MouseListener
 import java.io.IOException
 
 
@@ -37,6 +36,7 @@ object JavaFXTrayIcon {
             val tray = SystemTray.getSystemTray()
 
             val trayIcon = TrayIcon(SwingFXUtils.fromFXImage(icon, null))
+            this.trayIcon = trayIcon
 
             trayIcon.addMouseListener(object : MouseAdapter() {
                 override fun mousePressed(e: MouseEvent?) {

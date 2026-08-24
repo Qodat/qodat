@@ -1,12 +1,11 @@
 package stan.qodat.javafx
 
-import javafx.application.Platform
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
-import java.util.concurrent.*
+import java.util.concurrent.Executor
 
 
 object JavaFXExecutor : Executor {

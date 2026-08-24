@@ -1,6 +1,5 @@
 package stan.qodat.util
 
-import javafx.beans.property.SimpleStringProperty
 import java.util.*
 
 /**

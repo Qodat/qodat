@@ -3,7 +3,12 @@ package stan.qodat.cache.impl.legacy
 import qodat.cache.Cache
 import qodat.cache.definition.*
 import stan.qodat.Properties
-import stan.qodat.cache.impl.legacy.storage.*
+import stan.qodat.cache.impl.legacy.storage.LegacyAnimationStorage
+import stan.qodat.cache.impl.legacy.storage.LegacyBodyKitStorage
+import stan.qodat.cache.impl.legacy.storage.LegacyFrameStorage
+import stan.qodat.cache.impl.legacy.storage.LegacyModelStorage
+import stan.qodat.cache.impl.legacy.storage.LegacyNpcStorage
+import stan.qodat.cache.impl.legacy.storage.LegacyObjectStorage
 
 object LegacyCache : Cache("Legacy") {
 
