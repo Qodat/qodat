@@ -1,9 +1,5 @@
 package stan.qodat.task.export.impl
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
 import stan.qodat.scene.control.export.wavefront.WaveFrontMaterial
 import stan.qodat.scene.control.export.wavefront.WaveFrontWriter
 import stan.qodat.scene.control.export.wavefront.getFaceMaterials
@@ -70,11 +66,9 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
                     mtlFileNameWithoutExtension = modelGroupName,
                     objFileNameWithoutExtension = modelGroupName + "_${animationFrame.getName()}"
                 )
-                GlobalScope.launch(Dispatchers.JavaFx) {
-                    val finishedCount = modelExportFinishedCount.incrementAndGet().toLong()
-                    updateMessage("Parsing model $finishedCount in group $modelGroupName")
-                    updateProgress(finishedCount, modelCount.toLong())
-                }
+                val finishedCount = modelExportFinishedCount.incrementAndGet().toLong()
+                updateMessage("Parsing model $finishedCount in group $modelGroupName")
+                updateProgress(finishedCount, modelCount.toLong())
             }
             return ExportTaskResult.Success(saveDir)
         }

@@ -1,11 +1,16 @@
 package stan.qodat.cache
 
-import javafx.application.Platform
-import javafx.concurrent.Task
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import qodat.cache.Cache
+import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.EntityDefinition
+import qodat.cache.definition.InterfaceDefinition
+import qodat.cache.definition.SpriteDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.Animation
@@ -15,17 +20,17 @@ import stan.qodat.scene.runescape.entity.*
 import stan.qodat.scene.runescape.ui.InterfaceGroup
 import stan.qodat.scene.runescape.ui.Sprite
 import stan.qodat.task.BackgroundTasks
-import java.util.Arrays
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.system.measureTimeMillis
+import kotlin.coroutines.coroutineContext
+import kotlin.system.measureNanoTime
 
 class CacheAssetLoader(
     private val cache: Cache,
     private val resolveAnimations: (Array<String>) -> Array<Animation>
 ) {
 
-    fun loadAll(
+    suspend fun loadAll(
         selectedFirst: String?,
+        onProgress: (String) -> Unit = {},
         onNpcs: (List<NPC>) -> Unit,
         onObjects: (List<Object>) -> Unit,
         onItems: (List<Item>) -> Unit,
@@ -35,65 +40,64 @@ class CacheAssetLoader(
         onAnimations: (List<Animation>) -> Unit,
     ) {
         maybeSubmitMissingAnimParsers()
-        BackgroundTasks.submit(addProgressIndicator = true, object : Task<Unit>() {
-            init {
-                updateTitle("Loading ${cache.name} cache lists")
-            }
-
-            override fun call() {
-                val jobs = linkedMapOf(
-                    "NPC" to { applyOnFx(loadNpcsNow(), onNpcs) },
-                    "Object" to { applyOnFx(loadObjectsNow(), onObjects) },
-                    "Item" to { applyOnFx(loadItemsNow(), onItems) },
-                    "SpotAnim" to { applyOnFx(loadSpotAnimsNow(), onSpotAnims) },
-                    "Sprites" to { applyOnFx(loadSpritesNow(), onSprites) },
-                    "Interfaces" to { applyOnFx(loadInterfacesNow(), onInterfaces) },
-                    "Animations" to { applyOnFx(loadAnimationsNow(), onAnimations) },
-                )
-                val order = buildList {
-                    if (selectedFirst != null && selectedFirst in jobs) add(selectedFirst)
-                    jobs.keys.filter { it != selectedFirst }.forEach { add(it) }
-                }
-                for (name in order) {
-                    updateTitle("Loading $name from cache ${cache.name}")
-                    updateMessage("Loading $name")
-                    jobs.getValue(name).invoke()
-                }
-            }
-        })
+        val jobs = linkedMapOf(
+            "NPC" to suspend { applyOnFx(loadNpcsNow(), onNpcs) },
+            "Object" to suspend { applyOnFx(loadObjectsNow(), onObjects) },
+            "Item" to suspend { applyOnFx(loadItemsNow(), onItems) },
+            "SpotAnim" to suspend { applyOnFx(loadSpotAnimsNow(), onSpotAnims) },
+            "Sprites" to suspend { applyOnFx(loadSpritesNow(), onSprites) },
+            "Interfaces" to suspend { applyOnFx(loadInterfacesNow(), onInterfaces) },
+            "Animations" to suspend { applyOnFx(loadAnimationsNow(), onAnimations) },
+        )
+        val order = buildList {
+            if (selectedFirst != null && selectedFirst in jobs) add(selectedFirst)
+            jobs.keys.filter { it != selectedFirst }.forEach { add(it) }
+        }
+        for (name in order) {
+            coroutineContext.ensureActive()
+            onProgress("Loading $name from cache ${cache.name}")
+            jobs.getValue(name).invoke()
+        }
     }
 
     fun loadAnimations(onCompleted: (List<Animation>) -> Unit) {
-        BackgroundTasks.submit(addProgressIndicator = true, createLoadAnimationsTask(cache, onCompleted))
+        launchListLoad("Animations") { applyOnFx(loadAnimationsNow(), onCompleted) }
     }
 
     fun loadItems(onCompleted: (List<Item>) -> Unit) {
-        BackgroundTasks.submit(addProgressIndicator = true, createItemsLoadTask(cache, onCompleted))
+        launchListLoad("Item") { applyOnFx(loadItemsNow(), onCompleted) }
     }
 
     fun loadSpotAnims(onCompleted: (List<SpotAnimation>) -> Unit) {
-        BackgroundTasks.submit(addProgressIndicator = true, createSpotAnimsLoadTask(cache, onCompleted))
+        launchListLoad("SpotAnim") { applyOnFx(loadSpotAnimsNow(), onCompleted) }
     }
 
     fun loadSprites(onCompleted: (List<Sprite>) -> Unit) {
-        BackgroundTasks.submit(addProgressIndicator = true, createSpritesLoadTask(cache, onCompleted))
+        launchListLoad("Sprites") { applyOnFx(loadSpritesNow(), onCompleted) }
     }
 
     fun loadInterfaces(onCompleted: (List<InterfaceGroup>) -> Unit) {
-        BackgroundTasks.submit(addProgressIndicator = true, createInterfacesLoadTask(cache, onCompleted))
+        launchListLoad("Interfaces") { applyOnFx(loadInterfacesNow(), onCompleted) }
     }
 
     fun loadObjects(onCompleted: (List<Object>) -> Unit) {
         maybeSubmitObjectAnimParser()
-        BackgroundTasks.submit(addProgressIndicator = true, createObjectLoadTask(cache, onCompleted))
+        launchListLoad("Object") { applyOnFx(loadObjectsNow(), onCompleted) }
     }
 
     fun loadNpcs(onCompleted: (List<NPC>) -> Unit) {
         maybeSubmitNpcAnimParser()
-        BackgroundTasks.submit(addProgressIndicator = true, createNPCLoadTask(cache, onCompleted))
+        launchListLoad("NPC") { applyOnFx(loadNpcsNow(), onCompleted) }
     }
 
-    private fun maybeSubmitMissingAnimParsers() {
+    private fun launchListLoad(name: String, block: suspend () -> Unit) {
+        BackgroundTasks.launch(addProgressIndicator = true, title = "Loading $name from cache ${cache.name}") {
+            block()
+        }
+    }
+
+    private suspend fun maybeSubmitMissingAnimParsers() {
+        coroutineContext.ensureActive()
         maybeSubmitNpcAnimParser()
         maybeSubmitObjectAnimParser()
     }
@@ -120,180 +124,145 @@ class CacheAssetLoader(
         }
     }
 
-    private fun <T> applyOnFx(value: T, onCompleted: (T) -> Unit) {
-        Platform.runLater { onCompleted(value) }
+    private suspend fun <T> applyOnFx(value: T, onCompleted: (T) -> Unit) {
+        withContext(Dispatchers.JavaFx) { onCompleted(value) }
     }
 
-    private fun loadNpcsNow(): List<NPC> = loadEntities(
+    private suspend fun loadNpcsNow(): List<NPC> = loadEntities(
         definitions = { cache.getNPCs() },
         mapper = { NPC(cache, this, resolveAnimations) }
     )
 
-    private fun loadObjectsNow(): List<Object> = loadEntities(
+    private suspend fun loadObjectsNow(): List<Object> = loadEntities(
         definitions = { cache.getObjects() },
         mapper = { Object(cache, this, resolveAnimations) }
     )
 
-    private fun loadItemsNow(): List<Item> = loadEntities(
+    private suspend fun loadItemsNow(): List<Item> = loadEntities(
         definitions = { cache.getItems() },
         mapper = { Item(cache, this) }
     )
 
-    private fun loadSpotAnimsNow(): List<SpotAnimation> = loadEntities(
+    private suspend fun loadSpotAnimsNow(): List<SpotAnimation> = loadEntities(
         definitions = { cache.getSpotAnimations() },
         mapper = { SpotAnimation(cache, this, resolveAnimations) }
     )
 
-    private fun loadAnimationsNow(): List<Animation> {
-        val animationDefinitions = cache.getAnimationDefinitions()
-        val total = animationDefinitions.size
-        val progressCounter = AtomicInteger()
-        val updateFrequency = (total / 500).coerceAtLeast(1)
-        val animations = arrayOfNulls<Animation>(total)
-        val elapsed = measureTimeMillis {
-            CacheParallel.forEachIndexed(total) { i ->
-                val definition = animationDefinitions[i]
-                try {
-                    val animationId = definition.id.toIntOrNull() ?: i
-                    animations[i] = when {
-                        definition is AnimationMayaDefinition -> AnimationMaya(definition.id, definition, cache).apply {
-                            this.idProperty.set(animationId)
+    private suspend fun loadAnimationsNow(): List<Animation> {
+        val animationDefinitions: Array<AnimationDefinition>
+        val decodeNs = measureNanoTime {
+            animationDefinitions = withContext(Dispatchers.IO) { cache.getAnimationDefinitions() }
+        }
+        val animations: List<Animation>
+        val wrapNs = measureNanoTime {
+            animations = withContext(Dispatchers.Default) {
+                CacheListWrap.mapNotNullIndexedCancellable(animationDefinitions) { i, definition ->
+                    try {
+                        val animationId = definition.id.toIntOrNull() ?: i
+                        when {
+                            definition is AnimationMayaDefinition -> AnimationMaya(definition.id, definition, cache).apply {
+                                idProperty.set(animationId)
+                            }
+                            definition.frameHashes.isNotEmpty() -> AnimationLegacy(definition.id, definition, cache).apply {
+                                idProperty.set(animationId)
+                            }
+                            else -> null
                         }
-                        definition.frameHashes.isNotEmpty() -> AnimationLegacy(definition.id, definition, cache).apply {
-                            this.idProperty.set(animationId)
-                        }
-                        else -> null
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                        null
                     }
-                } catch (e: Exception) {
-                    e.printStackTrace()
                 }
-                CacheParallel.nextProgressStep(progressCounter, total, updateFrequency)
             }
         }
-        val values = animations.filterNotNull()
-        logger.debug("Wrapped {} animations in {}ms", values.size, elapsed)
-        return values
+        logger.debug(
+            "Decoded {} animations in {}ms, wrapped {} in {}ms",
+            animationDefinitions.size, decodeNs / 1_000_000,
+            animations.size, wrapNs / 1_000_000
+        )
+        return animations
     }
 
-    private fun loadSpritesNow(): List<Sprite> {
-        lateinit var values: List<Sprite>
-        val elapsed = measureTimeMillis {
-            val definitions = cache.getSprites()
-            val archives = definitions
-                .filter { it.width > 0 && it.height > 0 }
-                .groupBy { it.id }
-            values = archives.values.flatMap { frames ->
-                val ordered = frames.sortedBy { it.frame }
-                ordered.map { Sprite(it, ordered) }
+    private suspend fun loadSpritesNow(): List<Sprite> {
+        val definitions: Array<SpriteDefinition>
+        val decodeNs = measureNanoTime {
+            definitions = withContext(Dispatchers.IO) { cache.getSprites() }
+        }
+        val values: List<Sprite>
+        val wrapNs = measureNanoTime {
+            values = withContext(Dispatchers.Default) {
+                coroutineContext.ensureActive()
+                val archives = definitions
+                    .filter { it.width > 0 && it.height > 0 }
+                    .groupBy { it.id }
+                archives.values.flatMap { frames ->
+                    val ordered = frames.sortedBy { it.frame }
+                    ordered.map { Sprite(it, ordered) }
+                }
             }
         }
-        logger.debug("Wrapped {} sprites in {}ms", values.size, elapsed)
+        logger.debug(
+            "Decoded {} sprites in {}ms, wrapped {} in {}ms",
+            definitions.size, decodeNs / 1_000_000,
+            values.size, wrapNs / 1_000_000
+        )
         println("Loaded ${values.size} Sprite")
         return values
     }
 
-    private fun loadInterfacesNow(): List<InterfaceGroup> {
-        lateinit var values: List<InterfaceGroup>
-        val elapsed = measureTimeMillis {
-            val groups = cache.getRootInterfaces()
-            values = groups.map { (id, definitions) -> InterfaceGroup(cache, id, definitions) }
+    private suspend fun loadInterfacesNow(): List<InterfaceGroup> {
+        val groups: Map<Int, List<InterfaceDefinition>>
+        val decodeNs = measureNanoTime {
+            groups = withContext(Dispatchers.IO) { cache.getRootInterfaces() }
         }
-        logger.debug("Wrapped {} interface groups in {}ms", values.size, elapsed)
+        val values: List<InterfaceGroup>
+        val wrapNs = measureNanoTime {
+            values = withContext(Dispatchers.Default) {
+                coroutineContext.ensureActive()
+                groups.map { (id, definitions) -> InterfaceGroup(cache, id, definitions) }
+            }
+        }
+        logger.debug(
+            "Decoded {} interface groups in {}ms, wrapped {} in {}ms",
+            groups.size, decodeNs / 1_000_000,
+            values.size, wrapNs / 1_000_000
+        )
         println("Loaded ${values.size} InterfaceGroup")
         return values
     }
 
-    private fun createLoadAnimationsTask(@Suppress("UNUSED_PARAMETER") cache: Cache, onCompleted: (List<Animation>) -> Unit) = object : Task<Void?>() {
-        override fun call(): Void? {
-            applyOnFx(loadAnimationsNow(), onCompleted)
-            return null
-        }
-    }
-
-    private fun createObjectLoadTask(cache: Cache, onCompleted: (List<Object>) -> Unit) = createLoadTask(
-        definitions = { cache.getObjects() },
-        mapper = { Object(cache, this, resolveAnimations) }
-    ) { Platform.runLater { onCompleted(this) } }
-
-    private fun createNPCLoadTask(cache: Cache, onCompleted: (List<NPC>) -> Unit) = createLoadTask(
-        definitions = { cache.getNPCs() },
-        mapper = { NPC(cache, this, resolveAnimations) }
-    ) { Platform.runLater { onCompleted(this) } }
-
-    private fun createSpotAnimsLoadTask(cache: Cache, onCompleted: (List<SpotAnimation>) -> Unit) = createLoadTask(
-        definitions = { cache.getSpotAnimations() },
-        mapper = { SpotAnimation(cache, this, resolveAnimations) }
-    ) { Platform.runLater { onCompleted(this) } }
-
-    private fun createItemsLoadTask(cache: Cache, onCompleted: (List<Item>) -> Unit) = createLoadTask(
-        definitions = { cache.getItems() },
-        mapper = { Item(cache, this) }
-    ) { Platform.runLater { onCompleted(this) } }
-
-    private fun createSpritesLoadTask(cache: Cache, onCompleted: (List<Sprite>) -> Unit) = object : Task<Unit>() {
-        init {
-            updateTitle("Loading sprites from cache ${cache.name}")
-        }
-
-        override fun call() {
-            applyOnFx(loadSpritesNow(), onCompleted)
-        }
-    }
-
-    private fun createInterfacesLoadTask(cache: Cache, onCompleted: (List<InterfaceGroup>) -> Unit) = object : Task<Unit>() {
-        init {
-            updateTitle("Loading interfaces from cache ${cache.name}")
-        }
-
-        override fun call() {
-            applyOnFx(loadInterfacesNow(), onCompleted)
-        }
-    }
-
-    private inline fun <D : EntityDefinition, reified T : Entity<D>> loadEntities(
+    private suspend inline fun <D : EntityDefinition, reified T : Entity<D>> loadEntities(
         crossinline definitions: () -> Array<D>,
         crossinline mapper: D.() -> T,
     ): List<T> {
         val name = T::class.simpleName
-        val loadedDefinitions = definitions()
+        val loadedDefinitions: Array<D>
+        val decodeNs = measureNanoTime {
+            loadedDefinitions = withContext(Dispatchers.IO) { definitions() }
+        }
         if (loadedDefinitions.isEmpty() && cache is DispleeCache) {
             throw IllegalStateException("Displee cache returned 0 $name definitions")
         }
-        val progressCounter = AtomicInteger()
-        val total = loadedDefinitions.size
-        val updateFrequency = (total / 500).coerceAtLeast(1)
         val showNulls = Properties.showNullNamedEntities.get()
-        lateinit var loaded: List<T>
-        val elapsed = measureTimeMillis {
-            loaded = Arrays.stream(loadedDefinitions).parallel().map { definition ->
-                CacheParallel.nextProgressStep(progressCounter, total, updateFrequency)
-                val nullName = definition.name.isBlank() || definition.name == "null"
-                if (definition.modelIds.isNotEmpty() && (!nullName || showNulls))
-                    mapper(definition)
-                else
-                    null
-            }.toArray { arrayOfNulls<T>(it) }.filterNotNull()
+        val loaded: List<T>
+        val wrapNs = measureNanoTime {
+            loaded = withContext(Dispatchers.Default) {
+                CacheListWrap.mapNotNullCancellable(loadedDefinitions) { definition ->
+                    val nullName = definition.name.isBlank() || definition.name == "null"
+                    if (definition.modelIds.isNotEmpty() && (!nullName || showNulls))
+                        mapper(definition)
+                    else
+                        null
+                }
+            }
         }
-        logger.debug("Wrapped {} {} in {}ms", loaded.size, name, elapsed)
+        logger.debug(
+            "Decoded {} {} in {}ms, wrapped {} in {}ms",
+            loadedDefinitions.size, name, decodeNs / 1_000_000,
+            loaded.size, wrapNs / 1_000_000
+        )
         println("Loaded ${loaded.size} $name")
         return loaded
-    }
-
-    private inline fun <D : EntityDefinition, reified T : Entity<D>> createLoadTask(
-        crossinline definitions: () -> Array<D>,
-        crossinline mapper: D.() -> T,
-        crossinline onLoaded: List<T>.() -> Unit
-    ): Task<Unit> {
-        val name = T::class.simpleName
-        return object : Task<Unit>() {
-            init {
-                updateTitle("Loading $name from cache ${cache.name}")
-            }
-
-            override fun call() {
-                onLoaded(loadEntities(definitions, mapper))
-            }
-        }
     }
 
     companion object {

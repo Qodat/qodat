@@ -18,8 +18,15 @@ import javafx.scene.layout.StackPane
 import javafx.scene.paint.Color
 import javafx.scene.text.Font
 import javafx.scene.text.Text
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import stan.qodat.Qodat
 import stan.qodat.task.export.ExportTaskResult
@@ -36,6 +43,27 @@ object BackgroundTasks {
     private val busyProperty = SimpleBooleanProperty(false)
 
     val busy: ReadOnlyBooleanProperty = busyProperty
+
+    class ProgressHandle internal constructor(title: String) {
+        private val progressTask = object : Task<Unit>() {
+            override fun call() = Unit
+            init {
+                updateTitle(title)
+            }
+            fun setMessage(text: String) = updateMessage(text)
+            fun setTitleText(text: String) = updateTitle(text)
+        }
+
+        internal val task: Task<Unit> get() = progressTask
+
+        fun message(text: String) {
+            progressTask.setMessage(text)
+        }
+
+        fun title(text: String) {
+            progressTask.setTitleText(text)
+        }
+    }
 
     private fun markBusy() {
         if (active.incrementAndGet() == 1)
@@ -54,6 +82,38 @@ object BackgroundTasks {
             busyProperty.set(value)
         else
             Platform.runLater { busyProperty.set(value) }
+    }
+
+    fun launch(
+        addProgressIndicator: Boolean,
+        title: String,
+        block: suspend CoroutineScope.(ProgressHandle) -> Unit,
+    ): Job {
+        val handle = ProgressHandle(title)
+        logger.info("Starting task {}", title)
+        markBusy()
+        return Qodat.applicationScope.launch {
+            var stackPane: StackPane? = null
+            try {
+                if (addProgressIndicator) {
+                    stackPane = withContext(Dispatchers.JavaFx) {
+                        installProgress(handle.task)
+                    }
+                }
+                block(handle)
+            } catch (e: CancellationException) {
+                logger.debug("Cancelled task {}", title)
+                throw e
+            } catch (e: Exception) {
+                logger.error("Failed to execute task {}", title, e)
+                Qodat.logException("Failed to execute task $title", e)
+            } finally {
+                withContext(NonCancellable + Dispatchers.JavaFx) {
+                    stackPane?.let { Qodat.mainController.progressSpace.children.remove(it) }
+                }
+                markIdle()
+            }
+        }
     }
 
     fun submit(addProgressIndicator: Boolean, runnable: () -> Unit) {
@@ -83,13 +143,13 @@ object BackgroundTasks {
         logger.info("Starting task {}", taskTitle)
         markBusy()
 
-        if (addProgressIndicator) {
-            val stackPane = StackPane()
-            CoroutineScope(Dispatchers.JavaFx).launch {
+        val job = if (addProgressIndicator) {
+            Qodat.applicationScope.launch(Dispatchers.JavaFx) {
 
                 val progressPane = ProgressIndicatorPane()
                 progressPane.bindPrefWidth(mainPane)
                 progressPane.bind(task)
+                val stackPane = StackPane()
                 stackPane.children.add(progressPane)
 
                 progressBox.children.add(stackPane)
@@ -109,6 +169,10 @@ object BackgroundTasks {
                             else -> null
                         }
                     }
+                } catch (e: CancellationException) {
+                    task.cancel()
+                    logger.debug("Cancelled task {}", taskTitle)
+                    throw e
                 } catch (e: Exception) {
                     logger.error("Failed to execute task {}", taskTitle, e)
                     Qodat.logException("Failed to execute task $taskTitle", e)
@@ -119,9 +183,13 @@ object BackgroundTasks {
                 saved?.let { showOpenFileOption(it, progressBox) }
             }
         } else {
-            CoroutineScope(Dispatchers.Default).launch {
+            Qodat.applicationScope.launch(Dispatchers.Default) {
                 try {
                     task.run()
+                } catch (e: CancellationException) {
+                    task.cancel()
+                    logger.debug("Cancelled task {}", taskTitle)
+                    throw e
                 } catch (e: Exception) {
                     logger.error("Failed to execute task {}", taskTitle, e)
                     Qodat.logException("Failed to execute task $taskTitle", e)
@@ -130,6 +198,22 @@ object BackgroundTasks {
                 }
             }
         }
+        job.invokeOnCompletion { cause ->
+            if (cause is CancellationException && !task.isCancelled)
+                task.cancel()
+        }
+    }
+
+    private fun installProgress(task: Task<*>): StackPane {
+        val mainPane = Qodat.mainController.mainPane
+        val progressBox = Qodat.mainController.progressSpace
+        val stackPane = StackPane()
+        val progressPane = ProgressIndicatorPane()
+        progressPane.bindPrefWidth(mainPane)
+        progressPane.bind(task)
+        stackPane.children.add(progressPane)
+        progressBox.children.add(stackPane)
+        return stackPane
     }
 
     private suspend fun showOpenFileOption(result: Path, progressBox: HBox) {

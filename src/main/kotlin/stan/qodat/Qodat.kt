@@ -9,6 +9,9 @@ import javafx.scene.image.Image
 import javafx.scene.input.KeyCode
 import javafx.stage.Stage
 import javafx.stage.StageStyle
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.slf4j.LoggerFactory
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.cache.impl.qodat.QodatCache
@@ -82,6 +85,8 @@ class Qodat : Application() {
             setOnCloseRequest {
                 logger.info("Received close request")
                 try {
+                    shutDown = true
+                    applicationJob.cancel()
                     propertiesManager.saveToFile()
                     executor.shutdown()
                     ModelController.watchThread?.interrupt()
@@ -126,6 +131,14 @@ class Qodat : Application() {
         var shutDown = false
 
         val logger = LoggerFactory.getLogger(Qodat::class.java)
+
+        private val applicationJob = SupervisorJob()
+
+        /**
+         * Process-wide scope for cache/list loads and background work.
+         * Cancelled on window close so in-flight loads do not outlive the UI.
+         */
+        val applicationScope = CoroutineScope(applicationJob + Dispatchers.Default)
 
         /**
          * Handles the serialisation of [Properties].

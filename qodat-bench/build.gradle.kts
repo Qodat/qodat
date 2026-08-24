@@ -10,7 +10,9 @@ tasks.named("test") {
 
 gradle.taskGraph.whenReady {
     val benchRequested = gradle.startParameter.taskNames.any {
-        it.contains("qodat-bench", ignoreCase = true) || it.contains("benchDecode", ignoreCase = true)
+        it.contains("qodat-bench", ignoreCase = true) ||
+            it.contains("benchDecode", ignoreCase = true) ||
+            it.contains("benchListWrap", ignoreCase = true)
     }
     if (!benchRequested) {
         tasks.matching { it.name != "clean" }.configureEach {
@@ -32,4 +34,11 @@ tasks.register<JavaExec>("benchDecode") {
     description = "Synthetic decode speed vs RuneLite (not part of test)"
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("stan.qodat.bench.DecodeBenchmarkKt")
+}
+
+tasks.register<JavaExec>("benchListWrap") {
+    group = "benchmark"
+    description = "Chunked cache-list wrap vs parallel stream (not part of test)"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("stan.qodat.bench.ListWrapBenchmarkKt")
 }

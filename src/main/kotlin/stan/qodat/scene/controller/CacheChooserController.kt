@@ -19,7 +19,6 @@ import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.text.TextAlignment
 import javafx.stage.DirectoryChooser
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
@@ -30,7 +29,6 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.jsoup.Jsoup
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import stan.qodat.util.runCatchingWithDialog
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.File
@@ -127,7 +125,7 @@ class CacheChooserController : Initializable {
         }
         listCaches.placeholder = listCachesPlaceholder
 
-        CoroutineScope(Dispatchers.IO).launch {
+        Qodat.applicationScope.launch(Dispatchers.IO) {
             val result = runCatching { fetchRuneStatsCaches() }
             withContext(Dispatchers.JavaFx) {
                 result.onSuccess { caches ->
@@ -185,13 +183,11 @@ class CacheChooserController : Initializable {
             .pathProperty.get()
             .resolve(cacheName.removeSuffix(".tar.gz"))
             .toFile()
-        runCatchingWithDialog("Downloading cache $cacheName") {
-            CoroutineScope(Dispatchers.IO).launch {
+        Qodat.applicationScope.launch(Dispatchers.IO) {
+            try {
                 val conn = URL("$RUNESTATS_URL/$cacheName").openConnection()
                 conn.addRequestProperty("User-Agent", "qodat")
-                BufferedInputStream(withContext(Dispatchers.IO) {
-                    conn.getInputStream()
-                }).use { inputStream ->
+                BufferedInputStream(conn.getInputStream()).use { inputStream ->
                     val tarIn = TarArchiveInputStream(GzipCompressorInputStream(inputStream))
                     var tarEntry: TarArchiveEntry? = tarIn.nextTarEntry
                     while (tarEntry != null) {
@@ -213,12 +209,14 @@ class CacheChooserController : Initializable {
                         tarEntry = tarIn.nextTarEntry
                     }
                     tarIn.close()
-                    lblStatusText.isVisible = false
-                    dirChooser.field.text = destFolder.resolve("cache").absolutePath.toString()
+                    withContext(Dispatchers.JavaFx) {
+                        lblStatusText.isVisible = false
+                        dirChooser.field.text = destFolder.resolve("cache").absolutePath.toString()
+                    }
                 }
+            } catch (e: Exception) {
+                Qodat.logException("Failed to download cache $cacheName", e)
             }
-        }.onFailure {
-            Qodat.logException("Failed to download cache $cacheName", it)
         }
     }
 

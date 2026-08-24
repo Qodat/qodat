@@ -18,12 +18,11 @@ import javafx.scene.layout.Priority
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.javafx.JavaFx
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import stan.qodat.scene.EntitySelectionCoordinator
 import qodat.cache.Cache
-import java.util.concurrent.CountDownLatch
 import qodat.cache.CacheEventListener
 import qodat.cache.definition.EntityDefinition
 import qodat.cache.event.CacheReloadEvent
@@ -31,6 +30,7 @@ import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.CacheAssetLoader
 import stan.qodat.cache.impl.displee.DispleeCache
+import stan.qodat.task.BackgroundTasks
 import stan.qodat.scene.SubScene3D
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
@@ -146,6 +146,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
     lateinit var onEntitySelected: (Entity<*>) -> Unit
 
     private var pendingViewState: EntityViewState? = null
+    private var loadJob: Job? = null
     private val selectionCoordinator = EntitySelectionCoordinator(sceneContext).apply {
         onPreview = { node, gen -> previewSelection(node, gen) }
         onSettled = { node, gen -> settleSelection(node, gen) }
@@ -223,91 +224,87 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         }
     }
 
-    private fun loadAssets(cache: Cache) {
-        if (cache is DispleeCache) {
-            cache.ensureReady()
-        }
-        val pendingLoads = CountDownLatch(7)
-        loadLastSelectedAnimation(pendingLoads)
-
-        CacheAssetLoader(cache, animationController::resolve).loadAll(
-            selectedFirst = Properties.selectedViewerTab.get(),
-            onNpcs = {
-                npcs.setAll(it)
-                handleLastSelectedEntity(it, npcList)
-                pendingLoads.countDown()
-            },
-            onObjects = {
-                objects.setAll(it)
-                handleLastSelectedEntity(it, objectList)
-                pendingLoads.countDown()
-            },
-            onItems = {
-                items.setAll(it)
-                handleLastSelectedEntity(it, itemList)
-                pendingLoads.countDown()
-            },
-            onSpotAnims = {
-                spotAnims.setAll(it)
-                handleLastSelectedEntity(it, spotAnimList)
-                pendingLoads.countDown()
-            },
-            onSprites = {
-                try {
-                    sprites.setAll(it)
-                    restoreSpriteSelection(it)
-                } catch (e: Exception) {
-                    Qodat.logException("Failed to load sprites", e)
-                } finally {
-                    pendingLoads.countDown()
-                }
-            },
-            onInterfaces = {
-                try {
-                    interfaces.setAll(it)
-                    restoreInterfaceSelection(it)
-                } catch (e: Exception) {
-                    Qodat.logException("Failed to load interfaces", e)
-                } finally {
-                    pendingLoads.countDown()
-                }
-            },
-            onAnimations = { animationList ->
-                animationController.clearAnimationCache()
-                animationController.animationsListView.selectionModel.clearSelection()
-                animationController.indexCatalog(animationList)
-                applySelectedEntityAnimations()
-                pendingLoads.countDown()
-            },
-        )
+    fun cancelAssetLoad() {
+        loadJob?.cancel()
+        loadJob = null
     }
 
-    private fun loadLastSelectedAnimation(pendingLoads: CountDownLatch) {
-        Thread {
-            pendingLoads.await()
-            GlobalScope.launch(Dispatchers.JavaFx) {
-                applySelectedEntityAnimations()
-                val pending = pendingViewState
-                val identity = pending?.selectedAnimation
-                    ?: NamedIdentity(
-                        id = Properties.selectedAnimationId.get(),
-                        name = Properties.selectedAnimationName.get()
-                    )
-                animationController.restoreSelectedIdentity(identity)
-                scrollActiveEntityIntoView()
-                if (pending != null) {
-                    Platform.runLater {
-                        sceneContext.animationPlayer.restorePlayback(
-                            pending.animationPlaying,
-                            pending.animationFrameIndex
-                        )
-                        if (SubScene3D.contextProperty.get() == sceneContext)
-                            Qodat.mainController.playBtn.isSelected = pending.animationPlaying
-                        pendingViewState = null
-                    }
-                }
+    private fun loadAssets(cache: Cache) {
+        loadJob?.cancel()
+        loadJob = BackgroundTasks.launch(
+            addProgressIndicator = true,
+            title = "Loading ${cache.name} cache lists"
+        ) { progress ->
+            if (cache is DispleeCache) {
+                withContext(Dispatchers.IO) { cache.ensureReady() }
             }
-        }.start()
+            CacheAssetLoader(cache, animationController::resolve).loadAll(
+                selectedFirst = Properties.selectedViewerTab.get(),
+                onProgress = { progress.message(it) },
+                onNpcs = {
+                    npcs.setAll(it)
+                    handleLastSelectedEntity(it, npcList)
+                },
+                onObjects = {
+                    objects.setAll(it)
+                    handleLastSelectedEntity(it, objectList)
+                },
+                onItems = {
+                    items.setAll(it)
+                    handleLastSelectedEntity(it, itemList)
+                },
+                onSpotAnims = {
+                    spotAnims.setAll(it)
+                    handleLastSelectedEntity(it, spotAnimList)
+                },
+                onSprites = {
+                    try {
+                        sprites.setAll(it)
+                        restoreSpriteSelection(it)
+                    } catch (e: Exception) {
+                        Qodat.logException("Failed to load sprites", e)
+                    }
+                },
+                onInterfaces = {
+                    try {
+                        interfaces.setAll(it)
+                        restoreInterfaceSelection(it)
+                    } catch (e: Exception) {
+                        Qodat.logException("Failed to load interfaces", e)
+                    }
+                },
+                onAnimations = { animationList ->
+                    animationController.clearAnimationCache()
+                    animationController.animationsListView.selectionModel.clearSelection()
+                    animationController.indexCatalog(animationList)
+                    applySelectedEntityAnimations()
+                },
+            )
+            withContext(Dispatchers.JavaFx) {
+                restoreAfterListsLoaded()
+            }
+        }
+    }
+
+    private fun restoreAfterListsLoaded() {
+        applySelectedEntityAnimations()
+        val pending = pendingViewState
+        val identity = pending?.selectedAnimation
+            ?: NamedIdentity(
+                id = Properties.selectedAnimationId.get(),
+                name = Properties.selectedAnimationName.get()
+            )
+        animationController.restoreSelectedIdentity(identity)
+        scrollActiveEntityIntoView()
+        if (pending != null) {
+            sceneContext.animationPlayer.restorePlayback(
+                pending.animationPlaying,
+                pending.animationFrameIndex
+            )
+            if (SubScene3D.contextProperty.get() == sceneContext)
+                Qodat.mainController.playBtn.isSelected = pending.animationPlaying
+            pendingViewState = null
+        }
     }
 
     private fun applySelectedEntityAnimations() {

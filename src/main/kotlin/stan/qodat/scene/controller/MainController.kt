@@ -3,6 +3,9 @@ package stan.qodat.scene.controller
 import javafx.application.Platform
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.beans.property.SimpleObjectProperty
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.withContext
 import javafx.fxml.FXML
 import javafx.fxml.FXMLLoader
 import javafx.geometry.Insets
@@ -479,15 +482,19 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
         if (reloadingCache)
             return
         reloadingCache = true
+        viewerController.cancelAssetLoad()
+        editorController.cancelAssetLoad()
         val state = snapshotViewState()
-        BackgroundTasks.submit(addProgressIndicator = true) {
+        BackgroundTasks.launch(addProgressIndicator = true, title = "Reloading cache") {
             try {
-                Properties.viewerCache.get()?.reloadFromSource()
-                Properties.editorCache.get()?.reloadFromSource()
+                withContext(Dispatchers.IO) {
+                    Properties.viewerCache.get()?.reloadFromSource()
+                    Properties.editorCache.get()?.reloadFromSource()
+                }
             } catch (e: Exception) {
                 Qodat.logException("Failed to reload cache", e)
             }
-            Platform.runLater {
+            withContext(Dispatchers.JavaFx) {
                 try {
                     viewerController.restoreViewState(state.viewer)
                     editorController.restoreViewState(state.editor)
