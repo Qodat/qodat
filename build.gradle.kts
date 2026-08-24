@@ -101,6 +101,9 @@ dependencies {
     }
     implementation(libs.xmlutil.serialization)
     testImplementation(kotlin("test-junit"))
+    testImplementation(libs.runelite.cache) {
+        exclude(group = "com.google.guava")
+    }
 }
 
 /**
