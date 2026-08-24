@@ -2,13 +2,13 @@ package stan.qodat.cache.impl.oldschool
 
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import net.runelite.cache.definitions.NpcDefinition
 import net.runelite.cache.definitions.ObjectDefinition
 import net.runelite.cache.definitions.SpotAnimDefinition
 import qodat.cache.definition.NPCDefinition
 import qodat.cache.definition.ObjectDefinition as QodatObjectDefinition
 import qodat.cache.definition.SpotAnimationDefinition
 import stan.qodat.cache.NpcPrimaryAnimations
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 import java.io.File
 import java.util.OptionalInt
 import kotlin.io.path.createTempDirectory
@@ -117,11 +117,12 @@ class OldschoolCacheDefinitionMappingTest {
             npc: NpcDefinition,
             extraAnimationIds: Array<String> = emptyArray(),
         ): NPCDefinition? {
-            if (npc.models == null || npc.models.isEmpty()) return null
+            val models = npc.models
+            if (models == null || models.isEmpty()) return null
             return object : NPCDefinition {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
-                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                override val modelIds = models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
                 override val animationIds = extraAnimationIds
                 override val findColor = npc.recolorToFind

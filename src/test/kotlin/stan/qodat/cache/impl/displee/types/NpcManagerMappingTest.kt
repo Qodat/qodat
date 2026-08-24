@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.displee.types
 
-import net.runelite.cache.definitions.NpcDefinition
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 import stan.qodat.cache.impl.displee.types.NpcManager.Companion.extraAnimationIds
 import stan.qodat.cache.impl.displee.types.NpcManager.Companion.mapNpc
 import java.util.OptionalInt

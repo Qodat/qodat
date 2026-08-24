@@ -1,6 +1,6 @@
 package stan.qodat.cache
 
-import net.runelite.cache.definitions.NpcDefinition
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

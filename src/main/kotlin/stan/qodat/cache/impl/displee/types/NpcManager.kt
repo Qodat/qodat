@@ -3,11 +3,11 @@ package stan.qodat.cache.impl.displee.types
 import com.displee.cache.CacheLibrary
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
-import net.runelite.cache.definitions.NpcDefinition
-import net.runelite.cache.definitions.loaders.NpcLoader
 import qodat.cache.definition.NPCDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.NpcPrimaryAnimations
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
+import stan.qodat.cache.impl.oldschool.loader.NpcLoader
 import java.io.File
 import java.util.OptionalInt
 
@@ -56,11 +56,12 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
             npc: NpcDefinition,
             extraAnimationIds: () -> Array<String> = { emptyArray() },
         ): NPCDefinition? {
-            if (npc.models == null || npc.models.isEmpty()) return null
+            val models = npc.models
+            if (models == null || models.isEmpty()) return null
             return object : NPCDefinition {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
-                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
+                override val modelIds = models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
                 override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
                 override val animationIds by lazy {

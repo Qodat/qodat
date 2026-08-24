@@ -1,11 +1,11 @@
 package stan.qodat.cache.impl.displee.anims
 
 import com.displee.cache.CacheLibrary
-import net.runelite.cache.definitions.NpcDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.AnimationSkeletonIndex
 import stan.qodat.cache.NpcPrimaryAnimations
 import stan.qodat.cache.impl.displee.types.NpcManager
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 
 class NpcAnimParser(
     cacheLibrary: CacheLibrary,
@@ -21,7 +21,8 @@ class NpcAnimParser(
         }
         val npcsByModel = HashMap<Int, MutableList<Int>>()
         for (npc in npcs.values) {
-            for (modelId in npc.models ?: continue) {
+            val models = npc.models ?: continue
+            for (modelId in models) {
                 npcsByModel.getOrPut(modelId) { ArrayList() }.add(npc.id)
             }
         }
@@ -46,9 +47,10 @@ class NpcAnimParser(
         animationMap: AnimationSkeletonIndex.AnimationMap,
     ): IntArray {
         val npc = npcs[npcId] ?: return ownRefs
+        val models = npc.models ?: return ownRefs
         val ownAreMaya = ownRefs.any { it in animationMap.mayaAnimationIds }
         val expanded = ownRefs.toMutableSet()
-        for (modelId in npc.models ?: return ownRefs) {
+        for (modelId in models) {
             for (otherId in npcsByModel[modelId].orEmpty()) {
                 if (otherId == npcId) continue
                 val other = npcs[otherId] ?: continue

@@ -1,6 +1,6 @@
 package stan.qodat.cache
 
-import net.runelite.cache.definitions.NpcDefinition
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 
 /**
  * Stance / locomotion ids that belong in the first animation list.

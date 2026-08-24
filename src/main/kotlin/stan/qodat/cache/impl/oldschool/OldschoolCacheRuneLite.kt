@@ -17,6 +17,7 @@ import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.ModelDefinitionCache
 import stan.qodat.cache.NpcPrimaryAnimations
+import stan.qodat.cache.impl.oldschool.definition.NpcDefinition as OsrsNpcDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader206
@@ -126,13 +127,15 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
             npcAnimsDir.mkdirs()
         }
         return npcManager.npcs.mapNotNull { npc ->
-            if (npc.models == null || npc.models.isEmpty()) return@mapNotNull null
+            val models = npc.models
+            if (models == null || models.isEmpty()) return@mapNotNull null
+            val stances = npc.stanceCopy()
             object : NPCDefinition {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { "null" }
-                override val modelIds = npc.models.map { it.toString() }.toTypedArray()
-                override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
-                override val animationRoleLabels = NpcPrimaryAnimations.labels(npc)
+                override val modelIds = models.map { it.toString() }.toTypedArray()
+                override val primaryAnimationIds = NpcPrimaryAnimations.ids(stances)
+                override val animationRoleLabels = NpcPrimaryAnimations.labels(stances)
                 override val animationIds by lazy {
                     animIdsCache.getOrPut(npc.id) {
                         val file = npcAnimsDir.resolve("${npc.id}.json")
@@ -323,3 +326,22 @@ object OldschoolCacheRuneLite : Cache("LIVE") {
         Integer.parseInt(hexString.substring(hexString.length - 4), 16)
 
 }
+
+private fun net.runelite.cache.definitions.NpcDefinition.stanceCopy() =
+    OsrsNpcDefinition(id).apply {
+        standingAnimation = this@stanceCopy.standingAnimation
+        walkingAnimation = this@stanceCopy.walkingAnimation
+        idleRotateLeftAnimation = this@stanceCopy.idleRotateLeftAnimation
+        idleRotateRightAnimation = this@stanceCopy.idleRotateRightAnimation
+        rotateLeftAnimation = this@stanceCopy.rotateLeftAnimation
+        rotateRightAnimation = this@stanceCopy.rotateRightAnimation
+        rotate180Animation = this@stanceCopy.rotate180Animation
+        runAnimation = this@stanceCopy.runAnimation
+        runRotate180Animation = this@stanceCopy.runRotate180Animation
+        runRotateLeftAnimation = this@stanceCopy.runRotateLeftAnimation
+        runRotateRightAnimation = this@stanceCopy.runRotateRightAnimation
+        crawlAnimation = this@stanceCopy.crawlAnimation
+        crawlRotate180Animation = this@stanceCopy.crawlRotate180Animation
+        crawlRotateLeftAnimation = this@stanceCopy.crawlRotateLeftAnimation
+        crawlRotateRightAnimation = this@stanceCopy.crawlRotateRightAnimation
+    }
