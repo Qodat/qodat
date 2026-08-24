@@ -1,6 +1,5 @@
 package stan.qodat.scene.control.tree
 
-import IntTextField
 import javafx.beans.property.SimpleDoubleProperty
 import javafx.geometry.Orientation
 import javafx.scene.Group
@@ -15,6 +14,7 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
 import stan.qodat.javafx.*
+import stan.qodat.scene.control.IntTextField
 import stan.qodat.scene.control.TreeItemListContextMenu
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.AnimationFrameLegacy

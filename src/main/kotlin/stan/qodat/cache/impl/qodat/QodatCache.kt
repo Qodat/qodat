@@ -21,7 +21,7 @@ import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.outputStream
 
-@ExperimentalSerializationApi
+@OptIn(ExperimentalSerializationApi::class)
 object QodatCache : Cache("qodat") {
 
     val json = Json {

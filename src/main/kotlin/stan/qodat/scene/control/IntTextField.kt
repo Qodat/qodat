@@ -1,3 +1,5 @@
+package stan.qodat.scene.control
+
 import javafx.beans.property.IntegerProperty
 import javafx.beans.property.SimpleIntegerProperty
 import javafx.scene.control.TextField
@@ -25,9 +27,9 @@ class IntTextField(minValue: Int, maxValue: Int, initialValue: Int) : TextField(
     }
 
     init {
-        require(minValue <= maxValue) { "IntField min value $minValue greater than max value $maxValue" }
-        require(maxValue >= minValue) { "IntField max value $minValue less than min value $maxValue" }
-        require(minValue <= initialValue && initialValue <= maxValue) { "IntField initialValue $initialValue not between $minValue and $maxValue" }
+        require(minValue <= maxValue) { "IntTextField min value $minValue greater than max value $maxValue" }
+        require(maxValue >= minValue) { "IntTextField max value $minValue less than min value $maxValue" }
+        require(minValue <= initialValue && initialValue <= maxValue) { "IntTextField initialValue $initialValue not between $minValue and $maxValue" }
 
         // initialize the field values.
         this.minValue = minValue

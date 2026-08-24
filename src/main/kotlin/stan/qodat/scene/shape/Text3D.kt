@@ -135,7 +135,7 @@ class Text3D(
         faceCountBinding.invalidate()
     }
 
-    private fun<T> Property<T>.updateMeshesOnInvalidation() = apply {
+    private fun<T> Property<T>.updateMeshesOnInvalidation(): Property<T> = apply {
         onInvalidation {
             if (this@Text3D::meshes.isInitialized)
                 updateMeshes()

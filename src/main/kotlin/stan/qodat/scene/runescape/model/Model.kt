@@ -18,6 +18,7 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.MeshView
 import javafx.scene.shape.Sphere
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.decodeFromStream
 import mqo.MQOImporter
 import stan.qodat.scene.control.export.blender.GltfCodec
@@ -514,6 +515,7 @@ class Model(label: String,
 
         val supportedExtensions = arrayOf("model", "dat", "json", "mqo", "glb")
 
+        @OptIn(ExperimentalSerializationApi::class)
         fun fromFile(file: File) : Model {
             val definition = when (file.extension.lowercase()) {
                 "json" -> {

@@ -59,7 +59,6 @@ class AutoScaleSubScenePane(
                 /**
                  * TODO: FIX THIS
                  */
-                val widthOffset = parentWidthProperty.get() - width
                 val selection = selectionHandler.selectionRectangle
                 val selectionBounds = selection.boundsInParent
 
@@ -100,12 +99,12 @@ class AutoScaleSubScenePane(
             subScene.width = width
             subScene.height = height
         }
-        val rightNodeWidth = snapSize(rightOverlayGroup.prefWidth(-1.0))
-        val rightNodeHeight = snapSize(rightOverlayGroup.prefHeight(-1.0))
+        val rightNodeWidth = snapSizeX(rightOverlayGroup.prefWidth(-1.0))
+        val rightNodeHeight = snapSizeY(rightOverlayGroup.prefHeight(-1.0))
         rightOverlayGroup.resizeRelocate(width - rightNodeWidth, 0.0, rightNodeWidth, rightNodeHeight)
 
-        val leftNodeWidth = snapSize(leftOverlayGroup.prefWidth(-1.0))
-        val leftNodeHeight = snapSize(leftOverlayGroup.prefHeight(-1.0))
+        val leftNodeWidth = snapSizeX(leftOverlayGroup.prefWidth(-1.0))
+        val leftNodeHeight = snapSizeY(leftOverlayGroup.prefHeight(-1.0))
         leftOverlayGroup.resizeRelocate(0.0, 0.0, leftNodeWidth, leftNodeHeight)
     }
 }

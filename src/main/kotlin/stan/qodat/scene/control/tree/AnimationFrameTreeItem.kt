@@ -1,6 +1,5 @@
 package stan.qodat.scene.control.tree
 
-import IntTextField
 import javafx.beans.property.SimpleBooleanProperty
 import javafx.beans.property.SimpleObjectProperty
 import javafx.collections.ObservableList
@@ -19,6 +18,7 @@ import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.javafx.hBox
 import stan.qodat.javafx.onTreeSelected
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.IntTextField
 import stan.qodat.scene.runescape.animation.*
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.FrameTimeUtil
