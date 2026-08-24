@@ -2,7 +2,7 @@ package stan.qodat.scene.control.tree
 
 import stan.qodat.scene.runescape.animation.AnimationSkeleton
 import stan.qodat.scene.runescape.animation.TransformationType
-import stan.qodat.scene.runescape.model.Model
+import stan.qodat.scene.runescape.model.ModelSkeleton
 
 internal sealed class VertexHierarchyNode {
     abstract val highlightGroups: List<Int>
@@ -35,7 +35,7 @@ internal class BucketHierarchyNode(
 internal object VertexGroupHierarchy {
 
     fun build(
-        model: Model,
+        model: ModelSkeleton,
         skeletons: List<Pair<Int, AnimationSkeleton>>
     ): Pair<String, List<VertexHierarchyNode>> {
         if (skeletons.isEmpty())
@@ -66,7 +66,7 @@ internal object VertexGroupHierarchy {
         return "Vertex Group Hierarchy" to roots
     }
 
-    private fun buildFromSkeleton(model: Model, skeleton: AnimationSkeleton): List<VertexHierarchyNode> {
+    private fun buildFromSkeleton(model: ModelSkeleton, skeleton: AnimationSkeleton): List<VertexHierarchyNode> {
         val vertexGroups = model.getVertexGroups()
         val sets = skeleton.getTransformationGroups().mapIndexedNotNull { index, transform ->
             val groups = transform.groupIndices
@@ -141,7 +141,7 @@ internal object VertexGroupHierarchy {
     }
 
     private fun ungroupedLeaves(
-        model: Model,
+        model: ModelSkeleton,
         skeletons: List<Pair<Int, AnimationSkeleton>>
     ): List<VertexGroupNode> {
         val targeted = HashSet<Int>()
@@ -154,7 +154,7 @@ internal object VertexGroupHierarchy {
             .map { VertexGroupNode(it.index, it.value) }
     }
 
-    private fun buildInferred(model: Model): List<VertexHierarchyNode> {
+    private fun buildInferred(model: ModelSkeleton): List<VertexHierarchyNode> {
         val groups = model.getVertexGroups()
         val nonEmpty = groups.withIndex()
             .filter { it.value.isNotEmpty() }
@@ -221,7 +221,7 @@ internal object VertexGroupHierarchy {
         return node(root)
     }
 
-    private fun faceAdjacency(model: Model, groupCount: Int, nonEmpty: Set<Int>): Array<Set<Int>> {
+    private fun faceAdjacency(model: ModelSkeleton, groupCount: Int, nonEmpty: Set<Int>): Array<Set<Int>> {
         val skins = vertexToGroup(model)
         val adjacent = Array(groupCount) { HashSet<Int>() }
         val definition = model.modelDefinition
@@ -246,7 +246,7 @@ internal object VertexGroupHierarchy {
         adjacent[b].add(a)
     }
 
-    private fun vertexToGroup(model: Model): IntArray {
+    private fun vertexToGroup(model: ModelSkeleton): IntArray {
         val skins = model.modelDefinition.getVertexSkins()
         if (skins != null)
             return skins
@@ -259,7 +259,7 @@ internal object VertexGroupHierarchy {
         return map
     }
 
-    private fun groupBounds(model: Model, vertices: IntArray): GroupBounds {
+    private fun groupBounds(model: ModelSkeleton, vertices: IntArray): GroupBounds {
         var minX = Int.MAX_VALUE
         var minY = Int.MAX_VALUE
         var minZ = Int.MAX_VALUE

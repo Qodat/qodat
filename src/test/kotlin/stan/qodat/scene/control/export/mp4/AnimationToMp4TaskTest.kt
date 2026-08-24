@@ -29,12 +29,12 @@ class AnimationToMp4TaskTest {
 
     @Test
     fun snapshotViewportRoundsOddExtentsDownByOne() {
-        assertEquals(400.0, evenSnapshotExtent(400.0))
-        assertEquals(400.0, evenSnapshotExtent(401.0))
-        assertEquals(400.9, evenSnapshotExtent(401.9))
-        assertEquals(0.0, evenSnapshotExtent(0.0))
-        assertEquals(0.5, evenSnapshotExtent(0.5))
-        assertEquals(-2.0, evenSnapshotExtent(-1.0))
+        assertEquals(400.0, AnimationToMp4Task.evenDimension(400.0))
+        assertEquals(400.0, AnimationToMp4Task.evenDimension(401.0))
+        assertEquals(400.9, AnimationToMp4Task.evenDimension(401.9))
+        assertEquals(0.0, AnimationToMp4Task.evenDimension(0.0))
+        assertEquals(0.5, AnimationToMp4Task.evenDimension(0.5))
+        assertEquals(-2.0, AnimationToMp4Task.evenDimension(-1.0))
     }
 
     @Test
@@ -44,41 +44,20 @@ class AnimationToMp4TaskTest {
             AnimationFrameLegacy("fast", null, 1),
             AnimationFrameLegacy("mid", null, 2)
         )
-        val minMillis = frames.minOf { it.getDuration() }.toMillis()
-        val fps = 1000.0 / minMillis
-        assertEquals(frames[1].getDuration().toMillis(), minMillis)
+        val fps = AnimationToMp4Task.fpsFromShortestFrame(frames)
+        val shortestMillis = frames[1].getDuration().toMillis()
+        assertEquals(1000.0 / shortestMillis, fps)
         assertTrue(fps > 0.0)
-        assertEquals((1000.0 / minMillis).toInt(), fps.toInt())
+        assertEquals((1000.0 / shortestMillis).toInt(), fps.toInt())
     }
 
     @Test
     fun longerFramesRepeatUntilTheirDurationIsConsumed() {
         val shortFrame = AnimationFrameLegacy("short", null, 1)
         val longFrame = AnimationFrameLegacy("long", null, 5)
-        val fps = 1000.0 / shortFrame.getDuration().toMillis()
-        assertEquals(1, encodeRepeatCount(shortFrame.getDuration().toMillis(), fps))
-        assertEquals(5, encodeRepeatCount(longFrame.getDuration().toMillis(), fps))
-        assertEquals(0, encodeRepeatCount(0.0, fps))
-    }
-
-    /**
-     * Mirrors `AnimationToMp4Task` viewport sizing:
-     * `value.let { if (it.toInt() % 2 != 0) it - 1.0 else it }`.
-     */
-    private fun evenSnapshotExtent(value: Double): Double =
-        if (value.toInt() % 2 != 0) value - 1.0 else value
-
-    /**
-     * Mirrors the `while (animationFrameDuration > 0)` encode loop in `AnimationToMp4Task`.
-     */
-    private fun encodeRepeatCount(animationFrameDurationMs: Double, fps: Double): Int {
-        val videoFrameDurationInMs = 1000.0 / fps
-        var remaining = animationFrameDurationMs
-        var count = 0
-        while (remaining > 0) {
-            count++
-            remaining -= videoFrameDurationInMs
-        }
-        return count
+        val fps = AnimationToMp4Task.fpsFromShortestFrame(listOf(shortFrame))
+        assertEquals(1, AnimationToMp4Task.encodeRepeatCount(shortFrame.getDuration().toMillis(), fps))
+        assertEquals(5, AnimationToMp4Task.encodeRepeatCount(longFrame.getDuration().toMillis(), fps))
+        assertEquals(0, AnimationToMp4Task.encodeRepeatCount(0.0, fps))
     }
 }

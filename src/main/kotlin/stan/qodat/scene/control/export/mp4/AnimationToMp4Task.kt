@@ -14,6 +14,7 @@ import org.jcodec.common.io.SeekableByteChannel
 import org.jcodec.common.model.Rational
 import org.jcodec.scale.AWTUtil
 import stan.qodat.javafx.JavaFXExecutor
+import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import java.nio.file.Path
@@ -51,8 +52,8 @@ class AnimationToMp4Task(
                         viewport = Rectangle2D(
                             0.0,
                             0.0,
-                            scene.width.let { if (it.toInt() % 2 != 0) it - 1.0 else it },
-                            scene.height.let { if (it.toInt() % 2 != 0) it - 1.0 else it }
+                            evenDimension(scene.width),
+                            evenDimension(scene.height)
                         )
                     }
                     val image = scene.snapshot(snapshotParameters, null)!!
@@ -80,7 +81,7 @@ class AnimationToMp4Task(
         try {
             out = NIOUtils.writableChannel(file)
 
-            val fps = (1000.0 / aniamtionFrames.minOf { it.getDuration() }.toMillis())
+            val fps = fpsFromShortestFrame(aniamtionFrames)
             val encoder = AWTSequenceEncoder.createWithFps(out, Rational.R(fps.toInt(), 1))
 
             var count = 0
@@ -94,11 +95,8 @@ class AnimationToMp4Task(
                     updateProgress(count.toLong(), totalFrames.toLong())
                 }
                 val picture = AWTUtil.fromBufferedImageRGB(SwingFXUtils.fromFXImage(image, null))
-                val videoFrameDurationInMs = 1000.0/fps
-                var animationFrameDuration = duration.toMillis()
-                while (animationFrameDuration > 0) {
+                repeat(encodeRepeatCount(duration.toMillis(), fps)) {
                     encoder.encodeNativeFrame(picture)
-                    animationFrameDuration -= videoFrameDurationInMs
                 }
             }
             encoder.finish()
@@ -109,6 +107,25 @@ class AnimationToMp4Task(
         JavaFXExecutor.execute {
             updateProgress(0, 0)
             updateMessage("Generated MP4 at $file")
+        }
+    }
+
+    companion object {
+        fun evenDimension(value: Double): Double =
+            if (value.toInt() % 2 != 0) value - 1.0 else value
+
+        fun fpsFromShortestFrame(frames: Iterable<AnimationFrame>): Double =
+            1000.0 / frames.minOf { it.getDuration() }.toMillis()
+
+        fun encodeRepeatCount(animationFrameDurationMs: Double, fps: Double): Int {
+            val videoFrameDurationInMs = 1000.0 / fps
+            var remaining = animationFrameDurationMs
+            var count = 0
+            while (remaining > 0) {
+                count++
+                remaining -= videoFrameDurationInMs
+            }
+            return count
         }
     }
 }

@@ -10,6 +10,7 @@ import stan.qodat.scene.control.export.wavefront.getFaceMaterials
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.scene.runescape.model.ModelSkeleton
 import stan.qodat.task.export.ExportTask
 import stan.qodat.task.export.ExportTaskResult
 import stan.qodat.util.formatName
@@ -28,7 +29,7 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
         saveDir: Path,
         val modelGroupName: String,
         val frames: List<AnimationFrame>,
-        val model: Model,
+        val model: ModelSkeleton,
         val reColorMap: Map<Short, Short>? = null,
     ) : ExportWaveFrontTask(saveDir) {
 
@@ -81,13 +82,31 @@ sealed class ExportWaveFrontTask(val saveDir: Path) : ExportTask() {
 
     class Single(
         saveDir: Path,
-        private val model: Model,
+        private val model: ModelSkeleton,
         private val animationFrame: AnimationFrame? = null,
         private val writeMaterials: Boolean = true,
-        private val fileName: String = model.getName(),
+        private val fileName: String,
         private val materials: Set<WaveFrontMaterial>? = null,
         val reColorMap: Map<Short, Short>? = null,
     ) : ExportWaveFrontTask(saveDir) {
+
+        constructor(
+            saveDir: Path,
+            model: Model,
+            animationFrame: AnimationFrame? = null,
+            writeMaterials: Boolean = true,
+            fileName: String = model.getName(),
+            materials: Set<WaveFrontMaterial>? = null,
+            reColorMap: Map<Short, Short>? = null,
+        ) : this(
+            saveDir = saveDir,
+            model = model as ModelSkeleton,
+            animationFrame = animationFrame,
+            writeMaterials = writeMaterials,
+            fileName = fileName,
+            materials = materials,
+            reColorMap = reColorMap
+        )
 
         constructor(
             saveDir: Path,
