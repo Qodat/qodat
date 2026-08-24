@@ -86,6 +86,7 @@ class RSModelLoader {
         TODO("Not yet implemented")
     }
 
+    // TODO(perf): seven InputStream copies per model. Reuse a small pool or one buffer + offsets during cache load.
     private fun decodeHighRev(modelId: String, data: ByteArray): ModelDefinition {
 
         val input1 = InputStream(data)
@@ -129,8 +130,6 @@ class RSModelLoader {
             newformat = input1.readUnsignedByte()
             input1.offset += 6
         }
-        println("format = $newformat")
-
         val renderPriority = input1.readUnsignedByte()
         val transparencyFlag = input1.readUnsignedByte() == 1
         val animationFaceFlag = input1.readUnsignedByte() == 1

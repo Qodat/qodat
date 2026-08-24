@@ -23,13 +23,6 @@ import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.shape.PolygonMeshView
 
-//fun Qodat.Companion.addTo3DScene(node: Node) {
-//    SubScene3D.contextProperty.get().getController().getSceneNode().children.add(node)
-//}
-//fun Qodat.Companion.removeFrom3DScene(node: Node) {
-//    SubScene3D.contextProperty.get().getController().getSceneNode().children.remove(node)
-//}
-
 fun Qodat.Companion.addSceneTreeItem(provider: TreeItemProvider) {
     mainController.sceneTreeView.root.children.add(
         provider.getTreeItem(mainController.sceneTreeView)

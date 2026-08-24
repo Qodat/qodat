@@ -514,10 +514,6 @@ class Model(label: String,
 
         val supportedExtensions = arrayOf("model", "dat", "json", "mqo", "glb")
 
-        fun toFile(file: File) : Model {
-            TODO("Not implemented")
-        }
-
         fun fromFile(file: File) : Model {
             val definition = when (file.extension.lowercase()) {
                 "json" -> {
