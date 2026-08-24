@@ -28,12 +28,12 @@ class AnimManager(
         if (loaded) return
         val archive = cacheLibrary.index(2).archive(12)!!
         val revision = archive.revision
+        // TODO(perf): decodes every sequence sequentially; each file is independent
         archive.files.forEach { (fileId, file) ->
             val data = file.data ?: return@forEach
             try {
                 seqs[fileId] = loadSeq(revision, fileId, data)
-            } catch (e: Exception) {
-                e.printStackTrace()
+            } catch (_: Exception) {
             }
         }
         loaded = true
@@ -54,6 +54,7 @@ class AnimManager(
         val hexString = Integer.toHexString(frameHash)
         val frameArchiveId = getFileId(hexString)
         val frameArchiveFileId = getFrameId(hexString)
+        // TODO(perf): first hash in an archive decodes every frame file; consider lazy per-file decode
         return frames.getOrPut(frameArchiveId) {
             val frameArchive = cacheLibrary.index(0).archive(frameArchiveId)!!
             frameArchive.files().associate { file ->
@@ -76,6 +77,7 @@ class AnimManager(
         seqId: Int,
         seqData: ByteArray,
     ): AnimationDefinition = try {
+        // TODO(perf): SequenceLoader226 is constructed per sequence; reuse one loader per revision
         val sequence = SequenceLoader226().apply {
             configureForRevision(revision)
         }.load(seqId, seqData)
@@ -102,8 +104,7 @@ class AnimManager(
             override val leftHandItem: Int = sequence.leftHandItem
             override val rightHandItem: Int = sequence.rightHandItem
         }
-    } catch (e: Exception) {
-        e.printStackTrace()
+    } catch (_: Exception) {
         val sequence = SequenceLoader206().load(seqId, seqData)
         object : AnimationDefinition {
             override val id: String = seqId.toString()

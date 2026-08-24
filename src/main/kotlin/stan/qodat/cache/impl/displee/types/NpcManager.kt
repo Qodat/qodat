@@ -28,23 +28,16 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
             val data = file.data ?: return@forEach
             try {
                 npcs[fileId] = loader.load(fileId, data)
-            } catch (e: Exception) {
-                System.err.println("Failed to load NPC $fileId: ${e.message}")
+            } catch (_: Exception) {
             }
         }
         loaded = true
-    }
-
-    fun get(id: Int): NpcDefinition {
-        load()
-        return npcs[id] ?: error("Npc not found $id")
     }
 
     fun getNpcs(): Array<NPCDefinition> {
         load()
         val npcAnimsDir = Properties.osrsCachePath.get().resolve("npc_anims").toFile()
         if (!npcAnimsDir.exists()) {
-            println("Did not find npc_anims dir, creating...")
             npcAnimsDir.mkdirs()
         }
         return npcs.values.mapNotNull { npc ->
@@ -55,7 +48,7 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
                 override val modelIds = npc.models.map { it.toString() }.toTypedArray()
                 override val primaryAnimationIds = NpcPrimaryAnimations.ids(npc)
                 override val animationIds by lazy {
-                    (NpcPrimaryAnimations.ids(npc) + extraAnimationIds(npc, npcAnimsDir))
+                    (primaryAnimationIds + extraAnimationIds(npc, npcAnimsDir))
                         .distinct()
                         .toTypedArray()
                 }

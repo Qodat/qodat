@@ -30,6 +30,7 @@ class LegacyFrameDecoder {
         val id = `in`.readUnsignedShort()
         val length = `in`.readUnsignedByte()
 
+        // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
         val indexFrameIds = IntArray(500)
         val scratchTranslatorX = IntArray(500)
         val scratchTranslatorY = IntArray(500)

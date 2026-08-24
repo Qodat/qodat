@@ -14,6 +14,7 @@ class LegacyAnimationSkeletonDecoder {
 
     fun load(fileId: Int, `in`: InputStream): LegacyAnimationSkeletonDefinition {
         val length = `in`.readUnsignedShort()
+        // TODO(perf): builds an intermediate Array<Int> then map/toTypedArray for vertex groups
         return LegacyAnimationSkeletonDefinition(
             id = fileId,
             transformationTypes = IntArray(length) {

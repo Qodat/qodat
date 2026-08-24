@@ -37,9 +37,9 @@ object AnimationFrameCodec {
         val def = FramemapDefinition()
         def.id = id
         if (is317Framemap(data)) {
-            decode317Framemap(def, data)
+            decodeFramemap(def, data) { readUnsignedShort() }
         } else {
-            decodeOsrsFramemap(def, data)
+            decodeFramemap(def, data) { readUnsignedByte() }
         }
         return def
     }
@@ -70,26 +70,14 @@ object AnimationFrameCodec {
         override val targetVertexGroupsIndices: Array<IntArray> = framemap.frameMaps
     }
 
-    private fun decodeOsrsFramemap(def: FramemapDefinition, data: ByteArray) {
+    private fun decodeFramemap(def: FramemapDefinition, data: ByteArray, readValue: InputStream.() -> Int) {
         val input = InputStream(data)
-        def.length = input.readUnsignedByte()
-        def.types = IntArray(def.length) { input.readUnsignedByte() }
-        def.frameMaps = Array(def.length) { IntArray(input.readUnsignedByte()) }
+        def.length = input.readValue()
+        def.types = IntArray(def.length) { input.readValue() }
+        def.frameMaps = Array(def.length) { IntArray(input.readValue()) }
         for (i in 0 until def.length) {
             for (j in def.frameMaps[i].indices) {
-                def.frameMaps[i][j] = input.readUnsignedByte()
-            }
-        }
-    }
-
-    private fun decode317Framemap(def: FramemapDefinition, data: ByteArray) {
-        val input = InputStream(data)
-        def.length = input.readUnsignedShort()
-        def.types = IntArray(def.length) { input.readUnsignedShort() }
-        def.frameMaps = Array(def.length) { IntArray(input.readUnsignedShort()) }
-        for (i in 0 until def.length) {
-            for (j in def.frameMaps[i].indices) {
-                def.frameMaps[i][j] = input.readUnsignedShort()
+                def.frameMaps[i][j] = input.readValue()
             }
         }
     }
@@ -109,6 +97,7 @@ object AnimationFrameCodec {
         val length = input.readUnsignedByte()
         values.skip(3 + length)
 
+        // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
         val indexFrameIds = IntArray(500)
         val translatorX = IntArray(500)
         val translatorY = IntArray(500)
@@ -120,18 +109,10 @@ object AnimationFrameCodec {
             val mask = input.readUnsignedByte()
             if (mask <= 0) continue
 
-            if (def.framemap.types[i] != 0) {
-                for (prev in i - 1 downTo lastI + 1) {
-                    if (def.framemap.types[prev] == 0) {
-                        indexFrameIds[index] = prev
-                        translatorX[index] = 0
-                        translatorY[index] = 0
-                        translatorZ[index] = 0
-                        ++index
-                        break
-                    }
-                }
-            }
+            index = insertType0Predecessor(
+                def.framemap.types, i, lastI, index,
+                indexFrameIds, translatorX, translatorY, translatorZ,
+            )
 
             indexFrameIds[index] = i
             var fallback = 0
@@ -169,6 +150,7 @@ object AnimationFrameCodec {
         val length = data[offset].toInt() and 0xff
         offset++
 
+        // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
         val indexFrameIds = IntArray(500)
         val translatorX = IntArray(500)
         val translatorY = IntArray(500)
@@ -181,18 +163,10 @@ object AnimationFrameCodec {
             offset++
             if (mask <= 0) continue
 
-            if (def.framemap.types[i] != 0) {
-                for (prev in i - 1 downTo lastI + 1) {
-                    if (def.framemap.types[prev] == 0) {
-                        indexFrameIds[index] = prev
-                        translatorX[index] = 0
-                        translatorY[index] = 0
-                        translatorZ[index] = 0
-                        ++index
-                        break
-                    }
-                }
-            }
+            index = insertType0Predecessor(
+                def.framemap.types, i, lastI, index,
+                indexFrameIds, translatorX, translatorY, translatorZ,
+            )
 
             indexFrameIds[index] = i
             var fallback = 0
@@ -238,6 +212,29 @@ object AnimationFrameCodec {
             value -= 65537
         }
         return value
+    }
+
+    private fun insertType0Predecessor(
+        types: IntArray,
+        i: Int,
+        lastI: Int,
+        index: Int,
+        indexFrameIds: IntArray,
+        translatorX: IntArray,
+        translatorY: IntArray,
+        translatorZ: IntArray,
+    ): Int {
+        if (types[i] == 0) return index
+        for (prev in i - 1 downTo lastI + 1) {
+            if (types[prev] == 0) {
+                indexFrameIds[index] = prev
+                translatorX[index] = 0
+                translatorY[index] = 0
+                translatorZ[index] = 0
+                return index + 1
+            }
+        }
+        return index
     }
 
     private fun copyScratch(

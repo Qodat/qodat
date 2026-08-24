@@ -16,14 +16,7 @@ class SequenceLoader226 {
 
     fun load(id: Int, b: ByteArray): SequenceDefinition226 {
         val def = SequenceDefinition226(id.toString())
-        val `is` = InputStream(b)
-        while (true) {
-            val opcode = `is`.readUnsignedByte()
-            if (opcode == 0) {
-                break
-            }
-            def.decodeValues(opcode, `is`)
-        }
+        InputStream(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         return def
     }
 
@@ -33,35 +26,8 @@ class SequenceLoader226 {
     }
 
     private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputStream) {
-        val length: Int
+        if (applySharedSequenceOpcode(opcode, stream)) return
         when (opcode) {
-            1 -> {
-                val (lengths, ids) = stream.readFrameLengthAndIdTables()
-                frameLenghts = lengths
-                frameIDs = ids
-            }
-
-            2 -> frameStep = stream.readUnsignedShort()
-            3 -> {
-                length = stream.readUnsignedByte()
-                interleaveLeave = IntArray(1 + length) {
-                    if (it == length)
-                        9999999
-                    else
-                        stream.readUnsignedByte()
-                }
-            }
-
-            4 -> stretches = true
-            5 -> forcedPriority = stream.readUnsignedByte()
-            6 -> leftHandItem = stream.readUnsignedShort()
-            7 -> rightHandItem = stream.readUnsignedShort()
-            8 -> maxLoops = stream.readUnsignedByte()
-            9 -> precedenceAnimating = stream.readUnsignedByte()
-            10 -> priority = stream.readUnsignedByte()
-            11 -> replyMode = stream.readUnsignedByte()
-            12 -> chatFrameIds = stream.readPackedArchiveFileIds()
-
             13 -> {
                 if (rev226) {
                     animMayaId = stream.readInt()
@@ -118,14 +84,7 @@ class SequenceLoader226 {
                 }
             }
 
-            18 -> {
-                name = stream.readString()
-            }
-
-            19 -> {
-                soundsCrossWorldView = true
-            }
-
+            19 -> soundsCrossWorldView = true
             else -> Unit
         }
     }

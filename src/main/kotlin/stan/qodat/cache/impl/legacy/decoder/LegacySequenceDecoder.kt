@@ -16,8 +16,6 @@ class LegacySequenceDecoder {
 
         val def = LegacyAnimationBuilder()
 
-        def.id = id
-
         while (true) {
             val opcode = `is`.readUnsignedByte()
 
@@ -68,23 +66,17 @@ class LegacySequenceDecoder {
             10 -> def.priority = stream.readUnsignedByte()
             11 -> def.replyMode = stream.readUnsignedByte()
             12 -> stream.readInt()
-            else -> println("Error unrecognised seq config code: $opcode")
+            else -> Unit
         }
     }
 
     private companion object {
         private class LegacyAnimationBuilder {
-            var id: Int = 0
-            var frameIDs: IntArray? = null // top 16 bits are FrameDefinition ids
-            var field3048: IntArray? = null
+            var frameIDs: IntArray? = null
             var frameLenghts: IntArray? = null
             var rightHandItem = -1
-            var interleaveLeave: IntArray? = null
-            var stretches = false
             var forcedPriority = 5
             var maxLoops = 99
-            var field3056: IntArray? = null
-            var precedenceAnimating = -1
             var leftHandItem = -1
             var replyMode = 2
             var frameStep = -1

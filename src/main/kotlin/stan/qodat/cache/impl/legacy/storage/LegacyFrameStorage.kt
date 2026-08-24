@@ -24,7 +24,7 @@ object LegacyFrameStorage {
 
     fun decode(cachePath: Path, id: Int): LegacyAnimationFrameDefinition? {
 
-        val hexString = Integer.toHexString(id)?:return null
+        val hexString = Integer.toHexString(id)
 
         if(hexString.length < 6)
             return null
@@ -34,7 +34,7 @@ object LegacyFrameStorage {
 
         if (!frames.containsKey(fileId)) {
             try {
-
+                // TODO(perf): gunzips and decodes the entire frame archive on first access of any hash in that file
                 val compressedData = Files.readAllBytes(cachePath.resolve("frames").resolve("$fileId.gz"))
                 val uncompressedData = CompressionUtil.uncompressGzip(compressedData)
 
@@ -45,13 +45,9 @@ object LegacyFrameStorage {
 
                 val frameLoader = LegacyFrameDecoder()
 
-                println("LegacyFrameStorage: decoded frame data in file $id")
-
                 frames[fileId] = frameLoader.loadAll(frameMap, `in`)
 
-            } catch (exception: Exception) {
-                System.err.println("LegacyFrameStorage: could not load frame data in file $id.")
-                exception.printStackTrace()
+            } catch (_: Exception) {
             }
 
         }
