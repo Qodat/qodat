@@ -60,21 +60,16 @@ class EntityTreeItem(
                 var parent = newValue
                 while (parent != null) {
                     if (parent == this) {
-                        if (Properties.selectedEntity.get() != entity) {
-                            println("Selected $entity")
+                        if (Properties.selectedEntity.get() != entity)
                             Properties.selectedEntity.set(entity)
-                        }
                         selected = true
                         break
                     }
                     parent = parent.parent
                 }
-                if (!selected && Properties.selectedEntity.get() == entity) {
-                    println("Unselected $entity")
+                if (!selected && Properties.selectedEntity.get() == entity)
                     Properties.selectedEntity.set(null)
-                }
-            } else {
-                println("Unselected $entity")
+            } else if (Properties.selectedEntity.get() == entity) {
                 Properties.selectedEntity.set(null)
             }
         }

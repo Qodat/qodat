@@ -14,6 +14,7 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
     TreeItem<Node>() {
 
     private val itemsByChildId = HashMap<Int, InterfaceComponentTreeItem>()
+    private var syncing = false
 
     init {
         label(group.nameProperty)
@@ -50,18 +51,50 @@ class InterfaceTreeItem(val group: InterfaceGroup, val selectionModel: MultipleS
         }
 
         selectionModel.selectedItemProperty().addListener { _, _, item ->
-            val component = generateSequence(item) { it.parent }
-                .firstNotNullOfOrNull { it as? InterfaceComponentTreeItem }
-            val childId = component?.let { WidgetLayout.childId(it.definition.id) } ?: -1
+            if (syncing || !belongsTo(item, this))
+                return@addListener
+            val childId = childIdOf(item)
             if (group.selectedChildId.get() != childId)
-                group.selectedChildId.set(childId)
+                runSync { group.selectedChildId.set(childId) }
         }
         group.selectedChildId.addListener { _, _, childId ->
             val item = itemsByChildId[childId.toInt()] ?: return@addListener
-            if (selectionModel.selectedItem !== item)
+            if (syncing || alreadyShows(selectionModel.selectedItem, item))
+                return@addListener
+            runSync {
+                expandAncestors(item)
                 selectionModel.select(item)
+            }
         }
 
         expandedProperty().set(group.treeItemExpandedProperty().get())
+    }
+
+    private fun runSync(block: () -> Unit) {
+        syncing = true
+        try {
+            block()
+        } finally {
+            syncing = false
+        }
+    }
+
+    companion object {
+        internal fun childIdOf(item: TreeItem<*>?): Int {
+            val component = generateSequence(item) { it.parent }
+                .firstNotNullOfOrNull { it as? InterfaceComponentTreeItem }
+                ?: return -1
+            return WidgetLayout.childId(component.definition.id)
+        }
+
+        internal fun belongsTo(item: TreeItem<*>?, root: TreeItem<*>): Boolean =
+            generateSequence(item) { it.parent }.any { it === root }
+
+        internal fun alreadyShows(selected: TreeItem<*>?, target: TreeItem<*>): Boolean =
+            generateSequence(selected) { it.parent }.any { it === target }
+
+        internal fun expandAncestors(item: TreeItem<*>) {
+            generateSequence(item.parent) { it.parent }.forEach { it.isExpanded = true }
+        }
     }
 }
