@@ -2,17 +2,18 @@ package stan.qodat.cache.impl.displee
 
 import com.displee.cache.CacheLibrary
 import jagex.Buffer
-import net.runelite.cache.ConfigType
-import net.runelite.cache.IndexType
 import stan.qodat.cache.impl.oldschool.loader.SequenceLoader226
+
+/** Configs archive id for sequences (`ConfigType.SEQUENCE`). */
+private const val SEQUENCE_ARCHIVE = 12
 
 fun main() {
     val cache = CacheLibrary("/Users/stan/.qodat/downloads/2025-08-27-rev232/cache")
 
-    val animsIndex = cache.getIndex(IndexType.ANIMATIONS)
-    val seqArchive = cache.getIndex(IndexType.CONFIGS).archive(ConfigType.SEQUENCE.id)!!
-    val rev229 = cache.getIndex(IndexType.MODELS).revision >= 969
-    val keyframesIndex = cache.index(22)
+    val animsIndex = cache.index(CacheIndex.ANIMATIONS)
+    val seqArchive = cache.index(CacheIndex.CONFIGS).archive(SEQUENCE_ARCHIVE)!!
+    val rev229 = cache.index(CacheIndex.MODELS).revision >= 969
+    val keyframesIndex = cache.index(CacheIndex.MAYA_ANIMATIONS)
 
     val loader = SequenceLoader226()
     loader.configureForRevision(seqArchive.revision)
