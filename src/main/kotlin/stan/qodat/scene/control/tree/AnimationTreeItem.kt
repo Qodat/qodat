@@ -140,7 +140,7 @@ class AnimationTreeItem(
         val transformsContextMenuMap = HashMap<AnimationFrame, TreeItemListContextMenu<Transformation>>()
 
         fun roleLabel(entity: AnimatedEntity<*>, animation: Animation): String? {
-            val id = animation.definition?.id ?: animation.idProperty.get().toString()
+            val id = animation.catalogId()
             return entity.definition.animationRoleLabels[id]
         }
     }

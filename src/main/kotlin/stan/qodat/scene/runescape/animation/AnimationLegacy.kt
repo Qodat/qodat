@@ -18,13 +18,16 @@ import stan.qodat.task.BackgroundTasks
 class AnimationLegacy(
     label: String,
     definition: AnimationDefinition? = null,
-    cache: Cache? = null
-) : Encoder, Animation(label, definition, cache) {
+    cache: Cache? = null,
+    numericId: Int = 0,
+) : Encoder, Animation(label, definition, cache, numericId) {
 
     private lateinit var frames: ObservableList<AnimationFrame>
     private lateinit var skeletons: ObservableMap<Int, AnimationSkeleton>
 
-    val exportFrameArchiveId = SimpleIntegerProperty()
+    private var exportFrameArchiveIdProp: SimpleIntegerProperty? = null
+    val exportFrameArchiveId: SimpleIntegerProperty
+        get() = exportFrameArchiveIdProp ?: SimpleIntegerProperty().also { exportFrameArchiveIdProp = it }
 
     fun getSkeletons(): ObservableMap<Int, AnimationSkeleton> {
         if (!this::skeletons.isInitialized) {
@@ -70,7 +73,7 @@ class AnimationLegacy(
         return frames
     }
 
-    override fun copy() = AnimationLegacy(labelProperty.get(), definition, cache)
+    override fun copy() = AnimationLegacy(getName(), definition, cache, numericId())
 
     override fun exportAsMp4() {
         BackgroundTasks.submit(

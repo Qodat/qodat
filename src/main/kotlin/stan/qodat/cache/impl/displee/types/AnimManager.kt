@@ -100,8 +100,8 @@ class AnimManager(
             if (sequence.animMayaId >= 0)
                 object : AnimationMayaDefinition {
                     override val id: String = sequence.id
-                    override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                    override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
+                    override val frameHashes: IntArray = sequence.frameIDs ?: EMPTY_INTS
+                    override val frameLengths: IntArray = sequence.frameLenghts ?: EMPTY_INTS
                     override val loopOffset: Int = sequence.frameStep
                     override val leftHandItem: Int = sequence.leftHandItem
                     override val rightHandItem: Int = sequence.rightHandItem
@@ -113,12 +113,12 @@ class AnimManager(
                             ?: emptyMap()
                     override val animMayaStart: Int = sequence.animMayaStart
                     override val animMayaEnd: Int = sequence.animMayaEnd
-                    override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: BooleanArray(0)
+                    override val animMayaMasks: BooleanArray = sequence.animMayaMasks ?: EMPTY_BOOLS
                 }
             else object : AnimationDefinition {
                 override val id: String = sequence.id
-                override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
+                override val frameHashes: IntArray = sequence.frameIDs ?: EMPTY_INTS
+                override val frameLengths: IntArray = sequence.frameLenghts ?: EMPTY_INTS
                 override val loopOffset: Int = sequence.frameStep
                 override val leftHandItem: Int = sequence.leftHandItem
                 override val rightHandItem: Int = sequence.rightHandItem
@@ -127,11 +127,14 @@ class AnimManager(
         internal fun mapFallback206(sequence: SequenceDefinition206): AnimationDefinition =
             object : AnimationDefinition {
                 override val id: String = sequence.id
-                override val frameHashes: IntArray = sequence.frameIDs ?: IntArray(0)
-                override val frameLengths: IntArray = sequence.frameLenghts ?: IntArray(0)
+                override val frameHashes: IntArray = sequence.frameIDs ?: EMPTY_INTS
+                override val frameLengths: IntArray = sequence.frameLenghts ?: EMPTY_INTS
                 override val loopOffset: Int = sequence.frameStep
                 override val leftHandItem: Int = sequence.leftHandItem
                 override val rightHandItem: Int = sequence.rightHandItem
             }
+
+        internal val EMPTY_INTS = IntArray(0)
+        internal val EMPTY_BOOLS = BooleanArray(0)
     }
 }

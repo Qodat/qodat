@@ -107,7 +107,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
         for (anim in loaded) {
             animationMap[anim.getName()] = anim
             anim.definition?.id?.let { animationMap[it] = anim }
-            val numericId = anim.idProperty.get()
+            val numericId = anim.numericId()
             if (numericId != 0)
                 animationMap[numericId.toString()] = anim
         }
@@ -134,7 +134,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
     fun snapshotSelectedIdentity(): NamedIdentity? {
         val selected = animationsListView.selectionModel.selectedItem ?: return null
         return NamedIdentity(
-            id = selected.definition?.id ?: selected.idProperty.get().toString(),
+            id = selected.catalogId(),
             name = selected.getName()
         )
     }
@@ -145,7 +145,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     fun restoreSelectedIdentity(identity: NamedIdentity?): Animation? {
         val match = animations.findByIdentity(identity) {
-            it.definition?.id ?: it.idProperty.get().toString()
+            it.catalogId()
         } ?: return null
         animationsListView.selectionModel.select(match)
         Platform.runLater {
@@ -160,14 +160,14 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             return emptyArray()
         return ids.mapNotNull { id ->
             animationMap[id]
-                ?: catalog.find { it.definition?.id == id || it.idProperty.get().toString() == id }
+                ?: catalog.find { it.catalogId() == id }
         }.toTypedArray()
     }
 
     override fun invoke(p1: AnimatedEntityDefinition): Array<Animation> = resolve(p1.animationIds)
 
     private fun roleFor(animation: Animation): String? {
-        val id = animation.definition?.id ?: animation.idProperty.get().toString()
+        val id = animation.catalogId()
         return roleLabels[id]
     }
 
@@ -176,7 +176,7 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
             return true
         if (animation.getName().contains(query, ignoreCase = true))
             return true
-        val id = animation.definition?.id ?: animation.idProperty.get().toString()
+        val id = animation.catalogId()
         if (id.contains(query))
             return true
         val role = roleLabels[id]

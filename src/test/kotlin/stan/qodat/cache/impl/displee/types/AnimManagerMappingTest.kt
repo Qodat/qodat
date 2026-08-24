@@ -52,6 +52,8 @@ class AnimManagerMappingTest {
         assertEquals("8", mapped.id)
         assertTrue(mapped.frameHashes.isEmpty())
         assertTrue(mapped.frameLengths.isEmpty())
+        assertTrue(mapped.frameHashes === AnimManager.EMPTY_INTS)
+        assertTrue(mapped.frameLengths === AnimManager.EMPTY_INTS)
         assertEquals(4, mapped.loopOffset)
         assertEquals(10, mapped.leftHandItem)
         assertEquals(11, mapped.rightHandItem)

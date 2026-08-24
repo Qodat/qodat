@@ -13,8 +13,12 @@ import stan.qodat.scene.control.export.gif.AnimationToGifTask
 import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.runCatchingWithDialog
 
-class AnimationMaya(label: String, override val definition: AnimationMayaDefinition, cache: Cache? = null) :
-    Animation(label, definition, cache) {
+class AnimationMaya(
+    label: String,
+    override val definition: AnimationMayaDefinition,
+    cache: Cache? = null,
+    numericId: Int = 0,
+) : Animation(label, definition, cache, numericId) {
 
     private val frames = FXCollections.observableArrayList<AnimationFrame>()
 
@@ -54,7 +58,7 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
     }
 
     override fun copy(): AnimationLegacy =
-        AnimationLegacy(labelProperty.get(), definition, cache)
+        AnimationLegacy(getName(), definition, cache, numericId())
 
     override fun exportAsMp4() = TODO()
 

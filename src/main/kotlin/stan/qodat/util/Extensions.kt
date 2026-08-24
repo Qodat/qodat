@@ -78,7 +78,7 @@ private fun <S : Searchable> containsId(it: S, id: Int?, newValue: String): Bool
     if (id == null) return false
     return when (it) {
         is Entity<*> -> it.definition.getOptionalId().orElse(-1).toString().contains(newValue)
-        is Animation -> (it.definition?.id ?: it.idProperty.get().toString()).contains(newValue)
+        is Animation -> it.catalogId().contains(newValue)
         is InterfaceGroup -> it.idProperty.get().toString().contains(newValue)
         else -> false
     }

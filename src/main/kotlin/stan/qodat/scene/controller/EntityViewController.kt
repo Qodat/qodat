@@ -644,7 +644,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
 
             } else if (new != null) {
                 Properties.selectedAnimationName.set(new.getName())
-                Properties.selectedAnimationId.set(new.definition?.id ?: new.idProperty.get().toString())
+                Properties.selectedAnimationId.set(new.catalogId())
                 sceneContext.animationPlayer.transformerProperty.set(new)
                 (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.set(new)
             }

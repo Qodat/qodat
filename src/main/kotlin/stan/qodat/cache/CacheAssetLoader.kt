@@ -160,12 +160,10 @@ class CacheAssetLoader(
                     try {
                         val animationId = definition.id.toIntOrNull() ?: i
                         when {
-                            definition is AnimationMayaDefinition -> AnimationMaya(definition.id, definition, cache).apply {
-                                idProperty.set(animationId)
-                            }
-                            definition.frameHashes.isNotEmpty() -> AnimationLegacy(definition.id, definition, cache).apply {
-                                idProperty.set(animationId)
-                            }
+                            definition is AnimationMayaDefinition ->
+                                AnimationMaya(definition.id, definition, cache, animationId)
+                            definition.frameHashes.isNotEmpty() ->
+                                AnimationLegacy(definition.id, definition, cache, animationId)
                             else -> null
                         }
                     } catch (e: Exception) {
