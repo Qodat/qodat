@@ -120,16 +120,6 @@ class TransformGroupTreeItem(
             var totalZ = 0.0
 
 
-            val controller = gizmo.controller
-//            val t = Translate(
-//                controller.translateSliderX.value,
-//                controller.translateSliderY.value,
-//                controller.translateSliderZ.value)
-//
-//            t.xProperty().setAndBind(controller.translateSliderX.valueProperty())
-//            t.yProperty().setAndBind(controller.translateSliderY.valueProperty())
-//            t.zProperty().setAndBind(controller.translateSliderZ.valueProperty())
-
             for (i in 0 until rootTransformation.groupIndices.size()) {
                 val groupIndex = rootTransformation.groupIndices[i]
                 for (model in entity.getModels()) {
@@ -138,7 +128,6 @@ class TransformGroupTreeItem(
                     totalX += sphere.translateX
                     totalY += sphere.translateY
                     totalZ += sphere.translateZ
-//                    sphere.transforms.add(t)
                     selectionMesh.children.add(sphere)
                 }
             }
@@ -156,9 +145,6 @@ class TransformGroupTreeItem(
         selectionBox.drawMode = DrawMode.FILL
         selectionBox.depthTest = DepthTest.DISABLE
         selectionBox.material = PhongMaterial(Color.web("#CC7832"))
-//        model.getSceneNode().boundsInLocalProperty().onInvalidation {
-//            computerCenter(selectionBox, model, vertices)
-//        }
         computerCenter(selectionBox, model, vertices)
         return selectionBox
     }
@@ -184,10 +170,6 @@ class TransformGroupTreeItem(
         val width = abs(maxX - minX)
         val height = abs(maxY - minY)
         val depth = abs(maxZ - minZ)
-//        val box = Box()
-//        box.width = width.toDouble()
-//        box.height = height.toDouble()
-//        box.depth = depth.toDouble()
         sphere.radius = 3.0
         sphere.translateX = (minX + width.toDouble().div(2))
         sphere.translateY = (minY + height.toDouble().div(2))

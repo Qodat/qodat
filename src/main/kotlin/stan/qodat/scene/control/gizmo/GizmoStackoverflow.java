@@ -50,7 +50,6 @@ public class GizmoStackoverflow extends Application {
         loadControls(scene);
 
         root.getChildren().addAll(gizmo, cubeMesh);
-//        gizmo.controller.getNodeProperty().set(cubeMesh);
 
         stage.setTitle("Gizmo Example");
         stage.setScene(scene);
@@ -70,13 +69,6 @@ public class GizmoStackoverflow extends Application {
         scene.setCamera(camera);
     }
 
-    private double mousePosX;
-    private double mousePosY;
-    private double mouseOldX;
-    private double mouseOldY;
-    private double mouseDeltaX;
-    private double mouseDeltaY;
-
     public static Line3D getPickRay(Camera camera, MouseEvent event)
     {
         us.ihmc.euclid.tuple3D.Point3D point1 = new us.ihmc.euclid.tuple3D.Point3D();
@@ -94,41 +86,14 @@ public class GizmoStackoverflow extends Application {
     }
 
     private void loadControls(Scene scene) {
-        scene.setOnMouseMoved(mouseEvent -> {
-
-        });
-        scene.setOnMousePressed(me -> {
-            mouseOldX = mousePosX;
-            mouseOldY = mousePosY;
-            mousePosX = me.getSceneX();
-            mousePosY = me.getSceneY();
-        });
         scene.setOnMouseDragged((MouseEvent me) -> {
-            mouseOldX = mousePosX;
-            mouseOldY = mousePosY;
-            mousePosX = me.getSceneX();
-            mousePosY = me.getSceneY();
-            mouseDeltaX = (mousePosX - mouseOldX);
-            mouseDeltaY = (mousePosY - mouseOldY);
             Line3D line3D = getPickRay(camera, me);
-
-//            Transform transform = gizmo.getLocalToSceneTransform();
-//            Point3D point3D = gizmo.sceneToLocal(100.0, 1.0, 1.0);
-
-//            System.out.println(point3D);
-            gizmo.controller.getPosition().set(
-                    1.0, 1.0, 1.0
-//                    point3D.getX(),
-//                    point3D.getY(),
-//                    point3D.getZ()
-            );
+            gizmo.controller.getPosition().set(1.0, 1.0, 1.0);
             gizmo.controller.manipulateRotateGizmo(GizmoUtilKt.toRay(line3D));
         });
         scene.setOnMouseReleased((MouseEvent event)-> {
             gizmo.selectedAxis.set(null);
             gizmo.transformMode = null;
-//            gizmo.previousEvent = null;
-//            gizmo.axis = null;
         });
     }
 
@@ -228,7 +193,6 @@ public class GizmoStackoverflow extends Application {
                 mouseEvent.consume();
             });
             torus.setOnMouseReleased(mouseEvent -> {
-                System.out.println("release "+selectedAxis.get());
                 selectedAxis.set(null);
                 torus.setMaterial(new PhongMaterial(axis.regularColor));
                 mouseEvent.consume();

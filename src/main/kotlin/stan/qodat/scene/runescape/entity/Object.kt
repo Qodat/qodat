@@ -1,13 +1,11 @@
 package stan.qodat.scene.runescape.entity
 
 import qodat.cache.Cache
-import qodat.cache.EncodeResult
 import qodat.cache.Encoder
 import qodat.cache.definition.ObjectDefinition
 import stan.qodat.Properties
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.scene.runescape.animation.Animation
-import java.io.UnsupportedEncodingException
 
 /**
  * TODO: add documentation
@@ -20,10 +18,6 @@ class Object(
     definition: ObjectDefinition,
     resolveAnimations: (Array<String>) -> Array<Animation>
 ) : AnimatedEntity<ObjectDefinition>(cache, definition, resolveAnimations, "loc"), Encoder {
-
-    override fun encode(format: Cache) : EncodeResult {
-        throw UnsupportedEncodingException()
-    }
 
     override fun property() = Properties.selectedObjectName
 }

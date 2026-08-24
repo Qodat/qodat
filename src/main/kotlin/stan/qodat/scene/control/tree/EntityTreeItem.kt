@@ -92,12 +92,6 @@ class EntityTreeItem(
         }
 
         if (entity is AnimatedEntity<*>) {
-
-//            treeItem("Skeletons") {
-//                for ((_, skeleton) in entity.getSkeletons())
-//                    children.add(SkeletonTreeItem(skeleton, entity, treeView.selectionModel))
-//            }
-
             treeItem {
                 label("Animations") {
                     contextmenu {

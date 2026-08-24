@@ -10,6 +10,7 @@ import javafx.scene.layout.HBox
 import javafx.scene.text.TextFlow
 import qodat.cache.Cache
 import qodat.cache.definition.EntityDefinition
+import qodat.cache.definition.ModelDefinition
 import qodat.cache.models.RS2ModelBuilder
 import stan.qodat.Properties
 import stan.qodat.Qodat
@@ -84,21 +85,27 @@ abstract class Entity<D : EntityDefinition>(
         return models!!
     }
 
+    private fun loadModelDefinition(modelId: String) = try {
+        PerfTrace.span("cache.model $modelId") {
+            cache.getModelDefinition(modelId)
+        }
+    } catch (e: Throwable) {
+        Qodat.logException("Could not load model $modelId for entity {${getName()}}", e)
+        null
+    }
+
+    private fun modelFromDefinition(modelId: String, modelDefinition: ModelDefinition) =
+        Model(modelId, modelDefinition, definition.findColor, definition.replaceColor)
+
     private fun loadModels(): Array<Model> {
-        val definitions = definition.modelIds.mapNotNull { modelId ->
-            try {
-                PerfTrace.span("cache.model $modelId") {
-                    cache.getModelDefinition(modelId)
-                }
-            } catch (e: Throwable) {
-                Qodat.logException("Could not load model $modelId for entity {${getName()}}", e)
-                null
-            }
-        }.toTypedArray()
-        if (definitions.isEmpty())
+        val loaded = definition.modelIds.mapNotNull { modelId ->
+            loadModelDefinition(modelId)?.let { modelId to it }
+        }
+        if (loaded.isEmpty())
             return emptyArray()
-        return if (definitions.size > 1 && mergeModelProperty.get()) {
+        return if (loaded.size > 1 && mergeModelProperty.get()) {
             PerfTrace.span("entity.mergeModels ${getName()}") {
+                val definitions = loaded.map { it.second }.toTypedArray()
                 val multiModelName = "models_${
                     definitions.joinToString {
                         it.getName() + "_"
@@ -108,13 +115,14 @@ abstract class Entity<D : EntityDefinition>(
                 arrayOf(Model(multiModelName, modelDefinition, definition.findColor, definition.replaceColor))
             }
         } else
-            createDistinctModels()
+            loaded.map { (id, def) -> modelFromDefinition(id, def) }.toTypedArray()
     }
 
     fun getMaterials(): Array<Material> {
         if (!this::materials.isInitialized) {
             materials = PerfTrace.span("entity.getMaterials ${getName()}") {
                 try {
+                    // TODO(perf): unique-by texture/color id; getMaterial allocates Texture/ColorMaterial per face.
                     getModels()
                         .map { it.modelDefinition }
                         .flatMap { definition ->
@@ -132,7 +140,6 @@ abstract class Entity<D : EntityDefinition>(
         }
         return materials
     }
-
 
     fun getRecolorMap(): Map<Short, Short>? = definition.let {
         it.findColor?.mapIndexed { index, toFind -> toFind to it.replaceColor!![index] }?.toMap()
@@ -156,13 +163,7 @@ abstract class Entity<D : EntityDefinition>(
         createDistinctModels()
 
     private fun createDistinctModels() = definition.modelIds.mapNotNull { modelId ->
-        try {
-            val modelDefinition = cache.getModelDefinition(modelId)
-            Model(modelId, modelDefinition, definition.findColor, definition.replaceColor)
-        } catch (e: Throwable) {
-            Qodat.logException("Could not load model $modelId for entity {${getName()}}", e)
-            null
-        }
+        loadModelDefinition(modelId)?.let { modelFromDefinition(modelId, it) }
     }.toTypedArray()
 
     override fun getViewNode(): Node {

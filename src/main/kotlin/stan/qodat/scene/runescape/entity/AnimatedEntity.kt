@@ -22,24 +22,8 @@ abstract class AnimatedEntity<D : AnimatedEntityDefinition>(
 ) : Entity<D>(cache, definition, labelPrefix), Transformable, GroupableTransformable {
 
     private lateinit var animations: Array<Animation>
-//    private lateinit var skeletons: Map<Int, AnimationSkeleton>
 
     val selectedAnimation = SimpleObjectProperty<Animation>()
-
-//    fun getSkeletons(): Map<Int, AnimationSkeleton> {
-//        if (!this::skeletons.isInitialized) {
-//            val map = HashMap<Int, AnimationSkeleton>()
-//            for (animation in getAnimations()) {
-//                for ((id, skeleton) in animation.getSkeletons()){
-//                    if (!map.containsKey(id)){
-//                        map[id] = skeleton
-//                    }
-//                }
-//            }
-//            skeletons = map
-//        }
-//        return skeletons
-//    }
 
     fun getAnimations(): Array<Animation> {
         if (!this::animations.isInitialized) {
