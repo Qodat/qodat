@@ -27,40 +27,13 @@ class RSModelLoader {
             }
             isType3(data) || isType2(data) || isType1(data) -> {
                 try {
-                    fromOsrsModel(ModelLoader().load(modelId.toIntOrNull() ?: hashCode(), data))
+                    ModelLoader().load(modelId, data)
                 } catch (e: Exception) {
                     tryOtherLoadMethods(modelId, data, "OSRS")
                 }
             }
             else -> loadLowRev(modelId, data)
         }
-
-    private fun fromOsrsModel(src: net.runelite.cache.definitions.ModelDefinition) = RS2Model().apply {
-        setId(src.id.toString())
-        setPriority(src.priority)
-        setFaceCount(src.faceCount)
-        setFaceColors(src.faceColors)
-        setFaceAlphas(src.faceTransparencies)
-        setVertexSkins(src.packedVertexGroups)
-        setVertexCount(src.vertexCount)
-        setVertexPositionsX(src.vertexX)
-        setVertexPositionsY(src.vertexY)
-        setVertexPositionsZ(src.vertexZ)
-        setFaceVertexIndices1(src.faceIndices1)
-        setFaceVertexIndices2(src.faceIndices2)
-        setFaceVertexIndices3(src.faceIndices3)
-        setFaceTextures(src.faceTextures)
-        setTextureRenderTypes(src.textureRenderTypes)
-        texturePrimaryColors = src.texturePrimaryColors
-        setTextureTriangleVertexIndices1(src.texIndices1)
-        setTextureTriangleVertexIndices2(src.texIndices2)
-        setTextureTriangleVertexIndices3(src.texIndices3)
-        setFaceTextureConfigs(src.textureCoords)
-        faceRenderPriorities = src.faceRenderPriorities
-        faceRenderTypes = src.faceRenderTypes
-        setMayaGroups(src.animayaGroups)
-        setMayaScales(src.animayaScales)
-    }
 
     private fun tryOtherLoadMethods(
         modelId: String,

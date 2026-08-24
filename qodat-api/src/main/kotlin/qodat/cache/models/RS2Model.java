@@ -36,43 +36,43 @@ public class RS2Model implements ModelDefinition
 	private String id;
 
 	private int format = 0;
-	private int vertexCount = 0;
-	private int[] vertexPositionsX;
-	private int[] vertexPositionsY;
-	private int[] vertexPositionsZ;
+	int vertexCount = 0;
+	int[] vertexPositionsX;
+	int[] vertexPositionsY;
+	int[] vertexPositionsZ;
 	public transient VertexNormal[] vertexNormals;
 
-	private int faceCount;
-	private int[] faceVertexIndices1;
-	private int[] faceVertexIndices2;
-	private int[] faceVertexIndices3;
-	private byte[] faceAlphas;
-	private short[] faceColors;
-	private byte[] faceRenderPriorities;
-	private byte[] faceRenderTypes;
+	int faceCount;
+	int[] faceVertexIndices1;
+	int[] faceVertexIndices2;
+	int[] faceVertexIndices3;
+	byte[] faceAlphas;
+	short[] faceColors;
+	byte[] faceRenderPriorities;
+	byte[] faceRenderTypes;
 	public transient FaceNormal[] faceNormals;
 
-	private int textureConfigCount;
-	private short[] textureTriangleVertexIndices1;
-	private short[] textureTriangleVertexIndices2;
-	private short[] textureTriangleVertexIndices3;
+	int textureConfigCount;
+	short[] textureTriangleVertexIndices1;
+	short[] textureTriangleVertexIndices2;
+	short[] textureTriangleVertexIndices3;
 	private transient float[][] faceTextureUCoordinates;
 	private transient float[][] faceTextureVCoordinates;
 	private short[] texturePrimaryColors;
-	private short[] faceTextures;
-	private byte[] faceTextureConfigs;
-	private byte[] textureRenderTypes;
+	short[] faceTextures;
+	byte[] faceTextureConfigs;
+	byte[] textureRenderTypes;
 
-	private int[] vertexSkins;
-	private int[] faceSkins;
+	int[] vertexSkins;
+	int[] faceSkins;
 
-	private byte priority;
+	byte priority;
 
 	private transient int[][] vertexGroups;
 	private transient int[][] faceGroups;
 
-	private int[][] animayaGroups;
-	private int[][] animayaScales;
+	int[][] animayaGroups;
+	int[][] animayaScales;
 
 
 	/**

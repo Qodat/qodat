@@ -7,8 +7,8 @@ import javafx.scene.control.MultipleSelectionModel
 import javafx.scene.control.TreeItem
 import javafx.scene.paint.Color
 import javafx.stage.FileChooser
-import net.runelite.cache.util.GZip
 import stan.qodat.Properties
+import stan.qodat.cache.util.CompressionUtil
 import stan.qodat.util.export
 import stan.qodat.javafx.*
 import stan.qodat.scene.control.export.ExportMenu
@@ -49,7 +49,7 @@ class ModelTreeItem(
                     ) {}.first()
                     val bytes = export(model.modelDefinition).array().let {
                         if (file.name.endsWith(".gz"))
-                            GZip.compress(it)
+                            CompressionUtil.compressGzip(it)
                         else
                             it
                     }

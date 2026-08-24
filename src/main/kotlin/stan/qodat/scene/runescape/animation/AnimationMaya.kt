@@ -3,12 +3,11 @@ package stan.qodat.scene.runescape.animation
 import jagex.MayaAnimation
 import javafx.collections.FXCollections
 import javafx.collections.ObservableList
-import net.runelite.cache.IndexType
 import qodat.cache.Cache
 import qodat.cache.definition.AnimationMayaDefinition
 import stan.qodat.Properties
+import stan.qodat.cache.impl.displee.CacheIndex
 import stan.qodat.cache.impl.displee.DispleeCache
-import stan.qodat.cache.impl.displee.getIndex
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.export.gif.AnimationToGifTask
 import stan.qodat.task.BackgroundTasks
@@ -21,13 +20,13 @@ class AnimationMaya(label: String, override val definition: AnimationMayaDefinit
 
     override fun getFrameList(): ObservableList<AnimationFrame> {
         if (frames.isEmpty()) {
-            val rev229 = DispleeCache.store.getIndex(IndexType.MODELS).revision >= 969
+            val rev229 = DispleeCache.store.index(CacheIndex.MODELS).revision >= 969
             val animationsArchive = if (rev229)
-                DispleeCache.store.index(22)
+                DispleeCache.store.index(CacheIndex.MAYA_ANIMATIONS)
             else
-                DispleeCache.store.getIndex(IndexType.ANIMATIONS)
+                DispleeCache.store.index(CacheIndex.ANIMATIONS)
             val framesArchive =
-                DispleeCache.store.getIndex(IndexType.SKELETONS)
+                DispleeCache.store.index(CacheIndex.SKELETONS)
             val mayaAnimation = MayaAnimation.load(
                 animationsArchive,
                 framesArchive,

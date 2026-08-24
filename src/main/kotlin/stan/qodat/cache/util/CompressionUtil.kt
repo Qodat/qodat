@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
 
 /**
  * A utility class for performing compression/decompression.
@@ -19,6 +20,15 @@ object CompressionUtil {
      * @return The decompressed array.
      * @throws IOException If there is an error decompressing the buffer.
      */
+    @Throws(IOException::class)
+    fun compressGzip(data: ByteArray): ByteArray =
+        ByteArrayOutputStream().use { out ->
+            GZIPOutputStream(out).use { gzip ->
+                gzip.write(data)
+            }
+            out.toByteArray()
+        }
+
     @Throws(IOException::class)
     fun uncompressGzip(compressed: ByteArray) = GZIPInputStream(ByteArrayInputStream(compressed)).use { `is` ->
             // TODO(perf): 1KB copy buffer is small for frame archives; consider 8–16KB or a reused Inflater
