@@ -108,8 +108,7 @@ private fun sprite(args: BenchArgs, sink: BenchSink) {
 
 private fun inflateAll(sprites: Array<stan.qodat.cache.impl.oldschool.definition.SpriteDefinition>) {
     for (sprite in sprites) {
-        sprite.pixels.size
-        sprite.pixelIdx.size
+        sprite.inflatePixels()
     }
 }
 
