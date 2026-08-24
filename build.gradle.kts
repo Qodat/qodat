@@ -129,3 +129,30 @@ fun isJavaFXJar(jar: File, platform: JavaFXPlatform): Boolean =
     jar.isFile && JavaFXModule.values().any { module ->
         module.compareJarFileName(platform, jar.name) || module.moduleJarFileName == jar.name
     }
+
+tasks.register<JavaExec>("downloadLatestOsrsCache") {
+    group = "verification"
+    description = "Download the latest archive.runestats.com OSRS cache (not part of test)"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("stan.qodat.cache.OsrsCacheArchive")
+    val dest = providers.gradleProperty("qodat.cache.dest")
+        .orElse(providers.systemProperty("qodat.cache.dest"))
+        .orElse(layout.buildDirectory.dir("osrs-cache").map { it.asFile.absolutePath })
+    args(dest.get())
+}
+
+tasks.register<Test>("cacheSmoke") {
+    group = "verification"
+    description = "Decode a sample of each type from a real OSRS cache"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    filter {
+        includeTestsMatching("stan.qodat.cache.LatestOsrsCacheSmokeTest")
+    }
+    val cacheDir = providers.gradleProperty("qodat.cache.dir")
+        .orElse(providers.systemProperty("qodat.cache.dir"))
+        .orElse(providers.environmentVariable("QODAT_CACHE_DIR"))
+        .orElse("")
+    systemProperty("qodat.cache.dir", cacheDir)
+    systemProperty("qodat.cache.required", "true")
+}

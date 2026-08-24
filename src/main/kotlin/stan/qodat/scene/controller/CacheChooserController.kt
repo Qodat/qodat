@@ -23,16 +23,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry
-import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
-import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
-import org.jsoup.Jsoup
 import stan.qodat.Properties
 import stan.qodat.Qodat
-import java.io.BufferedInputStream
-import java.io.BufferedOutputStream
+import stan.qodat.cache.OsrsCacheArchive
 import java.io.File
-import java.io.FileOutputStream
 import java.net.URL
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -167,52 +161,21 @@ class CacheChooserController : Initializable {
         }
     }
 
-    private fun fetchRuneStatsCaches(): List<String> {
-        val doc = Jsoup.connect(RUNESTATS_URL).get()
-        return doc.select("a")
-            .map { col -> col.attr("href") }
-            .filter { it.length > 10 }
-            .reversed()
-    }
+    private fun fetchRuneStatsCaches(): List<String> = OsrsCacheArchive.listArchiveNames()
 
     private fun downloadCache(cacheName: String, dirChooser: DirChooserHBox) {
         lblStatusText.isVisible = true
         lblStatusText.text = "Downloading cache $cacheName please wait.."
         dirChooser.field.text = ""
-        val destFolder = downloadDirChooser
-            .pathProperty.get()
-            .resolve(cacheName.removeSuffix(".tar.gz"))
-            .toFile()
         Qodat.applicationScope.launch(Dispatchers.IO) {
             try {
-                val conn = URL("$RUNESTATS_URL/$cacheName").openConnection()
-                conn.addRequestProperty("User-Agent", "qodat")
-                BufferedInputStream(conn.getInputStream()).use { inputStream ->
-                    val tarIn = TarArchiveInputStream(GzipCompressorInputStream(inputStream))
-                    var tarEntry: TarArchiveEntry? = tarIn.nextTarEntry
-                    while (tarEntry != null) {
-                        val dest = File(destFolder, tarEntry.name)
-                        if (tarEntry.isDirectory) {
-                            dest.mkdirs()
-                        } else {
-                            dest.createNewFile()
-                            val btoRead = ByteArray(1024)
-                            val bout = BufferedOutputStream(FileOutputStream(dest))
-                            var len: Int
-
-                            while (tarIn.read(btoRead).also { len = it } != -1) {
-                                bout.write(btoRead, 0, len)
-                            }
-
-                            bout.close()
-                        }
-                        tarEntry = tarIn.nextTarEntry
-                    }
-                    tarIn.close()
-                    withContext(Dispatchers.JavaFx) {
-                        lblStatusText.isVisible = false
-                        dirChooser.field.text = destFolder.resolve("cache").absolutePath.toString()
-                    }
+                val cacheDir = OsrsCacheArchive.download(
+                    cacheName,
+                    downloadDirChooser.pathProperty.get(),
+                )
+                withContext(Dispatchers.JavaFx) {
+                    lblStatusText.isVisible = false
+                    dirChooser.field.text = cacheDir.toAbsolutePath().toString()
                 }
             } catch (e: Exception) {
                 Qodat.logException("Failed to download cache $cacheName", e)
@@ -221,8 +184,6 @@ class CacheChooserController : Initializable {
     }
 
     companion object {
-        private const val RUNESTATS_URL = "https://archive.runestats.com/osrs"
-
         val disableOkButtonProperty = SimpleBooleanProperty(true)
 
 
