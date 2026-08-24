@@ -403,6 +403,116 @@ internal object SyntheticPayloads {
         }.array()
     }
 
+    fun osrsFramemap(transforms: Int = 64): ByteArray {
+        val out = OutputBuffer(transforms * 8 + 16)
+        out.writeByte(transforms)
+        repeat(transforms) { out.writeByte(it % 5) }
+        repeat(transforms) { out.writeByte(1 + it % 4) }
+        repeat(transforms) { i ->
+            repeat(1 + i % 4) { out.writeByte(it + 1) }
+        }
+        return out.array()
+    }
+
+    fun osrsFramemapTiny(): ByteArray = OutputBuffer(16).apply {
+        writeByte(2)
+        writeByte(0)
+        writeByte(3)
+        writeByte(2)
+        writeByte(1)
+        writeByte(1)
+        writeByte(2)
+        writeByte(3)
+    }.array()
+
+    fun osrsFrameTiny(): ByteArray = OutputBuffer(16).apply {
+        writeShort(9)
+        writeByte(2)
+        writeByte(1)
+        writeByte(7)
+        writeByte(10 + 64)
+        writeByte(20 + 64)
+        writeByte(30 + 64)
+        writeByte(40 + 64)
+    }.array()
+
+    fun osrsFrame(transforms: Int = 64): ByteArray {
+        val out = OutputBuffer(transforms * 6 + 16)
+        out.writeShort(1)
+        out.writeByte(transforms)
+        repeat(transforms) { out.writeByte(7) }
+        repeat(transforms) {
+            out.writeByte(10 + 64)
+            out.writeByte(20 + 64)
+            out.writeByte(30 + 64)
+        }
+        return out.array()
+    }
+
+    fun nr317Framemap(): ByteArray = OutputBuffer(16).apply {
+        writeShort(2)
+        writeShort(0)
+        writeShort(5)
+        writeShort(1)
+        writeShort(1)
+        writeShort(4)
+        writeShort(7)
+        writeByte(stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec.NR_317_MAGIC.toInt())
+        writeByte(stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec.NR_317_MAGIC.toInt())
+    }.array()
+
+    fun nr317Frame(): ByteArray = byteArrayOf(
+        stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec.NR_317_MAGIC,
+        stan.qodat.cache.impl.oldschool.loader.AnimationFrameCodec.NR_317_MAGIC,
+        2,
+        0,
+        1,
+        0x00, 0x0C,
+    )
+
+    fun skeletonLabels(): ByteArray = byteArrayOf(
+        8,
+        0, 0, 1, 2, 3, 0, 1, 5,
+        2, 1, 3, 1, 2, 0, 1, 4,
+        5, 1, 7, 2, 9, 3, 4, 6, 8, 10, 11,
+        0x00, 0x00,
+    )
+
+    fun mayaSkeletonNoBones(): ByteArray {
+        val types = IntArray(16) { it % 6 }
+        return OutputBuffer(16).apply {
+            writeByte(types.size)
+            types.forEach { writeByte(it) }
+            types.indices.forEach { i ->
+                val n = 1 + i % 3
+                writeByte(n)
+                repeat(n) { writeByte(it) }
+            }
+        }.array()
+    }
+
+    fun mayaSkeletonWithBones(): ByteArray {
+        val types = IntArray(8) { it % 6 }
+        val identity = floatArrayOf(
+            1f, 0f, 0f, 0f,
+            0f, 1f, 0f, 0f,
+            0f, 0f, 1f, 0f,
+            0f, 0f, 0f, 1f,
+        )
+        return OutputBuffer(16).apply {
+            writeByte(types.size)
+            types.forEach { writeByte(it) }
+            types.indices.forEach { writeByte(1); writeByte(it) }
+            writeShort(4)
+            writeByte(1)
+            repeat(4) {
+                writeShort(0xFFFF)
+                identity.forEach { writeInt(it.toBits()) }
+                repeat(3) { writeInt(0) }
+            }
+        }.array()
+    }
+
     private fun OutputBuffer.writeUnsignedShortSmartMinusOne(value: Int) {
         val encoded = value + 1
         if (encoded in 0 until 128) writeByte(encoded) else writeShort(value + 0x8001)

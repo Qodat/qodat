@@ -1,6 +1,5 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationTransformationGroup
 import stan.qodat.cache.impl.oldschool.definition.FrameDefinition
@@ -16,6 +15,12 @@ object AnimationFrameCodec {
 
     /** Same sentinel the NR client uses (`fileData[0] == -7 && fileData[1] == -7`). */
     const val NR_317_MAGIC: Byte = -7
+
+    internal val EMPTY_INTS = IntArray(0)
+    internal val EMPTY_INT_ARRAYS = emptyArray<IntArray>()
+
+    private const val SCRATCH = 500
+    private val scratchTls = ThreadLocal.withInitial { FrameScratch() }
 
     fun is317Frame(data: ByteArray): Boolean =
         data.size >= 2 && data[0] == NR_317_MAGIC && data[1] == NR_317_MAGIC
@@ -36,10 +41,12 @@ object AnimationFrameCodec {
     fun loadFramemap(id: Int, data: ByteArray): FramemapDefinition {
         val def = FramemapDefinition()
         def.id = id
+        val cursor = scratchTls.get().masks
+        cursor.reset(data)
         if (is317Framemap(data)) {
-            decodeFramemap(def, data) { readUnsignedShort() }
+            decodeFramemap(def, cursor, shorts = true)
         } else {
-            decodeFramemap(def, data) { readUnsignedByte() }
+            decodeFramemap(def, cursor, shorts = false)
         }
         return def
     }
@@ -64,22 +71,40 @@ object AnimationFrameCodec {
     fun transformationGroup(
         framemapId: Int,
         framemap: FramemapDefinition,
-    ): AnimationTransformationGroup = object : AnimationTransformationGroup {
-        override val id: Int = framemapId
-        override val transformationTypes: IntArray = framemap.types
-        override val targetVertexGroupsIndices: Array<IntArray> = framemap.frameMaps
+    ): AnimationTransformationGroup {
+        if (framemap.id == framemapId) return framemap
+        framemap.id = framemapId
+        return framemap
     }
 
-    private fun decodeFramemap(def: FramemapDefinition, data: ByteArray, readValue: InputBuffer.() -> Int) {
-        val input = InputBuffer(data)
-        def.length = input.readValue()
-        def.types = IntArray(def.length) { input.readValue() }
-        def.frameMaps = Array(def.length) { IntArray(input.readValue()) }
-        for (i in 0 until def.length) {
-            for (j in def.frameMaps[i].indices) {
-                def.frameMaps[i][j] = input.readValue()
+    private fun decodeFramemap(def: FramemapDefinition, cursor: DecodeCursor, shorts: Boolean) {
+        val length = if (shorts) cursor.readUnsignedShort() else cursor.readUnsignedByte()
+        def.length = length
+        if (length == 0) {
+            def.types = EMPTY_INTS
+            def.frameMaps = EMPTY_INT_ARRAYS
+            return
+        }
+        val types = IntArray(length)
+        if (shorts) {
+            for (i in 0 until length) types[i] = cursor.readUnsignedShort()
+        } else {
+            for (i in 0 until length) types[i] = cursor.readUnsignedByte()
+        }
+        def.types = types
+        val maps = Array(length) {
+            val n = if (shorts) cursor.readUnsignedShort() else cursor.readUnsignedByte()
+            if (n == 0) EMPTY_INTS else IntArray(n)
+        }
+        for (i in 0 until length) {
+            val group = maps[i]
+            if (shorts) {
+                for (j in group.indices) group[j] = cursor.readUnsignedShort()
+            } else {
+                for (j in group.indices) group[j] = cursor.readUnsignedByte()
             }
         }
+        def.frameMaps = maps
     }
 
     /**
@@ -87,36 +112,39 @@ object AnimationFrameCodec {
      * Copied from RuneLite [net.runelite.cache.definitions.loaders.FrameLoader].
      */
     private fun decodeOsrsFrame(framemap: FramemapDefinition, id: Int, data: ByteArray): FrameDefinition {
+        val scratch = scratchTls.get()
+        val masks = scratch.masks
+        val values = scratch.values
+        masks.reset(data)
+        values.reset(data)
         val def = FrameDefinition()
-        val input = InputBuffer(data)
-        val values = InputBuffer(data)
         def.id = id
         def.framemap = framemap
 
-        input.readUnsignedShort()
-        val length = input.readUnsignedByte()
-        values.offset += 3 + length
+        masks.readUnsignedShort()
+        val length = masks.readUnsignedByte()
+        values.offset = 3 + length
 
-        // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
-        val indexFrameIds = IntArray(500)
-        val translatorX = IntArray(500)
-        val translatorY = IntArray(500)
-        val translatorZ = IntArray(500)
+        val indexFrameIds = scratch.ids
+        val translatorX = scratch.x
+        val translatorY = scratch.y
+        val translatorZ = scratch.z
+        val types = def.framemap.types
 
         var lastI = -1
         var index = 0
         for (i in 0 until length) {
-            val mask = input.readUnsignedByte()
+            val mask = masks.readUnsignedByte()
             if (mask <= 0) continue
 
             index = insertType0Predecessor(
-                def.framemap.types, i, lastI, index,
+                types, i, lastI, index,
                 indexFrameIds, translatorX, translatorY, translatorZ,
             )
 
             indexFrameIds[index] = i
             var fallback = 0
-            if (def.framemap.types[i] == 3) {
+            if (types[i] == 3) {
                 fallback = 128
             }
             translatorX[index] = if (mask and 1 != 0) values.readSmart() else fallback
@@ -124,7 +152,7 @@ object AnimationFrameCodec {
             translatorZ[index] = if (mask and 4 != 0) values.readSmart() else fallback
             lastI = i
             ++index
-            if (def.framemap.types[i] == 5) {
+            if (types[i] == 5) {
                 def.showing = true
             }
         }
@@ -150,11 +178,12 @@ object AnimationFrameCodec {
         val length = data[offset].toInt() and 0xff
         offset++
 
-        // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
-        val indexFrameIds = IntArray(500)
-        val translatorX = IntArray(500)
-        val translatorY = IntArray(500)
-        val translatorZ = IntArray(500)
+        val scratch = scratchTls.get()
+        val indexFrameIds = scratch.ids
+        val translatorX = scratch.x
+        val translatorY = scratch.y
+        val translatorZ = scratch.z
+        val types = def.framemap.types
 
         var lastI = -1
         var index = 0
@@ -164,13 +193,13 @@ object AnimationFrameCodec {
             if (mask <= 0) continue
 
             index = insertType0Predecessor(
-                def.framemap.types, i, lastI, index,
+                types, i, lastI, index,
                 indexFrameIds, translatorX, translatorY, translatorZ,
             )
 
             indexFrameIds[index] = i
             var fallback = 0
-            if (def.framemap.types[i] == 3) {
+            if (types[i] == 3) {
                 fallback = 128
             }
             if (mask and 1 != 0) {
@@ -193,7 +222,7 @@ object AnimationFrameCodec {
             }
             lastI = i
             ++index
-            if (def.framemap.types[i] == 5) {
+            if (types[i] == 5) {
                 def.showing = true
             }
         }
@@ -246,15 +275,25 @@ object AnimationFrameCodec {
         translatorZ: IntArray,
     ) {
         def.translatorCount = index
-        def.indexFrameIds = IntArray(index)
-        def.translator_x = IntArray(index)
-        def.translator_y = IntArray(index)
-        def.translator_z = IntArray(index)
-        for (i in 0 until index) {
-            def.indexFrameIds[i] = indexFrameIds[i]
-            def.translator_x[i] = translatorX[i]
-            def.translator_y[i] = translatorY[i]
-            def.translator_z[i] = translatorZ[i]
+        if (index == 0) {
+            def.indexFrameIds = EMPTY_INTS
+            def.translator_x = EMPTY_INTS
+            def.translator_y = EMPTY_INTS
+            def.translator_z = EMPTY_INTS
+            return
         }
+        def.indexFrameIds = indexFrameIds.copyOf(index)
+        def.translator_x = translatorX.copyOf(index)
+        def.translator_y = translatorY.copyOf(index)
+        def.translator_z = translatorZ.copyOf(index)
+    }
+
+    private class FrameScratch {
+        val masks = DecodeCursor(ByteArray(0))
+        val values = DecodeCursor(ByteArray(0))
+        val ids = IntArray(SCRATCH)
+        val x = IntArray(SCRATCH)
+        val y = IntArray(SCRATCH)
+        val z = IntArray(SCRATCH)
     }
 }

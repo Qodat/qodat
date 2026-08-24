@@ -64,6 +64,12 @@ internal class DecodeCursor(data: ByteArray) {
         return if (peek < 128) readUnsignedByte() else readUnsignedShort() - 32768
     }
 
+    /** Signed smart used by OSRS animation frames (`InputBuffer.readSmart`). */
+    fun readSmart(): Int {
+        val peek = data[offset].toInt() and 0xFF
+        return if (peek < 128) readUnsignedByte() - 64 else readUnsignedShort() - 49152
+    }
+
     fun readUnsignedSmartMin1(): Int = readUnsignedSmart() - 1
 
     fun readBigSmart(): Int {

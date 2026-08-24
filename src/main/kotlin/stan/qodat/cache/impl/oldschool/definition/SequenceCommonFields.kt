@@ -18,4 +18,8 @@ internal interface SequenceCommonFields {
     var priority: Int
     var replyMode: Int
     var name: String?
+
+    companion object {
+        val EMPTY_INTS = IntArray(0)
+    }
 }

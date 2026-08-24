@@ -2,6 +2,7 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields
+import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields.Companion.EMPTY_INTS
 
 internal inline fun InputBuffer.forEachOpcode(decode: InputBuffer.(Int) -> Unit) {
     while (true) {
@@ -13,6 +14,7 @@ internal inline fun InputBuffer.forEachOpcode(decode: InputBuffer.(Int) -> Unit)
 
 internal fun InputBuffer.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> {
     val length = readUnsignedShort()
+    if (length == 0) return EMPTY_INTS to EMPTY_INTS
     val frameLengths = IntArray(length) { readUnsignedShort() }
     val frameIds = IntArray(length) { readUnsignedShort() }
     for (i in frameIds.indices) {
@@ -23,6 +25,7 @@ internal fun InputBuffer.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> 
 
 internal fun InputBuffer.readPackedArchiveFileIds(): IntArray {
     val length = readUnsignedByte()
+    if (length == 0) return EMPTY_INTS
     val ids = IntArray(length) { readUnsignedShort() }
     for (i in ids.indices) {
         ids[i] += readUnsignedShort() shl 16
@@ -38,6 +41,58 @@ internal fun InputBuffer.readInterleaveLeave(): IntArray {
 }
 
 internal fun SequenceCommonFields.applySharedSequenceOpcode(opcode: Int, stream: InputBuffer): Boolean {
+    when (opcode) {
+        1 -> {
+            val (lengths, ids) = stream.readFrameLengthAndIdTables()
+            frameLenghts = lengths
+            frameIDs = ids
+        }
+        2 -> frameStep = stream.readUnsignedShort()
+        3 -> interleaveLeave = stream.readInterleaveLeave()
+        4 -> stretches = true
+        5 -> forcedPriority = stream.readUnsignedByte()
+        6 -> leftHandItem = stream.readUnsignedShort()
+        7 -> rightHandItem = stream.readUnsignedShort()
+        8 -> maxLoops = stream.readUnsignedByte()
+        9 -> precedenceAnimating = stream.readUnsignedByte()
+        10 -> priority = stream.readUnsignedByte()
+        11 -> replyMode = stream.readUnsignedByte()
+        12 -> chatFrameIds = stream.readPackedArchiveFileIds()
+        18 -> name = stream.readString()
+        else -> return false
+    }
+    return true
+}
+
+internal fun DecodeCursor.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> {
+    val length = readUnsignedShort()
+    if (length == 0) return EMPTY_INTS to EMPTY_INTS
+    val frameLengths = IntArray(length) { readUnsignedShort() }
+    val frameIds = IntArray(length) { readUnsignedShort() }
+    for (i in frameIds.indices) {
+        frameIds[i] += readUnsignedShort() shl 16
+    }
+    return frameLengths to frameIds
+}
+
+internal fun DecodeCursor.readPackedArchiveFileIds(): IntArray {
+    val length = readUnsignedByte()
+    if (length == 0) return EMPTY_INTS
+    val ids = IntArray(length) { readUnsignedShort() }
+    for (i in ids.indices) {
+        ids[i] += readUnsignedShort() shl 16
+    }
+    return ids
+}
+
+internal fun DecodeCursor.readInterleaveLeave(): IntArray {
+    val length = readUnsignedByte()
+    return IntArray(1 + length) {
+        if (it == length) 9999999 else readUnsignedByte()
+    }
+}
+
+internal fun SequenceCommonFields.applySharedSequenceOpcode(opcode: Int, stream: DecodeCursor): Boolean {
     when (opcode) {
         1 -> {
             val (lengths, ids) = stream.readFrameLengthAndIdTables()

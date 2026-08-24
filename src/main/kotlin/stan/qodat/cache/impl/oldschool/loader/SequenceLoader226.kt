@@ -1,6 +1,5 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import qodat.cache.definition.AnimationSound
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 
@@ -13,10 +12,12 @@ class SequenceLoader226 {
 
     private var rev220FrameSounds = false
     private var rev226 = false
+    private val cursor = DecodeCursor(ByteArray(0))
 
     fun load(id: Int, b: ByteArray): SequenceDefinition226 {
         val def = SequenceDefinition226(id.toString())
-        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        cursor.reset(b)
+        cursor.forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         return def
     }
 
@@ -25,29 +26,20 @@ class SequenceLoader226 {
         this.rev226 = revision > REV_226_SEQ_ARCHIVE_REV
     }
 
-    private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputBuffer) {
+    private fun SequenceDefinition226.decodeValues(opcode: Int, stream: DecodeCursor) {
         if (applySharedSequenceOpcode(opcode, stream)) return
         when (opcode) {
             13 -> {
                 if (rev226) {
                     animMayaId = stream.readInt()
                 } else {
-                    sounds = buildMap {
-                        repeat(stream.readUnsignedByte()) {
-                            put(it, readFrameSound(stream))
-                        }
-                    }
+                    sounds = readIndexedSounds(stream, stream.readUnsignedByte())
                 }
             }
 
             14 -> {
                 if (rev226) {
-                    sounds = buildMap {
-                        repeat(stream.readUnsignedShort()) {
-                            val frame = stream.readUnsignedShort()
-                            put(frame, readFrameSound(stream))
-                        }
-                    }
+                    sounds = readKeyedSounds(stream, stream.readUnsignedShort())
                 } else {
                     animMayaId = stream.readInt()
                 }
@@ -58,12 +50,7 @@ class SequenceLoader226 {
                     animMayaStart = stream.readUnsignedShort()
                     animMayaEnd = stream.readUnsignedShort()
                 } else {
-                    sounds = buildMap {
-                        repeat(stream.readUnsignedShort()) {
-                            val frame = stream.readUnsignedShort()
-                            put(frame, readFrameSound(stream))
-                        }
-                    }
+                    sounds = readKeyedSounds(stream, stream.readUnsignedShort())
                 }
             }
 
@@ -77,11 +64,11 @@ class SequenceLoader226 {
             }
 
             17 -> {
-                animMayaMasks = BooleanArray(256) { false }
+                val masks = BooleanArray(256)
                 repeat(stream.readUnsignedByte()) {
-                    val index = stream.readUnsignedByte()
-                    animMayaMasks?.set(index, true)
+                    masks[stream.readUnsignedByte()] = true
                 }
+                animMayaMasks = masks
             }
 
             19 -> soundsCrossWorldView = true
@@ -89,7 +76,24 @@ class SequenceLoader226 {
         }
     }
 
-    private fun readFrameSound(stream: InputBuffer): AnimationSound? {
+    private fun readIndexedSounds(stream: DecodeCursor, count: Int): Map<Int, AnimationSound?> {
+        if (count == 0) return emptyMap()
+        return buildMap {
+            repeat(count) { put(it, readFrameSound(stream)) }
+        }
+    }
+
+    private fun readKeyedSounds(stream: DecodeCursor, count: Int): Map<Int, AnimationSound?> {
+        if (count == 0) return emptyMap()
+        return buildMap {
+            repeat(count) {
+                val frame = stream.readUnsignedShort()
+                put(frame, readFrameSound(stream))
+            }
+        }
+    }
+
+    private fun readFrameSound(stream: DecodeCursor): AnimationSound? {
         val location: Int
         var weight: Int = -1
         val loops: Int
@@ -117,5 +121,5 @@ class SequenceLoader226 {
     }
 }
 
-private const val REV_220_SEQ_ARCHIVE_REV = 1141
-private const val REV_226_SEQ_ARCHIVE_REV = 1268
+internal const val REV_220_SEQ_ARCHIVE_REV = 1141
+internal const val REV_226_SEQ_ARCHIVE_REV = 1268

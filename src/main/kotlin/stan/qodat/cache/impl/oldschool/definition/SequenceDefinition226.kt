@@ -2,6 +2,7 @@ package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.AnimationDefinition
 import qodat.cache.definition.AnimationSound
+import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields.Companion.EMPTY_INTS
 
 class SequenceDefinition226(override val id: String) : AnimationDefinition, SequenceCommonFields {
 
@@ -26,8 +27,8 @@ class SequenceDefinition226(override val id: String) : AnimationDefinition, Sequ
     var sounds: Map<Int, AnimationSound?>? = null
     var soundsCrossWorldView = false
 
-    override val frameHashes: IntArray get() = frameIDs!!
-    override val frameLengths: IntArray get() = frameLenghts!!
+    override val frameHashes: IntArray get() = frameIDs ?: EMPTY_INTS
+    override val frameLengths: IntArray get() = frameLenghts ?: EMPTY_INTS
     override val loopOffset: Int get() = frameStep
     override var leftHandItem = -1
     override var rightHandItem = -1

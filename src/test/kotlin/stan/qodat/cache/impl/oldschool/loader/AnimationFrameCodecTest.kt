@@ -137,4 +137,26 @@ class AnimationFrameCodecTest {
         assertEquals(5, mapped.transformationGroup.transformationTypes[1])
         assertTrue(mapped.transformationGroup.targetVertexGroupsIndices[0].contentEquals(intArrayOf(4)))
     }
+
+    @Test
+    fun internsEmptyFramemapGroups() {
+        val bytes = OutputBuffer(16).apply {
+            writeByte(2)
+            writeByte(0)
+            writeByte(1)
+            writeByte(0)
+            writeByte(0)
+        }.array()
+        val framemap = AnimationFrameCodec.loadFramemap(1, bytes)
+        assertEquals(2, framemap.length)
+        assertTrue(framemap.frameMaps[0] === AnimationFrameCodec.EMPTY_INTS)
+        assertTrue(framemap.frameMaps[1] === AnimationFrameCodec.EMPTY_INTS)
+    }
+
+    @Test
+    fun decodeCursorReadSmartMatchesOsrsSignedSmart() {
+        val cursor = DecodeCursor(byteArrayOf((10 + 64).toByte(), 0x80.toByte(), 0x05))
+        assertEquals(10, cursor.readSmart())
+        assertEquals(0x8005 - 49152, cursor.readSmart())
+    }
 }

@@ -46,16 +46,19 @@ object AnimationSkeletonIndex {
         offset += count
         if (offset + count > data.size) return null
         val labelLengths = IntArray(count) { data[offset++].toInt() and 0xff }
-        val labels = ArrayList<Int>(labelLengths.sum())
+        var total = 0
+        for (length in labelLengths) total += length
+        val labels = IntArray(total)
+        var n = 0
         for (length in labelLengths) {
             if (offset + length > data.size) return null
-            repeat(length) { labels.add(data[offset++].toInt() and 0xff) }
+            repeat(length) { labels[n++] = data[offset++].toInt() and 0xff }
         }
         val mayaBoneCount = if (offset + 2 <= data.size) {
             (data[offset].toInt() and 0xff shl 8) or (data[offset + 1].toInt() and 0xff)
         } else 0
-        labels.sort()
-        return SkeletonSignature(mayaBoneCount, labels.joinToString(","))
+        java.util.Arrays.sort(labels)
+        return SkeletonSignature(mayaBoneCount, joinSortedLabels(labels))
     }
 
     fun expandSkeletonIds(
@@ -70,6 +73,17 @@ object AnimationSkeletonIndex {
             for (id in aliases) expanded.add(id)
         }
         return expanded
+    }
+
+    private fun joinSortedLabels(labels: IntArray): String {
+        if (labels.isEmpty()) return ""
+        val sb = StringBuilder(labels.size * 3)
+        sb.append(labels[0])
+        for (i in 1 until labels.size) {
+            sb.append(',')
+            sb.append(labels[i])
+        }
+        return sb.toString()
     }
 
     fun skeletonIdFromMayaAnimation(data: ByteArray): Int? {

@@ -2,6 +2,8 @@ package jagex;
 
 public class Skeleton {
 
+    private static final int[] EMPTY_LABELS = new int[0];
+
     int id;
     int count;
     int[] transformTypes;
@@ -19,8 +21,10 @@ public class Skeleton {
         for (i = 0; i < count; ++i)
             transformTypes[i] = buffer.readUnsignedByte();
 
-        for (i = 0; i < count; ++i)
-            labels[i] = new int[buffer.readUnsignedByte()];
+        for (i = 0; i < count; ++i) {
+            int length = buffer.readUnsignedByte();
+            labels[i] = length == 0 ? EMPTY_LABELS : new int[length];
+        }
 
         for (i = 0; i < count; ++i)
             for (int j = 0; j < labels[i].length; ++j)

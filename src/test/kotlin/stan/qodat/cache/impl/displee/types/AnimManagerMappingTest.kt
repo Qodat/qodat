@@ -112,6 +112,17 @@ class AnimManagerMappingTest {
         val hex = Integer.toHexString(hash)
         assertEquals(0x10, CacheIdPackingTest.getFileId(hex))
         assertEquals(0x03, CacheIdPackingTest.getFrameId(hex))
+        assertEquals(0x10, AnimManager.archiveId(hash))
+        assertEquals(0x03, AnimManager.fileId(hash))
+    }
+
+    @Test
+    fun bitSplitMatchesHexForWideHashesAndHandlesShortHashes() {
+        val wide = (0x1A shl 16) or 0x0B
+        assertEquals(CacheIdPackingTest.getFileId(Integer.toHexString(wide)), AnimManager.archiveId(wide))
+        assertEquals(CacheIdPackingTest.getFrameId(Integer.toHexString(wide)), AnimManager.fileId(wide))
+        assertEquals(0, AnimManager.archiveId(3))
+        assertEquals(3, AnimManager.fileId(3))
     }
 
     @Test

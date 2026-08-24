@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
+import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 
 /**
@@ -10,17 +10,22 @@ import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
  */
 class SequenceLoader206 {
 
+    private val cursor = DecodeCursor(ByteArray(0))
+
     fun load(id: Int, b: ByteArray): SequenceDefinition206 {
         val def = SequenceDefinition206(id.toString())
-        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        cursor.reset(b)
+        cursor.forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         return def
     }
 
-    private fun SequenceDefinition206.decodeValues(opcode: Int, stream: InputBuffer) {
+    private fun SequenceDefinition206.decodeValues(opcode: Int, stream: DecodeCursor) {
         if (applySharedSequenceOpcode(opcode, stream)) return
         when (opcode) {
-            13 -> frameSounds = IntArray(stream.readUnsignedByte()) {
-                stream.read24BitInt()
+            13 -> {
+                val count = stream.readUnsignedByte()
+                frameSounds = if (count == 0) SequenceCommonFields.EMPTY_INTS
+                else IntArray(count) { stream.read24BitInt() }
             }
             14 -> animMayaId = stream.readInt()
             15 -> {

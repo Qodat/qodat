@@ -210,7 +210,10 @@ object DispleeCache : Cache("Displee") {
     }
 
     override fun getAnimationSkeletonDefinition(frameHash: Int): AnimationTransformationGroup =
-        getFrameDefinition(frameHash)!!.transformationGroup
+        withOpenStore {
+            animLoader.getFramemap(frameHash)
+                ?: throw IllegalArgumentException("Animation skeleton not found $frameHash")
+        }
 
     override fun getFrameDefinition(frameHash: Int): AnimationFrameLegacyDefinition? = withOpenStore {
         animLoader.getFrameDef(frameHash)

@@ -1,6 +1,7 @@
 package stan.qodat.cache.impl.oldschool.definition
 
 import qodat.cache.definition.AnimationDefinition
+import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields.Companion.EMPTY_INTS
 
 class SequenceDefinition206(override val id: String) : AnimationDefinition, SequenceCommonFields {
 
@@ -21,8 +22,8 @@ class SequenceDefinition206(override val id: String) : AnimationDefinition, Sequ
     var animMayaEnd = 0
     override var name: String? = null
 
-    override val frameHashes: IntArray get() = frameIDs!!
-    override val frameLengths: IntArray get() = frameLenghts!!
+    override val frameHashes: IntArray get() = frameIDs ?: EMPTY_INTS
+    override val frameLengths: IntArray get() = frameLenghts ?: EMPTY_INTS
     override val loopOffset: Int get() = frameStep
     override var leftHandItem = -1
     override var rightHandItem = -1

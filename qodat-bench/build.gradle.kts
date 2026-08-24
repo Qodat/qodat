@@ -13,7 +13,8 @@ gradle.taskGraph.whenReady {
         it.contains("qodat-bench", ignoreCase = true) ||
             it.contains("benchDecode", ignoreCase = true) ||
             it.contains("benchListWrap", ignoreCase = true) ||
-            it.contains("benchSpriteList", ignoreCase = true)
+            it.contains("benchSpriteList", ignoreCase = true) ||
+            it.contains("benchSkeleton", ignoreCase = true)
     }
     if (!benchRequested) {
         tasks.matching { it.name != "clean" }.configureEach {
@@ -51,4 +52,11 @@ tasks.register<JavaExec>("benchListWrap") {
     description = "Chunked cache-list wrap vs parallel stream (not part of test)"
     classpath = sourceSets.main.get().runtimeClasspath
     mainClass.set("stan.qodat.bench.ListWrapBenchmarkKt")
+}
+
+tasks.register<JavaExec>("benchSkeleton") {
+    group = "benchmark"
+    description = "Framemap / frame / Maya skeleton decode (not part of test)"
+    classpath = sourceSets.main.get().runtimeClasspath
+    mainClass.set("stan.qodat.bench.SkeletonBenchmarkKt")
 }
