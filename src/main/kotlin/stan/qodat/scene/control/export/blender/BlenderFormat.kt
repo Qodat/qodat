@@ -3,6 +3,7 @@ package stan.qodat.scene.control.export.blender
 import javafx.beans.binding.Bindings
 import javafx.beans.binding.ObjectBinding
 import javafx.beans.property.ObjectProperty
+import javafx.concurrent.Task
 import javafx.stage.FileChooser
 import stan.qodat.Properties
 import stan.qodat.Qodat
@@ -11,6 +12,8 @@ import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
+import stan.qodat.task.BackgroundTasks
+import stan.qodat.task.export.ExportTaskResult
 import stan.qodat.util.Searchable
 import stan.qodat.util.formatName
 import java.io.File
@@ -65,19 +68,28 @@ class BlenderFormat(
                     "Cannot export ${exportable.getName()} of type ${exportable::class.java}"
                 )
             }
-            val file = if (destination.toString().endsWith(".glb", ignoreCase = true))
-                destination
-            else
-                destination.resolve(getFileName(context))
+            val file = resolveSaveFile(context, destination)
             val clips = GltfExportClips.resolve(exportable, context.second)
-            GltfCodec.write(
-                model.modelDefinition,
-                file,
-                model.getName().replace(" ", "_"),
-                clips,
-            )
+            val name = model.getName().replace(" ", "_")
+            BackgroundTasks.submit(true, object : Task<ExportTaskResult>() {
+                override fun call(): ExportTaskResult {
+                    updateTitle("Blender glTF export")
+                    updateMessage("Exporting $name as glTF")
+                    GltfCodec.write(model.modelDefinition, file, name, clips)
+                    return ExportTaskResult.Success(file)
+                }
+            })
         } catch (e: Exception) {
             Qodat.logException("Failed to export Blender glTF", e)
         }
     }
+
+    internal fun resolveSaveFile(
+        context: Triple<Searchable, Animation?, AnimationFrame?>,
+        destination: Path,
+    ): Path =
+        if (destination.toString().endsWith(".glb", ignoreCase = true))
+            destination
+        else
+            destination.resolve(getFileName(context))
 }
