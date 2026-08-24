@@ -10,7 +10,16 @@ import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
  */
 class InterfaceLoader237 {
 
+    private var sourceSize = 0
+    private var intModelIds = false
+
+    fun configureForRevision(revision: Int): InterfaceLoader237 {
+        intModelIds = revision > INT_MODEL_REVISION
+        return this
+    }
+
     fun load(id: Int, data: ByteArray): InterfaceDefinition {
+        sourceSize = data.size
         val iface = InterfaceDefinition()
         iface.id = id
 
@@ -224,7 +233,7 @@ class InterfaceLoader237 {
 
         if (iface.type == 6) {
             iface.modelType = 1
-            if (rev237) {
+            if (rev237 || intModelIds) {
                 iface.modelId = stream.readInt()
             } else {
                 iface.modelId = stream.readUnsignedShortOrNone()
@@ -280,12 +289,17 @@ class InterfaceLoader237 {
             }
         }
 
+        if (stream.remaining() < 3) return
         iface.clickMask = stream.read24BitInt()
         iface.name = stream.readString()
+        if (stream.remaining() < 1) return
         val actionCount = stream.readUnsignedByte()
         if (actionCount > 0) {
-            iface.actions = Array(actionCount) { stream.readString() }
+            iface.actions = Array(actionCount) {
+                if (stream.remaining() < 1) "" else stream.readString()
+            }
         }
+        if (stream.remaining() < 4) return
         iface.dragDeadZone = stream.readUnsignedByte()
         iface.dragDeadTime = stream.readUnsignedByte()
         iface.dragRenderBehavior = stream.readUnsignedByte() == 1
@@ -314,12 +328,14 @@ class InterfaceLoader237 {
     }
 
     private fun decodeListener(iface: InterfaceDefinition, stream: InputBuffer): Array<Any>? {
+        if (stream.remaining() < 1) return null
         val count = stream.readUnsignedByte()
         if (count == 0) return null
         val values = Array<Any>(count) {
+            if (stream.remaining() < 1) return@Array 0
             when (stream.readUnsignedByte()) {
-                0 -> stream.readInt()
-                1 -> stream.readString()
+                0 -> if (stream.remaining() >= 4) stream.readInt() else 0
+                1 -> if (stream.remaining() >= 1) stream.readString() else ""
                 else -> 0
             }
         }
@@ -328,10 +344,15 @@ class InterfaceLoader237 {
     }
 
     private fun decodeTriggers(stream: InputBuffer): IntArray? {
+        if (stream.remaining() < 1) return null
         val count = stream.readUnsignedByte()
         if (count == 0) return null
-        return IntArray(count) { stream.readInt() }
+        return IntArray(count) {
+            if (stream.remaining() >= 4) stream.readInt() else 0
+        }
     }
+
+    private fun InputBuffer.remaining(): Int = sourceSize - offset
 
     private fun decodeClientScripts(bytecode: IntArray): Array<ClientScript1Instruction> {
         val opcodes = ClientScript1Instruction.Opcode.entries
@@ -381,6 +402,7 @@ class InterfaceLoader237 {
     companion object {
         private const val MAGIC = 0xAABBCCDD
         private const val MAGIC_SIZE = 4
+        private const val INT_MODEL_REVISION = 1_773_137_432
 
         fun hasRev237Magic(data: ByteArray): Boolean =
             data.size > MAGIC_SIZE &&

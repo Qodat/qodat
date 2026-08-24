@@ -68,4 +68,11 @@ class InterfaceManagerMappingTest {
         assertTrue(mapDispleeRootInterfaces(emptyArray()).isEmpty())
         assertTrue(mapDispleeRootInterfaces(arrayOf(null, arrayOf(null))).isEmpty())
     }
+
+    @Test
+    fun indexGroupIdsAreEmptyPlaceholders() {
+        val listed = InterfaceManager.indexGroupIds(intArrayOf(12, 290))
+        assertEquals(listOf(12, 290), listed.keys.toList())
+        assertTrue(listed.values.all { it.isEmpty() })
+    }
 }

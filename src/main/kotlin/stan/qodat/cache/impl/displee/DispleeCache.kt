@@ -223,12 +223,12 @@ object DispleeCache : Cache("Displee") {
     override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> = withOpenStore {
         lateinit var result: Map<Int, List<InterfaceDefinition>>
         val elapsed = measureTimeMillis {
-            result = InterfaceManager.mapDispleeRootInterfaces(interfaceManager.getInterfaces())
+            result = interfaceManager.listGroupIds().associateWith { emptyList() }
         }
         if (result.isEmpty()) {
             throw IllegalStateException("Displee cache returned 0 interface groups")
         }
-        logger.debug("Interface groups ready: {} groups in {}ms", result.size, elapsed)
+        logger.debug("Interface index-only list: {} groups in {}ms (no widget decode)", result.size, elapsed)
         result
     }
 
@@ -241,6 +241,10 @@ object DispleeCache : Cache("Displee") {
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition = withOpenStore {
         spriteManager.findSprite(groupId, frameId)
             ?: throw IllegalArgumentException("Sprite not found $groupId:$frameId")
+    }
+
+    override fun getSpriteArchive(groupId: Int): Array<SpriteDefinition> = withOpenStore {
+        spriteManager.getArchiveFrames(groupId).toTypedArray()
     }
 
     override fun getTexture(id: Int): TextureDefinition = withOpenStore {

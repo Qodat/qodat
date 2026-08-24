@@ -18,11 +18,18 @@ import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
 import stan.qodat.util.Searchable
 
-class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions: List<InterfaceDefinition>) :
-    SceneNodeProvider, ViewNodeProvider, TreeItemProvider, Searchable {
+class InterfaceGroup(
+    val cache: Cache,
+    private val groupId: Int,
+    initialDefinitions: List<InterfaceDefinition> = emptyList(),
+) : SceneNodeProvider, ViewNodeProvider, TreeItemProvider, Searchable {
 
     val idProperty = SimpleIntegerProperty(groupId)
-    val nameProperty = SimpleStringProperty(InterfaceNames.display(groupId, definitions))
+    val nameProperty = SimpleStringProperty(groupId.toString())
+    val definitions: List<InterfaceDefinition> by lazy {
+        if (initialDefinitions.isNotEmpty()) initialDefinitions
+        else cache.getInterface(groupId).asList()
+    }
     val selectedChildId = SimpleIntegerProperty(-1)
     val hoveredChildId = SimpleIntegerProperty(-1)
 

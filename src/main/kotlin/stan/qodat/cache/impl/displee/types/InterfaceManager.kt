@@ -3,81 +3,78 @@ package stan.qodat.cache.impl.displee.types
 import com.displee.cache.CacheLibrary
 import org.slf4j.LoggerFactory
 import qodat.cache.definition.InterfaceDefinition as QodatInterfaceDefinition
-import stan.qodat.cache.CacheParallel
 import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import stan.qodat.cache.impl.oldschool.loader.InterfaceLoader237
-import java.util.concurrent.atomic.AtomicInteger
 
 class InterfaceManager(private val cacheLibrary: CacheLibrary) {
 
-    private lateinit var interfaces: Array<Array<InterfaceDefinition?>?>
-    @Volatile
-    private var loaded = false
+    private var groups: Array<Array<InterfaceDefinition?>?> = emptyArray()
+    private val decoded = HashSet<Int>()
+
+    fun listGroupIds(): IntArray = cacheLibrary.index(3).archiveIds()
 
     @Synchronized
     fun load() {
-        if (loaded) return
-        val interfaceIndex = cacheLibrary.index(3)
-        val archiveIds = interfaceIndex.archiveIds()
-        val max = archiveIds.max()
-        val groups = arrayOfNulls<Array<InterfaceDefinition?>?>(max + 1)
-        val payloads = ArrayList<InterfaceArchivePayload>(archiveIds.size)
-
-        for (archiveId in archiveIds) {
-            val archive = interfaceIndex.archive(archiveId) ?: continue
-            val maxFileId = archive.fileIds().maxOrNull() ?: continue
-            val files = ArrayList<Pair<Int, ByteArray>>(archive.files.size)
-            archive.files.forEach { (fileId, file) ->
-                val data = file.data ?: return@forEach
-                files.add(fileId to data)
-            }
-            if (files.isNotEmpty()) {
-                payloads.add(InterfaceArchivePayload(archiveId, maxFileId, files))
-            }
+        for (archiveId in listGroupIds()) {
+            decodeGroup(archiveId)
         }
-
-        val loadedCount = AtomicInteger()
-        val skipped = AtomicInteger()
-        val decoded = CacheParallel.decode(payloads.map { it.archiveId to it }) { _, payload ->
-            val loader = InterfaceLoader237()
-            val ifaces = arrayOfNulls<InterfaceDefinition>(payload.maxFileId + 1)
-            for ((fileId, data) in payload.files) {
-                val widgetId = Companion.widgetId(payload.archiveId, fileId)
-                try {
-                    ifaces[fileId] = loader.load(widgetId, data)
-                    loadedCount.incrementAndGet()
-                } catch (e: Exception) {
-                    skipped.incrementAndGet()
-                    logger.warn("Failed to unpack interface {}.{}: {}", payload.archiveId, fileId, e.message)
-                }
-            }
-            ifaces
-        }
-
-        decoded.forEach { (archiveId, group) -> groups[archiveId] = group }
-        interfaces = groups
-        loaded = true
-        logger.info("Loaded {} interfaces ({} skipped)", loadedCount.get(), skipped.get())
-        if (loadedCount.get() == 0) {
+        val loadedCount = groups.sumOf { group -> group?.count { it != null } ?: 0 }
+        logger.info("Loaded {} interfaces ({} groups)", loadedCount, decoded.size)
+        if (loadedCount == 0) {
             throw IllegalStateException("Interface archive produced 0 widgets")
         }
     }
 
     fun getInterfaceGroup(groupId: Int): Array<InterfaceDefinition?>? {
-        load()
-        return getInterfaceGroup(interfaces, groupId)
+        decodeGroup(groupId)
+        return getInterfaceGroup(groups, groupId)
     }
 
     fun getInterfaces(): Array<Array<InterfaceDefinition?>?> {
         load()
-        return interfaces
+        return groups
     }
 
-    private class InterfaceArchivePayload(
-        val archiveId: Int,
-        val maxFileId: Int,
-        val files: List<Pair<Int, ByteArray>>
-    )
+    @Synchronized
+    private fun decodeGroup(groupId: Int) {
+        if (!decoded.add(groupId)) return
+        val archive = cacheLibrary.index(3).archive(groupId) ?: return
+        val fileIds = archive.fileIds()
+        val maxFileId = fileIds.maxOrNull() ?: return
+        ensureGroupsCapacity(groupId)
+        val loader = InterfaceLoader237().configureForRevision(archive.revision)
+        val ifaces = arrayOfNulls<InterfaceDefinition>(maxFileId + 1)
+        var loaded = 0
+        for (fileId in fileIds) {
+            val data = archive.file(fileId)?.data ?: continue
+            if (data.size < 2) {
+                logger.debug("Skipping empty interface {}.{} ({} bytes)", groupId, fileId, data.size)
+                continue
+            }
+            val widgetId = widgetId(groupId, fileId)
+            try {
+                ifaces[fileId] = loader.load(widgetId, data)
+                loaded++
+            } catch (e: Exception) {
+                val leftover = e.message?.contains("No data left to read") == true
+                if (leftover) {
+                    logger.debug("Failed to unpack interface {}.{}: {}", groupId, fileId, e.message)
+                } else {
+                    logger.warn("Failed to unpack interface {}.{}: {}", groupId, fileId, e.message)
+                }
+            }
+        }
+        groups[groupId] = ifaces
+        if (loaded == 0) {
+            logger.debug("Interface group {} produced 0 widgets", groupId)
+        }
+    }
+
+    private fun ensureGroupsCapacity(groupId: Int) {
+        if (groupId < groups.size) return
+        val maxId = listGroupIds().maxOrNull() ?: groupId
+        groups = groups.copyOf(maxOf(maxId, groupId) + 1)
+    }
 
     companion object {
         private val logger = LoggerFactory.getLogger(InterfaceManager::class.java)
@@ -89,7 +86,7 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
         internal fun getInterfaceGroup(
             interfaces: Array<Array<InterfaceDefinition?>?>,
             groupId: Int,
-        ): Array<InterfaceDefinition?>? = interfaces[groupId]
+        ): Array<InterfaceDefinition?>? = interfaces.getOrNull(groupId)
 
         internal fun mapDispleeInterface(
             group: Array<InterfaceDefinition?>?,
@@ -107,5 +104,8 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
             }
             return groups
         }
+
+        internal fun indexGroupIds(archiveIds: IntArray): Map<Int, List<QodatInterfaceDefinition>> =
+            archiveIds.associateWith { emptyList() }
     }
 }

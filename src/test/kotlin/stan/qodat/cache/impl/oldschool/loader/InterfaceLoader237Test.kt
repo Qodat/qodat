@@ -265,6 +265,35 @@ class InterfaceLoader237Test {
         assertEquals("rect", iface.name)
     }
 
+    @Test
+    fun rev239Type6ReadsExtraShortAndTwoActions() {
+        val bytes = hexToBytes(REV239_TYPE6_WITH_ACTIONS)
+        val iface = InterfaceLoader237().configureForRevision(1_773_137_433).load((290 shl 16) + 3, bytes)
+        assertTrue(iface.isIf3)
+        assertEquals(6, iface.type)
+        assertEquals(0x1dc8, iface.modelId)
+        assertEquals(2, iface.actions?.size)
+        assertEquals("Rotate-Clockwise <col=FF981F>Dial", iface.actions!![0])
+        assertEquals("Rotate-AntiClockwise <col=FF981F>Dial", iface.actions!![1])
+    }
+
+    @Test
+    fun truncatedIf3TailDoesNotThrow() {
+        val bytes = OutputBuffer(16).apply {
+            writeByte(0xFF)
+            writeIf3Common(type = 0)
+            writeShort(0)
+            writeShort(0)
+            writeByte(0)
+        }.array()
+        val iface = InterfaceLoader237().load(4, bytes)
+        assertTrue(iface.isIf3)
+        assertEquals(0, iface.type)
+    }
+
+    private fun hexToBytes(hex: String): ByteArray =
+        hex.split(' ').map { it.toInt(16).toByte() }.toByteArray()
+
     private fun OutputBuffer.writeIf1Header(
         type: Int,
         menuType: Int = 0,
@@ -338,5 +367,16 @@ class InterfaceLoader237Test {
         }
         writeByte(0)
         writeByte(0)
+    }
+
+    companion object {
+        // Live rev239 interface 290.3 — IF3 type-6 with two rotate actions.
+        private const val REV239_TYPE6_WITH_ACTIONS =
+            "ff 06 00 00 00 76 00 25 00 36 00 36 00 00 00 00 00 0d 00 " +
+                "00 00 1d c8 00 00 00 00 01 eb 02 0a 00 00 03 20 08 ad 00 " +
+                "00 00 00 00 06 00 02 " +
+                "52 6f 74 61 74 65 2d 43 6c 6f 63 6b 77 69 73 65 20 3c 63 6f 6c 3d 46 46 39 38 31 46 3e 44 69 61 6c 00 " +
+                "52 6f 74 61 74 65 2d 41 6e 74 69 43 6c 6f 63 6b 77 69 73 65 20 3c 63 6f 6c 3d 46 46 39 38 31 46 3e 44 69 61 6c 00 " +
+                "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
     }
 }
