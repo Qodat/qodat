@@ -22,8 +22,9 @@ import kotlin.math.roundToInt
  * tile (128 scene units) is one metre**. That matches the client
  * (`Perspective.LOCAL_TILE_SIZE`, `RSModelData` resize `* n / 128`). Vertex
  * skins become a one-weight-per-vert armature (`vskin_N`). Idle / walk clips
- * bake as joint TRS (STEP, 20 ms client ticks). Face HSL / priorities / alphas
- * ride in `extras.rs`.
+ * bake as joint TRS (STEP, 20 ms client ticks). Face textures become PNG
+ * `images` plus a primitive per id; HSL / priorities / alphas / texture
+ * tables ride in `extras.rs` for a lossless round-trip.
  */
 object GltfCodec {
 
@@ -47,8 +48,9 @@ object GltfCodec {
         destination: Path,
         name: String,
         clips: List<GltfAnimationClip> = emptyList(),
+        textures: GltfTextureSource = GltfTextureSource.NONE,
     ) {
-        val built = build(definition, name, clips)
+        val built = build(definition, name, clips, textures)
         Files.createDirectories(destination.parent)
         Files.write(destination, built)
     }
@@ -66,7 +68,9 @@ object GltfCodec {
         definition: ModelDefinition,
         name: String,
         clips: List<GltfAnimationClip> = emptyList(),
+        textures: GltfTextureSource = GltfTextureSource.NONE,
     ): ByteArray {
+        definition.computeTextureUVCoordinates()
         val nVert = definition.getVertexCount()
         val nFace = definition.getFaceCount()
         val vx = definition.getVertexPositionsX()
@@ -80,6 +84,12 @@ object GltfCodec {
         val pri = definition.getFacePriorities()
         val alphas = definition.getFaceAlphas()
         val faceSkins = definition.getFaceSkins()
+        val faceTypes = definition.getFaceTypes()
+        val faceTextures = definition.getFaceTextures()
+        val loadedTextures = LinkedHashMap<Int, GltfTextureImage>()
+        for (id in distinctFaceTextureIds(faceTextures)) {
+            textures.load(id)?.let { loadedTextures[id] = it }
+        }
 
         val pts = FloatArray(nVert * 3)
         for (i in 0 until nVert) {
@@ -90,6 +100,7 @@ object GltfCodec {
         val vertRgb = FloatArray(nVert * 3)
         val hits = IntArray(nVert)
         for (f in 0 until nFace) {
+            if (faceTextureId(faceTextures, f) != -1) continue
             val rgb = HslPalette.rgb(colours[f].toInt() and 0xFFFF)
             val r = ((rgb shr 16) and 255) / 255f
             val g = ((rgb shr 8) and 255) / 255f
@@ -107,11 +118,12 @@ object GltfCodec {
             vertRgb[i * 3 + 1] = vertRgb[i * 3 + 1] / n
             vertRgb[i * 3 + 2] = vertRgb[i * 3 + 2] / n
         }
-        val indices = ShortArray(nFace * 3)
-        for (f in 0 until nFace) {
-            indices[f * 3] = fa[f].toShort()
-            indices[f * 3 + 1] = fb[f].toShort()
-            indices[f * 3 + 2] = fc[f].toShort()
+        val untexturedFaces = (0 until nFace).filter { faceTextureId(faceTextures, it) == -1 }
+        val indices = IntArray(untexturedFaces.size * 3)
+        untexturedFaces.forEachIndexed { i, f ->
+            indices[i * 3] = fa[f]
+            indices[i * 3 + 1] = fb[f]
+            indices[i * 3 + 2] = fc[f]
         }
 
         val skinToJoint = unique.withIndex().associate { it.value to it.index }
@@ -167,6 +179,30 @@ object GltfCodec {
             return accessors.size() - 1
         }
 
+        fun pushInts(data: IntArray, type: String, count: Int): Int {
+            val off = bin.addInts(data)
+            views.add(viewObj(off, data.size * 4))
+            val acc = JsonObject()
+            acc.addProperty("bufferView", views.size() - 1)
+            acc.addProperty("componentType", 5125)
+            acc.addProperty("count", count)
+            acc.addProperty("type", type)
+            accessors.add(acc)
+            return accessors.size() - 1
+        }
+
+        fun pushBytes(data: ByteArray): Int {
+            val off = bin.addBytes(data)
+            views.add(viewObj(off, data.size))
+            return views.size() - 1
+        }
+
+        fun pushIndices(data: IntArray): Int =
+            if (data.any { it > 65535 })
+                pushInts(data, "SCALAR", data.size)
+            else
+                pushShorts(ShortArray(data.size) { data[it].toShort() }, "SCALAR", data.size)
+
         var minX = Float.POSITIVE_INFINITY
         var minY = Float.POSITIVE_INFINITY
         var minZ = Float.POSITIVE_INFINITY
@@ -192,7 +228,7 @@ object GltfCodec {
         val colI = pushFloats(vertRgb, "VEC3", nVert)
         val jntI = pushShorts(joints, "VEC4", nVert)
         val wgtI = pushFloats(weights, "VEC4", nVert)
-        val idxI = pushShorts(indices, "SCALAR", indices.size)
+        val idxI = if (indices.isNotEmpty()) pushIndices(indices) else -1
 
         val ibm = FloatArray(unique.size * 16)
         for (j in unique.indices) {
@@ -218,12 +254,38 @@ object GltfCodec {
                 addProperty("clientTickMs", CLIENT_TICK_MS)
                 addProperty("animation", "armature")
                 addProperty("skeleton", "labels")
+                add("vertexPositionsX", jsonInts(vx))
+                add("vertexPositionsY", jsonInts(vy))
+                add("vertexPositionsZ", jsonInts(vz))
                 add("vertexSkins", jsonInts(skins))
+                add("faceVertexIndices1", jsonInts(fa))
+                add("faceVertexIndices2", jsonInts(fb))
+                add("faceVertexIndices3", jsonInts(fc))
                 add("faceColors", jsonShorts(colours))
                 if (pri != null) add("facePriorities", jsonBytes(pri))
                 addProperty("facePriorityDefault", definition.getPriority().toInt() and 0xFF)
                 if (alphas != null) add("faceAlphas", jsonBytes(alphas))
                 if (faceSkins != null) add("faceSkins", jsonInts(faceSkins))
+                if (faceTypes != null) add("faceTypes", jsonBytes(faceTypes))
+                if (faceTextures != null) add("faceTextures", jsonShorts(faceTextures))
+                definition.getFaceTextureConfigs()?.let { add("faceTextureConfigs", jsonBytes(it)) }
+                addProperty("textureConfigCount", definition.getTextureConfigCount())
+                definition.getTextureRenderTypes()?.let { add("textureRenderTypes", jsonBytes(it)) }
+                definition.getTextureTriangleVertexIndices1()?.let { add("textureTriangleVertexIndices1", jsonShorts(it)) }
+                definition.getTextureTriangleVertexIndices2()?.let { add("textureTriangleVertexIndices2", jsonShorts(it)) }
+                definition.getTextureTriangleVertexIndices3()?.let { add("textureTriangleVertexIndices3", jsonShorts(it)) }
+                if (loadedTextures.isNotEmpty()) {
+                    add("textures", JsonArray().apply {
+                        loadedTextures.values.forEach { image ->
+                            add(JsonObject().apply {
+                                addProperty("id", image.id)
+                                addProperty("spriteFileId", image.spriteFileId)
+                                addProperty("animationDirection", image.animationDirection)
+                                addProperty("animationSpeed", image.animationSpeed)
+                            })
+                        }
+                    })
+                }
                 val bones = JsonArray()
                 for (lab in unique) {
                     bones.add(JsonObject().apply {
@@ -263,21 +325,103 @@ object GltfCodec {
             addProperty("scene", 0)
             add("scenes", JsonArray().apply { add(JsonObject().apply { add("nodes", jsonInts(intArrayOf(0))) }) })
             add("nodes", nodes)
+            val materials = JsonArray()
+            val primitives = JsonArray()
+            val images = JsonArray()
+            val gltfTextures = JsonArray()
+            val samplers = JsonArray()
+            if (untexturedFaces.isNotEmpty()) {
+                materials.add(unlitMaterial(name))
+                primitives.add(JsonObject().apply {
+                    add("attributes", JsonObject().apply {
+                        addProperty("POSITION", posI)
+                        addProperty("COLOR_0", colI)
+                        addProperty("JOINTS_0", jntI)
+                        addProperty("WEIGHTS_0", wgtI)
+                    })
+                    addProperty("indices", idxI)
+                    addProperty("material", 0)
+                })
+            }
+            val faceU = definition.getFaceTextureUCoordinates()
+            val faceV = definition.getFaceTextureVCoordinates()
+            loadedTextures.values.forEach { image ->
+                val faces = (0 until nFace).filter { faceTextureId(faceTextures, it) == image.id }
+                if (faces.isEmpty()) return@forEach
+                val exploded = explodeTexturedFaces(
+                    faces, fa, fb, fc, pts, skins, skinToJoint, faceU, faceV,
+                )
+                val tPos = pushFloats(exploded.positions, "VEC3", exploded.vertexCount, exploded.posBounds)
+                val tUv = pushFloats(exploded.uvs, "VEC2", exploded.vertexCount)
+                val tJnt = pushShorts(exploded.joints, "VEC4", exploded.vertexCount)
+                val tWgt = pushFloats(exploded.weights, "VEC4", exploded.vertexCount)
+                val tIdx = pushIndices(exploded.indices)
+                val imageView = pushBytes(image.png)
+                val imageIndex = images.size()
+                images.add(JsonObject().apply {
+                    addProperty("name", "rs_texture_${image.id}")
+                    addProperty("mimeType", "image/png")
+                    addProperty("bufferView", imageView)
+                })
+                if (samplers.size() == 0) {
+                    samplers.add(JsonObject().apply {
+                        addProperty("magFilter", 9729)
+                        addProperty("minFilter", 9729)
+                        addProperty("wrapS", 10497)
+                        addProperty("wrapT", 10497)
+                    })
+                }
+                val textureIndex = gltfTextures.size()
+                gltfTextures.add(JsonObject().apply {
+                    addProperty("name", "rs_texture_${image.id}")
+                    addProperty("sampler", 0)
+                    addProperty("source", imageIndex)
+                    add("extras", JsonObject().apply {
+                        addProperty("rsTextureId", image.id)
+                        addProperty("spriteFileId", image.spriteFileId)
+                        addProperty("animationDirection", image.animationDirection)
+                        addProperty("animationSpeed", image.animationSpeed)
+                    })
+                })
+                val materialIndex = materials.size()
+                materials.add(JsonObject().apply {
+                    addProperty("name", "rs_texture_${image.id}")
+                    add("pbrMetallicRoughness", JsonObject().apply {
+                        add("baseColorFactor", jsonFloats(1f, 1f, 1f, 1f))
+                        addProperty("metallicFactor", 0)
+                        addProperty("roughnessFactor", 1)
+                        add("baseColorTexture", JsonObject().apply { addProperty("index", textureIndex) })
+                    })
+                    if (image.hasAlpha) addProperty("alphaMode", "BLEND")
+                    add("extras", JsonObject().apply { addProperty("rsTextureId", image.id) })
+                })
+                primitives.add(JsonObject().apply {
+                    add("attributes", JsonObject().apply {
+                        addProperty("POSITION", tPos)
+                        addProperty("TEXCOORD_0", tUv)
+                        addProperty("JOINTS_0", tJnt)
+                        addProperty("WEIGHTS_0", tWgt)
+                    })
+                    addProperty("indices", tIdx)
+                    addProperty("material", materialIndex)
+                })
+            }
+            if (primitives.size() == 0) {
+                materials.add(unlitMaterial(name))
+                primitives.add(JsonObject().apply {
+                    add("attributes", JsonObject().apply {
+                        addProperty("POSITION", posI)
+                        addProperty("COLOR_0", colI)
+                        addProperty("JOINTS_0", jntI)
+                        addProperty("WEIGHTS_0", wgtI)
+                    })
+                    addProperty("material", 0)
+                })
+            }
             add("meshes", JsonArray().apply {
                 add(JsonObject().apply {
                     addProperty("name", name)
-                    add("primitives", JsonArray().apply {
-                        add(JsonObject().apply {
-                            add("attributes", JsonObject().apply {
-                                addProperty("POSITION", posI)
-                                addProperty("COLOR_0", colI)
-                                addProperty("JOINTS_0", jntI)
-                                addProperty("WEIGHTS_0", wgtI)
-                            })
-                            addProperty("indices", idxI)
-                            addProperty("material", 0)
-                        })
-                    })
+                    add("primitives", primitives)
                     add("extras", extras)
                 })
             })
@@ -293,16 +437,12 @@ object GltfCodec {
                     addProperty("inverseBindMatrices", ibmI)
                 })
             })
-            add("materials", JsonArray().apply {
-                add(JsonObject().apply {
-                    addProperty("name", name)
-                    add("pbrMetallicRoughness", JsonObject().apply {
-                        add("baseColorFactor", jsonFloats(1f, 1f, 1f, 1f))
-                        addProperty("metallicFactor", 0)
-                        addProperty("roughnessFactor", 1)
-                    })
-                })
-            })
+            add("materials", materials)
+            if (images.size() > 0) {
+                add("images", images)
+                add("textures", gltfTextures)
+                add("samplers", samplers)
+            }
             add("accessors", accessors)
             add("bufferViews", views)
             add("buffers", JsonArray().apply {
@@ -330,6 +470,40 @@ object GltfCodec {
     private fun decode(doc: JsonObject, blob: ByteArray, fallbackName: String): QodatModelDefinition {
         val extras = rsExtras(doc)
         val mesh = doc.getAsJsonArray("meshes")[0].asJsonObject
+        val name = mesh.get("name")?.asString ?: fallbackName
+        if (extras?.has("vertexPositionsX") == true && extras.has("faceVertexIndices1")) {
+            val vx = extras.ints("vertexPositionsX")
+            val nVert = vx.size
+            val fa = extras.ints("faceVertexIndices1")
+            val def = QodatModelDefinition(
+                name = name,
+                vertexCount = nVert,
+                vertexPositionsX = vx,
+                vertexPositionsY = extras.ints("vertexPositionsY"),
+                vertexPositionsZ = extras.ints("vertexPositionsZ"),
+                vertexSkins = extras.intsOrNull("vertexSkins") ?: IntArray(nVert),
+                faceCount = fa.size,
+                faceVertexIndices1 = fa,
+                faceVertexIndices2 = extras.ints("faceVertexIndices2"),
+                faceVertexIndices3 = extras.ints("faceVertexIndices3"),
+                faceSkins = extras.intsOrNull("faceSkins"),
+                faceAlphas = extras.bytesOrNull("faceAlphas"),
+                facePriorities = extras.bytesOrNull("facePriorities"),
+                faceTypes = extras.bytesOrNull("faceTypes"),
+                priority = extras.get("facePriorityDefault")?.asInt?.toByte() ?: 10,
+                faceColors = extras.shortsOrNull("faceColors") ?: ShortArray(fa.size),
+                faceTextures = extras.shortsOrNull("faceTextures"),
+                faceTextureConfigs = extras.bytesOrNull("faceTextureConfigs"),
+                textureConfigCount = extras.get("textureConfigCount")?.asInt ?: 0,
+                textureRenderTypes = extras.bytesOrNull("textureRenderTypes"),
+                textureTriangleVertexIndices1 = extras.shortsOrNull("textureTriangleVertexIndices1"),
+                textureTriangleVertexIndices2 = extras.shortsOrNull("textureTriangleVertexIndices2"),
+                textureTriangleVertexIndices3 = extras.shortsOrNull("textureTriangleVertexIndices3"),
+            )
+            def.computeAnimationTables()
+            def.computeTextureUVCoordinates()
+            return def
+        }
         val prim = mesh.getAsJsonArray("primitives")[0].asJsonObject
         val attrs = prim.getAsJsonObject("attributes")
         val ptsB = readF32(doc, blob, attrs.get("POSITION").asInt, 3)
@@ -343,32 +517,14 @@ object GltfCodec {
             vy[i] = (-ptsB[i * 3 + 1] / scale).roundToInt()
             vz[i] = (-ptsB[i * 3 + 2] / scale).roundToInt()
         }
-        val idx = readU16(doc, blob, prim.get("indices").asInt)
+        val idx = if (prim.has("indices")) readIndices(doc, blob, prim.get("indices").asInt) else IntArray(0)
         require(idx.size % 3 == 0) { "index count not divisible by 3" }
         val nFace = idx.size / 3
         val fa = IntArray(nFace) { idx[it * 3] }
         val fb = IntArray(nFace) { idx[it * 3 + 1] }
         val fc = IntArray(nFace) { idx[it * 3 + 2] }
-
-        val colours = extras?.getAsJsonArray("faceColors")?.let { arr ->
-            ShortArray(arr.size()) { arr[it].asInt.toShort() }
-        } ?: ShortArray(nFace) { 0 }
-
-        val skins = extras?.getAsJsonArray("vertexSkins")?.let { arr ->
-            IntArray(arr.size()) { arr[it].asInt }
-        } ?: IntArray(nVert)
-
-        val pri = extras?.getAsJsonArray("facePriorities")?.let { arr ->
-            ByteArray(arr.size()) { arr[it].asInt.toByte() }
-        }
-        val alphas = extras?.getAsJsonArray("faceAlphas")?.let { arr ->
-            ByteArray(arr.size()) { arr[it].asInt.toByte() }
-        }
-        val faceSkins = extras?.getAsJsonArray("faceSkins")?.let { arr ->
-            IntArray(arr.size()) { arr[it].asInt }
-        }
-        val priority = extras?.get("facePriorityDefault")?.asInt?.toByte() ?: 10
-        val name = mesh.get("name")?.asString ?: fallbackName
+        val colours = extras?.shortsOrNull("faceColors") ?: ShortArray(nFace) { 0 }
+        val skins = extras?.intsOrNull("vertexSkins") ?: IntArray(nVert)
         val def = QodatModelDefinition(
             name = name,
             vertexCount = nVert,
@@ -380,15 +536,98 @@ object GltfCodec {
             faceVertexIndices1 = fa,
             faceVertexIndices2 = fb,
             faceVertexIndices3 = fc,
-            faceSkins = faceSkins,
-            faceAlphas = alphas,
-            facePriorities = pri,
-            faceTypes = null,
-            priority = priority,
+            faceSkins = extras?.intsOrNull("faceSkins"),
+            faceAlphas = extras?.bytesOrNull("faceAlphas"),
+            facePriorities = extras?.bytesOrNull("facePriorities"),
+            faceTypes = extras?.bytesOrNull("faceTypes"),
+            priority = extras?.get("facePriorityDefault")?.asInt?.toByte() ?: 10,
             faceColors = colours,
         )
         def.computeAnimationTables()
         return def
+    }
+
+    private fun unlitMaterial(name: String) = JsonObject().apply {
+        addProperty("name", name)
+        add("pbrMetallicRoughness", JsonObject().apply {
+            add("baseColorFactor", jsonFloats(1f, 1f, 1f, 1f))
+            addProperty("metallicFactor", 0)
+            addProperty("roughnessFactor", 1)
+        })
+    }
+
+    private data class ExplodedTexture(
+        val vertexCount: Int,
+        val positions: FloatArray,
+        val uvs: FloatArray,
+        val joints: ShortArray,
+        val weights: FloatArray,
+        val indices: IntArray,
+        val posBounds: JsonObject,
+    )
+
+    private fun explodeTexturedFaces(
+        faces: List<Int>,
+        fa: IntArray,
+        fb: IntArray,
+        fc: IntArray,
+        pts: FloatArray,
+        skins: IntArray,
+        skinToJoint: Map<Int, Int>,
+        faceU: Array<FloatArray>?,
+        faceV: Array<FloatArray>?,
+    ): ExplodedTexture {
+        val n = faces.size * 3
+        val positions = FloatArray(n * 3)
+        val uvs = FloatArray(n * 2)
+        val joints = ShortArray(n * 4)
+        val weights = FloatArray(n * 4)
+        val indices = IntArray(n)
+        var minX = Float.POSITIVE_INFINITY
+        var minY = Float.POSITIVE_INFINITY
+        var minZ = Float.POSITIVE_INFINITY
+        var maxX = Float.NEGATIVE_INFINITY
+        var maxY = Float.NEGATIVE_INFINITY
+        var maxZ = Float.NEGATIVE_INFINITY
+        var out = 0
+        for (f in faces) {
+            val corners = intArrayOf(fa[f], fb[f], fc[f])
+            for (c in 0..2) {
+                val src = corners[c]
+                positions[out * 3] = pts[src * 3]
+                positions[out * 3 + 1] = pts[src * 3 + 1]
+                positions[out * 3 + 2] = pts[src * 3 + 2]
+                val x = positions[out * 3]
+                val y = positions[out * 3 + 1]
+                val z = positions[out * 3 + 2]
+                if (x < minX) minX = x
+                if (y < minY) minY = y
+                if (z < minZ) minZ = z
+                if (x > maxX) maxX = x
+                if (y > maxY) maxY = y
+                if (z > maxZ) maxZ = z
+                val u = faceU?.getOrNull(f)?.getOrNull(c) ?: 0f
+                val v = faceV?.getOrNull(f)?.getOrNull(c) ?: 0f
+                uvs[out * 2] = u
+                uvs[out * 2 + 1] = 1f - v
+                joints[out * 4] = (skinToJoint[skins[src]] ?: 0).toShort()
+                weights[out * 4] = 1f
+                indices[out] = out
+                out++
+            }
+        }
+        return ExplodedTexture(
+            vertexCount = n,
+            positions = positions,
+            uvs = uvs,
+            joints = joints,
+            weights = weights,
+            indices = indices,
+            posBounds = JsonObject().apply {
+                add("min", jsonFloats(minX, minY, minZ))
+                add("max", jsonFloats(maxX, maxY, maxZ))
+            },
+        )
     }
 
     private fun writeBlenderPosition(pts: FloatArray, vertex: Int, x: Int, y: Int, z: Int) {
@@ -515,6 +754,9 @@ object GltfCodec {
     internal fun readDocument(path: Path): JsonObject =
         parseGlb(Files.readAllBytes(path)).first
 
+    internal fun readChunks(path: Path): Pair<JsonObject, ByteArray> =
+        parseGlb(Files.readAllBytes(path))
+
     private fun rsExtras(doc: JsonObject): JsonObject? {
         doc.getAsJsonObject("extras")?.getAsJsonObject("rs")?.let { return it }
         val mesh = doc.getAsJsonArray("meshes")?.get(0)?.asJsonObject ?: return null
@@ -552,6 +794,40 @@ object GltfCodec {
         val out = IntArray(n / 2)
         for (i in out.indices) out[i] = buf.short.toInt() and 0xFFFF
         return out
+    }
+
+    private fun readU32(doc: JsonObject, blob: ByteArray, accessor: Int): IntArray {
+        val (off, n) = accessorRange(doc, accessor, 1, 4)
+        val buf = ByteBuffer.wrap(blob, off, n).order(ByteOrder.LITTLE_ENDIAN)
+        val out = IntArray(n / 4)
+        for (i in out.indices) out[i] = buf.int
+        return out
+    }
+
+    private fun readIndices(doc: JsonObject, blob: ByteArray, accessor: Int): IntArray {
+        val acc = doc.getAsJsonArray("accessors")[accessor].asJsonObject
+        return when (acc.get("componentType").asInt) {
+            5125 -> readU32(doc, blob, accessor)
+            else -> readU16(doc, blob, accessor)
+        }
+    }
+
+    private fun JsonObject.ints(key: String): IntArray {
+        val arr = getAsJsonArray(key)
+        return IntArray(arr.size()) { arr[it].asInt }
+    }
+
+    private fun JsonObject.intsOrNull(key: String): IntArray? =
+        if (has(key)) ints(key) else null
+
+    private fun JsonObject.shortsOrNull(key: String): ShortArray? {
+        val arr = getAsJsonArray(key) ?: return null
+        return ShortArray(arr.size()) { arr[it].asInt.toShort() }
+    }
+
+    private fun JsonObject.bytesOrNull(key: String): ByteArray? {
+        val arr = getAsJsonArray(key) ?: return null
+        return ByteArray(arr.size()) { arr[it].asInt.toByte() }
     }
 
     private fun accessorRange(doc: JsonObject, index: Int, width: Int, elem: Int): Pair<Int, Int> {
@@ -597,6 +873,20 @@ object GltfCodec {
             val buf = ByteBuffer.allocate(data.size * 2).order(ByteOrder.LITTLE_ENDIAN)
             data.forEach { buf.putShort(it) }
             out.write(buf.array())
+            return off
+        }
+        fun addInts(data: IntArray): Int {
+            align4()
+            val off = out.size()
+            val buf = ByteBuffer.allocate(data.size * 4).order(ByteOrder.LITTLE_ENDIAN)
+            data.forEach { buf.putInt(it) }
+            out.write(buf.array())
+            return off
+        }
+        fun addBytes(data: ByteArray): Int {
+            align4()
+            val off = out.size()
+            out.write(data)
             return off
         }
         private fun align4() {

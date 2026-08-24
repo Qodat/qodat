@@ -361,6 +361,7 @@ data class QodatModelDefinition(
             faceColors = modelDefinition.getFaceColors(),
             faceTextures = modelDefinition.getFaceTextures(),
             faceTextureConfigs = modelDefinition.getFaceTextureConfigs(),
+            textureConfigCount = modelDefinition.getTextureConfigCount(),
             textureRenderTypes = modelDefinition.getTextureRenderTypes(),
             textureTriangleVertexIndices1 = modelDefinition.getTextureTriangleVertexIndices1(),
             textureTriangleVertexIndices2 = modelDefinition.getTextureTriangleVertexIndices2(),
