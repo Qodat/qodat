@@ -189,7 +189,7 @@ abstract class EntityViewController(name: String) : SceneController(name), ViewS
         objectList.configure(objects, searchObjectField)
         spritesList.configure(sprites, searchSpritesField)
         spotAnimList.configure(spotAnims, searchSpotAnimField)
-        interfaceList.configure(interfaces, searchInterfaceField)
+        interfaceList.configure(interfaces, searchInterfaceField, Comparator.comparingInt { it.idProperty.get() })
 
         configureEntitySortComboBox(sortNpcBox, npcList, Properties.selectedNpcSortType)
         configureEntitySortComboBox(sortItemBox, itemList, Properties.selectedItemSortType)

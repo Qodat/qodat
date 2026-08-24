@@ -21,6 +21,7 @@ import stan.qodat.scene.paint.TextureMaterial
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.entity.Entity
+import stan.qodat.scene.runescape.ui.InterfaceGroup
 import stan.qodat.scene.shape.PolygonMeshView
 
 fun Qodat.Companion.addSceneTreeItem(provider: TreeItemProvider) {
@@ -78,6 +79,7 @@ private fun <S : Searchable> containsId(it: S, id: Int?, newValue: String): Bool
     return when (it) {
         is Entity<*> -> it.definition.getOptionalId().orElse(-1).toString().contains(newValue)
         is Animation -> (it.definition?.id ?: it.idProperty.get().toString()).contains(newValue)
+        is InterfaceGroup -> it.idProperty.get().toString().contains(newValue)
         else -> false
     }
 }

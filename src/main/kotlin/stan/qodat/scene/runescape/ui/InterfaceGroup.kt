@@ -22,7 +22,7 @@ class InterfaceGroup(val cache: Cache, private val groupId: Int, val definitions
     SceneNodeProvider, ViewNodeProvider, TreeItemProvider, Searchable {
 
     val idProperty = SimpleIntegerProperty(groupId)
-    val nameProperty = SimpleStringProperty(idProperty.get().toString())
+    val nameProperty = SimpleStringProperty(InterfaceNames.display(groupId, definitions))
     val selectedChildId = SimpleIntegerProperty(-1)
     val hoveredChildId = SimpleIntegerProperty(-1)
 
