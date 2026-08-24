@@ -83,7 +83,12 @@ class ItemDefinition226(private val id: Int) : ItemDefinition {
 
     override fun getOptionalId(): OptionalInt = OptionalInt.of(id)
 
-    override var name: String = "$id"
+    private var nameOrNull: String? = null
+    override var name: String
+        get() = nameOrNull ?: id.toString()
+        set(value) {
+            nameOrNull = value
+        }
     override val modelIds: Array<String> by lazy { arrayOf(inventoryModel.toString()) }
     override val findColor: ShortArray? = recolorToFind
     override val replaceColor: ShortArray? = recolorToReplace

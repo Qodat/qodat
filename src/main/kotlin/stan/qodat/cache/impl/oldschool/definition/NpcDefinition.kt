@@ -31,9 +31,9 @@ class NpcDefinition(val id: Int) : NPCDefinition {
     var retextureToFind: ShortArray? = null
     var retextureToReplace: ShortArray? = null
     var actions = arrayOfNulls<String>(5)
-    val subOps = mutableListOf<NpcSubOp>()
-    val conditionalOps = mutableListOf<NpcConditionalOp>()
-    val conditionalSubOps = mutableListOf<NpcConditionalSubOp>()
+    var subOps: List<NpcSubOp> = emptyList()
+    var conditionalOps: List<NpcConditionalOp> = emptyList()
+    var conditionalSubOps: List<NpcConditionalSubOp> = emptyList()
     var isMinimapVisible = true
     var combatLevel = -1
     var widthScale = 128

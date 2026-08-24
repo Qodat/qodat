@@ -1,6 +1,5 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import com.displee.io.impl.OutputBuffer
 import stan.qodat.cache.impl.oldschool.definition.NpcConditionalOp
 import stan.qodat.cache.impl.oldschool.definition.NpcConditionalSubOp
@@ -27,7 +26,7 @@ class NpcLoader {
 
     fun load(id: Int, b: ByteArray): NpcDefinition {
         val def = NpcDefinition(id)
-        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        DecodeCursor(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         def.post()
         return def
     }
@@ -170,7 +169,7 @@ class NpcLoader {
         return out.array()
     }
 
-    private fun NpcDefinition.decodeValues(opcode: Int, stream: InputBuffer) {
+    private fun NpcDefinition.decodeValues(opcode: Int, stream: DecodeCursor) {
         when (opcode) {
             1 -> models = stream.readShortIdArray()
             2 -> name = stream.readString()
@@ -194,21 +193,25 @@ class NpcLoader {
             }
             40 -> {
                 val length = stream.readUnsignedByte()
-                recolorToFind = ShortArray(length)
-                recolorToReplace = ShortArray(length)
-                repeat(length) {
-                    recolorToFind!![it] = stream.readUnsignedShort().toShort()
-                    recolorToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                recolorToFind = find
+                recolorToReplace = replace
             }
             41 -> {
                 val length = stream.readUnsignedByte()
-                retextureToFind = ShortArray(length)
-                retextureToReplace = ShortArray(length)
-                repeat(length) {
-                    retextureToFind!![it] = stream.readUnsignedShort().toShort()
-                    retextureToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                retextureToFind = find
+                retextureToReplace = replace
             }
             60 -> chatheadModels = stream.readShortIdArray()
             61 -> models = stream.readIntIdArray()
@@ -292,7 +295,7 @@ class NpcLoader {
         }
     }
 
-    private fun NpcDefinition.decodeHeadIcons(stream: InputBuffer) {
+    private fun NpcDefinition.decodeHeadIcons(stream: DecodeCursor) {
         if (!rev210HeadIcons) {
             headIconArchiveIds = intArrayOf(defaultHeadIconArchive)
             headIconSpriteIndex = shortArrayOf(stream.readUnsignedShort().toShort())
@@ -320,13 +323,13 @@ class NpcLoader {
         headIconSpriteIndex = sprites
     }
 
-    private fun NpcDefinition.decodeConfigs(stream: InputBuffer, defaultConfig: Int) {
+    private fun NpcDefinition.decodeConfigs(stream: DecodeCursor, defaultConfig: Int) {
         varbitId = stream.readConfigId()
         varpIndex = stream.readConfigId()
         decodeConfigChildren(stream, defaultConfig)
     }
 
-    private fun NpcDefinition.decodeConfigChildren(stream: InputBuffer, defaultConfig: Int) {
+    private fun NpcDefinition.decodeConfigChildren(stream: DecodeCursor, defaultConfig: Int) {
         val length = stream.readUnsignedByte()
         val values = IntArray(length + 2)
         for (index in 0..length) {
@@ -354,22 +357,30 @@ const val REV_210_NPC_ARCHIVE_REV = 1493
 
 private fun defaultFootprintSize(size: Int): Int = (0.4F * (size * 128).toFloat()).toInt()
 
-private fun InputBuffer.readShortIdArray(): IntArray {
+private fun DecodeCursor.readShortIdArray(): IntArray {
     val length = readUnsignedByte()
-    return IntArray(length) { readUnsignedShort() }
+    val ids = IntArray(length)
+    for (i in 0 until length) {
+        ids[i] = readUnsignedShort()
+    }
+    return ids
 }
 
-private fun InputBuffer.readIntIdArray(): IntArray {
+private fun DecodeCursor.readIntIdArray(): IntArray {
     val length = readUnsignedByte()
-    return IntArray(length) { readInt() }
+    val ids = IntArray(length)
+    for (i in 0 until length) {
+        ids[i] = readInt()
+    }
+    return ids
 }
 
-private fun InputBuffer.readConfigId(): Int {
+private fun DecodeCursor.readConfigId(): Int {
     val value = readUnsignedShort()
     return if (value == 0xFFFF) -1 else value
 }
 
-private fun InputBuffer.readNpcParams(): HashMap<Int, Any> {
+private fun DecodeCursor.readNpcParams(): HashMap<Int, Any> {
     val length = readUnsignedByte()
     val params = HashMap<Int, Any>(length)
     repeat(length) {

@@ -17,9 +17,14 @@ class SpriteDefinition(
     override var offsetY = 0
     override var width = 0
     override var height = 0
-    override var pixels = IntArray(0)
+    override var pixels = EMPTY_INTS
     override var maxWidth = 0
     override var maxHeight = 0
-    override var pixelIdx = ByteArray(0)
-    override var palette = IntArray(0)
+    override var pixelIdx = EMPTY_BYTES
+    override var palette = EMPTY_INTS
+
+    companion object {
+        private val EMPTY_INTS = IntArray(0)
+        private val EMPTY_BYTES = ByteArray(0)
+    }
 }

@@ -1,19 +1,17 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.oldschool.definition.ItemDefinition226
 
 class ItemLoader226 {
 
     fun load(id: Int, b: ByteArray): ItemDefinition226 {
-        // TODO(perf): opcode walk allocates InputBuffer per item; the items archive is large (~20k defs)
         val def = ItemDefinition226(id)
-        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        DecodeCursor(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         def.post()
         return def
     }
 
-    private fun ItemDefinition226.decodeValues(opcode: Int, stream: InputBuffer) {
+    private fun ItemDefinition226.decodeValues(opcode: Int, stream: DecodeCursor) {
         when (opcode) {
             1 -> inventoryModel = stream.readUnsignedShort()
             2 -> name = stream.readString()
@@ -69,22 +67,26 @@ class ItemLoader226 {
 
             40 -> {
                 val length = stream.readUnsignedByte()
-                recolorToFind = ShortArray(length)
-                recolorToReplace = ShortArray(length)
-                repeat(length) {
-                    recolorToFind!![it] = stream.readUnsignedShort().toShort()
-                    recolorToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                recolorToFind = find
+                recolorToReplace = replace
             }
 
             41 -> {
                 val length = stream.readUnsignedByte()
-                retextureToFind = ShortArray(length)
-                retextureToReplace = ShortArray(length)
-                repeat(length) {
-                    retextureToFind!![it] = stream.readUnsignedShort().toShort()
-                    retextureToReplace!![it] = stream.readUnsignedShort().toShort()
+                val find = ShortArray(length)
+                val replace = ShortArray(length)
+                for (i in 0 until length) {
+                    find[i] = stream.readUnsignedShort().toShort()
+                    replace[i] = stream.readUnsignedShort().toShort()
                 }
+                retextureToFind = find
+                retextureToReplace = replace
             }
 
             42 -> shiftClickDropIndex = stream.readByte().toInt()
@@ -162,7 +164,7 @@ class ItemLoader226 {
                 val length = stream.readUnsignedByte()
                 params = HashMap(length)
                 repeat(length) {
-                    val isString = stream.readUnsignedByte().toInt() == 1
+                    val isString = stream.readUnsignedByte() == 1
                     val key = stream.read24BitInt()
                     val value: Any = if (isString) {
                         stream.readString()
@@ -183,13 +185,13 @@ class ItemLoader226 {
         }
     }
 
-    private fun skipSubOp(stream: InputBuffer) {
+    private fun skipSubOp(stream: DecodeCursor) {
         stream.readUnsignedByte()
         stream.readUnsignedByte()
         stream.readString()
     }
 
-    private fun skipConditionalOp(stream: InputBuffer) {
+    private fun skipConditionalOp(stream: DecodeCursor) {
         stream.readUnsignedByte()
         stream.readUnsignedShort()
         stream.readUnsignedShort()
@@ -198,7 +200,7 @@ class ItemLoader226 {
         stream.readString()
     }
 
-    private fun skipConditionalSubOp(stream: InputBuffer) {
+    private fun skipConditionalSubOp(stream: DecodeCursor) {
         stream.readUnsignedByte()
         stream.readUnsignedShort()
         stream.readUnsignedShort()

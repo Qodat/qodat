@@ -1,6 +1,5 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.oldschool.definition.SpriteDefinition
 
 /**
@@ -14,7 +13,7 @@ import stan.qodat.cache.impl.oldschool.definition.SpriteDefinition
 class SpriteLoader {
 
     fun load(id: Int, b: ByteArray): Array<SpriteDefinition> {
-        val input = InputBuffer(b)
+        val input = DecodeCursor(b)
         val length = b.size
 
         input.offset = length - 2
@@ -50,20 +49,18 @@ class SpriteLoader {
             sprite.palette = palette
 
             val flags = input.readUnsignedByte()
-            readIndexed(input, pixelIdx, sprite.width, sprite.height, flags and FLAG_VERTICAL != 0)
+            val vertical = flags and FLAG_VERTICAL != 0
+            readIndexed(input, pixelIdx, sprite.width, sprite.height, vertical)
             if (flags and FLAG_ALPHA != 0) {
-                readIndexed(input, pixelAlphas, sprite.width, sprite.height, flags and FLAG_VERTICAL != 0)
-            }
-            for (j in 0 until dimension) {
-                if (pixelIdx[j].toInt() != 0) {
-                    pixelAlphas[j] = 0xFF.toByte()
-                }
+                readIndexed(input, pixelAlphas, sprite.width, sprite.height, vertical)
             }
 
             val pixels = IntArray(dimension)
             for (j in 0 until dimension) {
-                val index = pixelIdx[j].toInt() and 0xFF
-                pixels[j] = palette[index] or (pixelAlphas[j].toInt() shl 24)
+                val idxByte = pixelIdx[j]
+                val index = idxByte.toInt() and 0xFF
+                val alpha = if (idxByte.toInt() != 0) 0xFF else pixelAlphas[j].toInt()
+                pixels[j] = palette[index] or (alpha shl 24)
             }
             sprite.pixels = pixels
         }
@@ -71,23 +68,24 @@ class SpriteLoader {
     }
 
     private fun readIndexed(
-        input: InputBuffer,
+        input: DecodeCursor,
         dest: ByteArray,
         width: Int,
         height: Int,
         vertical: Boolean,
     ) {
         if (!vertical) {
-            for (i in dest.indices) {
-                dest[i] = input.readByte()
-            }
+            input.readBytes(dest)
             return
         }
+        val raw = input.raw()
+        var o = input.offset
         for (x in 0 until width) {
             for (y in 0 until height) {
-                dest[width * y + x] = input.readByte()
+                dest[width * y + x] = raw[o++]
             }
         }
+        input.offset = o
     }
 
     companion object {
