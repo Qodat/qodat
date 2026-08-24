@@ -1,6 +1,6 @@
 package qodat.cache.models
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import qodat.cache.definition.ModelDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,7 +23,7 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesLowRevOptionalFaceAndVertexFlags() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(7)
             writeByte(4)
             writeByte(3)
@@ -57,7 +57,7 @@ class RSModelLoaderDecodeTest {
             writeShort(2)
             writeShort(2)
             writeShort(3)
-        }.flip()
+        }.array()
 
         val model = RSModelLoader().load("8", bytes)
         assertEquals(3, model.vertexCount)
@@ -75,7 +75,7 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesLowRevFaceIndexOpcodes() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(0)
             writeByte(1)
             writeByte(1)
@@ -108,7 +108,7 @@ class RSModelLoaderDecodeTest {
             writeShort(0)
             writeShort(0)
             writeShort(5)
-        }.flip()
+        }.array()
 
         val model = RSModelLoader().load("9", bytes)
         assertEquals(5, model.vertexCount)
@@ -135,7 +135,7 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesSingleVertexWithoutFaces() {
-        val atOrigin = OutputStream().apply {
+        val atOrigin = OutputBuffer(16).apply {
             writeByte(0)
             writeLowRevHeader(
                 vertexCount = 1,
@@ -145,7 +145,7 @@ class RSModelLoaderDecodeTest {
                 pointZLength = 0,
                 triangleLength = 0,
             )
-        }.flip()
+        }.array()
         val origin = RSModelLoader().load("10", atOrigin)
         assertEquals(1, origin.vertexCount)
         assertEquals(0, origin.faceCount)
@@ -153,7 +153,7 @@ class RSModelLoaderDecodeTest {
         assertEquals(0, origin.vertexPositionsY[0])
         assertEquals(0, origin.vertexPositionsZ[0])
 
-        val displaced = OutputStream().apply {
+        val displaced = OutputBuffer(16).apply {
             writeByte(7)
             writeSmart(7)
             writeSmart(8)
@@ -166,7 +166,7 @@ class RSModelLoaderDecodeTest {
                 pointZLength = 1,
                 triangleLength = 0,
             )
-        }.flip()
+        }.array()
         val vertex = RSModelLoader().load("11", displaced)
         assertEquals(1, vertex.vertexCount)
         assertEquals(0, vertex.faceCount)
@@ -178,10 +178,10 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesType1Triangle() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeTriangleBody()
             writeType1Header(priority = 5)
-        }.flip()
+        }.array()
         assertTrue(RSModelLoader.isType1(bytes))
         assertFalse(RSModelLoader.isType2(bytes))
         assertFalse(RSModelLoader.isType3(bytes))
@@ -190,10 +190,10 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesType2Triangle() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeTriangleBody()
             writeType2Header(priority = 5)
-        }.flip()
+        }.array()
         assertTrue(RSModelLoader.isType2(bytes))
         assertFalse(RSModelLoader.isType1(bytes))
         assertTriangle(RSModelLoader().load("2", bytes), id = "2", priority = 5)
@@ -201,10 +201,10 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesType3Triangle() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeTriangleBody()
             writeType3Header(priority = 5)
-        }.flip()
+        }.array()
         assertTrue(RSModelLoader.isType3(bytes))
         assertFalse(RSModelLoader.isType1(bytes))
         assertTriangle(RSModelLoader().load("3", bytes), id = "3", priority = 5)
@@ -212,9 +212,9 @@ class RSModelLoaderDecodeTest {
 
     @Test
     fun decodesEmptyTypeTrailerModels() {
-        val type1 = OutputStream().apply { writeType1Header(vertexCount = 0, faceCount = 0) }.flip()
-        val type2 = OutputStream().apply { writeType2Header(vertexCount = 0, faceCount = 0) }.flip()
-        val type3 = OutputStream().apply { writeType3Header(vertexCount = 0, faceCount = 0) }.flip()
+        val type1 = OutputBuffer(16).apply { writeType1Header(vertexCount = 0, faceCount = 0) }.array()
+        val type2 = OutputBuffer(16).apply { writeType2Header(vertexCount = 0, faceCount = 0) }.array()
+        val type3 = OutputBuffer(16).apply { writeType3Header(vertexCount = 0, faceCount = 0) }.array()
 
         assertTrue(RSModelLoader.isType1(type1))
         assertTrue(RSModelLoader.isType2(type2))
@@ -246,12 +246,12 @@ class RSModelLoaderDecodeTest {
         assertNull(model.faceTypes)
     }
 
-    private fun lowRevTriangle(): ByteArray = OutputStream().apply {
+    private fun lowRevTriangle(): ByteArray = OutputBuffer(16).apply {
         writeTriangleBody()
         writeLowRevHeader(priority = 5)
-    }.flip()
+    }.array()
 
-    private fun OutputStream.writeTriangleBody() {
+    private fun OutputBuffer.writeTriangleBody() {
         writeByte(7)
         writeByte(4)
         writeByte(3)
@@ -268,7 +268,7 @@ class RSModelLoaderDecodeTest {
         writeSmart(10)
     }
 
-    private fun OutputStream.writeLowRevHeader(
+    private fun OutputBuffer.writeLowRevHeader(
         vertexCount: Int = 3,
         faceCount: Int = 1,
         textureConfigCount: Int = 0,
@@ -296,7 +296,7 @@ class RSModelLoaderDecodeTest {
         writeShort(triangleLength)
     }
 
-    private fun OutputStream.writeType1Header(
+    private fun OutputBuffer.writeType1Header(
         vertexCount: Int = 3,
         faceCount: Int = 1,
         priority: Int = 0,
@@ -323,7 +323,7 @@ class RSModelLoaderDecodeTest {
         writeByte(255)
     }
 
-    private fun OutputStream.writeType2Header(
+    private fun OutputBuffer.writeType2Header(
         vertexCount: Int = 3,
         faceCount: Int = 1,
         priority: Int = 0,
@@ -350,7 +350,7 @@ class RSModelLoaderDecodeTest {
         writeByte(254)
     }
 
-    private fun OutputStream.writeType3Header(
+    private fun OutputBuffer.writeType3Header(
         vertexCount: Int = 3,
         faceCount: Int = 1,
         priority: Int = 0,
@@ -379,7 +379,7 @@ class RSModelLoaderDecodeTest {
         writeByte(253)
     }
 
-    private fun OutputStream.writeSmart(value: Int) {
+    private fun OutputBuffer.writeSmart(value: Int) {
         require(value in -64..63) { "test smarts stay in one-byte range: $value" }
         writeByte(value + 64)
     }

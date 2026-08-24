@@ -2,7 +2,7 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.FrameDefinition
 import net.runelite.cache.definitions.FramemapDefinition
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationTransformationGroup
 
@@ -70,8 +70,8 @@ object AnimationFrameCodec {
         override val targetVertexGroupsIndices: Array<IntArray> = framemap.frameMaps
     }
 
-    private fun decodeFramemap(def: FramemapDefinition, data: ByteArray, readValue: InputStream.() -> Int) {
-        val input = InputStream(data)
+    private fun decodeFramemap(def: FramemapDefinition, data: ByteArray, readValue: InputBuffer.() -> Int) {
+        val input = InputBuffer(data)
         def.length = input.readValue()
         def.types = IntArray(def.length) { input.readValue() }
         def.frameMaps = Array(def.length) { IntArray(input.readValue()) }
@@ -88,14 +88,14 @@ object AnimationFrameCodec {
      */
     private fun decodeOsrsFrame(framemap: FramemapDefinition, id: Int, data: ByteArray): FrameDefinition {
         val def = FrameDefinition()
-        val input = InputStream(data)
-        val values = InputStream(data)
+        val input = InputBuffer(data)
+        val values = InputBuffer(data)
         def.id = id
         def.framemap = framemap
 
         input.readUnsignedShort()
         val length = input.readUnsignedByte()
-        values.skip(3 + length)
+        values.offset += 3 + length
 
         // TODO(perf): four IntArray(500) scratch buffers are allocated per frame
         val indexFrameIds = IntArray(500)
@@ -119,9 +119,9 @@ object AnimationFrameCodec {
             if (def.framemap.types[i] == 3) {
                 fallback = 128
             }
-            translatorX[index] = if (mask and 1 != 0) values.readShortSmart() else fallback
-            translatorY[index] = if (mask and 2 != 0) values.readShortSmart() else fallback
-            translatorZ[index] = if (mask and 4 != 0) values.readShortSmart() else fallback
+            translatorX[index] = if (mask and 1 != 0) values.readSmart() else fallback
+            translatorY[index] = if (mask and 2 != 0) values.readSmart() else fallback
+            translatorZ[index] = if (mask and 4 != 0) values.readSmart() else fallback
             lastI = i
             ++index
             if (def.framemap.types[i] == 5) {
@@ -129,8 +129,8 @@ object AnimationFrameCodec {
             }
         }
 
-        if (values.getOffset() != data.size) {
-            throw RuntimeException("OSRS frame $id leftover bytes: offset=${values.getOffset()} length=${data.size}")
+        if (values.offset != data.size) {
+            throw RuntimeException("OSRS frame $id leftover bytes: offset=${values.offset} length=${data.size}")
         }
 
         copyScratch(def, index, indexFrameIds, translatorX, translatorY, translatorZ)

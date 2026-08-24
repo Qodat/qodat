@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -9,7 +9,7 @@ class SequenceLoader226Test {
 
     @Test
     fun decodesFrameTablesAndStep() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeShort(2)
             writeShort(5)
@@ -25,7 +25,7 @@ class SequenceLoader226Test {
             writeShort(7)
             writeShort(8)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().load(42, bytes)
         assertEquals("42", def.id)
@@ -37,21 +37,21 @@ class SequenceLoader226Test {
 
     @Test
     fun configureForRevisionSwitchesMayaAndSoundOpcodes() {
-        val pre226 = OutputStream().apply {
+        val pre226 = OutputBuffer(16).apply {
             writeByte(13)
             writeByte(0)
             writeByte(14)
             writeInt(99)
             writeByte(0)
-        }.flip()
+        }.array()
         val older = SequenceLoader226().load(1, pre226)
         assertEquals(99, older.animMayaId)
 
-        val post226Bytes = OutputStream().apply {
+        val post226Bytes = OutputBuffer(16).apply {
             writeByte(13)
             writeInt(77)
             writeByte(0)
-        }.flip()
+        }.array()
         val newer = SequenceLoader226().apply { configureForRevision(1269) }.load(2, post226Bytes)
         assertEquals(77, newer.animMayaId)
     }

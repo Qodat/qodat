@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.ClientScript1Instruction
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +33,7 @@ class InterfaceLoader237Test {
         val groupId = 3
         val childId = 7
         val widgetId = (groupId shl 16) + childId
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeIf1Header(
                 type = 0,
                 menuType = 0,
@@ -46,7 +46,7 @@ class InterfaceLoader237Test {
             )
             writeShort(200)
             writeByte(1)
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(widgetId, bytes)
         assertFalse(iface.isIf3)
@@ -64,11 +64,11 @@ class InterfaceLoader237Test {
 
     @Test
     fun if1UnsetParentBecomesMinusOne() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeIf1Header(type = 0, parentId = 0xFFFF)
             writeShort(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(1, bytes)
         assertEquals(-1, iface.parentId)
@@ -76,7 +76,7 @@ class InterfaceLoader237Test {
 
     @Test
     fun decodesIf1TextAndDefaultTooltip() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeIf1Header(type = 4, menuType = 1)
             writeByte(1)
             writeByte(2)
@@ -90,7 +90,7 @@ class InterfaceLoader237Test {
             writeInt(0xFF0000)
             writeInt(0x111111)
             writeString("")
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(2, bytes)
         assertEquals("Hello", iface.text)
@@ -104,7 +104,7 @@ class InterfaceLoader237Test {
 
     @Test
     fun decodesIf1ClientScripts() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeIf1Header(type = 0, scriptCount = 1)
             writeShort(3)
             writeShort(ClientScript1Instruction.Opcode.CONSTANT.ordinal)
@@ -112,7 +112,7 @@ class InterfaceLoader237Test {
             writeShort(ClientScript1Instruction.Opcode.RETURN.ordinal)
             writeShort(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(8, bytes)
         val script = iface.clientScripts[0]
@@ -128,7 +128,7 @@ class InterfaceLoader237Test {
 
     @Test
     fun decodesIf3LayerAndListeners() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(0xFF)
             writeIf3Common(type = 0)
             writeShort(16)
@@ -146,7 +146,7 @@ class InterfaceLoader237Test {
                 },
                 varTriggers = intArrayOf(5, 6),
             )
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(16, bytes)
         assertTrue(iface.isIf3)
@@ -164,7 +164,7 @@ class InterfaceLoader237Test {
 
     @Test
     fun rev237If3ModelUsesIntId() {
-        val vanilla = OutputStream().apply {
+        val vanilla = OutputBuffer(16).apply {
             writeByte(0xFF)
             writeIf3Common(type = 6, widthMode = 1)
             writeShort(0xFFFF)
@@ -179,7 +179,7 @@ class InterfaceLoader237Test {
             writeShort(0)
             writeShort(77)
             writeIf3Tail()
-        }.flip()
+        }.array()
         val vanillaIface = InterfaceLoader237().load(20, vanilla)
         assertEquals(-1, vanillaIface.modelId)
         assertEquals(1, vanillaIface.modelType)
@@ -187,7 +187,7 @@ class InterfaceLoader237Test {
         assertTrue(vanillaIface.orthogonal)
         assertFalse(InterfaceLoader237.hasRev237Magic(vanilla))
 
-        val rev237 = OutputStream().apply {
+        val rev237 = OutputBuffer(16).apply {
             writeByte(0xAA)
             writeByte(0xBB)
             writeByte(0xCC)
@@ -207,7 +207,7 @@ class InterfaceLoader237Test {
             writeShort(8)
             writeShort(9)
             writeIf3Tail(name = "model")
-        }.flip()
+        }.array()
 
         val iface = InterfaceLoader237().load(21, rev237)
         assertTrue(InterfaceLoader237.hasRev237Magic(rev237))
@@ -219,7 +219,7 @@ class InterfaceLoader237Test {
 
     @Test
     fun mapsLoadedIf3ThroughRuneliteInterfaceDefinition() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(0xFF)
             writeIf3Common(type = 4, originalX = 3, originalY = 4)
             writeShort(12)
@@ -230,7 +230,7 @@ class InterfaceLoader237Test {
             writeByte(1)
             writeInt(0xABCDEF)
             writeIf3Tail(name = "label")
-        }.flip()
+        }.array()
 
         val mapped = RuneliteInterfaceDefinition(InterfaceLoader237().load(30, bytes))
         assertTrue(mapped.isIf3)
@@ -243,7 +243,7 @@ class InterfaceLoader237Test {
         assertEquals(4, mapped.originalY)
     }
 
-    private fun OutputStream.writeIf1Header(
+    private fun OutputBuffer.writeIf1Header(
         type: Int,
         menuType: Int = 0,
         originalX: Int = 0,
@@ -268,7 +268,7 @@ class InterfaceLoader237Test {
         writeByte(scriptCount)
     }
 
-    private fun OutputStream.writeIf3Common(
+    private fun OutputBuffer.writeIf3Common(
         type: Int,
         originalX: Int = 0,
         originalY: Int = 0,
@@ -292,10 +292,10 @@ class InterfaceLoader237Test {
         writeByte(0)
     }
 
-    private fun OutputStream.writeIf3Tail(
+    private fun OutputBuffer.writeIf3Tail(
         name: String? = null,
         actions: Array<String> = emptyArray(),
-        onLoad: (OutputStream.() -> Unit)? = null,
+        onLoad: (OutputBuffer.() -> Unit)? = null,
         varTriggers: IntArray = intArrayOf(),
     ) {
         write24BitInt(0)

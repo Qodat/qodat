@@ -2,7 +2,7 @@ package qodat.cache.models
 
 import qodat.cache.definition.ModelDefinition
 import qodat.cache.definition.ModelTextureDefinition
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import java.util.logging.Logger
 
 /**
@@ -82,7 +82,7 @@ class RSModelLoader {
         TODO("Not yet implemented")
     }
 
-    // TODO(perf): seven InputStream copies per model. Reuse a small pool or one buffer + offsets during cache load.
+    // TODO(perf): seven InputBuffer copies per model. Reuse a small pool or one buffer + offsets during cache load.
     private fun decodeHighRev(modelId: String, data: ByteArray): ModelDefinition {
         val streams = modelStreams(data, 7)
         val input1 = streams[0]
@@ -154,13 +154,13 @@ class RSModelLoader {
         faceCount: Int,
         textureConfigCount: Int,
         l1: Int,
-        input1: InputStream,
-        input2: InputStream,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
-        input6: InputStream,
-        input7: InputStream
+        input1: InputBuffer,
+        input2: InputBuffer,
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
+        input6: InputBuffer,
+        input7: InputBuffer
     ): RS2Model {
         val renderFlag = (0x1 and l1).inv() == -2
         val header = readTexturedHeader(input1)
@@ -392,7 +392,7 @@ class RSModelLoader {
         header: TexturedHeader,
         textureHeader: TextureTypeHeader?,
         offsets: TexturedOffsets,
-        streams: Array<InputStream>,
+        streams: Array<InputBuffer>,
         skipFooter: Boolean
     ): RS2Model {
         val input1 = streams[0]
@@ -524,7 +524,7 @@ class RSModelLoader {
         )
     }
 
-    private fun readTexturedHeader(input1: InputStream) = TexturedHeader(
+    private fun readTexturedHeader(input1: InputBuffer) = TexturedHeader(
         renderPriority = input1.readUnsignedByte(),
         transparencyFlag = input1.readUnsignedByte() == 1,
         animationFaceFlag = input1.readUnsignedByte() == 1,
@@ -537,7 +537,7 @@ class RSModelLoader {
         texturedCoordLength = input1.readUnsignedShort()
     )
 
-    private fun readTextureTypeHeader(input1: InputStream, textureConfigCount: Int): TextureTypeHeader? {
+    private fun readTextureTypeHeader(input1: InputBuffer, textureConfigCount: Int): TextureTypeHeader? {
         if (textureConfigCount <= 0) return null
         var count1 = 0
         var count2 = 0
@@ -688,12 +688,12 @@ class RSModelLoader {
         midRev: Boolean = false,
         textureDefinition: ModelTextureDefinition,
         textureConfigCount: Int,
-        input1: InputStream,
-        input2: InputStream,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
-        input6: InputStream
+        input1: InputBuffer,
+        input2: InputBuffer,
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
+        input6: InputBuffer
     ) {
         for (config in 0 until textureConfigCount) {
             val type = textureDefinition.renderTypes[config].toInt() and 255
@@ -713,7 +713,7 @@ class RSModelLoader {
     private fun readTextureData(
         textureDefinition: ModelTextureDefinition,
         texturedTriangleCount: Int,
-        input1: InputStream
+        input1: InputBuffer
     ) {
         for (triangle in 0 until texturedTriangleCount) {
             textureDefinition.renderTypes[triangle] = 0
@@ -724,7 +724,7 @@ class RSModelLoader {
     private fun readTexturedTrianglePositions(
         textureDefinition: ModelTextureDefinition,
         triangle: Int,
-        input1: InputStream
+        input1: InputBuffer
     ) {
         textureDefinition.triangleVertexIndices1[triangle] = input1.readUnsignedShort().toShort()
         textureDefinition.triangleVertexIndices2[triangle] = input1.readUnsignedShort().toShort()
@@ -735,10 +735,10 @@ class RSModelLoader {
         midRev: Boolean,
         textureDefinition: ModelTextureDefinition,
         triangle: Int,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
-        input6: InputStream
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
+        input6: InputBuffer
     ) {
         textureDefinition.texturedFaces1!![triangle] = input3.readUnsignedShort().toShort()
         textureDefinition.texturedFaces2!![triangle] = input3.readUnsignedShort().toShort()
@@ -749,11 +749,11 @@ class RSModelLoader {
     }
 
     private fun readVertices(
-        input1: InputStream,
-        input2: InputStream,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
+        input1: InputBuffer,
+        input2: InputBuffer,
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
         readVertexSkins: Boolean,
         vertexCount: Int,
         vertexSkins: IntArray?,
@@ -768,9 +768,9 @@ class RSModelLoader {
         for (point in 0 until vertexCount) {
 
             val flag = input1.readUnsignedByte()
-            val vertexXOffset = if (isFlagged(flag, 1)) input2.readShortSmart() else 0
-            val vertexYOffset = if (isFlagged(flag, 2)) input3.readShortSmart() else 0
-            val vertexZOffset = if (isFlagged(flag, 4)) input4.readShortSmart() else 0
+            val vertexXOffset = if (isFlagged(flag, 1)) input2.readSmart() else 0
+            val vertexYOffset = if (isFlagged(flag, 2)) input3.readSmart() else 0
+            val vertexZOffset = if (isFlagged(flag, 4)) input4.readSmart() else 0
 
             vertexPositionsX[point] = lastVertexPositionX + vertexXOffset
             vertexPositionsY[point] = lastVertexPositionY + vertexYOffset
@@ -786,13 +786,13 @@ class RSModelLoader {
     }
 
     private fun readTriangleRenderInformation(
-        input1: InputStream,
-        input2: InputStream,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
-        input6: InputStream,
-        input7: InputStream,
+        input1: InputBuffer,
+        input2: InputBuffer,
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
+        input6: InputBuffer,
+        input7: InputBuffer,
         triangleCount: Int,
         textureCoordinates: ByteArray?,
         faceRenderPriorities: ByteArray?,
@@ -818,11 +818,11 @@ class RSModelLoader {
     }
 
     private fun readTriangleRenderInformation(
-        input1: InputStream,
-        input2: InputStream,
-        input3: InputStream,
-        input4: InputStream,
-        input5: InputStream,
+        input1: InputBuffer,
+        input2: InputBuffer,
+        input3: InputBuffer,
+        input4: InputBuffer,
+        input5: InputBuffer,
         triangleCount: Int,
         faceTextureConfigs: ByteArray?,
         faceRenderPriorities: ByteArray?,
@@ -870,8 +870,8 @@ class RSModelLoader {
 
     @Suppress("unused")
     private fun readVertexIndicesRS3(
-        input1: InputStream,
-        input2: InputStream,
+        input1: InputBuffer,
+        input2: InputBuffer,
         faceCount: Int,
         faceVertexIndices1: IntArray,
         faceVertexIndices2: IntArray,
@@ -890,11 +890,11 @@ class RSModelLoader {
 
             when (triangleType) {
                 1 -> {
-                    vertexOffset +=  input1.readShortSmart()
+                    vertexOffset +=  input1.readSmart()
                     vertex1 = vertexOffset
-                    vertexOffset +=  input1.readShortSmart()
+                    vertexOffset +=  input1.readSmart()
                     vertex2 = vertexOffset
-                    vertexOffset +=  input1.readShortSmart()
+                    vertexOffset +=  input1.readSmart()
                     vertex3 = vertexOffset
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -902,7 +902,7 @@ class RSModelLoader {
                 }
                 2 -> {
                     vertex2 = vertex3
-                    vertex3 = input1.readShortSmart() + vertexOffset
+                    vertex3 = input1.readSmart() + vertexOffset
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -910,7 +910,7 @@ class RSModelLoader {
                 }
                 3 -> {
                     vertex1 = vertex3
-                    vertex3 = input1.readShortSmart() + vertexOffset
+                    vertex3 = input1.readSmart() + vertexOffset
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -920,7 +920,7 @@ class RSModelLoader {
                     val vertex1Copy = vertex1
                     vertex1 = vertex2
                     vertex2 = vertex1Copy
-                    vertex3 = input1.readShortSmart() + vertexOffset
+                    vertex3 = input1.readSmart() + vertexOffset
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex1Copy
@@ -931,8 +931,8 @@ class RSModelLoader {
     }
 
     private fun readVertexIndices(
-        input1: InputStream,
-        input2: InputStream,
+        input1: InputBuffer,
+        input2: InputBuffer,
         faceCount: Int,
         faceVertexIndices1: IntArray,
         faceVertexIndices2: IntArray,
@@ -950,9 +950,9 @@ class RSModelLoader {
 
             when (type) {
                 1 -> {
-                    vertex1 = input1.readShortSmart() + vertexOffset
-                    vertex2 = input1.readShortSmart() + vertex1
-                    vertex3 = input1.readShortSmart() + vertex2
+                    vertex1 = input1.readSmart() + vertexOffset
+                    vertex2 = input1.readSmart() + vertex1
+                    vertex3 = input1.readSmart() + vertex2
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -960,7 +960,7 @@ class RSModelLoader {
                 }
                 2 -> {
                     vertex2 = vertex3
-                    vertex3 = input1.readShortSmart() + vertex2
+                    vertex3 = input1.readSmart() + vertex2
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -968,7 +968,7 @@ class RSModelLoader {
                 }
                 3 -> {
                     vertex1 = vertex3
-                    vertex3 = input1.readShortSmart() + vertexOffset
+                    vertex3 = input1.readSmart() + vertexOffset
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex2
@@ -978,7 +978,7 @@ class RSModelLoader {
                     val vertex1Copy = vertex1
                     vertex1 = vertex2
                     vertex2 = vertex1Copy
-                    vertex3 = input1.readShortSmart() + vertexOffset
+                    vertex3 = input1.readSmart() + vertexOffset
                     vertexOffset = vertex3
                     faceVertexIndices1[i] = vertex1
                     faceVertexIndices2[i] = vertex1Copy
@@ -1098,4 +1098,4 @@ class RSModelLoader {
 
 }
 
-private fun modelStreams(data: ByteArray, count: Int) = Array(count) { InputStream(data) }
+private fun modelStreams(data: ByteArray, count: Int) = Array(count) { InputBuffer(data) }

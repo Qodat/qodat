@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.loaders.TextureLoader
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,13 +11,13 @@ class TextureDefinitionLoaderTest {
 
     @Test
     fun decodesRev233SingleFileTexture() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeShort(55)
             writeShort(0x1234)
             writeByte(1)
             writeByte(2)
             writeByte(3)
-        }.flip()
+        }.array()
 
         val texture = TextureLoader().load(9, bytes)
         assertEquals(9, texture.id)
@@ -30,7 +30,7 @@ class TextureDefinitionLoaderTest {
 
     @Test
     fun decodesLegacyMultiFileTexture() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeShort(0x00AB)
             writeByte(0)
             writeByte(2)
@@ -42,7 +42,7 @@ class TextureDefinitionLoaderTest {
             writeInt(0x222222)
             writeByte(6)
             writeByte(7)
-        }.flip()
+        }.array()
 
         val texture = TextureLoader().setRev233(false).load(4, bytes)
         assertEquals(4, texture.id)

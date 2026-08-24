@@ -1,11 +1,11 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyNpcDefinition
 
 class LegacyNpcDecoder {
 
-    fun load(id: Int, `is`: InputStream): LegacyNpcDefinition {
+    fun load(id: Int, `is`: InputBuffer): LegacyNpcDefinition {
 
         val def = LegacyNpcBuilder()
 
@@ -33,7 +33,7 @@ class LegacyNpcDecoder {
         )
     }
 
-    private fun decodeValues(opcode: Int, def: LegacyNpcBuilder, stream: InputStream) {
+    private fun decodeValues(opcode: Int, def: LegacyNpcBuilder, stream: InputBuffer) {
         val length: Int
         var index: Int
         when (opcode) {

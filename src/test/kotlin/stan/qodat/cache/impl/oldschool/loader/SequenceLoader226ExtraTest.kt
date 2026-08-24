@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -11,13 +11,13 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun emptyFrameAndChatTablesStayEmpty() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeShort(0)
             writeByte(12)
             writeByte(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().load(0, bytes)
         assertEquals("0", def.id)
@@ -28,7 +28,7 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun packsEdgeFrameIdsWithoutSwappingTables() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeFrameTables(
                 lengths = intArrayOf(1, 65535),
@@ -36,7 +36,7 @@ class SequenceLoader226ExtraTest {
                 archiveIds = intArrayOf(2, 1),
             )
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().load(65535, bytes)
         assertTrue(def.frameLenghts.contentEquals(intArrayOf(1, 65535)))
@@ -45,7 +45,7 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun pre226Opcode15MapsSoundsAnd16SetsMayaRange() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(15)
             writeShort(1)
             writeShort(7)
@@ -54,7 +54,7 @@ class SequenceLoader226ExtraTest {
             writeShort(10)
             writeShort(20)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().load(1, bytes)
         val sound = def.sounds?.get(7)
@@ -71,14 +71,14 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun post226Opcode15SetsMayaRangeAnd16SetsVerticalOffset() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(15)
             writeShort(4)
             writeShort(9)
             writeByte(16)
             writeByte(-3)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().apply { configureForRevision(1269) }.load(2, bytes)
         assertEquals(4, def.animMayaStart)
@@ -89,11 +89,11 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun revision1268KeepsPre226MayaOnOpcode14() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(14)
             writeInt(55)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val atBoundary = SequenceLoader226().apply { configureForRevision(1268) }.load(3, bytes)
         assertEquals(55, atBoundary.animMayaId)
@@ -102,7 +102,7 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun post226Opcode14MapsSoundsWithWeight() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(14)
             writeShort(1)
             writeShort(0)
@@ -112,7 +112,7 @@ class SequenceLoader226ExtraTest {
             writeByte(3)
             writeByte(4)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().apply { configureForRevision(1269) }.load(4, bytes)
         val sound = def.sounds?.get(0)
@@ -127,12 +127,12 @@ class SequenceLoader226ExtraTest {
     @Test
     fun rev220BoundarySwitchesSoundLayout() {
         val oldBits = packed24Sound(id = 6, loops = 2, location = 1)
-        val pre220 = OutputStream().apply {
+        val pre220 = OutputBuffer(16).apply {
             writeByte(13)
             writeByte(1)
             write24(oldBits)
             writeByte(0)
-        }.flip()
+        }.array()
         val oldSound = SequenceLoader226().apply { configureForRevision(1141) }.load(5, pre220).sounds?.get(0)
         assertEquals(6, oldSound?.id)
         assertEquals(2, oldSound?.loops)
@@ -140,7 +140,7 @@ class SequenceLoader226ExtraTest {
         assertEquals(0, oldSound?.retain)
         assertEquals(-1, oldSound?.weight)
 
-        val post220 = OutputStream().apply {
+        val post220 = OutputBuffer(16).apply {
             writeByte(13)
             writeByte(1)
             writeShort(9)
@@ -148,7 +148,7 @@ class SequenceLoader226ExtraTest {
             writeByte(5)
             writeByte(6)
             writeByte(0)
-        }.flip()
+        }.array()
         val newSound = SequenceLoader226().apply { configureForRevision(1142) }.load(6, post220).sounds?.get(0)
         assertEquals(9, newSound?.id)
         assertEquals(4, newSound?.loops)
@@ -159,7 +159,7 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun mayaMasksNameAndCrossWorldFlag() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(17)
             writeByte(2)
             writeByte(0)
@@ -168,7 +168,7 @@ class SequenceLoader226ExtraTest {
             writeCString("walk")
             writeByte(19)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().load(8, bytes)
         assertEquals(256, def.animMayaMasks!!.size)
@@ -181,7 +181,7 @@ class SequenceLoader226ExtraTest {
 
     @Test
     fun invalidRev220SoundIsNullEntry() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(13)
             writeByte(1)
             writeShort(0)
@@ -189,7 +189,7 @@ class SequenceLoader226ExtraTest {
             writeByte(0)
             writeByte(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader226().apply { configureForRevision(1142) }.load(9, bytes)
         assertEquals(1, def.sounds!!.size)
@@ -202,7 +202,7 @@ class SequenceLoader226ExtraTest {
         (id shl 8) or ((loops and 7) shl 4) or (location and 15)
 }
 
-private fun OutputStream.writeFrameTables(
+private fun OutputBuffer.writeFrameTables(
     lengths: IntArray,
     fileIds: IntArray,
     archiveIds: IntArray,
@@ -213,13 +213,13 @@ private fun OutputStream.writeFrameTables(
     archiveIds.forEach { writeShort(it) }
 }
 
-private fun OutputStream.write24(value: Int) {
+private fun OutputBuffer.write24(value: Int) {
     writeByte(value ushr 16)
     writeByte(value ushr 8)
     writeByte(value)
 }
 
-private fun OutputStream.writeCString(value: String) {
+private fun OutputBuffer.writeCString(value: String) {
     value.forEach { writeByte(it.code) }
     writeByte(0)
 }

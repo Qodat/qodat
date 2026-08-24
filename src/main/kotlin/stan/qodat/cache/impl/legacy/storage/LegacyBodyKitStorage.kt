@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyKitDefinition
 import stan.qodat.cache.impl.legacy.decoder.LegacyKitDecoder
 import java.io.IOException
@@ -14,7 +14,7 @@ object LegacyBodyKitStorage {
     @Throws(IOException::class)
     fun load(cachePath: Path) {
 
-        val stream = InputStream(Files.readAllBytes(cachePath.resolve("idk.dat")))
+        val stream = InputBuffer(Files.readAllBytes(cachePath.resolve("idk.dat")))
 
         kits = Array(stream.readUnsignedShort()) {
             LegacyKitDecoder().load(it, stream)

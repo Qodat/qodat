@@ -1,6 +1,6 @@
 package stan.qodat.util
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 
 /**
  * TODO: add documentation
@@ -10,7 +10,7 @@ import qodat.cache.io.OutputStream
  * @version 1.0
  */
 
-fun OutputStream.writeByteOrShort(value: Int) {
+fun OutputBuffer.writeByteOrShort(value: Int) {
     when {
         value >= -0x40 && value < 0x40 -> writeByte(value + 64)
         value >= -0x8000 && value < 0x8000 -> writeShort(value + 49152)

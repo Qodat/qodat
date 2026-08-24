@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
+import com.displee.io.impl.InputBuffer
 import qodat.cache.definition.AnimationSound
-import qodat.cache.io.InputStream
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
 
 /**
@@ -16,7 +16,7 @@ class SequenceLoader226 {
 
     fun load(id: Int, b: ByteArray): SequenceDefinition226 {
         val def = SequenceDefinition226(id.toString())
-        InputStream(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         return def
     }
 
@@ -25,7 +25,7 @@ class SequenceLoader226 {
         this.rev226 = revision > REV_226_SEQ_ARCHIVE_REV
     }
 
-    private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputStream) {
+    private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputBuffer) {
         if (applySharedSequenceOpcode(opcode, stream)) return
         when (opcode) {
             13 -> {
@@ -89,7 +89,7 @@ class SequenceLoader226 {
         }
     }
 
-    private fun readFrameSound(stream: InputStream): AnimationSound? {
+    private fun readFrameSound(stream: InputBuffer): AnimationSound? {
         val location: Int
         var weight: Int = -1
         val loops: Int

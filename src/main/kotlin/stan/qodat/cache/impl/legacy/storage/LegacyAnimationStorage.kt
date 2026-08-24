@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyAnimationDefinition
 import stan.qodat.cache.impl.legacy.decoder.LegacySequenceDecoder
 
@@ -12,7 +12,7 @@ object LegacyAnimationStorage {
     lateinit var animations: Array<LegacyAnimationDefinition>
 
     fun load(cachePath: Path) {
-        val stream = InputStream(Files.readAllBytes(cachePath.resolve("seq.dat")))
+        val stream = InputBuffer(Files.readAllBytes(cachePath.resolve("seq.dat")))
         val length = stream.readUnsignedShort()
         animations = Array(length) {
             LegacySequenceDecoder().load(it, stream)

@@ -2,7 +2,7 @@ package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.ClientScript1Instruction
 import net.runelite.cache.definitions.InterfaceDefinition
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 
 /**
  * Interface decoder that understands Near Reality's rev237 IF3 prefix (`0xAABBCCDD`)
@@ -16,7 +16,7 @@ class InterfaceLoader237 {
 
         val rev237 = hasRev237Magic(data)
         val offset = if (rev237) MAGIC_SIZE else 0
-        val stream = InputStream(data)
+        val stream = InputBuffer(data)
         stream.offset = offset
         if (data[offset] == (-1).toByte()) {
             decodeIf3(iface, stream, rev237)
@@ -26,7 +26,7 @@ class InterfaceLoader237 {
         return iface
     }
 
-    private fun decodeIf1(iface: InterfaceDefinition, stream: InputStream) {
+    private fun decodeIf1(iface: InterfaceDefinition, stream: InputBuffer) {
         iface.isIf3 = false
         iface.type = stream.readUnsignedByte()
         iface.menuType = stream.readUnsignedByte()
@@ -182,7 +182,7 @@ class InterfaceLoader237 {
         }
     }
 
-    private fun decodeIf3(iface: InterfaceDefinition, stream: InputStream, rev237: Boolean) {
+    private fun decodeIf3(iface: InterfaceDefinition, stream: InputBuffer, rev237: Boolean) {
         stream.readUnsignedByte()
         iface.isIf3 = true
         iface.type = stream.readUnsignedByte()
@@ -306,7 +306,7 @@ class InterfaceLoader237 {
         iface.statTransmitTriggers = decodeTriggers(stream)
     }
 
-    private fun decodeListener(iface: InterfaceDefinition, stream: InputStream): Array<Any?>? {
+    private fun decodeListener(iface: InterfaceDefinition, stream: InputBuffer): Array<Any?>? {
         val count = stream.readUnsignedByte()
         if (count == 0) return null
         val values = arrayOfNulls<Any>(count)
@@ -320,7 +320,7 @@ class InterfaceLoader237 {
         return values
     }
 
-    private fun decodeTriggers(stream: InputStream): IntArray? {
+    private fun decodeTriggers(stream: InputBuffer): IntArray? {
         val count = stream.readUnsignedByte()
         if (count == 0) return null
         return IntArray(count) { stream.readInt() }
@@ -346,7 +346,7 @@ class InterfaceLoader237 {
         return instructions.toTypedArray()
     }
 
-    private fun decodeParentId(iface: InterfaceDefinition, stream: InputStream) {
+    private fun decodeParentId(iface: InterfaceDefinition, stream: InputBuffer) {
         iface.parentId = stream.readUnsignedShort()
         if (iface.parentId == 0xFFFF) {
             iface.parentId = -1
@@ -355,7 +355,7 @@ class InterfaceLoader237 {
         }
     }
 
-    private fun decodeConfigActions(iface: InterfaceDefinition, stream: InputStream) {
+    private fun decodeConfigActions(iface: InterfaceDefinition, stream: InputBuffer) {
         iface.configActions = arrayOfNulls(5)
         for (i in 0 until 5) {
             val action = stream.readString()
@@ -366,7 +366,7 @@ class InterfaceLoader237 {
         }
     }
 
-    private fun InputStream.readUnsignedShortOrNone(): Int {
+    private fun InputBuffer.readUnsignedShortOrNone(): Int {
         val value = readUnsignedShort()
         return if (value == 0xFFFF) -1 else value
     }

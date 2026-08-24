@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.InputBuffer
+import com.displee.io.impl.OutputBuffer
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ class LegacyObjectDecoderTest {
 
     @Test
     fun decodesModelsNameAnimationAndRecolors() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeByte(1)
             writeShort(70)
@@ -25,9 +25,9 @@ class LegacyObjectDecoderTest {
             writeShort(0x1001)
             writeShort(0x2002)
             writeByte(0)
-        }.flip()
+        }.array()
 
-        val obj = LegacyObjectDecoder().load(1276, InputStream(bytes))
+        val obj = LegacyObjectDecoder().load(1276, InputBuffer(bytes))
         assertEquals("Tree", obj.name)
         assertTrue(obj.modelIds.contentEquals(arrayOf("70")))
         assertTrue(obj.animationIds.contentEquals(arrayOf("15")))
@@ -37,7 +37,7 @@ class LegacyObjectDecoderTest {
 
     @Test
     fun unsetAnimationStaysMinusOneAndModelOnlyOpcodeWorks() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(5)
             writeByte(2)
             writeShort(8)
@@ -45,16 +45,16 @@ class LegacyObjectDecoderTest {
             writeByte(24)
             writeShort(0xFFFF)
             writeByte(0)
-        }.flip()
+        }.array()
 
-        val obj = LegacyObjectDecoder().load(2, InputStream(bytes))
+        val obj = LegacyObjectDecoder().load(2, InputBuffer(bytes))
         assertTrue(obj.modelIds.contentEquals(arrayOf("8", "9")))
         assertTrue(obj.animationIds.contentEquals(arrayOf("-1")))
     }
 
     @Test
     fun hiddenActionDoesNotChangeReturnedDefinition() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(2)
             writeStringOld("Chest")
             writeByte(30)
@@ -62,14 +62,14 @@ class LegacyObjectDecoderTest {
             writeByte(31)
             writeStringOld("Open")
             writeByte(0)
-        }.flip()
+        }.array()
 
-        val obj = LegacyObjectDecoder().load(3, InputStream(bytes))
+        val obj = LegacyObjectDecoder().load(3, InputBuffer(bytes))
         assertEquals("Chest", obj.name)
         assertTrue(obj.modelIds.isEmpty())
     }
 
-    private fun OutputStream.writeStringOld(value: String) {
+    private fun OutputBuffer.writeStringOld(value: String) {
         writeBytes(value.toByteArray(StandardCharsets.ISO_8859_1))
         writeByte(10)
     }

@@ -1,6 +1,6 @@
 package stan.qodat.util
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import qodat.cache.definition.ModelDefinition
 
 /**
@@ -12,15 +12,15 @@ import qodat.cache.definition.ModelDefinition
  */
 const val BUFFER_SIZE = 30_000
 
-fun export(modelDefinition: ModelDefinition) : OutputStream {
+fun export(modelDefinition: ModelDefinition) : OutputBuffer {
 
-    val out = OutputStream(BUFFER_SIZE)
+    val out = OutputBuffer(BUFFER_SIZE)
 
-    val outVertexFlags = OutputStream()
-    val outPointX = OutputStream()
-    val outPointY = OutputStream()
-    val outPointZ = OutputStream()
-    val outVertexSkins = OutputStream()
+    val outVertexFlags = OutputBuffer(16)
+    val outPointX = OutputBuffer(16)
+    val outPointY = OutputBuffer(16)
+    val outPointZ = OutputBuffer(16)
+    val outVertexSkins = OutputBuffer(16)
 
     val vertexCount = modelDefinition.getVertexCount()
     val vertexSkins = modelDefinition.getVertexSkins()
@@ -37,13 +37,13 @@ fun export(modelDefinition: ModelDefinition) : OutputStream {
         vertexSkins
     )
 
-    val outFaceColors = OutputStream()
-    val outFaceSkins = OutputStream()
-    val outFaceVertexIndices = OutputStream()
-    val outFaceVertexIndicesMasks = OutputStream()
-    val outFaceRenderTypes = OutputStream()
-    val outFaceRenderPriorities = OutputStream()
-    val outFaceAlphas = OutputStream()
+    val outFaceColors = OutputBuffer(16)
+    val outFaceSkins = OutputBuffer(16)
+    val outFaceVertexIndices = OutputBuffer(16)
+    val outFaceVertexIndicesMasks = OutputBuffer(16)
+    val outFaceRenderTypes = OutputBuffer(16)
+    val outFaceRenderPriorities = OutputBuffer(16)
+    val outFaceAlphas = OutputBuffer(16)
 
     val faceCount = modelDefinition.getFaceCount()
     val faceColors = modelDefinition.getFaceColors()
@@ -78,7 +78,7 @@ fun export(modelDefinition: ModelDefinition) : OutputStream {
         modelDefinition.getFaceVertexIndices3()
     )
 
-    val outFaceTextures = OutputStream()
+    val outFaceTextures = OutputBuffer(16)
     val textureConfigCount = modelDefinition.getTextureConfigCount()
     if(textureConfigCount > 0) {
         writeFaceTextures(
@@ -124,12 +124,12 @@ fun export(modelDefinition: ModelDefinition) : OutputStream {
     return out
 }
 
-private fun write(out: OutputStream, section: OutputStream) {
-    out.writeBytes(section.array, 0, section.offset)
+private fun write(out: OutputBuffer, section: OutputBuffer) {
+    out.writeBytes(section.raw(), 0, section.offset)
 }
 
 private fun writeFaceTextures(
-    out1: OutputStream,
+    out1: OutputBuffer,
     textureConfigCount: Int,
     triangleVertexIndices1: ShortArray,
     triangleVertexIndices2: ShortArray,
@@ -143,8 +143,8 @@ private fun writeFaceTextures(
 }
 
 private fun writeFaceVertexIndices(
-    out1: OutputStream,
-    out2: OutputStream,
+    out1: OutputBuffer,
+    out2: OutputBuffer,
     faceCount: Int,
     faceVertexIndices1: IntArray,
     faceVertexIndices2: IntArray,
@@ -180,11 +180,11 @@ private fun writeFaceVertexIndices(
 }
 
 private fun writeFaceData(
-    out1: OutputStream,
-    out2: OutputStream,
-    out3: OutputStream,
-    out4: OutputStream,
-    out5: OutputStream,
+    out1: OutputBuffer,
+    out2: OutputBuffer,
+    out3: OutputBuffer,
+    out4: OutputBuffer,
+    out5: OutputBuffer,
     faceCount: Int,
     faceColors: ShortArray,
     faceTextures: ShortArray?,
@@ -221,11 +221,11 @@ private fun writeFaceData(
 }
 
 private fun writeVertexData(
-    out1: OutputStream,
-    out2: OutputStream,
-    out3: OutputStream,
-    out4: OutputStream,
-    out5: OutputStream,
+    out1: OutputBuffer,
+    out2: OutputBuffer,
+    out3: OutputBuffer,
+    out4: OutputBuffer,
+    out5: OutputBuffer,
     vertexCount: Int,
     vertexPositionsX: IntArray,
     vertexPositionsY: IntArray,
@@ -264,7 +264,7 @@ private fun writeVertexData(
 }
 
 private fun writeHeader(
-    stream: OutputStream,
+    stream: OutputBuffer,
     vertexCount: Int,
     faceCount: Int,
     faceTextureConfigCount: Int,

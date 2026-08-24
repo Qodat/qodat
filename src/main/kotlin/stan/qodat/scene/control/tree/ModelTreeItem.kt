@@ -47,7 +47,7 @@ class ModelTreeItem(
                         ),
                         mode = FileChooserMode.Save
                     ) {}.first()
-                    val bytes = export(model.modelDefinition).flip().let {
+                    val bytes = export(model.modelDefinition).array().let {
                         if (file.name.endsWith(".gz"))
                             GZip.compress(it)
                         else

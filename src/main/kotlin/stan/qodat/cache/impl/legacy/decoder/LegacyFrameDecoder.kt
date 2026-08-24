@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyAnimationFrameDefinition
 import stan.qodat.cache.impl.legacy.LegacyAnimationSkeletonDefinition
 
@@ -15,14 +15,14 @@ import stan.qodat.cache.impl.legacy.LegacyAnimationSkeletonDefinition
  */
 class LegacyFrameDecoder {
 
-    fun loadAll(framemap: LegacyAnimationSkeletonDefinition, `in`: InputStream) : Array<LegacyAnimationFrameDefinition?> {
+    fun loadAll(framemap: LegacyAnimationSkeletonDefinition, `in`: InputBuffer) : Array<LegacyAnimationFrameDefinition?> {
         val count = `in`.readUnsignedShort()
         return Array(count * 3) {
             load(framemap, `in`)
         }
     }
 
-    fun load(framemap: LegacyAnimationSkeletonDefinition, `in`: InputStream): LegacyAnimationFrameDefinition? {
+    fun load(framemap: LegacyAnimationSkeletonDefinition, `in`: InputBuffer): LegacyAnimationFrameDefinition? {
 
         if(`in`.remaining() == 0)
             return null

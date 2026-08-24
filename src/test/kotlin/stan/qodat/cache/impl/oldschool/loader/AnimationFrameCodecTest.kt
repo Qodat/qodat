@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -37,7 +37,7 @@ class AnimationFrameCodecTest {
 
     @Test
     fun decodesOsrsFramemapAndFrame() {
-        val framemapBytes = OutputStream().apply {
+        val framemapBytes = OutputBuffer(16).apply {
             writeByte(2)
             writeByte(0)
             writeByte(3)
@@ -46,7 +46,7 @@ class AnimationFrameCodecTest {
             writeByte(1)
             writeByte(2)
             writeByte(3)
-        }.flip()
+        }.array()
         val framemap = AnimationFrameCodec.loadFramemap(9, framemapBytes)
         assertEquals(2, framemap.length)
         assertEquals(0, framemap.types[0])
@@ -54,7 +54,7 @@ class AnimationFrameCodecTest {
         assertTrue(framemap.frameMaps[0].contentEquals(intArrayOf(1, 2)))
         assertTrue(framemap.frameMaps[1].contentEquals(intArrayOf(3)))
 
-        val frameBytes = OutputStream().apply {
+        val frameBytes = OutputBuffer(16).apply {
             writeShort(9)
             writeByte(2)
             writeByte(1)
@@ -63,7 +63,7 @@ class AnimationFrameCodecTest {
             writeByte(20 + 64)
             writeByte(30 + 64)
             writeByte(40 + 64)
-        }.flip()
+        }.array()
         val frame = AnimationFrameCodec.loadFrame(framemap, 4, frameBytes)
         assertEquals(4, frame.id)
         assertEquals(2, frame.translatorCount)
@@ -80,7 +80,7 @@ class AnimationFrameCodecTest {
 
     @Test
     fun decodes317FramemapAndFrameAndMarksType5Alpha() {
-        val framemapBytes = OutputStream().apply {
+        val framemapBytes = OutputBuffer(16).apply {
             writeShort(2)
             writeShort(0)
             writeShort(5)
@@ -90,7 +90,7 @@ class AnimationFrameCodecTest {
             writeShort(7)
             writeByte(AnimationFrameCodec.NR_317_MAGIC.toInt())
             writeByte(AnimationFrameCodec.NR_317_MAGIC.toInt())
-        }.flip()
+        }.array()
         val framemap = AnimationFrameCodec.loadFramemap(3, framemapBytes)
         assertEquals(2, framemap.length)
         assertEquals(5, framemap.types[1])

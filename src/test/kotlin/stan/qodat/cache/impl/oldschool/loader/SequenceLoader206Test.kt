@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -10,7 +10,7 @@ class SequenceLoader206Test {
 
     @Test
     fun decodesFrameTablesWithoutSwappingLengthsAndIds() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeFrameTables(
                 lengths = intArrayOf(5, 40),
@@ -20,7 +20,7 @@ class SequenceLoader206Test {
             writeByte(2)
             writeShort(12)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(7, bytes)
         assertEquals("7", def.id)
@@ -31,13 +31,13 @@ class SequenceLoader206Test {
 
     @Test
     fun emptyFrameAndChatTablesStayEmpty() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeShort(0)
             writeByte(12)
             writeByte(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(0, bytes)
         assertEquals("0", def.id)
@@ -48,7 +48,7 @@ class SequenceLoader206Test {
 
     @Test
     fun packsEdgeFrameIds() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeFrameTables(
                 lengths = intArrayOf(0, 65535),
@@ -60,7 +60,7 @@ class SequenceLoader206Test {
             writeShort(0)
             writeShort(65535)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(65535, bytes)
         assertEquals("65535", def.id)
@@ -71,13 +71,13 @@ class SequenceLoader206Test {
 
     @Test
     fun opcode13IsFrameSoundsNotMayaId() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(13)
             writeByte(2)
             write24(0x010203)
             write24(0x040506)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(1, bytes)
         assertTrue(def.frameSounds.contentEquals(intArrayOf(0x010203, 0x040506)))
@@ -86,7 +86,7 @@ class SequenceLoader206Test {
 
     @Test
     fun opcode14SetsMayaIdAndSkips15Through17Payloads() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(15)
             writeShort(1)
             writeShort(9)
@@ -103,7 +103,7 @@ class SequenceLoader206Test {
             writeByte(18)
             writeCString("idle")
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(3, bytes)
         assertEquals(99, def.animMayaId)
@@ -114,7 +114,7 @@ class SequenceLoader206Test {
 
     @Test
     fun interleaveLeaveAppendsSentinelAndFlagsStayDefaultUnlessSet() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(3)
             writeByte(2)
             writeByte(1)
@@ -125,7 +125,7 @@ class SequenceLoader206Test {
             writeByte(7)
             writeShort(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = SequenceLoader206().load(2, bytes)
         assertTrue(def.interleaveLeave.contentEquals(intArrayOf(1, 4, 9999999)))
@@ -139,7 +139,7 @@ class SequenceLoader206Test {
     private fun packed(fileId: Int, archiveId: Int): Int = fileId + (archiveId shl 16)
 }
 
-private fun OutputStream.writeFrameTables(
+private fun OutputBuffer.writeFrameTables(
     lengths: IntArray,
     fileIds: IntArray,
     archiveIds: IntArray,
@@ -150,13 +150,13 @@ private fun OutputStream.writeFrameTables(
     archiveIds.forEach { writeShort(it) }
 }
 
-private fun OutputStream.write24(value: Int) {
+private fun OutputBuffer.write24(value: Int) {
     writeByte(value ushr 16)
     writeByte(value ushr 8)
     writeByte(value)
 }
 
-private fun OutputStream.writeCString(value: String) {
+private fun OutputBuffer.writeCString(value: String) {
     value.forEach { writeByte(it.code) }
     writeByte(0)
 }

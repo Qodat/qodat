@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyKitDefinition
 
 /**
@@ -12,7 +12,7 @@ import stan.qodat.cache.impl.legacy.LegacyKitDefinition
  */
 class LegacyKitDecoder {
 
-    fun load(id: Int, `is`: InputStream): LegacyKitDefinition {
+    fun load(id: Int, `is`: InputBuffer): LegacyKitDefinition {
 
         var bodyPartId = 0
         var modelIds : Array<String>? = null

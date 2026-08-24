@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyAnimationFrameDefinition
 import stan.qodat.cache.impl.legacy.LegacyAnimationSkeletonDefinition
 import stan.qodat.cache.impl.legacy.decoder.LegacyFrameDecoder
@@ -38,7 +38,7 @@ object LegacyFrameStorage {
                 val compressedData = Files.readAllBytes(cachePath.resolve("frames").resolve("$fileId.gz"))
                 val uncompressedData = CompressionUtil.uncompressGzip(compressedData)
 
-                val `in` = InputStream(uncompressedData)
+                val `in` = InputBuffer(uncompressedData)
 
                 val frameMapDecoder = LegacyAnimationSkeletonDecoder()
                 val frameMap = frameMapDecoder.load(fileId, `in`)

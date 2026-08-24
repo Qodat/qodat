@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyObjectDefinition
 
 /**
@@ -12,7 +12,7 @@ import stan.qodat.cache.impl.legacy.LegacyObjectDefinition
  */
 class LegacyObjectDecoder {
 
-    fun load(id: Int, `is`: InputStream): LegacyObjectDefinition {
+    fun load(id: Int, `is`: InputBuffer): LegacyObjectDefinition {
         val def = LegacyObjectBuilder()
         def.setDefaults()
         while (true) {
@@ -33,7 +33,7 @@ class LegacyObjectDecoder {
     private fun processOp317(
         opcode: Int,
         def: LegacyObjectBuilder,
-        `is`: InputStream
+        `is`: InputBuffer
     ) {
         when (opcode) {
             1 -> {
@@ -47,7 +47,7 @@ class LegacyObjectDecoder {
                     if (def.objectModels == null) {
                         processObjectModels(def, `is`, length)
                     } else {
-                        `is`.skip(length * 2)
+                        `is`.offset += length * 2
                     }
                 }
             }
@@ -128,7 +128,7 @@ class LegacyObjectDecoder {
 
     private fun processObjectTypesAndModels(
         def: LegacyObjectBuilder,
-        `is`: InputStream
+        `is`: InputBuffer
     ) {
         val length = `is`.readUnsignedByte()
         if (length > 0) {
@@ -145,7 +145,7 @@ class LegacyObjectDecoder {
 
     private fun processObjectModels(
         def: LegacyObjectBuilder,
-        `is`: InputStream,
+        `is`: InputBuffer,
         length: Int
     ) {
         def.objectTypes = null
@@ -154,7 +154,7 @@ class LegacyObjectDecoder {
         def.objectModels = objectModels
     }
 
-    private fun readConfigBits(def: LegacyObjectBuilder, `is`: InputStream) {
+    private fun readConfigBits(def: LegacyObjectBuilder, `is`: InputBuffer) {
         var varpID = `is`.readUnsignedShort()
         if (varpID == 0xFFFF) varpID = -1
         def.varbitID = varpID

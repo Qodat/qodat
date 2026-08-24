@@ -1,6 +1,6 @@
 package stan.qodat.util
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
@@ -30,7 +30,7 @@ class IoExtensionsTest {
     }
 
     private fun encoded(value: Int): ByteArray =
-        OutputStream().apply { writeByteOrShort(value) }.flip()
+        OutputBuffer(16).apply { writeByteOrShort(value) }.array()
 
     private fun shortBytes(value: Int): ByteArray {
         val biased = value + 49152

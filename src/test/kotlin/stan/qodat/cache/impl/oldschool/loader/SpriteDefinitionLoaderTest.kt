@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.loaders.SpriteLoader
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -12,7 +12,7 @@ class SpriteDefinitionLoaderTest {
     @Test
     fun decodesSingleFrameSpriteAndWrapsDefinition() {
         val rgb = 0x00AABB
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(0)
             writeByte(1)
             write24BitInt(rgb)
@@ -24,7 +24,7 @@ class SpriteDefinitionLoaderTest {
             writeShort(1)
             writeShort(1)
             writeShort(1)
-        }.flip()
+        }.array()
 
         val sprites = SpriteLoader().load(44, bytes)
         assertEquals(1, sprites.size)
@@ -54,7 +54,7 @@ class SpriteDefinitionLoaderTest {
 
     @Test
     fun verticalFlagReadsColumnMajorPixels() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(SpriteLoader.FLAG_VERTICAL)
             writeByte(1)
             writeByte(2)
@@ -70,7 +70,7 @@ class SpriteDefinitionLoaderTest {
             writeShort(2)
             writeShort(2)
             writeShort(1)
-        }.flip()
+        }.array()
 
         val sprite = SpriteLoader().load(1, bytes)[0]
         assertTrue(sprite.pixelIdx.contentEquals(byteArrayOf(1, 1, 2, 2)))

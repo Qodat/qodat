@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.loaders.NpcLoader
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import stan.qodat.cache.NpcPrimaryAnimations
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ class NpcDefinitionLoaderTest {
 
     @Test
     fun decodesModelsNameAnimsAndRecolors() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeByte(2)
             writeShort(100)
@@ -34,7 +34,7 @@ class NpcDefinitionLoaderTest {
             writeByte(95)
             writeShort(42)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val npc = NpcLoader().load(394, bytes)
         assertEquals(394, npc.id)
@@ -55,7 +55,7 @@ class NpcDefinitionLoaderTest {
 
     @Test
     fun defaultFootprintScalesWithSize() {
-        val bytes = OutputStream().apply { writeByte(0) }.flip()
+        val bytes = OutputBuffer(16).apply { writeByte(0) }.array()
         val npc = NpcLoader().load(1, bytes)
         assertEquals("null", npc.name)
         assertEquals((0.4F * 128).toInt(), npc.footprintSize)
@@ -63,11 +63,11 @@ class NpcDefinitionLoaderTest {
 
     @Test
     fun revisionSwitchStillDecodesName() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(2)
             writeString("Man")
             writeByte(0)
-        }.flip()
+        }.array()
 
         val npc = NpcLoader().configureForRevision(1000).load(2, bytes)
         assertEquals("Man", npc.name)
@@ -75,12 +75,12 @@ class NpcDefinitionLoaderTest {
 
     @Test
     fun intModelOpcodeReplacesShortModels() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(61)
             writeByte(1)
             writeInt(900_001)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val npc = NpcLoader().load(3, bytes)
         assertTrue(npc.models.contentEquals(intArrayOf(900_001)))

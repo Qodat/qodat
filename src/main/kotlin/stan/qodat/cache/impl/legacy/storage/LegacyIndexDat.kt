@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.storage
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -10,12 +10,12 @@ internal class LegacyIndexDat(
     datFileName: String,
 ) {
     val count: Int
-    val dataStream: InputStream
+    val dataStream: InputBuffer
     private val positions: IntArray
 
     init {
-        val indexStream = InputStream(Files.readAllBytes(cachePath.resolve(indexFileName)))
-        dataStream = InputStream(Files.readAllBytes(cachePath.resolve(datFileName)))
+        val indexStream = InputBuffer(Files.readAllBytes(cachePath.resolve(indexFileName)))
+        dataStream = InputBuffer(Files.readAllBytes(cachePath.resolve(datFileName)))
         count = indexStream.readUnsignedShort()
         positions = IntArray(count)
         var offset = 2

@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.oldschool.loader
 
 import net.runelite.cache.definitions.loaders.ObjectLoader
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -12,7 +12,7 @@ class ObjectDefinitionLoaderTest {
 
     @Test
     fun decodesModelsNameAnimationAndRecolors() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeByte(2)
             writeShort(50)
@@ -32,7 +32,7 @@ class ObjectDefinitionLoaderTest {
             writeByte(15)
             writeByte(3)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val obj = ObjectLoader().load(1738, bytes)
         assertEquals(1738, obj.id)
@@ -48,23 +48,23 @@ class ObjectDefinitionLoaderTest {
 
     @Test
     fun unsetAnimationSentinelBecomesMinusOne() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(24)
             writeShort(0xFFFF)
             writeByte(0)
-        }.flip()
+        }.array()
 
         assertEquals(-1, ObjectLoader().load(1, bytes).animationID)
     }
 
     @Test
     fun modelOnlyOpcodeClearsTypes() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(5)
             writeByte(1)
             writeShort(9)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val obj = ObjectLoader().load(2, bytes)
         assertTrue(obj.objectModels.contentEquals(intArrayOf(9)))
@@ -74,10 +74,10 @@ class ObjectDefinitionLoaderTest {
 
     @Test
     fun clearedInteractTypeDisablesSupportedItems() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(17)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val obj = ObjectLoader().load(3, bytes)
         assertEquals(0, obj.interactType)
@@ -87,12 +87,12 @@ class ObjectDefinitionLoaderTest {
 
     @Test
     fun intModelOpcodeAndRevisionConfigStillLoad() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(7)
             writeByte(1)
             writeInt(800_002)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val obj = ObjectLoader().configureForRevision(1000).load(4, bytes)
         assertTrue(obj.objectModels.contentEquals(intArrayOf(800_002)))

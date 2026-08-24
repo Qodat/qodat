@@ -1,7 +1,7 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.InputBuffer
+import com.displee.io.impl.OutputBuffer
 import java.nio.charset.StandardCharsets
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,7 +11,7 @@ class LegacyNpcDecoderTest {
 
     @Test
     fun decodesModelsNameAnimsAndRecolors() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeByte(2)
             writeShort(30)
@@ -30,9 +30,9 @@ class LegacyNpcDecoderTest {
             writeShort(0x00AA)
             writeShort(0x00BB)
             writeByte(0)
-        }.flip()
+        }.array()
 
-        val npc = LegacyNpcDecoder().load(13, InputStream(bytes))
+        val npc = LegacyNpcDecoder().load(13, InputBuffer(bytes))
         assertEquals("Goblin", npc.name)
         assertTrue(npc.modelIds.contentEquals(arrayOf("30", "31")))
         assertTrue(npc.animationIds.contentEquals(arrayOf("9", "8", "12", "11", "10")))
@@ -42,14 +42,14 @@ class LegacyNpcDecoderTest {
 
     @Test
     fun emptyPayloadUsesNullNameAndEmptyModels() {
-        val bytes = OutputStream().apply { writeByte(0) }.flip()
-        val npc = LegacyNpcDecoder().load(1, InputStream(bytes))
+        val bytes = OutputBuffer(16).apply { writeByte(0) }.array()
+        val npc = LegacyNpcDecoder().load(1, InputBuffer(bytes))
         assertEquals("null", npc.name)
         assertTrue(npc.modelIds.isEmpty())
         assertTrue(npc.animationIds.contentEquals(arrayOf("-1", "-1", "-1", "-1", "-1")))
     }
 
-    private fun OutputStream.writeStringOld(value: String) {
+    private fun OutputBuffer.writeStringOld(value: String) {
         writeBytes(value.toByteArray(StandardCharsets.ISO_8859_1))
         writeByte(10)
     }

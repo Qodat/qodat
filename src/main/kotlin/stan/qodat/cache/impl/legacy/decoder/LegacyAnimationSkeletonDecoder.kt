@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyAnimationSkeletonDefinition
 
 /**
@@ -12,7 +12,7 @@ import stan.qodat.cache.impl.legacy.LegacyAnimationSkeletonDefinition
  */
 class LegacyAnimationSkeletonDecoder {
 
-    fun load(fileId: Int, `in`: InputStream): LegacyAnimationSkeletonDefinition {
+    fun load(fileId: Int, `in`: InputBuffer): LegacyAnimationSkeletonDefinition {
         val length = `in`.readUnsignedShort()
         // TODO(perf): builds an intermediate Array<Int> then map/toTypedArray for vertex groups
         return LegacyAnimationSkeletonDefinition(

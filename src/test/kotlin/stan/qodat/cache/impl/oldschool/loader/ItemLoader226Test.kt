@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.OutputStream
+import com.displee.io.impl.OutputBuffer
 import java.util.OptionalInt
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -23,8 +23,8 @@ class ItemLoader226Test {
     }
 
     @Test
-    fun decodesCoreFieldsThroughRuneLiteInputStream() {
-        val bytes = OutputStream().apply {
+    fun decodesCoreFieldsThroughRuneLiteInputBuffer() {
+        val bytes = OutputBuffer(16).apply {
             writeByte(1)
             writeShort(321)
             writeByte(2)
@@ -46,7 +46,7 @@ class ItemLoader226Test {
             writeByte(95)
             writeShort(7)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(4151, bytes)
         assertEquals("Abyssal whip", def.name)
@@ -65,13 +65,13 @@ class ItemLoader226Test {
 
     @Test
     fun signed2dOffsetsWrapPast32767() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(7)
             writeShort(0xFFFF)
             writeByte(8)
             writeShort(0x8000)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(1, bytes)
         assertEquals(-1, def.xOffset2d)
@@ -80,7 +80,7 @@ class ItemLoader226Test {
 
     @Test
     fun hiddenGroundOptionIsCleared() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(30)
             writeString("Hidden")
             writeByte(31)
@@ -88,7 +88,7 @@ class ItemLoader226Test {
             writeByte(35)
             writeString("Drop")
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(2, bytes)
         assertNull(def.options!![0])
@@ -98,7 +98,7 @@ class ItemLoader226Test {
 
     @Test
     fun recolorRetextureAndStackVariants() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(40)
             writeByte(1)
             writeShort(0x1234)
@@ -111,7 +111,7 @@ class ItemLoader226Test {
             writeShort(4152)
             writeShort(5)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(3, bytes)
         assertTrue(def.recolorToFind!!.contentEquals(shortArrayOf(0x1234)))
@@ -124,12 +124,12 @@ class ItemLoader226Test {
 
     @Test
     fun stackablePostZerosWeight() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(75)
             writeShort(250)
             writeByte(11)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(4, bytes)
         assertEquals(1, def.stackable)
@@ -138,7 +138,7 @@ class ItemLoader226Test {
 
     @Test
     fun skipOpcodesDoNotShiftFollowingFields() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(200)
             writeByte(1)
             writeByte(2)
@@ -161,7 +161,7 @@ class ItemLoader226Test {
             writeByte(2)
             writeString("After skips")
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(5, bytes)
         assertEquals("After skips", def.name)
@@ -169,7 +169,7 @@ class ItemLoader226Test {
 
     @Test
     fun decodesIntModelIdsParamsAndNotes() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(44)
             writeInt(1_000_042)
             writeByte(97)
@@ -185,7 +185,7 @@ class ItemLoader226Test {
             write24BitInt(0x0A0B0C)
             writeString("param")
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(6, bytes)
         assertEquals(1_000_042, def.inventoryModel)
@@ -197,7 +197,7 @@ class ItemLoader226Test {
 
     @Test
     fun decodesWornModelsAndSubOps() {
-        val bytes = OutputStream().apply {
+        val bytes = OutputBuffer(16).apply {
             writeByte(23)
             writeShort(11)
             writeByte(4)
@@ -210,7 +210,7 @@ class ItemLoader226Test {
             writeString("Extra")
             writeByte(0)
             writeByte(0)
-        }.flip()
+        }.array()
 
         val def = ItemLoader226().load(7, bytes)
         assertEquals(11, def.maleModel0)
@@ -221,5 +221,5 @@ class ItemLoader226Test {
     }
 
     private fun terminator(): ByteArray =
-        OutputStream().apply { writeByte(0) }.flip()
+        OutputBuffer(16).apply { writeByte(0) }.array()
 }

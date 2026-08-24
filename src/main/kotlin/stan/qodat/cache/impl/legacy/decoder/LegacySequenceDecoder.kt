@@ -1,6 +1,6 @@
 package stan.qodat.cache.impl.legacy.decoder
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.legacy.LegacyAnimationDefinition
 
 /**
@@ -12,7 +12,7 @@ import stan.qodat.cache.impl.legacy.LegacyAnimationDefinition
  */
 class LegacySequenceDecoder {
 
-    fun load(id: Int, `is`: InputStream): LegacyAnimationDefinition {
+    fun load(id: Int, `is`: InputBuffer): LegacyAnimationDefinition {
 
         val def = LegacyAnimationBuilder()
 
@@ -40,7 +40,7 @@ class LegacySequenceDecoder {
         )
     }
 
-    private fun decodeValues(opcode: Int, def: LegacyAnimationBuilder, stream: InputStream) {
+    private fun decodeValues(opcode: Int, def: LegacyAnimationBuilder, stream: InputBuffer) {
 
         when (opcode) {
             1 -> {

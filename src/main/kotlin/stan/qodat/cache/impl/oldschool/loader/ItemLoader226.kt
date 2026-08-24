@@ -1,19 +1,19 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.oldschool.definition.ItemDefinition226
 
 class ItemLoader226 {
 
     fun load(id: Int, b: ByteArray): ItemDefinition226 {
-        // TODO(perf): opcode walk allocates InputStream per item; the items archive is large (~20k defs)
+        // TODO(perf): opcode walk allocates InputBuffer per item; the items archive is large (~20k defs)
         val def = ItemDefinition226(id)
-        InputStream(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        InputBuffer(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         def.post()
         return def
     }
 
-    private fun ItemDefinition226.decodeValues(opcode: Int, stream: InputStream) {
+    private fun ItemDefinition226.decodeValues(opcode: Int, stream: InputBuffer) {
         when (opcode) {
             1 -> inventoryModel = stream.readUnsignedShort()
             2 -> name = stream.readString()
@@ -183,13 +183,13 @@ class ItemLoader226 {
         }
     }
 
-    private fun skipSubOp(stream: InputStream) {
+    private fun skipSubOp(stream: InputBuffer) {
         stream.readUnsignedByte()
         stream.readUnsignedByte()
         stream.readString()
     }
 
-    private fun skipConditionalOp(stream: InputStream) {
+    private fun skipConditionalOp(stream: InputBuffer) {
         stream.readUnsignedByte()
         stream.readUnsignedShort()
         stream.readUnsignedShort()
@@ -198,7 +198,7 @@ class ItemLoader226 {
         stream.readString()
     }
 
-    private fun skipConditionalSubOp(stream: InputStream) {
+    private fun skipConditionalSubOp(stream: InputBuffer) {
         stream.readUnsignedByte()
         stream.readUnsignedShort()
         stream.readUnsignedShort()

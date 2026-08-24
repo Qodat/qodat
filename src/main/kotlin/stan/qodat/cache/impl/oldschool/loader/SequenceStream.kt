@@ -1,9 +1,9 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import qodat.cache.io.InputStream
+import com.displee.io.impl.InputBuffer
 import stan.qodat.cache.impl.oldschool.definition.SequenceCommonFields
 
-internal inline fun InputStream.forEachOpcode(decode: InputStream.(Int) -> Unit) {
+internal inline fun InputBuffer.forEachOpcode(decode: InputBuffer.(Int) -> Unit) {
     while (true) {
         val opcode = readUnsignedByte()
         if (opcode == 0) break
@@ -11,7 +11,7 @@ internal inline fun InputStream.forEachOpcode(decode: InputStream.(Int) -> Unit)
     }
 }
 
-internal fun InputStream.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> {
+internal fun InputBuffer.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> {
     val length = readUnsignedShort()
     val frameLengths = IntArray(length) { readUnsignedShort() }
     val frameIds = IntArray(length) { readUnsignedShort() }
@@ -21,7 +21,7 @@ internal fun InputStream.readFrameLengthAndIdTables(): Pair<IntArray, IntArray> 
     return frameLengths to frameIds
 }
 
-internal fun InputStream.readPackedArchiveFileIds(): IntArray {
+internal fun InputBuffer.readPackedArchiveFileIds(): IntArray {
     val length = readUnsignedByte()
     val ids = IntArray(length) { readUnsignedShort() }
     for (i in ids.indices) {
@@ -30,14 +30,14 @@ internal fun InputStream.readPackedArchiveFileIds(): IntArray {
     return ids
 }
 
-internal fun InputStream.readInterleaveLeave(): IntArray {
+internal fun InputBuffer.readInterleaveLeave(): IntArray {
     val length = readUnsignedByte()
     return IntArray(1 + length) {
         if (it == length) 9999999 else readUnsignedByte()
     }
 }
 
-internal fun SequenceCommonFields.applySharedSequenceOpcode(opcode: Int, stream: InputStream): Boolean {
+internal fun SequenceCommonFields.applySharedSequenceOpcode(opcode: Int, stream: InputBuffer): Boolean {
     when (opcode) {
         1 -> {
             val (lengths, ids) = stream.readFrameLengthAndIdTables()
