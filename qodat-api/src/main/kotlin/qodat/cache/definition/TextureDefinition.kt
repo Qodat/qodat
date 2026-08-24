@@ -10,6 +10,8 @@ interface TextureDefinition {
     var id: Int
     val fileIds: IntArray
     var pixels: IntArray
-
-
+    val animationDirection: Int
+        get() = 0
+    val animationSpeed: Int
+        get() = 0
 }

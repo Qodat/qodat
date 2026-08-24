@@ -4,7 +4,6 @@ import com.displee.cache.CacheLibrary
 import com.displee.cache.ProgressListener
 import javafx.application.Platform
 import javafx.concurrent.Task
-import net.runelite.cache.definitions.loaders.TextureLoader
 import org.slf4j.LoggerFactory
 import qodat.cache.Cache
 import qodat.cache.definition.*
@@ -21,6 +20,7 @@ import stan.qodat.cache.impl.displee.types.NpcManager
 import stan.qodat.cache.impl.displee.types.ObjectManager
 import stan.qodat.cache.impl.displee.types.SpotAnimManager
 import stan.qodat.cache.impl.displee.types.SpriteManager
+import stan.qodat.cache.impl.displee.types.TextureManager
 import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.util.onInvalidation
@@ -42,6 +42,7 @@ object DispleeCache : Cache("Displee") {
     lateinit var objectManager: ObjectManager
     lateinit var itemManager: ItemManager
     lateinit var spotAnimManager: SpotAnimManager
+    lateinit var textureManager: TextureManager
 
     lateinit var npcAnimParser: NpcAnimParser
     lateinit var objectAnimParser: ObjectAnimParser
@@ -151,6 +152,7 @@ object DispleeCache : Cache("Displee") {
             objectManager = ObjectManager(store)
             itemManager = ItemManager(store)
             spotAnimManager = SpotAnimManager(store)
+            textureManager = TextureManager(store)
             npcAnimParser = NpcAnimParser(store, npcManager)
             objectAnimParser = ObjectAnimParser(store, objectManager)
         }
@@ -258,16 +260,14 @@ object DispleeCache : Cache("Displee") {
     }
 
     override fun getTexture(id: Int): TextureDefinition = withOpenStore {
-        val textureData = store.data(9, 0, id) ?: throw IllegalArgumentException("Texture not found $id")
-        val texture = TextureLoader().load(id, textureData)
-        texture.method2680(1.0, 128) { spriteId, frameId ->
-            spriteManager.findSprite(spriteId, frameId)
+        val texture = textureManager.findTexture(id)
+            ?: throw IllegalArgumentException("Texture not found $id")
+        if (texture.pixels.isEmpty()) {
+            texture.computePixels(1.0, 128) { spriteId, frameId ->
+                spriteManager.findSprite(spriteId, frameId)?.let(::RuneliteSpriteDefinition)
+            }
         }
-        object : TextureDefinition {
-            override var id: Int = id
-            override val fileIds: IntArray = texture.fileIds!!
-            override var pixels: IntArray = texture.getPixels()
-        }
+        texture
     }
 
     private inline fun <T> timed(kind: String, expectedMin: Int, block: () -> Array<T>): Array<T> {
