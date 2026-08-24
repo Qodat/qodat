@@ -459,7 +459,6 @@ public class ModelLoader
 		var24 += var18;
 		int var35 = var24;
 		var24 += var19;
-		int var10000 = var24 + var20;
 		def.vertexCount = var9;
 		def.faceCount = var10;
 		def.numTextureFaces = var11;
@@ -1149,7 +1148,6 @@ public class ModelLoader
 		var22 += var17;
 		int var33 = var22;
 		var22 += var18;
-		int var10000 = var22 + var19;
 		def.vertexCount = var9;
 		def.faceCount = var10;
 		def.numTextureFaces = var11;

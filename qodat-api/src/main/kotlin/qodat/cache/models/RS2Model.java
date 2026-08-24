@@ -68,13 +68,6 @@ public class RS2Model implements ModelDefinition
 
 	private byte priority;
 
-	private short[] aShortArray2574;
-	private short[] aShortArray2575;
-	private short[] aShortArray2577;
-	private short[] aShortArray2578;
-	private byte[] aByteArray2580;
-	private short[] aShortArray2586;
-
 	private transient int[][] vertexGroups;
 	private transient int[][] faceGroups;
 
@@ -94,25 +87,8 @@ public class RS2Model implements ModelDefinition
 
 		for (int i = 0; i < faceCount; i++)
 		{
-			int textureConfig;
-			if (faceTextureConfigs == null)
-			{
-				textureConfig = -1;
-			}
-			else
-			{
-				textureConfig = faceTextureConfigs[i];
-			}
-
-			int textureIdx;
-			if (faceTextures == null)
-			{
-				textureIdx = -1;
-			}
-			else
-			{
-				textureIdx = faceTextures[i] & 0xFFFF;
-			}
+			int textureConfig = faceTextureConfigs == null ? -1 : faceTextureConfigs[i];
+			int textureIdx = faceTextures == null ? -1 : faceTextures[i] & 0xFFFF;
 
 			if (textureIdx != -1)
 			{
@@ -133,24 +109,17 @@ public class RS2Model implements ModelDefinition
 				else
 				{
 					textureConfig &= 0xFF;
-
-					byte textureRenderType = 0;
-					if (textureRenderTypes != null)
-					{
-						textureRenderType = textureRenderTypes[textureConfig];
-					}
+					byte textureRenderType = textureRenderTypes == null ? 0 : textureRenderTypes[textureConfig];
 
 					if (textureRenderType == 0)
 					{
-						int faceVertexIdx1 = faceVertexIndices1[i];
-						int faceVertexIdx2 = faceVertexIndices2[i];
-						int faceVertexIdx3 = faceVertexIndices3[i];
-
-						short triangleVertexIdx1 = textureTriangleVertexIndices1[textureConfig];
-						short triangleVertexIdx2 = textureTriangleVertexIndices2[textureConfig];
-						short triangleVertexIdx3 = textureTriangleVertexIndices3[textureConfig];
-
-						mapToUV(u, v, faceVertexIdx1, faceVertexIdx2, faceVertexIdx3, triangleVertexIdx1, triangleVertexIdx2, triangleVertexIdx3);
+						mapToUV(
+							u, v,
+							faceVertexIndices1[i], faceVertexIndices2[i], faceVertexIndices3[i],
+							textureTriangleVertexIndices1[textureConfig],
+							textureTriangleVertexIndices2[textureConfig],
+							textureTriangleVertexIndices3[textureConfig]
+						);
 					}
 				}
 
@@ -208,63 +177,43 @@ public class RS2Model implements ModelDefinition
 	{
 		if (this.vertexSkins != null)
 		{
-			int[] groupCounts = new int[256];
-			int numGroups = 0;
-			int var3, var4;
-
-			for (var3 = 0; var3 < this.vertexCount; ++var3)
-			{
-				var4 = this.vertexSkins[var3];
-				++groupCounts[var4];
-				if (var4 > numGroups)
-				{
-					numGroups = var4;
-				}
-			}
-
-			this.vertexGroups = new int[numGroups + 1][];
-
-			for (var3 = 0; var3 <= numGroups; ++var3)
-			{
-				this.vertexGroups[var3] = new int[groupCounts[var3]];
-				groupCounts[var3] = 0;
-			}
-
-			for (var3 = 0; var3 < this.vertexCount; this.vertexGroups[var4][groupCounts[var4]++] = var3++)
-			{
-				var4 = this.vertexSkins[var3];
-			}
+			this.vertexGroups = buildSkinGroups(this.vertexSkins, this.vertexCount);
 		}
 		if (this.faceSkins != null)
 		{
-			int[] groupCounts = new int[256];
-			int numGroups = 0;
-			int var3, var4;
-
-			for (var3 = 0; var3 < this.faceCount; ++var3)
-			{
-				var4 = this.faceSkins[var3];
-				++groupCounts[var4];
-				if (var4 > numGroups)
-				{
-					numGroups = var4;
-				}
-			}
-
-			this.faceGroups = new int[numGroups + 1][];
-
-			for (var3 = 0; var3 <= numGroups; ++var3)
-			{
-				this.faceGroups[var3] = new int[groupCounts[var3]];
-				groupCounts[var3] = 0;
-			}
-
-			for (var3 = 0; var3 < this.faceCount; this.faceGroups[var4][groupCounts[var4]++] = var3++)
-			{
-				var4 = this.faceSkins[var3];
-			}
+			this.faceGroups = buildSkinGroups(this.faceSkins, this.faceCount);
 		}
 	}
+
+	private static int[][] buildSkinGroups(int[] skins, int count)
+	{
+		int[] groupCounts = new int[256];
+		int numGroups = 0;
+		for (int i = 0; i < count; ++i)
+		{
+			int group = skins[i];
+			++groupCounts[group];
+			if (group > numGroups)
+			{
+				numGroups = group;
+			}
+		}
+
+		int[][] groups = new int[numGroups + 1][];
+		for (int i = 0; i <= numGroups; ++i)
+		{
+			groups[i] = new int[groupCounts[i]];
+			groupCounts[i] = 0;
+		}
+		for (int i = 0; i < count; ++i)
+		{
+			int group = skins[i];
+			groups[group][groupCounts[group]++] = i;
+		}
+		return groups;
+	}
+
+	// TODO(perf): per-face cross product + 3 vertex accumulations; skip when the caller does not need normals.
 	public void computeNormals()
 	{
 		if (this.vertexNormals != null)
@@ -328,23 +277,9 @@ public class RS2Model implements ModelDefinition
 
 			if (var15 == 0)
 			{
-				VertexNormal var16 = this.vertexNormals[vertexA];
-				var16.x += var11;
-				var16.y += var12;
-				var16.z += var13;
-				++var16.magnitude;
-
-				var16 = this.vertexNormals[vertexB];
-				var16.x += var11;
-				var16.y += var12;
-				var16.z += var13;
-				++var16.magnitude;
-
-				var16 = this.vertexNormals[vertexC];
-				var16.x += var11;
-				var16.y += var12;
-				var16.z += var13;
-				++var16.magnitude;
+				addToVertexNormal(this.vertexNormals[vertexA], var11, var12, var13);
+				addToVertexNormal(this.vertexNormals[vertexB], var11, var12, var13);
+				addToVertexNormal(this.vertexNormals[vertexC], var11, var12, var13);
 			}
 			else if (var15 == 1)
 			{
@@ -360,6 +295,15 @@ public class RS2Model implements ModelDefinition
 			}
 		}
 	}
+
+	private static void addToVertexNormal(VertexNormal normal, int x, int y, int z)
+	{
+		normal.x += x;
+		normal.y += y;
+		normal.z += z;
+		++normal.magnitude;
+	}
+
 	public void setId(String id) {
 		this.id = id;
 	}

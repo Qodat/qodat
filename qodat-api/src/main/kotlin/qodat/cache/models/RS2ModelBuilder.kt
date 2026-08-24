@@ -20,7 +20,6 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private var copyFacePriorities = false
     private var copyFaceAlphas = false
     private var copyFaceSkins = false
-    private var copyFaceColors = true
     private var copyFaceTextures = false
     private var copyMayaGroups = false
 
@@ -33,7 +32,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
     private val faceVertexIndices2: IntArray
     private val faceVertexIndices3: IntArray
     private val faceAlphas: ByteArray?
-    private val faceColors: ShortArray?
+    private val faceColors: ShortArray
     private val faceTextures: ShortArray?
     private val faceRenderPriorities: ByteArray?
     private val faceRenderTypes: ByteArray?
@@ -69,7 +68,7 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
         faceRenderPriorities = if(copyFacePriorities) ByteArray(faceCount) else null
         faceRenderTypes = if(copyFaceTypes) ByteArray(faceCount) else null
         faceAlphas = if(copyFaceAlphas) ByteArray(faceCount) else null
-        faceColors = if(copyFaceColors) ShortArray(faceCount) else null
+        faceColors = ShortArray(faceCount)
         faceSkins = if(copyFaceSkins) IntArray(faceCount) else null
         faceTextures = if(copyFaceTextures) ShortArray(faceCount) {(-1).toShort()} else null
         if(copyMayaGroups) {
@@ -82,20 +81,25 @@ class RS2ModelBuilder(vararg modelDefinitions: ModelDefinition) {
 
         for(definition in modelDefinitions){
             for(srcFaceIdx in 0 until definition.getFaceCount()){
-                faceRenderPriorities?.tryCopy(srcFaceIdx, definition.getFacePriorities())
-                faceRenderTypes?.tryCopy(srcFaceIdx, definition.getFaceTypes())
-                faceAlphas?.tryCopy(srcFaceIdx, definition.getFaceAlphas())
-                faceColors?.tryCopy(srcFaceIdx, definition.getFaceColors())
-                faceSkins?.tryCopy(srcFaceIdx, definition.getFaceSkins())
-                faceTextures?.tryCopy(srcFaceIdx, definition.getFaceTextures())
-                faceVertexIndices1[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices1() }
-                faceVertexIndices2[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices2() }
-                faceVertexIndices3[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices3() }
-                faceIdx++
+                copyFace(definition, srcFaceIdx)
             }
         }
     }
 
+    private fun copyFace(definition: ModelDefinition, srcFaceIdx: Int) {
+        faceRenderPriorities?.tryCopy(srcFaceIdx, definition.getFacePriorities())
+        faceRenderTypes?.tryCopy(srcFaceIdx, definition.getFaceTypes())
+        faceAlphas?.tryCopy(srcFaceIdx, definition.getFaceAlphas())
+        faceColors.tryCopy(srcFaceIdx, definition.getFaceColors())
+        faceSkins?.tryCopy(srcFaceIdx, definition.getFaceSkins())
+        faceTextures?.tryCopy(srcFaceIdx, definition.getFaceTextures())
+        faceVertexIndices1[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices1() }
+        faceVertexIndices2[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices2() }
+        faceVertexIndices3[faceIdx] = computeVertexIndex(definition, srcFaceIdx) { it.getFaceVertexIndices3() }
+        faceIdx++
+    }
+
+    // TODO(perf): linear scan of merged vertices is O(n^2); hash xyz when combining many models.
     private fun computeVertexIndex(model: ModelDefinition, face: Int, indicesSelector: (ModelDefinition) -> IntArray): Int {
 
         val localVertexIdx = indicesSelector.invoke(model)[face]
