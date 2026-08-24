@@ -1,12 +1,12 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import net.runelite.cache.definitions.ClientScript1Instruction
-import net.runelite.cache.definitions.InterfaceDefinition
 import com.displee.io.impl.InputBuffer
+import qodat.cache.definition.ClientScript1Instruction
+import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 
 /**
  * Interface decoder that understands Near Reality's rev237 IF3 prefix (`0xAABBCCDD`)
- * in addition to vanilla IF1 / IF3.
+ * in addition to vanilla IF1 / IF3. Newer decode reads IF1, vanilla IF3, and 237.
  */
 class InterfaceLoader237 {
 
@@ -42,12 +42,14 @@ class InterfaceLoader237 {
 
         val alternateCount = stream.readUnsignedByte()
         if (alternateCount > 0) {
-            iface.alternateOperators = IntArray(alternateCount)
-            iface.alternateRhs = IntArray(alternateCount)
+            val operators = IntArray(alternateCount)
+            val rhs = IntArray(alternateCount)
             for (i in 0 until alternateCount) {
-                iface.alternateOperators[i] = stream.readUnsignedByte()
-                iface.alternateRhs[i] = stream.readUnsignedShort()
+                operators[i] = stream.readUnsignedByte()
+                rhs[i] = stream.readUnsignedShort()
             }
+            iface.alternateOperators = operators
+            iface.alternateRhs = rhs
         }
 
         val scriptCount = stream.readUnsignedByte()
@@ -81,18 +83,21 @@ class InterfaceLoader237 {
             if (stream.readUnsignedByte() == 1) iface.clickMask = iface.clickMask or 536870912
             iface.xPitch = stream.readUnsignedByte()
             iface.yPitch = stream.readUnsignedByte()
-            iface.xOffsets = IntArray(20)
-            iface.yOffsets = IntArray(20)
-            iface.sprites = IntArray(20)
+            val xOffsets = IntArray(20)
+            val yOffsets = IntArray(20)
+            val sprites = IntArray(20)
             for (i in 0 until 20) {
                 if (stream.readUnsignedByte() == 1) {
-                    iface.xOffsets[i] = stream.readShort().toInt()
-                    iface.yOffsets[i] = stream.readShort().toInt()
-                    iface.sprites[i] = stream.readInt()
+                    xOffsets[i] = stream.readShort().toInt()
+                    yOffsets[i] = stream.readShort().toInt()
+                    sprites[i] = stream.readInt()
                 } else {
-                    iface.sprites[i] = -1
+                    sprites[i] = -1
                 }
             }
+            iface.xOffsets = xOffsets
+            iface.yOffsets = yOffsets
+            iface.sprites = sprites
             decodeConfigActions(iface, stream)
         }
 
@@ -163,14 +168,16 @@ class InterfaceLoader237 {
         }
 
         if (iface.menuType == 1 || iface.menuType == 4 || iface.menuType == 5 || iface.menuType == 6) {
-            iface.tooltip = stream.readString()
-            if (iface.tooltip.isEmpty()) {
-                iface.tooltip = when (iface.menuType) {
+            val tooltip = stream.readString()
+            iface.tooltip = if (tooltip.isEmpty()) {
+                when (iface.menuType) {
                     1 -> "Ok"
                     4, 5 -> "Select"
                     6 -> "Continue"
-                    else -> iface.tooltip
+                    else -> tooltip
                 }
+            } else {
+                tooltip
             }
         }
 
@@ -306,14 +313,14 @@ class InterfaceLoader237 {
         iface.statTransmitTriggers = decodeTriggers(stream)
     }
 
-    private fun decodeListener(iface: InterfaceDefinition, stream: InputBuffer): Array<Any?>? {
+    private fun decodeListener(iface: InterfaceDefinition, stream: InputBuffer): Array<Any>? {
         val count = stream.readUnsignedByte()
         if (count == 0) return null
-        val values = arrayOfNulls<Any>(count)
-        for (i in 0 until count) {
+        val values = Array<Any>(count) {
             when (stream.readUnsignedByte()) {
-                0 -> values[i] = stream.readInt()
-                1 -> values[i] = stream.readString()
+                0 -> stream.readInt()
+                1 -> stream.readString()
+                else -> 0
             }
         }
         iface.hasListener = true
@@ -327,7 +334,7 @@ class InterfaceLoader237 {
     }
 
     private fun decodeClientScripts(bytecode: IntArray): Array<ClientScript1Instruction> {
-        val opcodes = ClientScript1Instruction.Opcode.values()
+        val opcodes = ClientScript1Instruction.Opcode.entries
         val instructions = ArrayList<ClientScript1Instruction>()
         var i = 0
         while (i < bytecode.size) {
@@ -335,12 +342,10 @@ class InterfaceLoader237 {
             if (opcodeIndex !in opcodes.indices) {
                 break
             }
-            val instruction = ClientScript1Instruction()
-            instruction.opcode = opcodes[opcodeIndex]
-            val argumentCount = instruction.opcode.argumentCount
+            val opcode = opcodes[opcodeIndex]
+            val argumentCount = opcode.argumentCount
             val end = (i + argumentCount).coerceAtMost(bytecode.size)
-            instruction.operands = bytecode.copyOfRange(i, end)
-            instructions.add(instruction)
+            instructions.add(ClientScript1Instruction(opcode, bytecode.copyOfRange(i, end)))
             i += argumentCount
         }
         return instructions.toTypedArray()
@@ -355,15 +360,17 @@ class InterfaceLoader237 {
         }
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun decodeConfigActions(iface: InterfaceDefinition, stream: InputBuffer) {
-        iface.configActions = arrayOfNulls(5)
+        val actions = arrayOfNulls<String>(5)
         for (i in 0 until 5) {
             val action = stream.readString()
             if (action.isNotEmpty()) {
-                iface.configActions[i] = action
+                actions[i] = action
                 iface.clickMask = iface.clickMask or (1 shl i + 23)
             }
         }
+        iface.configActions = actions as Array<String>
     }
 
     private fun InputBuffer.readUnsignedShortOrNone(): Int {

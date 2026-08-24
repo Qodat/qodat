@@ -1,7 +1,6 @@
 package stan.qodat.scene.runescape.ui
 
-import net.runelite.cache.definitions.InterfaceDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -27,5 +26,5 @@ class InterfaceNamesTest {
     }
 
     private fun iface(init: InterfaceDefinition.() -> Unit) =
-        RuneliteInterfaceDefinition(InterfaceDefinition().also(init))
+        InterfaceDefinition().also(init)
 }

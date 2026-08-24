@@ -21,9 +21,7 @@ import stan.qodat.cache.impl.displee.types.ObjectManager
 import stan.qodat.cache.impl.displee.types.SpotAnimManager
 import stan.qodat.cache.impl.displee.types.SpriteManager
 import stan.qodat.cache.impl.displee.types.TextureManager
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.util.onInvalidation
-import java.util.AbstractList
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.io.path.absolutePathString
 import kotlin.system.measureTimeMillis
@@ -219,24 +217,13 @@ object DispleeCache : Cache("Displee") {
     }
 
     override fun getInterface(groupId: Int): Array<InterfaceDefinition> = withOpenStore {
-        interfaceManager
-            .getInterfaceGroup(groupId)
-            ?.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
-            ?.toTypedArray()
-            ?: emptyArray()
+        InterfaceManager.mapDispleeInterface(interfaceManager.getInterfaceGroup(groupId))
     }
 
     override fun getRootInterfaces(): Map<Int, List<InterfaceDefinition>> = withOpenStore {
         lateinit var result: Map<Int, List<InterfaceDefinition>>
         val elapsed = measureTimeMillis {
-            val raw = interfaceManager.getInterfaces()
-            val groups = LinkedHashMap<Int, List<InterfaceDefinition>>()
-            for (groupId in raw.indices) {
-                val components = raw[groupId] ?: continue
-                if (components.all { it == null }) continue
-                groups[groupId] = LazyInterfaceList(components)
-            }
-            result = groups
+            result = InterfaceManager.mapDispleeRootInterfaces(interfaceManager.getInterfaces())
         }
         if (result.isEmpty()) {
             throw IllegalStateException("Displee cache returned 0 interface groups")
@@ -282,17 +269,4 @@ object DispleeCache : Cache("Displee") {
 
     internal fun getFrameId(hexString: String) =
         Integer.parseInt(hexString.substring(hexString.length - 4), 16)
-
-    private class LazyInterfaceList(
-        private val components: Array<net.runelite.cache.definitions.InterfaceDefinition?>
-    ) : AbstractList<InterfaceDefinition>() {
-        private val mapped: List<InterfaceDefinition> by lazy {
-            components.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
-        }
-
-        override val size: Int
-            get() = mapped.size
-
-        override fun get(index: Int): InterfaceDefinition = mapped[index]
-    }
 }

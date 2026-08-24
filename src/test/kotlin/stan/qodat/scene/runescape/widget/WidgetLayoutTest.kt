@@ -1,7 +1,6 @@
 package stan.qodat.scene.runescape.widget
 
-import net.runelite.cache.definitions.InterfaceDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -41,14 +40,14 @@ class WidgetLayoutTest {
 
     @Test
     fun layoutUsesComputedSizeWhenCentering() {
-        val def = RuneliteInterfaceDefinition(InterfaceDefinition().also {
+        val def = InterfaceDefinition().also {
             it.originalX = 10
             it.originalY = 4
             it.originalWidth = 40
             it.originalHeight = 20
             it.xPositionMode = 1
             it.yPositionMode = 1
-        })
+        }
         val box = WidgetLayout.layout(def, 200, 100)
         assertEquals(10 + (200 - 40) / 2, box.x)
         assertEquals(4 + (100 - 20) / 2, box.y)
@@ -76,8 +75,8 @@ class WidgetLayoutTest {
         assertEquals(5, WidgetLayout.childId(tree[1].definition.id))
     }
 
-    private fun iface(id: Int, parentId: Int) = RuneliteInterfaceDefinition(InterfaceDefinition().also {
+    private fun iface(id: Int, parentId: Int) = InterfaceDefinition().also {
         it.id = id
         it.parentId = parentId
-    })
+    }
 }

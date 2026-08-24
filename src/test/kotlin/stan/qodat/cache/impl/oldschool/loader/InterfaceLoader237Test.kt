@@ -1,14 +1,12 @@
 package stan.qodat.cache.impl.oldschool.loader
 
-import net.runelite.cache.definitions.ClientScript1Instruction
 import com.displee.io.impl.OutputBuffer
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
+import qodat.cache.definition.ClientScript1Instruction
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import qodat.cache.definition.ClientScript1Instruction as QodatScript
 
 class InterfaceLoader237Test {
 
@@ -115,15 +113,10 @@ class InterfaceLoader237Test {
         }.array()
 
         val iface = InterfaceLoader237().load(8, bytes)
-        val script = iface.clientScripts[0]
+        val script = iface.clientScripts!![0]
         assertEquals(ClientScript1Instruction.Opcode.CONSTANT, script[0].opcode)
         assertTrue(script[0].operands.contentEquals(intArrayOf(42)))
         assertEquals(ClientScript1Instruction.Opcode.RETURN, script[1].opcode)
-
-        val mapped = RuneliteInterfaceDefinition(iface)
-        assertEquals(QodatScript.Opcode.CONSTANT, mapped.clientScripts!![0][0].opcode)
-        assertTrue(mapped.clientScripts!![0][0].operands.contentEquals(intArrayOf(42)))
-        assertEquals(QodatScript.Opcode.RETURN, mapped.clientScripts!![0][1].opcode)
     }
 
     @Test
@@ -154,11 +147,11 @@ class InterfaceLoader237Test {
         assertEquals(16, iface.scrollWidth)
         assertEquals(32, iface.scrollHeight)
         assertTrue(iface.noClickThrough)
-        assertTrue(iface.actions.contentEquals(arrayOf("Close")))
-        assertEquals(99, iface.onLoadListener[0])
-        assertEquals("cb", iface.onLoadListener[1])
+        assertTrue(iface.actions!!.contentEquals(arrayOf("Close")))
+        assertEquals(99, iface.onLoadListener!![0])
+        assertEquals("cb", iface.onLoadListener!![1])
         assertTrue(iface.hasListener)
-        assertTrue(iface.varTransmitTriggers.contentEquals(intArrayOf(5, 6)))
+        assertTrue(iface.varTransmitTriggers!!.contentEquals(intArrayOf(5, 6)))
         assertNull(iface.onClickListener)
     }
 
@@ -218,7 +211,7 @@ class InterfaceLoader237Test {
     }
 
     @Test
-    fun mapsLoadedIf3ThroughRuneliteInterfaceDefinition() {
+    fun loadedIf3IsQodatInterfaceDefinition() {
         val bytes = OutputBuffer(16).apply {
             writeByte(0xFF)
             writeIf3Common(type = 4, originalX = 3, originalY = 4)
@@ -232,15 +225,44 @@ class InterfaceLoader237Test {
             writeIf3Tail(name = "label")
         }.array()
 
-        val mapped = RuneliteInterfaceDefinition(InterfaceLoader237().load(30, bytes))
-        assertTrue(mapped.isIf3)
-        assertEquals(4, mapped.type)
-        assertEquals("Title", mapped.text)
-        assertEquals(12, mapped.fontId)
-        assertEquals(0xABCDEF, mapped.textColor)
-        assertEquals("label", mapped.name)
-        assertEquals(3, mapped.originalX)
-        assertEquals(4, mapped.originalY)
+        val iface = InterfaceLoader237().load(30, bytes)
+        assertTrue(iface.isIf3)
+        assertEquals(4, iface.type)
+        assertEquals("Title", iface.text)
+        assertEquals(12, iface.fontId)
+        assertEquals(0xABCDEF, iface.textColor)
+        assertEquals("label", iface.name)
+        assertEquals(3, iface.originalX)
+        assertEquals(4, iface.originalY)
+    }
+
+    @Test
+    fun rev237Type10ReadsFilledAndLineWidth() {
+        val bytes = OutputBuffer(16).apply {
+            writeByte(0xAA)
+            writeByte(0xBB)
+            writeByte(0xCC)
+            writeByte(0xDD)
+            writeByte(0xFF)
+            writeIf3Common(type = 10)
+            writeInt(0x224466)
+            writeByte(0)
+            writeByte(40)
+            writeShort(0)
+            writeShort(0)
+            writeByte(3)
+            writeIf3Tail(name = "rect")
+        }.array()
+
+        val iface = InterfaceLoader237().load(22, bytes)
+        assertTrue(InterfaceLoader237.hasRev237Magic(bytes))
+        assertTrue(iface.isIf3)
+        assertEquals(10, iface.type)
+        assertEquals(0x224466, iface.textColor)
+        assertFalse(iface.filled)
+        assertEquals(40, iface.opacity)
+        assertEquals(3, iface.lineWidth)
+        assertEquals("rect", iface.name)
     }
 
     private fun OutputBuffer.writeIf1Header(

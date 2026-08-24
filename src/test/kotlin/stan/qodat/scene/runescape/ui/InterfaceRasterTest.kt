@@ -1,8 +1,7 @@
 package stan.qodat.scene.runescape.ui
 
-import net.runelite.cache.definitions.InterfaceDefinition
 import net.runelite.cache.definitions.SpriteDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
+import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.scene.runescape.widget.WidgetLayout
 import kotlin.test.Test
@@ -106,11 +105,11 @@ class InterfaceRasterTest {
     }
 
     private fun iface(childId: Int, parentId: Int, init: InterfaceDefinition.() -> Unit) =
-        RuneliteInterfaceDefinition(InterfaceDefinition().also {
+        InterfaceDefinition().also {
             it.id = childId
             it.parentId = parentId
             init(it)
-        })
+        }
 
     private fun sprite(width: Int, height: Int, offsetX: Int, offsetY: Int, vararg pixels: Int) =
         RuneliteSpriteDefinition(SpriteDefinition().also {

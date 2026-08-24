@@ -1,10 +1,10 @@
 package stan.qodat.cache.impl.displee.types
 
 import com.displee.cache.CacheLibrary
-import net.runelite.cache.definitions.InterfaceDefinition
 import org.slf4j.LoggerFactory
 import qodat.cache.definition.InterfaceDefinition as QodatInterfaceDefinition
 import stan.qodat.cache.CacheParallel
+import stan.qodat.cache.impl.oldschool.definition.InterfaceDefinition
 import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
 import stan.qodat.cache.impl.oldschool.loader.InterfaceLoader237
 import java.util.concurrent.atomic.AtomicInteger
@@ -95,10 +95,7 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
         internal fun mapDispleeInterface(
             group: Array<InterfaceDefinition?>?,
         ): Array<QodatInterfaceDefinition> =
-            group
-                ?.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
-                ?.toTypedArray()
-                ?: emptyArray()
+            group?.filterNotNull()?.toTypedArray() ?: emptyArray()
 
         internal fun mapDispleeRootInterfaces(
             raw: Array<Array<InterfaceDefinition?>?>,
@@ -107,13 +104,13 @@ class InterfaceManager(private val cacheLibrary: CacheLibrary) {
             for (groupId in raw.indices) {
                 val components = raw[groupId] ?: continue
                 if (components.all { it == null }) continue
-                groups[groupId] = components.mapNotNull { it?.let(::RuneliteInterfaceDefinition) }
+                groups[groupId] = components.filterNotNull()
             }
             return groups
         }
 
         internal fun mapOldschoolRootInterfaces(
-            interfaces: Array<Array<InterfaceDefinition>?>,
+            interfaces: Array<Array<net.runelite.cache.definitions.InterfaceDefinition>?>,
         ): Map<Int, List<QodatInterfaceDefinition>> =
             interfaces
                 .filterNotNull()
