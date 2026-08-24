@@ -11,6 +11,7 @@ import stan.qodat.scene.control.export.gif.GifFormat
 import stan.qodat.scene.control.export.wavefront.WaveFrontFormat
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.task.BackgroundTasks
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 
@@ -20,6 +21,10 @@ import stan.qodat.util.setAndBind
  * TODO: prevent unnecessary invocations of [updateMenuItems]
  */
 class ExportMenu<T : Exportable> : Menu("Export") {
+
+    init {
+        disableProperty().bind(BackgroundTasks.busy)
+    }
 
     private val exportableProperty = SimpleObjectProperty<T>().apply {
         onInvalidation {

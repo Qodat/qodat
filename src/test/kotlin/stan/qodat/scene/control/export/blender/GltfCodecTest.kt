@@ -54,7 +54,7 @@ class GltfCodecTest {
     }
 
     @Test
-    fun bakesIdleAndWalkMorphClips() {
+    fun bakesIdleAndWalkAsArmatureActions() {
         val dir = Files.createTempDirectory("gltf-clips")
         try {
             val file = dir.resolve("anim.glb")
@@ -71,17 +71,25 @@ class GltfCodecTest {
             )
 
             val doc = GltfCodec.readDocument(file)
-            val names = doc.getAsJsonArray("animations").map { it.asJsonObject.get("name").asString }
-            assertEquals(listOf("Idle", "Walk"), names)
+            val rs = doc.getAsJsonObject("extras").getAsJsonObject("rs")
+            assertEquals(50, rs.get("frameRate").asInt)
+            assertEquals(20, rs.get("clientTickMs").asInt)
+            assertEquals("armature", rs.get("animation").asString)
 
-            val mesh = doc.getAsJsonArray("meshes")[0].asJsonObject
-            val targetNames = mesh.getAsJsonObject("extras").getAsJsonArray("targetNames")
-            assertEquals(listOf("Idle_00", "Walk_00"), targetNames.map { it.asString })
+            val animations = doc.getAsJsonArray("animations")
+            assertEquals(listOf("Idle", "Walk"), animations.map { it.asJsonObject.get("name").asString })
 
-            val prim = mesh.getAsJsonArray("primitives")[0].asJsonObject
-            assertEquals(2, prim.getAsJsonArray("targets").size())
-            assertEquals("STEP", doc.getAsJsonArray("animations")[0].asJsonObject
-                .getAsJsonArray("samplers")[0].asJsonObject.get("interpolation").asString)
+            val prim = doc.getAsJsonArray("meshes")[0].asJsonObject.getAsJsonArray("primitives")[0].asJsonObject
+            assertEquals(false, prim.has("targets"))
+
+            val idleAnim = animations[0].asJsonObject
+            val channels = idleAnim.getAsJsonArray("channels")
+            assertEquals(4, channels.size())
+            assertEquals("translation", channels[0].asJsonObject.getAsJsonObject("target").get("path").asString)
+            assertEquals("rotation", channels[1].asJsonObject.getAsJsonObject("target").get("path").asString)
+            assertEquals(1, channels[0].asJsonObject.getAsJsonObject("target").get("node").asInt)
+            assertEquals("STEP", idleAnim.getAsJsonArray("samplers")[0].asJsonObject.get("interpolation").asString)
+            assertEquals(50, idleAnim.getAsJsonObject("extras").get("frameRate").asInt)
         } finally {
             dir.toFile().deleteRecursively()
         }

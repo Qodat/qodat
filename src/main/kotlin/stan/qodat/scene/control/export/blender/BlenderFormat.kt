@@ -21,7 +21,7 @@ import java.nio.file.Path
 
 /**
  * Export the current model as a Blender-ready .glb: vertex skins, tile-metre
- * scale (128 RS units = 1 m), plus idle / walk morph clips when the entity
+ * scale (128 RS units = 1 m), plus idle / walk armature actions when the entity
  * carries those sequences. Import is [Model.fromFile] on .glb / .gltf.
  */
 class BlenderFormat(

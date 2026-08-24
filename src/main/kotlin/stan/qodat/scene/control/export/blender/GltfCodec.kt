@@ -22,7 +22,8 @@ import kotlin.math.roundToInt
  * tile (128 scene units) is one metre**. That matches the client
  * (`Perspective.LOCAL_TILE_SIZE`, `RSModelData` resize `* n / 128`). Vertex
  * skins become a one-weight-per-vert armature (`vskin_N`). Idle / walk clips
- * bake as morph targets. Face HSL / priorities / alphas ride in `extras.rs`.
+ * bake as joint TRS (STEP, 20 ms client ticks). Face HSL / priorities / alphas
+ * ride in `extras.rs`.
  */
 object GltfCodec {
 
@@ -33,6 +34,11 @@ object GltfCodec {
     const val METERS_PER_TILE = 1f
 
     const val UNIT_SCALE = METERS_PER_TILE / RS_UNITS_PER_TILE
+
+    /** NR / RuneLite [net.runelite.api.Constants.CLIENT_TICK_LENGTH]. Max client fps is 50. */
+    const val CLIENT_TICK_MS = 20
+
+    const val CLIENT_FPS = 1000 / CLIENT_TICK_MS
 
     private val gson = GsonBuilder().disableHtmlEscaping().create()
 
@@ -79,7 +85,8 @@ object GltfCodec {
         for (i in 0 until nVert) {
             writeBlenderPosition(pts, i, vx[i], vy[i], vz[i])
         }
-        val baked = bakeClips(definition, clips, pts)
+        val unique = skins.distinct().sorted()
+        val baked = bakeBoneClips(definition, clips, unique, skins, pts)
         val vertRgb = FloatArray(nVert * 3)
         val hits = IntArray(nVert)
         for (f in 0 until nFace) {
@@ -107,7 +114,6 @@ object GltfCodec {
             indices[f * 3 + 2] = fc[f].toShort()
         }
 
-        val unique = skins.distinct().sorted()
         val skinToJoint = unique.withIndex().associate { it.value to it.index }
         val joints = ShortArray(nVert * 4)
         val weights = FloatArray(nVert * 4)
@@ -201,15 +207,6 @@ object GltfCodec {
         }
         val ibmI = pushFloats(ibm, "MAT4", unique.size)
 
-        val targetAccessors = baked.targets.map { target ->
-            pushFloats(target.deltas, "VEC3", nVert)
-        }
-        val animationSamplers = baked.clips.map { clip ->
-            val timeI = pushFloats(clip.times, "SCALAR", clip.times.size)
-            val weightI = pushFloats(clip.weights, "SCALAR", clip.weights.size)
-            timeI to weightI
-        }
-
         val extras = JsonObject().apply {
             add("rs", JsonObject().apply {
                 addProperty("coordSpace", "qodat_wavefront")
@@ -217,6 +214,9 @@ object GltfCodec {
                 addProperty("rsUnitsPerTile", RS_UNITS_PER_TILE)
                 addProperty("metersPerTile", METERS_PER_TILE)
                 addProperty("unitScale", UNIT_SCALE)
+                addProperty("frameRate", CLIENT_FPS)
+                addProperty("clientTickMs", CLIENT_TICK_MS)
+                addProperty("animation", "armature")
                 addProperty("skeleton", "labels")
                 add("vertexSkins", jsonInts(skins))
                 add("faceColors", jsonShorts(colours))
@@ -276,48 +276,14 @@ object GltfCodec {
                             })
                             addProperty("indices", idxI)
                             addProperty("material", 0)
-                            if (targetAccessors.isNotEmpty()) {
-                                add("targets", JsonArray().apply {
-                                    targetAccessors.forEach { acc ->
-                                        add(JsonObject().apply { addProperty("POSITION", acc) })
-                                    }
-                                })
-                            }
                         })
                     })
-                    if (baked.targets.isNotEmpty()) {
-                        add("weights", jsonFloats(*FloatArray(baked.targets.size)))
-                        extras.add("targetNames", JsonArray().apply {
-                            baked.targets.forEach { add(it.name) }
-                        })
-                    }
                     add("extras", extras)
                 })
             })
-            if (baked.clips.isNotEmpty()) {
-                add("animations", JsonArray().apply {
-                    baked.clips.forEachIndexed { clipIndex, clip ->
-                        val (timeI, weightI) = animationSamplers[clipIndex]
-                        add(JsonObject().apply {
-                            addProperty("name", clip.name)
-                            add("samplers", JsonArray().apply {
-                                add(JsonObject().apply {
-                                    addProperty("input", timeI)
-                                    addProperty("output", weightI)
-                                    addProperty("interpolation", "STEP")
-                                })
-                            })
-                            add("channels", JsonArray().apply {
-                                add(JsonObject().apply {
-                                    addProperty("sampler", 0)
-                                    add("target", JsonObject().apply {
-                                        addProperty("node", 0)
-                                        addProperty("path", "weights")
-                                    })
-                                })
-                            })
-                        })
-                    }
+            if (baked.isNotEmpty()) {
+                add("animations", animationJson(baked, unique.size) { data, type, count ->
+                    pushFloats(data, type, count)
                 })
             }
             add("skins", JsonArray().apply {
@@ -431,59 +397,120 @@ object GltfCodec {
         pts[vertex * 3 + 2] = -z * UNIT_SCALE
     }
 
-    private data class BakedTarget(val name: String, val deltas: FloatArray)
-    private data class BakedClip(val name: String, val times: FloatArray, val weights: FloatArray)
-    private data class BakedClips(val targets: List<BakedTarget>, val clips: List<BakedClip>)
+    private data class BoneClip(
+        val name: String,
+        val times: FloatArray,
+        val translations: Array<FloatArray>,
+        val rotations: Array<FloatArray>,
+    )
 
-    private fun bakeClips(
+    private fun bakeBoneClips(
         definition: ModelDefinition,
         clips: List<GltfAnimationClip>,
+        unique: List<Int>,
+        skins: IntArray,
         bind: FloatArray,
-    ): BakedClips {
-        if (clips.isEmpty()) return BakedClips(emptyList(), emptyList())
+    ): List<BoneClip> {
+        if (clips.isEmpty() || unique.isEmpty()) return emptyList()
         val nVert = definition.getVertexCount()
         val poser = ModelSkeleton(definition)
-        val targets = mutableListOf<BakedTarget>()
-        val pending = mutableListOf<Triple<String, FloatArray, IntRange>>()
-
+        val posed = FloatArray(nVert * 3)
+        val out = ArrayList<BoneClip>(clips.size)
         for (clip in clips) {
             val frames = clip.frames.take(GltfExportClips.MAX_FRAMES_PER_CLIP)
             if (frames.isEmpty()) continue
-            val start = targets.size
             val times = ArrayList<Float>(frames.size + 1)
+            val translations = Array(unique.size) { FloatArray((frames.size + 1) * 3) }
+            val rotations = Array(unique.size) { FloatArray((frames.size + 1) * 4) }
             var t = 0f
-            times.add(0f)
             frames.forEachIndexed { index, frame ->
                 poser.animate(frame)
-                val deltas = FloatArray(nVert * 3)
                 for (i in 0 until nVert) {
-                    deltas[i * 3] = poser.getX(i) * UNIT_SCALE - bind[i * 3]
-                    deltas[i * 3 + 1] = -poser.getY(i) * UNIT_SCALE - bind[i * 3 + 1]
-                    deltas[i * 3 + 2] = -poser.getZ(i) * UNIT_SCALE - bind[i * 3 + 2]
+                    writeBlenderPosition(posed, i, poser.getX(i), poser.getY(i), poser.getZ(i))
                 }
-                targets += BakedTarget("${clip.name}_${index.toString().padStart(2, '0')}", deltas)
-                t += durationSeconds(frame)
+                writeJointKeys(unique, skins, nVert, bind, posed, translations, rotations, index)
                 times.add(t)
+                t += durationSeconds(frame)
             }
-            pending += Triple(clip.name, times.toFloatArray(), start until targets.size)
+            writeJointKeys(unique, skins, nVert, bind, posed, translations, rotations, frames.size)
+            times.add(t)
+            out += BoneClip(clip.name, times.toFloatArray(), translations, rotations)
         }
+        return out
+    }
 
-        val totalTargets = targets.size
-        if (totalTargets == 0) return BakedClips(emptyList(), emptyList())
+    private fun writeJointKeys(
+        unique: List<Int>,
+        skins: IntArray,
+        nVert: Int,
+        bind: FloatArray,
+        posed: FloatArray,
+        translations: Array<FloatArray>,
+        rotations: Array<FloatArray>,
+        key: Int,
+    ) {
+        for (j in unique.indices) {
+            val pose = GltfRigid.pose(bind, posed, skins, unique[j], nVert)
+            translations[j][key * 3] = pose.translation[0]
+            translations[j][key * 3 + 1] = pose.translation[1]
+            translations[j][key * 3 + 2] = pose.translation[2]
+            rotations[j][key * 4] = pose.rotation[0]
+            rotations[j][key * 4 + 1] = pose.rotation[1]
+            rotations[j][key * 4 + 2] = pose.rotation[2]
+            rotations[j][key * 4 + 3] = pose.rotation[3]
+        }
+    }
 
-        val bakedClips = pending.map { (name, times, range) ->
-            val weights = FloatArray(times.size * totalTargets)
-            for (key in times.indices) {
-                val target = if (key == times.lastIndex) range.first else range.first + key
-                weights[key * totalTargets + target] = 1f
+    private fun animationJson(
+        clips: List<BoneClip>,
+        jointCount: Int,
+        pushFloats: (FloatArray, String, Int) -> Int,
+    ): JsonArray {
+        val animations = JsonArray()
+        for (clip in clips) {
+            val timeI = pushFloats(clip.times, "SCALAR", clip.times.size)
+            val samplers = JsonArray()
+            val channels = JsonArray()
+            for (j in 0 until jointCount) {
+                val tI = pushFloats(clip.translations[j], "VEC3", clip.times.size)
+                val rI = pushFloats(clip.rotations[j], "VEC4", clip.times.size)
+                val tSampler = samplers.size()
+                samplers.add(sampler(timeI, tI))
+                val rSampler = samplers.size()
+                samplers.add(sampler(timeI, rI))
+                val node = j + 1
+                channels.add(channel(tSampler, node, "translation"))
+                channels.add(channel(rSampler, node, "rotation"))
             }
-            BakedClip(name, times, weights)
+            animations.add(JsonObject().apply {
+                addProperty("name", clip.name)
+                add("samplers", samplers)
+                add("channels", channels)
+                add("extras", JsonObject().apply {
+                    addProperty("frameRate", CLIENT_FPS)
+                    addProperty("clientTickMs", CLIENT_TICK_MS)
+                })
+            })
         }
-        return BakedClips(targets, bakedClips)
+        return animations
+    }
+
+    private fun sampler(input: Int, output: Int) = JsonObject().apply {
+        addProperty("input", input)
+        addProperty("output", output)
+        addProperty("interpolation", "STEP")
+    }
+
+    private fun channel(sampler: Int, node: Int, path: String) = JsonObject().apply {
+        addProperty("sampler", sampler)
+        add("target", JsonObject().apply {
+            addProperty("node", node)
+            addProperty("path", path)
+        })
     }
 
     private fun durationSeconds(frame: AnimationFrame): Float =
-        (frame.getDuration().toMillis() / 1000.0).toFloat().coerceAtLeast(0.02f)
+        (frame.getDuration().toMillis() / 1000.0).toFloat().coerceAtLeast(CLIENT_TICK_MS / 1000f)
 
     internal fun readDocument(path: Path): JsonObject =
         parseGlb(Files.readAllBytes(path)).first
