@@ -104,6 +104,7 @@ public final class FastGifEncoder {
         }
     }
 
+    // TODO(perf): allocate 3 int[] + 1 boolean[] per frame. Reuse thread-local scratch for animation export.
     private void floydSteinberg(int[] argb, byte[] indices) {
         int pixelCount = argb.length;
         int[] red = new int[pixelCount];

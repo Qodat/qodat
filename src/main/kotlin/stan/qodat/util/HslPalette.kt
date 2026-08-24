@@ -47,6 +47,7 @@ object HslPalette {
      * The palette is not analytically invertible because of the gamma curve, so this searches
      * for the nearest entry to guarantee that encoding and decoding round-trip.
      */
+    // TODO(perf): O(65536) scan per colour. Build an inverse LUT or spatial index if recolor/export encode is hot.
     fun encode(red: Int, green: Int, blue: Int): Int {
         var best = 0
         var bestDistance = Int.MAX_VALUE

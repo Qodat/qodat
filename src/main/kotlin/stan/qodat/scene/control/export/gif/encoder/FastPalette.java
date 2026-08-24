@@ -32,6 +32,7 @@ public final class FastPalette {
         this.reduced = reduced;
     }
 
+    // TODO(perf): HashMap over every pixel. Histogram in a 32k/64k table when sampling GIF frames.
     static FastPalette fromFrames(int[][] frames, int maxColors) {
         if (maxColors < 2 || maxColors > MAX_COLORS) {
             throw new IllegalArgumentException("maxColors must be in [2, 256]");

@@ -90,6 +90,7 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
         return shouldRebuild
     }
 
+    // TODO(perf): per-vertex rotate/translate is the animation hot path; keep SINE/COSINE lookups and avoid extra allocs here.
     private fun animateLegacyFrame(frame: AnimationFrameLegacy) {
         resetPointOffset()
         val x = vertexPositionsX
