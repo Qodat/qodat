@@ -3,16 +3,17 @@ package stan.qodat.cache.impl.displee.types
 import com.displee.cache.CacheLibrary
 import com.google.common.collect.LinkedListMultimap
 import com.google.common.collect.Multimap
-import net.runelite.cache.definitions.SpriteDefinition
-import net.runelite.cache.definitions.loaders.SpriteLoader
+import qodat.cache.definition.SpriteDefinition
 import stan.qodat.cache.CacheParallel
+import stan.qodat.cache.impl.oldschool.definition.SpriteDefinition as OsrsSpriteDefinition
+import stan.qodat.cache.impl.oldschool.loader.SpriteLoader
 import java.util.Collections
 
 class SpriteManager(
     private val cacheLibrary: CacheLibrary
 ) {
 
-    private val sprites: Multimap<Int, SpriteDefinition> = LinkedListMultimap.create()
+    private val sprites: Multimap<Int, OsrsSpriteDefinition> = LinkedListMultimap.create()
     @Volatile
     private var loaded = false
 
@@ -51,9 +52,14 @@ class SpriteManager(
         return Collections.unmodifiableCollection(sprites.values())
     }
 
-    fun findSprite(spriteId: Int, frame: Int): SpriteDefinition? {
+    fun findSprite(spriteId: Int, frame: Int): OsrsSpriteDefinition? {
         load()
         return sprites.get(spriteId).find { it.frame == frame }
+    }
+
+    companion object {
+        internal fun getSprites(sprites: Collection<OsrsSpriteDefinition>): Array<SpriteDefinition> =
+            sprites.toTypedArray()
     }
 
     private class SpriteArchivePayload(

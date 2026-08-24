@@ -1,9 +1,9 @@
 package stan.qodat.scene.runescape.ui
 
 import com.displee.cache.CacheLibrary
+import qodat.cache.definition.SpriteDefinition
 import stan.qodat.cache.impl.displee.types.InterfaceManager
 import stan.qodat.cache.impl.displee.types.SpriteManager
-import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.imageio.ImageIO
@@ -33,8 +33,8 @@ class InterfaceOsrsCompareDump {
                 notes.appendLine("$id $label: missing")
                 continue
             }
-            val lookup: (Int) -> RuneliteSpriteDefinition? = { spriteId ->
-                sprites.findSprite(spriteId, 0)?.let(::RuneliteSpriteDefinition)
+            val lookup: (Int) -> SpriteDefinition? = { spriteId ->
+                sprites.findSprite(spriteId, 0)
             }
             val image = InterfaceRaster.render(defs, lookup)
             val file = out.resolve("$id-$label.png").toFile()

@@ -22,7 +22,6 @@ import stan.qodat.cache.impl.displee.types.SpotAnimManager
 import stan.qodat.cache.impl.displee.types.SpriteManager
 import stan.qodat.cache.impl.displee.types.TextureManager
 import stan.qodat.cache.impl.oldschool.definition.RuneliteInterfaceDefinition
-import stan.qodat.cache.impl.oldschool.definition.RuneliteSpriteDefinition
 import stan.qodat.util.onInvalidation
 import java.util.AbstractList
 import java.util.concurrent.locks.ReentrantLock
@@ -248,15 +247,13 @@ object DispleeCache : Cache("Displee") {
 
     override fun getSprites(): Array<SpriteDefinition> = withOpenStore {
         timed("Sprite", expectedMin = 1) {
-            spriteManager.getSprites().map { RuneliteSpriteDefinition(it) }.toTypedArray()
+            spriteManager.getSprites().toTypedArray()
         }
     }
 
     override fun getSprite(groupId: Int, frameId: Int): SpriteDefinition = withOpenStore {
-        RuneliteSpriteDefinition(
-            spriteManager.findSprite(groupId, frameId)
-                ?: throw IllegalArgumentException("Sprite not found $groupId:$frameId")
-        )
+        spriteManager.findSprite(groupId, frameId)
+            ?: throw IllegalArgumentException("Sprite not found $groupId:$frameId")
     }
 
     override fun getTexture(id: Int): TextureDefinition = withOpenStore {
@@ -264,7 +261,7 @@ object DispleeCache : Cache("Displee") {
             ?: throw IllegalArgumentException("Texture not found $id")
         if (texture.pixels.isEmpty()) {
             texture.computePixels(1.0, 128) { spriteId, frameId ->
-                spriteManager.findSprite(spriteId, frameId)?.let(::RuneliteSpriteDefinition)
+                spriteManager.findSprite(spriteId, frameId)
             }
         }
         texture
