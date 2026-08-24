@@ -16,6 +16,7 @@ datetime = "0.8.0"
 poly2tri = "0.1.2"
 logback = "1.6.3"
 rsCacheLibrary = "7.3.0"
+disio = "2.2"
 joml = "1.10.9"
 jomlPrimitives = "1.10.0"
 tornadofx = "2.1.0"
@@ -37,6 +38,7 @@ kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.
 poly2tri-core = { module = "org.orbisgis:poly2tri-core", version.ref = "poly2tri" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 rs-cache-library = { module = "com.displee:rs-cache-library", version.ref = "rsCacheLibrary" }
+disio = { module = "com.displee:disio", version.ref = "disio" }
 joml = { module = "org.joml:joml", version.ref = "joml" }
 joml-primitives = { module = "org.joml:joml-primitives", version.ref = "jomlPrimitives" }
 tornadofx = { module = "com.googlecode.blaisemath.tornado:tornadofx-fx21k19", version.ref = "tornadofx" }

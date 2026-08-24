@@ -93,6 +93,7 @@ dependencies {
     implementation(libs.poly2tri.core)
     implementation(libs.logback.classic)
     implementation(libs.rs.cache.library)
+    implementation(libs.disio)
     implementation(libs.joml.primitives)
     implementation(libs.joml)
     implementation(libs.tornadofx) {
