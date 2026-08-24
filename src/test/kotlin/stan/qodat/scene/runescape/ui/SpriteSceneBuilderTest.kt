@@ -30,6 +30,35 @@ class SpriteSceneBuilderTest {
         assertEquals("3[1]", sprite.getName())
     }
 
+    @Test
+    fun listStubResolvesArchiveFromCacheOnView() {
+        val loaded0 = fake(id = 5, frame = 0, width = 2, height = 2)
+        val loaded1 = fake(id = 5, frame = 1, width = 2, height = 2)
+        val cache = object : qodat.cache.Cache("sprite-resolve") {
+            override fun getModelDefinition(id: String) = error("unused")
+            override fun getAnimation(id: String) = error("unused")
+            override fun getNPCs() = emptyArray<qodat.cache.definition.NPCDefinition>()
+            override fun getObjects() = emptyArray<qodat.cache.definition.ObjectDefinition>()
+            override fun getItems() = emptyArray<qodat.cache.definition.ItemDefinition>()
+            override fun getSpotAnimations() = emptyArray<qodat.cache.definition.SpotAnimationDefinition>()
+            override fun getAnimationDefinitions() = emptyArray<qodat.cache.definition.AnimationDefinition>()
+            override fun getAnimationSkeletonDefinition(frameHash: Int) = error("unused")
+            override fun getFrameDefinition(frameHash: Int) = null
+            override fun getInterface(groupId: Int) = emptyArray<qodat.cache.definition.InterfaceDefinition>()
+            override fun getRootInterfaces() = emptyMap<Int, List<qodat.cache.definition.InterfaceDefinition>>()
+            override fun getSprites() = emptyArray<SpriteDefinition>()
+            override fun getSprite(groupId: Int, frameId: Int) =
+                if (groupId == 5 && frameId == 0) loaded0 else error("unused $groupId:$frameId")
+            override fun getSpriteArchive(groupId: Int): Array<SpriteDefinition> = arrayOf(loaded0, loaded1)
+            override fun getTexture(id: Int) = error("unused")
+        }
+        val stub = fake(id = 5, frame = 0, width = 0, height = 0)
+        val sprite = Sprite(stub, cache = cache)
+        assertEquals("5[0]", sprite.getName())
+        assertEquals(2, sprite.definition.width)
+        assertEquals(listOf(0, 1), sprite.archiveFrames.map { it.frame })
+    }
+
     private fun fake(id: Int, frame: Int, width: Int, height: Int) = object : SpriteDefinition {
         override val id = id
         override val frame = frame

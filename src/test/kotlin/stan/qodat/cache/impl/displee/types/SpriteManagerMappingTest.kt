@@ -47,4 +47,11 @@ class SpriteManagerMappingTest {
     fun getSpritesReturnsEmptyWhenNothingWasLoaded() {
         assertTrue(getSprites(emptyList()).isEmpty())
     }
+
+    @Test
+    fun indexEntriesAreOneStubPerArchiveId() {
+        val stubs = SpriteManager.indexEntries(intArrayOf(0, 4, 12))
+        assertEquals(listOf(0, 4, 12), stubs.map { it.id })
+        assertTrue(stubs.all { it.frame == 0 && it.width == 0 && it.height == 0 })
+    }
 }

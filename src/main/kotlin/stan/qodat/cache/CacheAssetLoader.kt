@@ -205,13 +205,7 @@ class CacheAssetLoader(
         val wrapNs = measureNanoTime {
             values = withContext(Dispatchers.Default) {
                 coroutineContext.ensureActive()
-                val archives = definitions
-                    .filter { it.width > 0 && it.height > 0 }
-                    .groupBy { it.id }
-                archives.values.flatMap { frames ->
-                    val ordered = frames.sortedBy { it.frame }
-                    ordered.map { Sprite(it, ordered) }
-                }
+                definitions.map { Sprite(it, cache = cache) }
             }
         }
         logger.debug(

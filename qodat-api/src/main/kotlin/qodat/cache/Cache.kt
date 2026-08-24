@@ -66,6 +66,21 @@ abstract class Cache(val name: String) {
 
     abstract fun getSprite(groupId: Int, frameId: Int): SpriteDefinition
 
+    /**
+     * Every frame in sprite archive [groupId]. Default walks [getSprite] from
+     * frame 0 until a miss; caches that decode one archive should override.
+     */
+    open fun getSpriteArchive(groupId: Int): Array<SpriteDefinition> {
+        val frames = ArrayList<SpriteDefinition>()
+        var frame = 0
+        while (frame <= 256) {
+            val sprite = runCatching { getSprite(groupId, frame) }.getOrNull() ?: break
+            frames.add(sprite)
+            frame++
+        }
+        return frames.toTypedArray()
+    }
+
     abstract fun getTexture(id: Int): TextureDefinition
 
     open fun add(any: Any) {

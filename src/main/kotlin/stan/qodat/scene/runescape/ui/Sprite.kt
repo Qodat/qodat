@@ -8,6 +8,7 @@ import javafx.scene.image.ImageView
 import javafx.scene.image.PixelFormat
 import javafx.scene.image.WritableImage
 import javafx.scene.layout.HBox
+import qodat.cache.Cache
 import qodat.cache.definition.SpriteDefinition
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.export.ExportMenuItem
@@ -20,14 +21,31 @@ import tornadofx.contextmenu
 import java.nio.IntBuffer
 
 class Sprite(
-    val definition: SpriteDefinition,
+    definition: SpriteDefinition,
     archiveFrames: List<SpriteDefinition> = listOf(definition),
+    private val cache: Cache? = null,
 ) : SceneNodeProvider, ViewNodeProvider, Searchable {
 
-    val nameProperty = SimpleStringProperty(definition.id.toString() + "[" + definition.frame + "]")
-    val archiveFrames = SpriteSceneBuilder.archiveFrames(definition, archiveFrames)
+    private val listId = definition.id
+    private val listFrame = definition.frame
+    private var resolvedDef = definition
+    private var resolvedFrames = archiveFrames
+    private var resolved = cache == null
 
-    val image: Image by lazy { imageOf(definition) }
+    val nameProperty = SimpleStringProperty("$listId[$listFrame]")
+    val archiveFrames: List<SpriteDefinition>
+        get() {
+            ensureResolved()
+            return SpriteSceneBuilder.archiveFrames(resolvedDef, resolvedFrames)
+        }
+
+    val definition: SpriteDefinition
+        get() {
+            ensureResolved()
+            return resolvedDef
+        }
+
+    val image: Image by lazy { imageOf(this.definition) }
 
     val preview: ImageView by lazy {
         ImageView(image).apply {
@@ -43,7 +61,7 @@ class Sprite(
     }
 
     private val sceneGroup: Group by lazy {
-        val builder = SpriteSceneBuilder(definition, this.archiveFrames)
+        val builder = SpriteSceneBuilder(this.definition, this.archiveFrames)
         sceneBuilder = builder
         val content = builder.build()
         planar.bind()
@@ -73,6 +91,15 @@ class Sprite(
     }
 
     override fun getName(): String = nameProperty.get()
+
+    private fun ensureResolved() {
+        if (resolved) return
+        resolved = true
+        val frames = cache?.getSpriteArchive(listId) ?: return
+        if (frames.isEmpty()) return
+        resolvedFrames = frames.toList()
+        resolvedDef = frames.firstOrNull { it.frame == listFrame } ?: frames.first()
+    }
 
     companion object {
         fun imageOf(definition: SpriteDefinition): Image {
