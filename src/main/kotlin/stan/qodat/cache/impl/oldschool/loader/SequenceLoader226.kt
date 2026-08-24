@@ -34,21 +34,11 @@ class SequenceLoader226 {
 
     private fun SequenceDefinition226.decodeValues(opcode: Int, stream: InputStream) {
         val length: Int
-        var i: Int
         when (opcode) {
             1 -> {
-                length = stream.readUnsignedShort()
-                frameLenghts = IntArray(length) {
-                    stream.readUnsignedShort()
-                }
-                frameIDs = IntArray(length) {
-                    stream.readUnsignedShort()
-                }
-                i = 0
-                while (i < length) {
-                    frameIDs!![i] += stream.readUnsignedShort() shl 16
-                    ++i
-                }
+                val (lengths, ids) = stream.readFrameLengthAndIdTables()
+                frameLenghts = lengths
+                frameIDs = ids
             }
 
             2 -> frameStep = stream.readUnsignedShort()
@@ -70,17 +60,7 @@ class SequenceLoader226 {
             9 -> precedenceAnimating = stream.readUnsignedByte()
             10 -> priority = stream.readUnsignedByte()
             11 -> replyMode = stream.readUnsignedByte()
-            12 -> {
-                length = stream.readUnsignedByte()
-                chatFrameIds = IntArray(length) {
-                    stream.readUnsignedShort()
-                }
-                i = 0
-                while (i < length) {
-                    chatFrameIds!![i] += stream.readUnsignedShort() shl 16
-                    ++i
-                }
-            }
+            12 -> chatFrameIds = stream.readPackedArchiveFileIds()
 
             13 -> {
                 if (rev226) {
