@@ -11,8 +11,9 @@ import javafx.scene.shape.TriangleMesh
 /**
  * Client-space quad (X right, Y down mapped to -Y) that faces the SubScene camera.
  *
- * Faces are CCW from -Z so the texture is not mirrored. V is flipped because
- * JavaFX TriangleMesh uploads images with V=0 at the bottom.
+ * The camera sits at -Z and looks toward +Z. Triangle 0→1→2 has a -Z normal
+ * (right-hand rule) so CullFace.BACK keeps the textured front. V is flipped
+ * because JavaFX TriangleMesh uploads images with V=0 at the bottom.
  */
 object PlanarQuad {
 
@@ -39,8 +40,8 @@ object PlanarQuad {
                 0f, 0f,
             ),
             faces = intArrayOf(
-                0, 0, 3, 3, 2, 2,
-                0, 0, 2, 2, 1, 1,
+                0, 0, 1, 1, 2, 2,
+                0, 0, 2, 2, 3, 3,
             ),
         )
     }

@@ -30,11 +30,24 @@ class PlanarQuadTest {
         )
         assertContentEquals(
             intArrayOf(
-                0, 0, 3, 3, 2, 2,
-                0, 0, 2, 2, 1, 1,
+                0, 0, 1, 1, 2, 2,
+                0, 0, 2, 2, 3, 3,
             ),
             mesh.faces,
         )
+        assertTrue(faceNormalZ(mesh, 0) < 0.0, "first triangle must face the camera at -Z")
+        assertTrue(faceNormalZ(mesh, 1) < 0.0, "second triangle must face the camera at -Z")
+    }
+
+    private fun faceNormalZ(mesh: PlanarQuad.Mesh, triangle: Int): Double {
+        val base = triangle * 6
+        fun vx(corner: Int) = mesh.points[mesh.faces[base + corner * 2] * 3].toDouble()
+        fun vy(corner: Int) = mesh.points[mesh.faces[base + corner * 2] * 3 + 1].toDouble()
+        val e1x = vx(1) - vx(0)
+        val e1y = vy(1) - vy(0)
+        val e2x = vx(2) - vx(0)
+        val e2y = vy(2) - vy(0)
+        return e1x * e2y - e1y * e2x
     }
 
     @Test
