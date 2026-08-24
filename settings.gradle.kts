@@ -2,6 +2,7 @@
 rootProject.name = "qodat"
 
 include("qodat-api")
+include("qodat-bench")
 //include("qodat-launcher")
 //include("qodat-launcher:buildSrc")
 includeBuild("qodat-cache") {

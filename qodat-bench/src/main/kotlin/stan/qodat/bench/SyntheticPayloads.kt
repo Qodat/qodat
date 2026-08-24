@@ -1,0 +1,416 @@
+package stan.qodat.bench
+
+import com.displee.io.impl.OutputBuffer
+import stan.qodat.cache.impl.oldschool.loader.REV_210_NPC_ARCHIVE_REV
+import stan.qodat.cache.impl.oldschool.loader.REV_220_OBJ_ARCHIVE_REV
+import stan.qodat.cache.impl.oldschool.loader.SpriteLoader
+
+/**
+ * Representative synthetic config/sprite/texture bytes. Same layouts as the
+ * Phase C loader tests — not a live cache.
+ */
+internal object SyntheticPayloads {
+
+    fun npcOldest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(1)
+        writeByte(2)
+        writeShort(100)
+        writeShort(101)
+        writeByte(2)
+        writeString("Guard")
+        writeByte(12)
+        writeByte(2)
+        writeByte(13)
+        writeShort(20)
+        writeByte(17)
+        writeShort(21)
+        writeShort(22)
+        writeShort(23)
+        writeShort(24)
+        writeByte(40)
+        writeByte(1)
+        writeShort(0x1111)
+        writeShort(0x2222)
+        writeByte(95)
+        writeShort(42)
+        writeByte(0)
+    }.array()
+
+    fun npcMidIntModel(): ByteArray = OutputBuffer(16).apply {
+        writeByte(61)
+        writeByte(1)
+        writeInt(900_001)
+        writeByte(62)
+        writeByte(1)
+        writeInt(900_002)
+        writeByte(0)
+    }.array()
+
+    fun npcNewest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(61)
+        writeByte(1)
+        writeInt(1_000_042)
+        writeByte(2)
+        writeString("Dragon")
+        writeByte(30)
+        writeString("Talk-to")
+        writeByte(111)
+        writeByte(114)
+        writeShort(30)
+        writeByte(115)
+        writeShort(30)
+        writeShort(31)
+        writeShort(32)
+        writeShort(33)
+        writeByte(116)
+        writeShort(40)
+        writeByte(122)
+        writeByte(124)
+        writeShort(50)
+        writeByte(249)
+        writeByte(2)
+        writeByte(0)
+        write24BitInt(0x010203)
+        writeInt(77)
+        writeByte(1)
+        write24BitInt(0x0A0B0C)
+        writeString("param")
+        writeByte(0)
+    }.array()
+
+    fun npcPre210HeadIcon(): ByteArray = OutputBuffer(16).apply {
+        writeByte(102)
+        writeShort(5)
+        writeByte(0)
+    }.array()
+
+    fun npcRev210HeadIcon(): ByteArray = OutputBuffer(16).apply {
+        writeByte(102)
+        writeByte(1)
+        writeBigSmart(12)
+        writeUnsignedShortSmartMinusOne(3)
+        writeByte(0)
+    }.array()
+
+    fun objectOldest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(1)
+        writeByte(2)
+        writeShort(50)
+        writeByte(10)
+        writeShort(51)
+        writeByte(11)
+        writeByte(2)
+        writeString("Door")
+        writeByte(24)
+        writeShort(88)
+        writeByte(40)
+        writeByte(1)
+        writeShort(0x0102)
+        writeShort(0x0304)
+        writeByte(14)
+        writeByte(2)
+        writeByte(15)
+        writeByte(3)
+        writeByte(0)
+    }.array()
+
+    fun objectMidIntModel(): ByteArray = OutputBuffer(16).apply {
+        writeByte(7)
+        writeByte(1)
+        writeInt(800_002)
+        writeByte(0)
+    }.array()
+
+    fun objectNewest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(6)
+        writeByte(1)
+        writeInt(800_002)
+        writeByte(10)
+        writeByte(2)
+        writeString("Portal")
+        writeByte(24)
+        writeShort(99)
+        writeByte(30)
+        writeString("Open")
+        writeByte(78)
+        writeShort(12)
+        writeByte(4)
+        writeByte(3)
+        writeByte(89)
+        writeByte(249)
+        writeByte(2)
+        writeByte(0)
+        write24BitInt(0x010203)
+        writeInt(77)
+        writeByte(1)
+        write24BitInt(0x0A0B0C)
+        writeString("param")
+        writeByte(0)
+    }.array()
+
+    fun objectPre220Sound(): ByteArray = OutputBuffer(16).apply {
+        writeByte(78)
+        writeShort(100)
+        writeByte(5)
+        writeByte(0)
+    }.array()
+
+    fun objectRev220Sound(): ByteArray = OutputBuffer(16).apply {
+        writeByte(78)
+        writeShort(100)
+        writeByte(5)
+        writeByte(7)
+        writeByte(0)
+    }.array()
+
+    fun spotOldest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(1)
+        writeShort(99)
+        writeByte(2)
+        writeShort(3)
+        writeByte(4)
+        writeShort(200)
+        writeByte(5)
+        writeShort(150)
+        writeByte(6)
+        writeShort(512)
+        writeByte(7)
+        writeByte(40)
+        writeByte(8)
+        writeByte(20)
+        writeByte(40)
+        writeByte(1)
+        writeShort(0x1234)
+        writeShort(0x5678)
+        writeByte(0)
+    }.array()
+
+    fun spotMidIntModel(): ByteArray = OutputBuffer(16).apply {
+        writeByte(3)
+        writeInt(900_001)
+        writeByte(2)
+        writeShort(44)
+        writeByte(0)
+    }.array()
+
+    fun spotNewest(): ByteArray = OutputBuffer(16).apply {
+        writeByte(3)
+        writeInt(1_000_042)
+        writeByte(2)
+        writeShort(8)
+        writeByte(9)
+        writeString("fire_blast")
+        writeByte(41)
+        writeByte(1)
+        writeShort(10)
+        writeShort(20)
+        writeByte(0)
+    }.array()
+
+    fun itemCore(): ByteArray = OutputBuffer(16).apply {
+        writeByte(1)
+        writeShort(321)
+        writeByte(2)
+        writeString("Abyssal whip")
+        writeByte(3)
+        writeString("A weapon from the abyss.")
+        writeByte(4)
+        writeShort(840)
+        writeByte(5)
+        writeShort(280)
+        writeByte(6)
+        writeShort(90)
+        writeByte(12)
+        writeInt(120_001)
+        writeByte(16)
+        writeByte(65)
+        writeByte(94)
+        writeShort(14)
+        writeByte(95)
+        writeShort(7)
+        writeByte(0)
+    }.array()
+
+    fun itemIntModel(): ByteArray = OutputBuffer(16).apply {
+        writeByte(44)
+        writeInt(1_000_042)
+        writeByte(97)
+        writeShort(4160)
+        writeByte(98)
+        writeShort(799)
+        writeByte(249)
+        writeByte(2)
+        writeByte(0)
+        write24BitInt(0x010203)
+        writeInt(77)
+        writeByte(1)
+        write24BitInt(0x0A0B0C)
+        writeString("param")
+        writeByte(0)
+    }.array()
+
+    fun seqFrameTables(): ByteArray = OutputBuffer(16).apply {
+        writeByte(1)
+        writeShort(2)
+        writeShort(5)
+        writeShort(6)
+        writeShort(1)
+        writeShort(3)
+        writeShort(2)
+        writeShort(4)
+        writeByte(2)
+        writeShort(10)
+        writeByte(12)
+        writeByte(1)
+        writeShort(7)
+        writeShort(8)
+        writeByte(0)
+    }.array()
+
+    fun seq226Maya(): ByteArray = OutputBuffer(16).apply {
+        writeByte(13)
+        writeInt(77)
+        writeByte(0)
+    }.array()
+
+    fun seq206PackedSounds(): ByteArray = OutputBuffer(16).apply {
+        writeByte(13)
+        writeByte(2)
+        write24BitInt(0x010203)
+        write24BitInt(0x040506)
+        writeByte(0)
+    }.array()
+
+    fun textureRev233(): ByteArray = OutputBuffer(16).apply {
+        writeShort(55)
+        writeShort(0x1234)
+        writeByte(1)
+        writeByte(2)
+        writeByte(3)
+    }.array()
+
+    fun textureLegacyMulti(): ByteArray = OutputBuffer(16).apply {
+        writeShort(0x00AB)
+        writeByte(0)
+        writeByte(2)
+        writeShort(10)
+        writeShort(11)
+        writeByte(4)
+        writeByte(5)
+        writeInt(0x111111)
+        writeInt(0x222222)
+        writeByte(6)
+        writeByte(7)
+    }.array()
+
+    fun textureLegacySingle(): ByteArray = OutputBuffer(16).apply {
+        writeShort(0x00CD)
+        writeByte(1)
+        writeByte(1)
+        writeShort(99)
+        writeInt(0x333333)
+        writeByte(1)
+        writeByte(2)
+    }.array()
+
+    fun spriteSingle(rgb: Int = 0x00AABB): ByteArray = OutputBuffer(16).apply {
+        writeByte(0)
+        writeByte(1)
+        write24BitInt(rgb)
+        writeShort(1)
+        writeShort(1)
+        writeByte(1)
+        writeShort(2)
+        writeShort(3)
+        writeShort(1)
+        writeShort(1)
+        writeShort(1)
+    }.array()
+
+    fun spriteVertical(): ByteArray = OutputBuffer(16).apply {
+        writeByte(SpriteLoader.FLAG_VERTICAL)
+        writeByte(1)
+        writeByte(2)
+        writeByte(1)
+        writeByte(2)
+        write24BitInt(0x110000)
+        write24BitInt(0x001100)
+        writeShort(2)
+        writeShort(2)
+        writeByte(2)
+        writeShort(0)
+        writeShort(0)
+        writeShort(2)
+        writeShort(2)
+        writeShort(1)
+    }.array()
+
+    fun spriteAlpha(): ByteArray = OutputBuffer(16).apply {
+        writeByte(SpriteLoader.FLAG_ALPHA)
+        writeByte(0)
+        writeByte(1)
+            writeByte(0x80)
+        writeByte(0x40)
+        write24BitInt(0x112233)
+        writeShort(2)
+        writeShort(1)
+        writeByte(1)
+        writeShort(0)
+        writeShort(0)
+        writeShort(2)
+        writeShort(1)
+        writeShort(1)
+    }.array()
+
+    fun spriteMultiFrame(): ByteArray = OutputBuffer(16).apply {
+        writeByte(0)
+        writeByte(1)
+        writeByte(0)
+        writeByte(2)
+        write24BitInt(0xAA0000)
+        write24BitInt(0x00BB00)
+        writeShort(2)
+        writeShort(2)
+        writeByte(2)
+        writeShort(1)
+        writeShort(3)
+        writeShort(2)
+        writeShort(4)
+        writeShort(1)
+        writeShort(1)
+        writeShort(1)
+        writeShort(1)
+        writeShort(2)
+    }.array()
+
+    /** Small icon-sized sprite; 1×1 is too cheap to show pixel-loop cost. */
+    fun sprite32(): ByteArray {
+        val width = 32
+        val height = 32
+        val pixels = width * height
+        return OutputBuffer(pixels + 32).apply {
+            writeByte(0)
+            repeat(pixels) { writeByte(1) }
+            write24BitInt(0x00AABB)
+            writeShort(width)
+            writeShort(height)
+            writeByte(1)
+            writeShort(0)
+            writeShort(0)
+            writeShort(width)
+            writeShort(height)
+            writeShort(1)
+        }.array()
+    }
+
+    private fun OutputBuffer.writeUnsignedShortSmartMinusOne(value: Int) {
+        val encoded = value + 1
+        if (encoded in 0 until 128) writeByte(encoded) else writeShort(value + 0x8001)
+    }
+
+    const val NPC_REV_PRE_210 = REV_210_NPC_ARCHIVE_REV - 1
+    const val NPC_REV_210 = REV_210_NPC_ARCHIVE_REV
+    const val OBJ_REV_PRE_220 = REV_220_OBJ_ARCHIVE_REV - 1
+    const val OBJ_REV_220 = REV_220_OBJ_ARCHIVE_REV
+    const val SEQ_REV_226 = 1269
+}
