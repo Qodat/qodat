@@ -36,8 +36,6 @@ import kotlin.math.roundToLong
 
 object FrameTimeUtil {
 
-    private const val FPS = 48.0
-
     // Experimentally trying to land the frames on whole frame values
     // Duration is still double, but internally, in RSFrameSequence/Timeline,
     // the time is discrete.  6000 units per second.

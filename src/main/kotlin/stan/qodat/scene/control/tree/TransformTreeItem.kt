@@ -9,7 +9,6 @@ import javafx.scene.layout.HBox
 import javafx.scene.layout.VBox
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
-import javafx.scene.shape.Box
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
@@ -22,7 +21,6 @@ import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.Entity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.BABY_BLUE
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
 import kotlin.math.abs
@@ -124,7 +122,6 @@ open class TransformTreeItem(
 
     private fun getSelectionMesh(): Group {
         if (!this::selectionMesh.isInitialized) {
-            val selectionMaterial = PhongMaterial(BABY_BLUE)
             selectionMesh = Group()
             var meshId = 0
             for (i in 0 until transform.groupIndices.size()) {
@@ -137,8 +134,6 @@ open class TransformTreeItem(
         }
         return selectionMesh
     }
-
-    private val selectionBoxes = mutableMapOf<Int, Box>()
 
     private fun getSelectionBox(meshId: Int, model: Model, vertices: IntArray) : Sphere {
         val selectionBox = Sphere()
@@ -175,10 +170,6 @@ open class TransformTreeItem(
         val width = abs(maxX - minX)
         val height = abs(maxY - minY)
         val depth = abs(maxZ - minZ)
-        val box = Box()
-//        box.width = width.toDouble()
-//        box.height = height.toDouble()
-//        box.depth = depth.toDouble()
         sphere.radius = 3.0
         sphere.translateX = (minX + width.toDouble().div(2))
         sphere.translateY = (minY + height.toDouble().div(2))

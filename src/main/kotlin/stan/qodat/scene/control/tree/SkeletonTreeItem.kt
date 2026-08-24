@@ -35,14 +35,6 @@ class SkeletonTreeItem(
         text("SKELETON", Color.web("#FFC66D"))
         label(skeleton.labelProperty)
 
-//        val transformationGroupsIterator = skeleton.getTransformationGroups().iterator()
-//
-//        while (transformationGroupsIterator.hasNext()){
-//            val group = transformationGroupsIterator.next()
-//            if (group.typeProperty.get() == TransformationType.SET_OFFSET) {
-//
-//            }
-//        }
         for (group in skeleton.getTransformationGroups()) {
             treeItem {
                 text("CONTROL_GROUP", Color.web("#FFC66D"))

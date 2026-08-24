@@ -37,14 +37,6 @@ class AnimationFrameTreeItem(
     init {
 
         hBox(spacing = 15.0) {
-//            checkBox(frame.enabledProperty, biDirectional = true)
-
-            val frameContextMenu = ContextMenu(
-                createInterpolationMenuItem(),
-                createDuplicateMenuItem(),
-                createRemoveMenuItem()
-            )
-
             children += HBox().apply {
                 minHeight(100.0)
                 isFillHeight = true
@@ -137,131 +129,29 @@ class AnimationFrameTreeItem(
     ) {
         children.clear()
 
-        val flat = false
-        if (!flat) {
-            val groupedTransformations = mutableMapOf<Transformation, List<Transformation>>()
-            var children: MutableList<Transformation>? = null
-            val transformationsIterator = list.iterator()
-            while (transformationsIterator.hasNext()) {
-                val next = transformationsIterator.next()
-                next.bind(frame, entity)
-                if (next.getType() == TransformationType.SET_OFFSET) {
-                    children = mutableListOf()
-                    groupedTransformations[next] = children
-                } else {
-                    requireNotNull(children) { "First transform should be of type ${TransformationType.SET_OFFSET}" }
-                        .add(next)
-                }
+        val groupedTransformations = mutableMapOf<Transformation, List<Transformation>>()
+        var children: MutableList<Transformation>? = null
+        val transformationsIterator = list.iterator()
+        while (transformationsIterator.hasNext()) {
+            val next = transformationsIterator.next()
+            next.bind(frame, entity)
+            if (next.getType() == TransformationType.SET_OFFSET) {
+                children = mutableListOf()
+                groupedTransformations[next] = children
+            } else {
+                requireNotNull(children) { "First transform should be of type ${TransformationType.SET_OFFSET}" }
+                    .add(next)
             }
-            for ((rootTransformation, childTransformations) in groupedTransformations) {
-                this.children.add(
-                    TransformGroupTreeItem(
-                        entity, frame, this, treeView,
-                        rootTransformation, childTransformations
-                    )
+        }
+        for ((rootTransformation, childTransformations) in groupedTransformations) {
+            this.children.add(
+                TransformGroupTreeItem(
+                    entity, frame, this, treeView,
+                    rootTransformation, childTransformations
                 )
-            }
-        } else {
-            for ((index, transform) in list.withIndex())
-                this.children.add(
-                    index,
-                    TransformTreeItem(entity, frame, transform, this, treeView.selectionModel)
-                )
+            )
         }
     }
-
-    private fun shiftFrameIndices(index: Int) {
-        val frameIterator = animation.getFrameList().subList(index + 1, animation.getFrameList().size).iterator()
-        val frameId = frame.getFrameId(Integer.toHexString(frame.idProperty.get())) + 1
-        var nextFrameId = frameId + 1
-        var i = index + 1
-        while (frameIterator.hasNext()) {
-            val next = frameIterator.next()
-            val hex = Integer.toHexString(next.idProperty.get())
-            val fileId = next.getFileId(hex)
-            next.idProperty.set(((fileId and 0xFFFF) shl 16) or (nextFrameId and 0xFFFF))
-            next.labelProperty.set("frame[${++i}]")
-            nextFrameId++
-        }
-    }
-
-    private fun createRemoveMenuItem() =
-        MenuItem("Remove").apply {
-            setOnAction {
-
-                val index = animation.getFrameList().indexOf(frame)
-
-                animation.getFrameList().remove(frame)
-
-                val frameIterator =
-                    animation.getFrameList().subList(index, animation.getFrameList().size).iterator()
-                val frameId = frame.getFrameId(Integer.toHexString(frame.idProperty.get()))
-                var nextFrameId = frameId
-                var i = index
-                while (frameIterator.hasNext()) {
-                    val next = frameIterator.next()
-                    val hex = Integer.toHexString(next.idProperty.get())
-                    val fileId = next.getFileId(hex)
-                    next.idProperty.set(((fileId and 0xFFFF) shl 16) or (nextFrameId and 0xFFFF))
-                    next.labelProperty.set("frame[${i++}]")
-                    nextFrameId++
-                }
-
-            }
-        }
-
-    private fun createDuplicateMenuItem() =
-        MenuItem("Duplicate").apply {
-            setOnAction {
-                val index = animation.getFrameList().indexOf(frame)
-                shiftFrameIndices(index)
-                if (frame is AnimationFrameLegacy)
-                    animation.getFrameList().add(index + 1, frame.clone("frame[${index + 1}]"))
-            }
-        }
-
-    private fun createInterpolationMenuItem() =
-        MenuItem("Interpolate").apply {
-            setOnAction {
-                val frames = animation.getFrameList()
-                var index = frames.indexOf(frame)
-                var nextFrameIndex = index
-                if (index + 1 < frames.size) {
-                    nextFrameIndex = index + 1
-                } else
-                    nextFrameIndex = 0
-
-                if (nextFrameIndex != index) {
-                    val nextFrame = frames[nextFrameIndex]
-                    if (frame is AnimationFrameLegacy && nextFrame is AnimationFrameLegacy)
-                        if (frame.transformationCountProperty.get() == nextFrame.transformationCountProperty.get()) {
-                        val transforms = mutableListOf<Transformation>()
-                        for (i in 0 until frame.transformationCountProperty.get()) {
-                            val initialTransform = frame.transformationList.get(i)
-                            val transform = nextFrame.transformationList.get(i)
-                            val dx = -(transform.getDeltaX() - initialTransform.getDeltaX()).div(2)
-                            val dy = -(transform.getDeltaY() - initialTransform.getDeltaY()).div(2)
-                            val dz = -(transform.getDeltaZ() - initialTransform.getDeltaZ()).div(2)
-                            transforms.add(Transformation(
-                                "transform[$i]",
-                                transform.groupIndices.toArray(null),
-                                transform.getType().ordinal,
-                                transform.getDeltaX() + dx,
-                                transform.getDeltaY() + dy,
-                                transform.getDeltaZ() + dz
-                            ).apply {
-                                idProperty.set(i)
-                                groupIndexProperty.set(transform.groupIndexProperty.get())
-                            })
-                        }
-                        val interpolatedFrame = frame.clone("frame[${index + 1}]")
-                        interpolatedFrame.transformationList.setAll(transforms)
-                        shiftFrameIndices(index)
-                        animation.getFrameList().add(index + 1, interpolatedFrame)
-                    }
-                }
-            }
-        }
 
     private lateinit var selectionMesh: Group
 

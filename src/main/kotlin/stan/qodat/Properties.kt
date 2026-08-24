@@ -4,7 +4,6 @@ import javafx.beans.property.*
 import javafx.scene.SceneAntialiasing
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
-import javafx.scene.shape.DrawMode
 import qodat.cache.Cache
 import stan.qodat.scene.controller.EntityViewController.SortType
 import stan.qodat.scene.runescape.animation.Animation
@@ -36,7 +35,6 @@ object Properties {
         it.specularColor = Color.BLUE
     }
 
-    val drawModeProperty = SimpleObjectProperty(DrawMode.FILL)
     val viewMode = SimpleObjectProperty(ModelViewMode.FILL)
 
     /**

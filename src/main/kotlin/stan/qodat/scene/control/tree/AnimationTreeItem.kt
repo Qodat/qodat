@@ -29,14 +29,9 @@ class AnimationTreeItem(
     private val onRemoval: (AnimationTreeItem) -> Unit = {},
 ) : TreeItem<Node>() {
 
-    private val framesMap = HashMap<AnimationFrameTreeItem, AnimationFrame>()
     private var loadedFrames = false
 
     init {
-
-//        assert(animation.treeItemProperty.get() == null)
-//        { "Tree item property for animation $animation is already set!" }
-
         hBox(isGraphic = false) {
             children += Text("ANIMATION").apply {
                 fill = Color.web("#FFC66D")
@@ -109,7 +104,7 @@ class AnimationTreeItem(
         }
     }
 
-    override fun isLeaf() = if (framesMap.isNotEmpty()) children.isEmpty() else false
+    override fun isLeaf() = false
 
     private fun loadFrameTreeItems(){
         val frames = animation.getFrameList()

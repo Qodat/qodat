@@ -8,13 +8,6 @@ class RootSceneTreeItem : TreeItem<Node>() {
 
     init {
         isExpanded = true
-        label("Nodes") {
-//            contextMenu = ContextMenu(ExportMenu<AbstractSubScene>().apply {
-//                setExportable(SubScene3D)
-//                bindAnimation(Properties.selectedAnimation)
-//            })
-        }
+        label("Nodes")
     }
-
-
 }

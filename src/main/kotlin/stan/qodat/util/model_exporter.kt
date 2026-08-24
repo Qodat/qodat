@@ -12,17 +12,6 @@ import qodat.cache.definition.ModelDefinition
  */
 const val BUFFER_SIZE = 30_000
 
-//fun exportToFile(modelDefinition: ModelDefinition, file: File, exportSkinsAsColor: Boolean){
-//    if(file.name.endsWith(".mqo")){
-//        MQOExporter().export(file, modelDefinition)
-//    } else {
-//        var data = export(modelDefinition).flip()
-//        if(file.name.endsWith(".gz"))
-//           data = GZip.compress(data)
-//        Files.write(file.toPath(), data)
-//    }
-//}
-
 fun export(modelDefinition: ModelDefinition) : OutputStream {
 
     val out = OutputStream(BUFFER_SIZE)
@@ -100,33 +89,19 @@ fun export(modelDefinition: ModelDefinition) : OutputStream {
             modelDefinition.getTextureTriangleVertexIndices3()!!
         )
     }
-//    println("outVertexFlags ->  at ${out.offset}")
     write(out, outVertexFlags)
-//    println("outFaceVertexIndicesMasks ->  at ${out.offset}")
     write(out, outFaceVertexIndicesMasks)
-//    println("outFaceRenderPriorities ->  at ${out.offset}")
     write(out, outFaceRenderPriorities)
-//    println("outFaceSkins ->  at ${out.offset}")
     write(out, outFaceSkins)
-//    println("outFaceRenderTypes ->  at ${out.offset}")
     write(out, outFaceRenderTypes)
-//    println("outVertexSkins ->  at ${out.offset}")
     write(out, outVertexSkins)
-//    println("outFaceAlphas ->  at ${out.offset}")
     write(out, outFaceAlphas)
-//    println("outFaceVertexIndices ->  at ${out.offset}")
     write(out, outFaceVertexIndices)
-//    println("outFaceColors ->  at ${out.offset}")
     write(out, outFaceColors)
-//    println("outFaceTextures ->  at ${out.offset}")
     write(out, outFaceTextures)
-//    println("outPointX ->  at ${out.offset}")
     write(out, outPointX)
-//    println("outPointY ->  at ${out.offset}")
     write(out, outPointY)
-//    println("outPointZ ->  at ${out.offset}")
     write(out, outPointZ)
-//    println("header ->  at ${out.offset}")
 
     val faceRenderFlag = if(faceRenderTypes == null && faceTextures == null && faceTextureConfigs == null)
         0 else 1
@@ -146,7 +121,6 @@ fun export(modelDefinition: ModelDefinition) : OutputStream {
         pointZLength = outPointZ.offset,
         faceVertexDataLength = outFaceVertexIndices.offset
     )
-//    println("length =   ${out.offset}")
     return out
 }
 
