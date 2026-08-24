@@ -18,9 +18,15 @@ class WidgetLayoutTest {
 
     @Test
     fun aspectSizeUsesTheResolvedOppositeEdge() {
-        val sized = WidgetLayout.size(400, 200, 2, 1, 4, 0)
-        assertEquals(200, sized.second)
-        assertEquals(400, sized.first)
+        // height = parent-minus 20; width mode 4 uses that height * 2 / 20
+        val wide = WidgetLayout.size(400, 200, 2, 20, 4, 1)
+        assertEquals(180, wide.second)
+        assertEquals(18, wide.first)
+
+        // width = parent-minus 40; height mode 4 uses that width * 20 / 40
+        val tall = WidgetLayout.size(400, 200, 40, 20, 1, 4)
+        assertEquals(360, tall.first)
+        assertEquals(180, tall.second)
     }
 
     @Test
