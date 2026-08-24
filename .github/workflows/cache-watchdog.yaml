@@ -53,6 +53,8 @@ jobs:
       cache-dir: ${{ steps.download.outputs.cache-dir }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - uses: actions/setup-java@v4
         with:
@@ -206,6 +208,9 @@ jobs:
     permissions:
       contents: write
       issues: write
+    env:
+      # secrets is not allowed in step `if:`; promote presence to env first.
+      HAS_CURSOR_KEY: ${{ secrets.CURSOR_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
 
@@ -243,7 +248,7 @@ jobs:
           node "$GITHUB_WORKSPACE/.github/scripts/cursor-cache-patch.mjs"
 
       - name: Mark issue as agent-dispatched
-        if: success() && secrets.CURSOR_API_KEY != ''
+        if: success() && env.HAS_CURSOR_KEY == 'true'
         uses: actions/github-script@v7
         env:
           ISSUE_NUMBER: ${{ needs.report.outputs.issue_number }}

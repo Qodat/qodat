@@ -49,8 +49,12 @@ jobs:
       contents: write
     env:
       WANT_PUBLISH: ${{ github.event_name == 'push' || github.event_name == 'release' || inputs.publish }}
+      # secrets is not allowed in step `if:`; promote presence to env first.
+      HAS_SIGNING_KEY: ${{ secrets.CONVEYOR_SIGNING_KEY != '' }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
 
       - uses: actions/setup-java@v4
         with:
@@ -63,7 +67,7 @@ jobs:
         run: ./gradlew jar -x :qodat-bench:compileKotlin
 
       - name: Unsigned package (no GitHub signing key)
-        if: ${{ secrets.CONVEYOR_SIGNING_KEY == '' }}
+        if: env.HAS_SIGNING_KEY != 'true'
         run: |
           echo "CONVEYOR_SIGNING_KEY is not set; building unsigned site artifacts."
           echo "Signed publishes stay on the machine that already has Conveyor keys."
@@ -72,7 +76,7 @@ jobs:
           fi
 
       - name: Package with Conveyor (signed)
-        if: ${{ secrets.CONVEYOR_SIGNING_KEY != '' }}
+        if: env.HAS_SIGNING_KEY == 'true'
         uses: hydraulic-software/conveyor/actions/build@v22.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -88,7 +92,7 @@ jobs:
             ${{ inputs.version != '' && format('-Kapp.version={0}', inputs.version) || '' }}
 
       - name: Package with Conveyor (unsigned)
-        if: ${{ secrets.CONVEYOR_SIGNING_KEY == '' }}
+        if: env.HAS_SIGNING_KEY != 'true'
         uses: hydraulic-software/conveyor/actions/build@v22.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,6 +113,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ secrets.CONVEYOR_SIGNING_KEY != '' && 'conveyor-output-signed' || 'conveyor-output-unsigned' }}
+          name: ${{ env.HAS_SIGNING_KEY == 'true' && 'conveyor-output-signed' || 'conveyor-output-unsigned' }}
           path: output/
           if-no-files-found: ignore
