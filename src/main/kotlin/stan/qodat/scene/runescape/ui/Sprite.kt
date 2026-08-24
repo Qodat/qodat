@@ -28,9 +28,13 @@ class Sprite(
 
     private val listId = definition.id
     private val listFrame = definition.frame
+    private val listStub = definition
     private var resolvedDef = definition
     private var resolvedFrames = archiveFrames
     private var resolved = cache == null
+    private var cachedImage: Image? = null
+    private var previewView: ImageView? = null
+    private var sceneGroup: Group? = null
 
     val nameProperty = SimpleStringProperty("$listId[$listFrame]")
     val archiveFrames: List<SpriteDefinition>
@@ -45,27 +49,20 @@ class Sprite(
             return resolvedDef
         }
 
-    val image: Image by lazy { imageOf(this.definition) }
+    val image: Image
+        get() = cachedImage ?: imageOf(this.definition).also { cachedImage = it }
 
-    val preview: ImageView by lazy {
-        ImageView(image).apply {
+    val preview: ImageView
+        get() = previewView ?: ImageView(image).apply {
             isPreserveRatio = true
             fitWidth = 24.0
             fitHeight = 24.0
+            previewView = this
         }
-    }
 
     private var sceneBuilder: SpriteSceneBuilder? = null
     private val planar = PlanarSceneHandle { exploded, animate ->
         sceneBuilder?.applyExploded(exploded, animate)
-    }
-
-    private val sceneGroup: Group by lazy {
-        val builder = SpriteSceneBuilder(this.definition, this.archiveFrames)
-        sceneBuilder = builder
-        val content = builder.build()
-        planar.bind()
-        Group(content)
     }
 
     val viewNode: HBox by lazy {
@@ -79,7 +76,13 @@ class Sprite(
     }
 
     override fun getSceneNode(): Node {
-        val node = sceneGroup
+        val node = sceneGroup ?: run {
+            val builder = SpriteSceneBuilder(this.definition, this.archiveFrames)
+            sceneBuilder = builder
+            val content = builder.build()
+            planar.bind()
+            Group(content).also { sceneGroup = it }
+        }
         planar.bind()
         return node
     }
@@ -88,6 +91,15 @@ class Sprite(
 
     override fun removeSceneNodeReference() {
         planar.unbind()
+        sceneBuilder = null
+        sceneGroup = null
+        cachedImage = null
+        previewView?.image = null
+        if (cache != null) {
+            resolved = false
+            resolvedDef = listStub
+            resolvedFrames = listOf(listStub)
+        }
     }
 
     override fun getName(): String = nameProperty.get()

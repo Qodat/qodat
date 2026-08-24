@@ -2,6 +2,7 @@ package stan.qodat.cache.impl.displee.types
 
 import com.displee.cache.CacheLibrary
 import qodat.cache.definition.TextureDefinition
+import stan.qodat.cache.BoundedLruCache
 import stan.qodat.cache.impl.oldschool.definition.TextureDefinition as OsrsTextureDefinition
 import stan.qodat.cache.impl.oldschool.loader.TextureLoader
 
@@ -10,6 +11,10 @@ class TextureManager(
 ) {
 
     val textures = mutableMapOf<Int, OsrsTextureDefinition>()
+    private val computedPixels = BoundedLruCache<Int, OsrsTextureDefinition>(
+        maxEntries = MAX_COMPUTED_TEXTURES,
+        onEvict = { _, texture -> texture.releaseComputedPixels() },
+    )
     @Volatile
     private var loaded = false
 
@@ -30,12 +35,18 @@ class TextureManager(
         return textures[id]
     }
 
+    fun rememberComputed(texture: OsrsTextureDefinition) {
+        computedPixels.put(texture.id, texture)
+    }
+
     fun getTextures(): Array<TextureDefinition> {
         load()
         return getTextures(textures)
     }
 
     companion object {
+        internal const val MAX_COMPUTED_TEXTURES = 64
+
         internal fun getTextures(textures: Map<Int, OsrsTextureDefinition>): Array<TextureDefinition> =
             textures.values.toTypedArray()
     }

@@ -22,55 +22,58 @@ class AnimationLegacy(
     numericId: Int = 0,
 ) : Encoder, Animation(label, definition, cache, numericId) {
 
-    private lateinit var frames: ObservableList<AnimationFrame>
-    private lateinit var skeletons: ObservableMap<Int, AnimationSkeleton>
+    private var frames: ObservableList<AnimationFrame>? = null
+    private var skeletons: ObservableMap<Int, AnimationSkeleton>? = null
 
     private var exportFrameArchiveIdProp: SimpleIntegerProperty? = null
     val exportFrameArchiveId: SimpleIntegerProperty
         get() = exportFrameArchiveIdProp ?: SimpleIntegerProperty().also { exportFrameArchiveIdProp = it }
 
     fun getSkeletons(): ObservableMap<Int, AnimationSkeleton> {
-        if (!this::skeletons.isInitialized) {
-            try {
-                val skeletonsMap: Map<Int, AnimationSkeleton> = definition
-                    ?.frameHashes
-                    ?.map { getCacheSafe().getAnimationSkeletonDefinition(it) }
-                    ?.distinctBy { it.id }
-                    ?.associate { it.id to AnimationSkeleton("${it.id}", it) }
-                    ?: emptyMap()
-                skeletons = FXCollections.observableMap(skeletonsMap)
-            } catch (e: Exception) {
-                Qodat.logException("Could not get animation {${getName()}}'s skeletons", e)
-                return FXCollections.emptyObservableMap()
-            }
+        skeletons?.let { return it }
+        return try {
+            val skeletonsMap: Map<Int, AnimationSkeleton> = definition
+                ?.frameHashes
+                ?.map { getCacheSafe().getAnimationSkeletonDefinition(it) }
+                ?.distinctBy { it.id }
+                ?.associate { it.id to AnimationSkeleton("${it.id}", it) }
+                ?: emptyMap()
+            FXCollections.observableMap(skeletonsMap).also { skeletons = it }
+        } catch (e: Exception) {
+            Qodat.logException("Could not get animation {${getName()}}'s skeletons", e)
+            FXCollections.emptyObservableMap()
         }
-        return skeletons
     }
 
     override fun getFrameList(): ObservableList<AnimationFrame> {
-        if (!this::frames.isInitialized) {
-            try {
-                val framesArray = if (definition == null)
-                    emptyArray()
-                else {
-                    Array(definition.frameHashes.size) { idx ->
-                        val frameDefinition = getCacheSafe().getFrameDefinition(definition.frameHashes[idx])!!
-                        AnimationFrameLegacy(
-                            name = "frame[$idx]",
-                            definition = frameDefinition,
-                            duration = definition.frameLengths[idx]
-                        ).apply {
-                            idProperty.set(this@AnimationLegacy.definition.frameHashes[idx])
-                        }
+        frames?.let { return it }
+        return try {
+            val source = definition
+            val framesArray = if (source == null)
+                emptyArray()
+            else {
+                Array(source.frameHashes.size) { idx ->
+                    val frameHash = source.frameHashes[idx]
+                    val frameDefinition = getCacheSafe().getFrameDefinition(frameHash)!!
+                    AnimationFrameLegacy(
+                        name = "frame[$idx]",
+                        definition = frameDefinition,
+                        duration = source.frameLengths[idx]
+                    ).apply {
+                        idProperty.set(frameHash)
                     }
                 }
-                frames = FXCollections.observableArrayList(*framesArray)
-            } catch (e: Exception) {
-                Qodat.logException("Could not get animation {${getName()}}'s frames", e)
-                return FXCollections.emptyObservableList()
             }
+            FXCollections.observableArrayList<AnimationFrame>(*framesArray).also { frames = it }
+        } catch (e: Exception) {
+            Qodat.logException("Could not get animation {${getName()}}'s frames", e)
+            FXCollections.emptyObservableList()
         }
-        return frames
+    }
+
+    override fun releaseDecodedFrames() {
+        frames = null
+        skeletons = null
     }
 
     override fun copy() = AnimationLegacy(getName(), definition, cache, numericId())

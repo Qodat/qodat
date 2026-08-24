@@ -49,7 +49,7 @@ abstract class Entity<D : EntityDefinition>(
     private var preparedDefinitions: List<Pair<String, ModelDefinition>>? = null
     private var preparedMerged: ModelDefinition? = null
     private val modelLock = Any()
-    private lateinit var materials: Array<Material>
+    private var materials: Array<Material>? = null
     private lateinit var viewBox: HBox
     private var treeItem: EntityTreeItem? = null
 
@@ -159,17 +159,17 @@ abstract class Entity<D : EntityDefinition>(
     }
 
     fun getMaterials(): Array<Material> {
-        if (!this::materials.isInitialized) {
-            materials = PerfTrace.span("entity.getMaterials ${getName()}") {
-                try {
-                    uniqueMaterials()
-                } catch (e: Throwable) {
-                    Qodat.logException("Could not get entity {${getName()}}'s materials", e)
-                    emptyArray()
-                }
+        materials?.let { return it }
+        val loaded = PerfTrace.span("entity.getMaterials ${getName()}") {
+            try {
+                uniqueMaterials()
+            } catch (e: Throwable) {
+                Qodat.logException("Could not get entity {${getName()}}'s materials", e)
+                emptyArray()
             }
         }
-        return materials
+        materials = loaded
+        return loaded
     }
 
     private fun mergeModelsEnabled(): Boolean = mergeModelProp?.get() ?: true
@@ -261,6 +261,7 @@ abstract class Entity<D : EntityDefinition>(
         models = null
         preparedDefinitions = null
         preparedMerged = null
+        materials = null
     }
 
     override fun removeTreeItemReference() {

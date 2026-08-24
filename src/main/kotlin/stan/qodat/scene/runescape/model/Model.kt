@@ -61,8 +61,8 @@ class Model(label: String,
     Encoder {
 
     private var sceneGroup: Group? = null
-    private lateinit var sceneNode: Node
-    private lateinit var modelSkin : ModelSkin
+    private var sceneNode: Node? = null
+    private var modelSkin : ModelSkin? = null
     private lateinit var viewBox : HBox
     private var treeItem: ModelTreeItem? = null
     private lateinit var priorityLabels: Group
@@ -126,10 +126,9 @@ class Model(label: String,
     }
 
     private fun rebuildModel() {
-        if (this@Model::sceneNode.isInitialized)
-            getSceneNode().children.remove(sceneNode)
+        sceneNode?.let { getSceneNode().children.remove(it) }
         buildModelSkin()
-        getSceneNode().children.add(sceneNode)
+        sceneNode?.let { getSceneNode().children.add(it) }
     }
 
     private fun addOrRemoveSelectionBoxes(add: Boolean) {
@@ -369,18 +368,19 @@ class Model(label: String,
     }
 
     fun collectMeshes() : Collection<ModelMesh> {
+        val skin = modelSkin ?: return emptyList()
         return when (buildTypeProperty.get()!!){
             ModelMeshBuildType.ATLAS -> {
-                listOf(modelSkin as ModelAtlasMesh)
+                listOf(skin as ModelAtlasMesh)
             }
             ModelMeshBuildType.SKELETON_ATLAS -> {
-                val atlasGroup = (modelSkin as ModelSkeletonMesh).getSceneNode()
+                val atlasGroup = (skin as ModelSkeletonMesh).getSceneNode()
                 return atlasGroup.children.map {
                     (it as MeshView).mesh as ModelAtlasMesh
                 }
             }
             ModelMeshBuildType.MESH_PER_FACE -> {
-                val faceMeshGroup = (modelSkin as ModelFaceMeshGroup).getSceneNode()
+                val faceMeshGroup = (skin as ModelFaceMeshGroup).getSceneNode()
                 return faceMeshGroup.children.map {
                     (it as MeshView).mesh as ModelFaceMesh
                 }
@@ -402,9 +402,8 @@ class Model(label: String,
 
     private fun applyViewModeColors() {
         ModelOverlayHover.hide()
-        if (!this::modelSkin.isInitialized)
-            return
-        when (val skin = modelSkin) {
+        val skin = modelSkin ?: return
+        when (skin) {
             is ModelAtlasMesh -> skin.rebuildAtlas()
             is ModelSkeletonMesh -> {
                 for (child in skin.getSceneNode().children) {
@@ -435,9 +434,9 @@ class Model(label: String,
     override fun getSceneNode() : Group {
         if (sceneGroup == null){
             sceneGroup = Group().apply {
-                if (!this@Model::sceneNode.isInitialized)
+                if (sceneNode == null)
                     buildModelSkin()
-                children.add(sceneNode)
+                sceneNode?.let { children.add(it) }
             }
         }
         return sceneGroup!!
@@ -447,6 +446,8 @@ class Model(label: String,
         unbindGlobalProperties()
         disposeOverlays()
         sceneGroup = null
+        sceneNode = null
+        modelSkin = null
     }
 
     override fun removeTreeItemReference() {
@@ -473,19 +474,20 @@ class Model(label: String,
     }
 
     private fun getModelSkin() : ModelSkin {
-        if (!this::modelSkin.isInitialized)
+        if (modelSkin == null)
             buildModelSkin()
-        return modelSkin
+        return modelSkin!!
     }
 
     private fun buildModelSkin() {
         PerfTrace.span("model.buildSkin ${labelProperty.get()}") {
-            modelSkin = when (buildTypeProperty.get()!!) {
+            val skin = when (buildTypeProperty.get()!!) {
                 ModelMeshBuildType.ATLAS -> ModelAtlasMesh(this)
                 ModelMeshBuildType.SKELETON_ATLAS -> ModelSkeletonMesh(this)
                 ModelMeshBuildType.MESH_PER_FACE -> ModelFaceMeshGroup(this)
             }
-            sceneNode = modelSkin.getSceneNode()
+            modelSkin = skin
+            sceneNode = skin.getSceneNode()
         }
     }
 

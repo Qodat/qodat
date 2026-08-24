@@ -64,8 +64,12 @@ class TextureDefinition(override var id: Int) : QodatTextureDefinition {
         }
     }
 
+    fun releaseComputedPixels() {
+        pixels = EMPTY_INTS
+    }
+
     companion object {
-        private val EMPTY_INTS = IntArray(0)
+        internal val EMPTY_INTS = IntArray(0)
 
         internal fun adjustRgb(rgb: Int, brightness: Double): Int {
             val r = Math.pow((rgb shr 16).toDouble() / 256.0, brightness)

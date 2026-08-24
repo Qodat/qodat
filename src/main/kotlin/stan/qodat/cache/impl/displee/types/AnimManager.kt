@@ -7,6 +7,7 @@ import qodat.cache.definition.AnimationFrameLegacyDefinition
 import qodat.cache.definition.AnimationMayaDefinition
 import qodat.cache.definition.AnimationSound
 import qodat.cache.definition.AnimationTransformationGroup
+import stan.qodat.cache.BoundedLruCache
 import stan.qodat.cache.impl.oldschool.definition.FramemapDefinition
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition206
 import stan.qodat.cache.impl.oldschool.definition.SequenceDefinition226
@@ -19,9 +20,9 @@ class AnimManager(
 ) {
 
     private val seqs = mutableMapOf<Int, AnimationDefinition>()
-    private val frames = mutableMapOf<Int, MutableMap<Int, AnimationFrameLegacyDefinition?>>()
-    private val frameMaps = mutableMapOf<Int, FramemapDefinition>()
-    private val frameArchives = mutableMapOf<Int, Archive>()
+    private val frames = BoundedLruCache<Long, AnimationFrameLegacyDefinition?>(MAX_DECODED_FRAMES)
+    private val frameMaps = BoundedLruCache<Int, FramemapDefinition>(MAX_FRAMEMAPS)
+    private val frameArchives = BoundedLruCache<Int, Archive>(MAX_FRAME_ARCHIVES)
     private var seqArray: Array<AnimationDefinition>? = null
     @Volatile
     private var loaded = false
@@ -57,11 +58,9 @@ class AnimManager(
     fun getFrameDef(frameHash: Int): AnimationFrameLegacyDefinition? {
         val archiveId = archiveId(frameHash)
         val fileId = fileId(frameHash)
-        val archiveFrames = frames.getOrPut(archiveId) { mutableMapOf() }
-        if (fileId in archiveFrames) return archiveFrames[fileId]
-        val def = decodeFrame(archiveId, fileId)
-        archiveFrames[fileId] = def
-        return def
+        return frames.getOrLoad(frameKey(archiveId, fileId)) {
+            decodeFrame(archiveId, fileId)
+        }
     }
 
     fun getFramemap(frameHash: Int): AnimationTransformationGroup? {
@@ -83,21 +82,19 @@ class AnimManager(
         frameMaps[framemapId]?.let { return it }
         val contents = cacheLibrary.data(1, framemapId) ?: return null
         return AnimationFrameCodec.loadFramemap(framemapId, contents).also {
-            frameMaps[framemapId] = it
+            frameMaps.put(framemapId, it)
         }
     }
 
     private fun frameBytes(archiveId: Int, fileId: Int): ByteArray? {
-        val archive = frameArchives[archiveId] ?: run {
-            val opened = try {
-                cacheLibrary.index(0).archive(archiveId)
-            } catch (_: Exception) {
-                null
-            } ?: return null
-            frameArchives[archiveId] = opened
-            opened
-        }
-        return archive.file(fileId)?.data
+        frameArchives[archiveId]?.let { return it.file(fileId)?.data }
+        val opened = try {
+            cacheLibrary.index(0).archive(archiveId)
+        } catch (_: Exception) {
+            null
+        } ?: return null
+        frameArchives.put(archiveId, opened)
+        return opened.file(fileId)?.data
     }
 
     private fun loadSeq(
@@ -112,9 +109,16 @@ class AnimManager(
     }
 
     companion object {
+        internal const val MAX_DECODED_FRAMES = 2048
+        internal const val MAX_FRAMEMAPS = 256
+        internal const val MAX_FRAME_ARCHIVES = 32
+
         internal fun archiveId(frameHash: Int): Int = frameHash ushr 16
 
         internal fun fileId(frameHash: Int): Int = frameHash and 0xFFFF
+
+        internal fun frameKey(archiveId: Int, fileId: Int): Long =
+            (archiveId.toLong() shl 16) or (fileId.toLong() and 0xFFFF)
 
         internal fun getSeq(seqs: Map<Int, AnimationDefinition>, id: String): AnimationDefinition {
             val seqId = id.toIntOrNull()

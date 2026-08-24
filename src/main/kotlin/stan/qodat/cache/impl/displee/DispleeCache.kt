@@ -258,6 +258,7 @@ object DispleeCache : Cache("Displee") {
                 spriteManager.findSprite(spriteId, frameId)
             }
         }
+        textureManager.rememberComputed(texture)
         texture
     }
 

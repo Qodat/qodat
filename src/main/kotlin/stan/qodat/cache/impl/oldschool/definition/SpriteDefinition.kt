@@ -31,6 +31,7 @@ class SpriteDefinition(
     private var inflated = false
     private var pixelsField = EMPTY_INTS
     private var pixelIdxField = EMPTY_BYTES
+    internal var onInflated: (() -> Unit)? = null
 
     override var pixels: IntArray
         get() {
@@ -65,8 +66,37 @@ class SpriteDefinition(
             if (inflated) return
             SpriteLoader.inflate(this, source)
             inflated = true
-            pixelSource = null
+            onInflated?.invoke()
         }
+    }
+
+    /**
+     * Drops ARGB / idx copies so the archive bytes can be re-inflated later.
+     * No-ops when this definition was assigned pixels without a [pixelSource].
+     */
+    internal fun releaseInflatedPixels() {
+        if (!inflated || pixelSource == null) return
+        synchronized(this) {
+            if (!inflated || pixelSource == null) return
+            pixelsField = EMPTY_INTS
+            pixelIdxField = EMPTY_BYTES
+            inflated = false
+        }
+    }
+
+    internal fun releaseDecoded() {
+        synchronized(this) {
+            pixelsField = EMPTY_INTS
+            pixelIdxField = EMPTY_BYTES
+            pixelSource = null
+            inflated = false
+            onInflated = null
+        }
+    }
+
+    internal fun inflatedByteSize(): Long {
+        if (!inflated) return 0L
+        return pixelsField.size * 4L + pixelIdxField.size
     }
 
     internal fun assignInflated(pixels: IntArray, pixelIdx: ByteArray) {

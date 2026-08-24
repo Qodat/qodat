@@ -150,6 +150,7 @@ open class TransformationTimer<R : Transformer<*>> {
                 }
                 removeListener(updateFramesListener)
             }
+            (oldAnimation as? stan.qodat.scene.runescape.animation.Animation)?.releaseDecodedFrames()
 
             Qodat.mainController.playBtn.selectedProperty().set(false)
 

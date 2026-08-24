@@ -67,6 +67,12 @@ abstract class Animation(
 
     abstract override fun getFrameList(): ObservableList<AnimationFrame>
 
+    /**
+     * Drops decoded JavaFX frame / transformation graphs so playing many
+     * sequences does not retain every Transformation forever.
+     */
+    open fun releaseDecodedFrames() {}
+
     protected fun getCacheSafe() = requireNotNull(cache)
     { "Cache must not be null if loading from cache definition!" }
 

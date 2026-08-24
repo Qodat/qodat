@@ -81,6 +81,20 @@ class SpriteDefinitionLoaderTest {
     }
 
     @Test
+    fun releaseInflatedPixelsKeepsSourceAndReinflates() {
+        val sprites = SpriteLoader().load(44, singleFramePayload(0x00AABB))
+        val sprite = sprites[0]
+        assertEquals(0xFF00AABB.toInt(), sprite.pixels[0])
+        assertTrue(sprite.isPixelDataInflated)
+        assertTrue(sprite.pixelSource != null)
+        sprite.releaseInflatedPixels()
+        assertTrue(!sprite.isPixelDataInflated)
+        assertEquals(0, sprite.inflatedByteSize())
+        assertEquals(0xFF00AABB.toInt(), sprite.pixels[0])
+        assertTrue(sprite.isPixelDataInflated)
+    }
+
+    @Test
     fun loadDefersPixelInflateUntilPixelsOrIdxAreRead() {
         val sprites = SpriteLoader().load(44, singleFramePayload(0x00AABB))
         val sprite = sprites[0]

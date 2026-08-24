@@ -126,6 +126,16 @@ class AnimManagerMappingTest {
     }
 
     @Test
+    fun frameKeyPacksArchiveAndFile() {
+        val hash = (0x1A shl 16) or 0x0B
+        assertEquals(0x00100003L, AnimManager.frameKey(0x10, 0x03))
+        assertEquals(
+            AnimManager.frameKey(AnimManager.archiveId(hash), AnimManager.fileId(hash)),
+            AnimManager.frameKey(0x1A, 0x0B),
+        )
+    }
+
+    @Test
     fun frameCodecMapsFrameAndFramemapFields() {
         val framemap = FramemapDefinition().apply {
             types = intArrayOf(0, 5)

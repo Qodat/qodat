@@ -57,6 +57,10 @@ class AnimationMaya(
         return frames
     }
 
+    override fun releaseDecodedFrames() {
+        frames.clear()
+    }
+
     override fun copy(): AnimationLegacy =
         AnimationLegacy(getName(), definition, cache, numericId())
 
