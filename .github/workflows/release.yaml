@@ -1,8 +1,29 @@
 name: Release
 
+# Publish a desktop build with Hydraulic Conveyor.
+# Triggers: tag v*, GitHub Release published, or workflow_dispatch.
+# Does not run on ordinary branch pushes.
+#
+# Required GitHub secrets:
+#   CONVEYOR_SIGNING_KEY — Hydraulic Conveyor signing key (PEM) consumed by
+#     hydraulic-software/conveyor/actions/build as signing_key. Unsigned
+#     local `make site` may still work; publishing to GitHub Releases and
+#     gh-pages needs this plus contents:write (GITHUB_TOKEN is automatic).
+#
+# How to release:
+#   1. Bump version in build.gradle.kts (or pass workflow_dispatch version).
+#   2. Tag vX.Y.Z and push the tag, or Actions → Release → Run workflow
+#      with publish=true (optional version override → -Kapp.version=).
+#   3. Conveyor `make copied-site` uploads to GitHub Releases + gh-pages
+#      (see conveyor.conf app.site.github).
+
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: Override Conveyor app.version (e.g. 0.4.2). Empty uses Gradle project version.
+        required: false
+        type: string
       publish:
         description: Upload to GitHub Releases and gh-pages
         type: boolean
@@ -10,6 +31,8 @@ on:
   push:
     tags:
       - "v*"
+  release:
+    types: [published]
 
 concurrency:
   group: qodat-release
@@ -21,19 +44,19 @@ jobs:
     permissions:
       contents: write
     env:
-      PUBLISH: ${{ github.event_name == 'push' || inputs.publish }}
+      PUBLISH: ${{ github.event_name == 'push' || github.event_name == 'release' || inputs.publish }}
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 17
+          java-version: "25"
 
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build JARs
-        run: ./gradlew jar
+        run: ./gradlew jar -x :qodat-bench:compileKotlin
 
       - name: Package with Conveyor
         uses: hydraulic-software/conveyor/actions/build@v22.1
@@ -48,3 +71,12 @@ jobs:
             --parallelism=2
             --cache-limit=4
             ${{ env.PUBLISH == 'true' && '' || '-Kapp.site.consistency-checks=warn' }}
+            ${{ inputs.version != '' && format('-Kapp.version={0}', inputs.version) || '' }}
+
+      - name: Upload Conveyor output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: conveyor-output
+          path: output/
+          if-no-files-found: ignore
