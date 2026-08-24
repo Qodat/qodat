@@ -21,6 +21,7 @@ import javafx.scene.text.TextAlignment
 import javafx.stage.DirectoryChooser
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry
@@ -126,10 +127,21 @@ class CacheChooserController : Initializable {
         }
         listCaches.placeholder = listCachesPlaceholder
 
-        runCatchingWithDialog("Fetching caches") {
-            fetchRuneStatsCaches(listCachesPlaceholder)
-        }.onFailure {
-            Qodat.logException("Failed to fetch caches", it)
+        CoroutineScope(Dispatchers.IO).launch {
+            val result = runCatching { fetchRuneStatsCaches() }
+            withContext(Dispatchers.JavaFx) {
+                result.onSuccess { caches ->
+                    entries.addAll(caches)
+                }.onFailure { error ->
+                    error.printStackTrace()
+                    listCachesPlaceholder.text += "\n\n${error.message}"
+                    if (error is SSLHandshakeException) {
+                        listCachesPlaceholder.text +=
+                            "\n\nSSLHandshakeException is a known bug with certain Java versions, try updating."
+                    }
+                    Qodat.logException("Failed to fetch caches", error)
+                }
+            }
         }
 
         val filterableEntries = FilteredList(entries)
@@ -157,21 +169,12 @@ class CacheChooserController : Initializable {
         }
     }
 
-    private fun fetchRuneStatsCaches(listCachesPlaceholder: Label) {
-        try {
-            val doc = Jsoup.connect(RUNESTATS_URL).get()
-            entries.addAll(doc.select("a")
-                .map { col -> col.attr("href") }
-                .filter { it.length > 10 } // get rid of ../ and ./types
-                .reversed()
-            )
-        } catch (e: Exception) {
-            e.printStackTrace()
-            listCachesPlaceholder.text += "\n\n${e.message}"
-            if (e is SSLHandshakeException) {
-                listCachesPlaceholder.text += "\n\nSSLHandshakeException is a known bug with certain Java versions, try updating."
-            }
-        }
+    private fun fetchRuneStatsCaches(): List<String> {
+        val doc = Jsoup.connect(RUNESTATS_URL).get()
+        return doc.select("a")
+            .map { col -> col.attr("href") }
+            .filter { it.length > 10 }
+            .reversed()
     }
 
     private fun downloadCache(cacheName: String, dirChooser: DirChooserHBox) {
@@ -281,7 +284,9 @@ class CacheChooserController : Initializable {
                             val initDir = property.get().toFile()
                             initDir.mkdirs()
                             directoryChooser.initialDirectory = initDir
-                            val f = directoryChooser.showDialog(null) ?: return@setOnAction
+                            val owner = scene?.window
+                                ?: if (Qodat.isStageInitialized()) Qodat.stage else null
+                            val f = directoryChooser.showDialog(owner) ?: return@setOnAction
                             field.text = f.absolutePath
                         }
                     })

@@ -6,38 +6,46 @@ import javafx.scene.control.Dialog
 import javafx.scene.layout.AnchorPane
 import stan.qodat.Qodat
 import stan.qodat.scene.controller.CacheChooserController
-import stan.qodat.util.runCatchingWithDialog
 import java.nio.file.Path
 
 class CacheChooserDialog : Dialog<Pair<Path, Path>>() {
 
     init {
-        runCatchingWithDialog(activityName = "Creating CacheChooserDialog") {
+        title = "Change Cache"
+        headerText = null
+        try {
             val cacheChooserLoader = FXMLLoader(Qodat::class.java.getResource("cachechooser.fxml"))
             val root = cacheChooserLoader.load<AnchorPane>()
 
             dialogPane.content = root
-            dialogPane.stylesheets.add(root.stylesheets.first())
+            root.stylesheets.firstOrNull()?.let { dialogPane.stylesheets.add(it) }
             dialogPane.styleClass.add("myDialog")
-            dialogPane.buttonTypes.add(ButtonType.OK)
+            dialogPane.buttonTypes.setAll(ButtonType.OK, ButtonType.CANCEL)
             dialogPane
                 .lookupButton(ButtonType.OK)
                 .disableProperty()
                 .bind(CacheChooserController.disableOkButtonProperty)
 
             val controller: CacheChooserController = cacheChooserLoader.getController()
-            setResultConverter {
-                when(it) {
-                    ButtonType.OK -> {
-                        val rootDir = controller.rootDirChooser.pathProperty.get()
-                        val cacheDir = controller.osrsCacheDirChooser.pathProperty.get()
-                        rootDir to cacheDir
-                    }
-                    else -> throw Exception("Unexpected button type {$it}")
-                }
+            setResultConverter { button ->
+                resultOf(
+                    button,
+                    controller.rootDirChooser.pathProperty.get(),
+                    controller.osrsCacheDirChooser.pathProperty.get()
+                )
             }
-        }.onFailure {
-            Qodat.logException("Failed to create CacheChooserDialog", it)
+            FxDialogs.attachToMainWindow(this)
+        } catch (e: Exception) {
+            Qodat.logException("Failed to create CacheChooserDialog", e)
+            setResultConverter { null }
+        }
+    }
+
+    companion object {
+        fun resultOf(button: ButtonType?, rootDir: Path?, cacheDir: Path?): Pair<Path, Path>? {
+            if (button != ButtonType.OK || rootDir == null || cacheDir == null)
+                return null
+            return rootDir to cacheDir
         }
     }
 }

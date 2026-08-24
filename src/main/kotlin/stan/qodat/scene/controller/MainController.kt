@@ -21,6 +21,7 @@ import stan.qodat.scene.control.MainMenuBar
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.dialog.AboutDialog
 import stan.qodat.scene.control.dialog.CacheChooserDialog
+import stan.qodat.scene.control.dialog.FxDialogs
 import stan.qodat.scene.control.dialog.SettingsDialog
 import stan.qodat.scene.control.tree.RootSceneTreeItem
 import stan.qodat.scene.layout.AutoScaleSubScenePane
@@ -512,10 +513,12 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
             .filterIsInstance<DispleeCache>()
             .firstOrNull()
         if (cache == null) {
-            Alert(
-                Alert.AlertType.INFORMATION,
-                "Animation rescan is only available when the Displee OSRS cache is loaded."
-            ).showAndWait()
+            FxDialogs.runAfterCurrentEvent {
+                Alert(
+                    Alert.AlertType.INFORMATION,
+                    "Animation rescan is only available when the Displee OSRS cache is loaded."
+                ).showAndWait()
+            }
             return
         }
         rescanningAnimations = true
@@ -527,7 +530,10 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
 
     @FXML
     fun setCachePath() {
+        FxDialogs.runAfterCurrentEvent { showCacheChooserAndApply() }
+    }
 
+    private fun showCacheChooserAndApply() {
         fun resolveAndMake(rootDir: Path, s: String) = rootDir.resolve(s).apply {
             val file = toFile()
             if (!file.exists())
@@ -556,17 +562,21 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
     }
 
     fun openSettings() {
-        if (Qodat.isStageInitialized()) {
-            settingsDialog.attachTo(Qodat.stage)
+        FxDialogs.runAfterCurrentEvent {
+            if (Qodat.isStageInitialized()) {
+                settingsDialog.attachTo(Qodat.stage)
+            }
+            settingsDialog.showAndWait()
         }
-        settingsDialog.showAndWait()
     }
 
     fun showAbout() {
-        if (Qodat.isStageInitialized()) {
-            aboutDialog.attachTo(Qodat.stage)
+        FxDialogs.runAfterCurrentEvent {
+            if (Qodat.isStageInitialized()) {
+                aboutDialog.attachTo(Qodat.stage)
+            }
+            aboutDialog.showAndWait()
         }
-        aboutDialog.showAndWait()
     }
 
     fun quit() {
