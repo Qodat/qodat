@@ -18,6 +18,7 @@ class NpcLoader {
     var defaultHeadIconArchive = -1
     var rev210HeadIcons = true
     var rev233 = true
+    private val cursor = DecodeCursor(ByteArray(0))
 
     fun configureForRevision(revision: Int): NpcLoader {
         rev210HeadIcons = revision >= REV_210_NPC_ARCHIVE_REV
@@ -26,7 +27,8 @@ class NpcLoader {
 
     fun load(id: Int, b: ByteArray): NpcDefinition {
         val def = NpcDefinition(id)
-        DecodeCursor(b).forEachOpcode { opcode -> def.decodeValues(opcode, this) }
+        cursor.reset(b)
+        cursor.forEachOpcode { opcode -> def.decodeValues(opcode, this) }
         def.post()
         return def
     }
@@ -172,7 +174,7 @@ class NpcLoader {
     private fun NpcDefinition.decodeValues(opcode: Int, stream: DecodeCursor) {
         when (opcode) {
             1 -> models = stream.readShortIdArray()
-            2 -> name = stream.readString()
+            2 -> name = internNpcName(stream.readString())
             12 -> size = stream.readUnsignedByte()
             13 -> standingAnimation = stream.readUnsignedShort()
             14 -> walkingAnimation = stream.readUnsignedShort()
@@ -188,6 +190,8 @@ class NpcLoader {
             in 30..34 -> {
                 val text = stream.readString()
                 if (!text.equals("Hidden", ignoreCase = true)) {
+                    if (actions === NpcDefinition.EMPTY_ACTIONS)
+                        actions = arrayOfNulls(5)
                     actions[opcode - 30] = text
                 }
             }
@@ -354,6 +358,9 @@ enum class NpcEncodeFormat {
 }
 
 const val REV_210_NPC_ARCHIVE_REV = 1493
+
+private fun internNpcName(name: String): String =
+    if (name.isEmpty() || name == NpcDefinition.NULL_NAME) NpcDefinition.NULL_NAME else name
 
 private fun defaultFootprintSize(size: Int): Int = (0.4F * (size * 128).toFloat()).toInt()
 

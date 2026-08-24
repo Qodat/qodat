@@ -7,8 +7,14 @@ import com.displee.io.impl.InputBuffer
  * skips [InputBuffer]'s per-byte bounds check and [InputBuffer.isMsb] branch
  * on every short/int (RuneLite reads the same way via `ByteBuffer.getShort`).
  */
-internal class DecodeCursor(private val data: ByteArray) {
+internal class DecodeCursor(data: ByteArray) {
+    private var data: ByteArray = data
     var offset = 0
+
+    fun reset(newData: ByteArray) {
+        data = newData
+        offset = 0
+    }
 
     fun remaining(): Int = data.size - offset
 

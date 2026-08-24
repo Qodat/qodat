@@ -6,7 +6,7 @@ import java.util.OptionalInt
 
 class NpcDefinition(val id: Int) : NPCDefinition {
 
-    override var name: String = "null"
+    override var name: String = NULL_NAME
     var size = 1
     var models: IntArray? = null
     var chatheadModels: IntArray? = null
@@ -30,7 +30,7 @@ class NpcDefinition(val id: Int) : NPCDefinition {
     var recolorToReplace: ShortArray? = null
     var retextureToFind: ShortArray? = null
     var retextureToReplace: ShortArray? = null
-    var actions = arrayOfNulls<String>(5)
+    var actions: Array<String?> = EMPTY_ACTIONS
     var subOps: List<NpcSubOp> = emptyList()
     var conditionalOps: List<NpcConditionalOp> = emptyList()
     var conditionalSubOps: List<NpcConditionalSubOp> = emptyList()
@@ -69,6 +69,11 @@ class NpcDefinition(val id: Int) : NPCDefinition {
     override val primaryAnimationIds: Array<String> get() = NpcPrimaryAnimations.ids(this)
     override val animationRoleLabels: Map<String, String> get() = NpcPrimaryAnimations.labels(this)
     override val animationIds: Array<String> get() = primaryAnimationIds
+
+    companion object {
+        const val NULL_NAME = "null"
+        val EMPTY_ACTIONS: Array<String?> = arrayOfNulls(5)
+    }
 }
 
 data class NpcSubOp(val index: Int, val subId: Int, val text: String)

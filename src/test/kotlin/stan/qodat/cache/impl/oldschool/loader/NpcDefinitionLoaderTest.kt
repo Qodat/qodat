@@ -42,6 +42,18 @@ class NpcDefinitionLoaderTest {
     }
 
     @Test
+    fun unusedNameAndActionsShareInternedEmpties() {
+        val loader = NpcLoader()
+        val first = loader.load(1, terminator())
+        val second = loader.load(2, terminator())
+        assertTrue(first.name === NpcDefinition.NULL_NAME)
+        assertTrue(second.name === NpcDefinition.NULL_NAME)
+        assertTrue(first.actions === NpcDefinition.EMPTY_ACTIONS)
+        assertTrue(second.actions === NpcDefinition.EMPTY_ACTIONS)
+        assertTrue(NpcPrimaryAnimations.labels(first).isEmpty())
+    }
+
+    @Test
     fun revisionSwitchStillDecodesName() {
         val bytes = OutputBuffer(16).apply {
             writeByte(2)
