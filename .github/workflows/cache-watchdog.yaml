@@ -241,11 +241,15 @@ jobs:
           elif [ -f smoke-artifacts/build/reports/cache-smoke/summary.txt ]; then
             export QODAT_SMOKE_SUMMARY="$(cat smoke-artifacts/build/reports/cache-smoke/summary.txt)"
           fi
-          mkdir -p "$RUNNER_TEMP/cursor-sdk"
-          cd "$RUNNER_TEMP/cursor-sdk"
+          # ESM resolves @cursor/sdk from the script file, not cwd. Install
+          # and run in the same directory so the import succeeds.
+          WORKDIR="$RUNNER_TEMP/cursor-sdk"
+          mkdir -p "$WORKDIR"
+          cp "$GITHUB_WORKSPACE/.github/scripts/cursor-cache-patch.mjs" "$WORKDIR/"
+          cd "$WORKDIR"
           printf '%s\n' '{"type":"module"}' > package.json
           npm install @cursor/sdk
-          node "$GITHUB_WORKSPACE/.github/scripts/cursor-cache-patch.mjs"
+          node cursor-cache-patch.mjs
 
       - name: Mark issue as agent-dispatched
         if: success() && env.HAS_CURSOR_KEY == 'true'
