@@ -52,16 +52,16 @@ jobs:
       # secrets is not allowed in step `if:`; promote presence to env first.
       HAS_SIGNING_KEY: ${{ secrets.CONVEYOR_SIGNING_KEY != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: Build JARs
         run: ./gradlew jar -x :qodat-bench:compileKotlin
@@ -111,7 +111,7 @@ jobs:
 
       - name: Upload Conveyor output
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ env.HAS_SIGNING_KEY == 'true' && 'conveyor-output-signed' || 'conveyor-output-unsigned' }}
           path: output/

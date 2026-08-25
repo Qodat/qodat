@@ -52,17 +52,17 @@ jobs:
       archive: ${{ steps.download.outputs.archive }}
       cache-dir: ${{ steps.download.outputs.cache-dir }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           submodules: true
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: "25"
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Download latest OSRS cache
         id: download
@@ -86,7 +86,7 @@ jobs:
 
       - name: Upload smoke logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cache-smoke-${{ steps.download.outputs.archive }}
           path: |
@@ -108,7 +108,7 @@ jobs:
       issue_number: ${{ steps.issue.outputs.issue_number }}
       issue_url: ${{ steps.issue.outputs.issue_url }}
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: cache-smoke-${{ needs.smoke.outputs.archive }}
@@ -116,7 +116,7 @@ jobs:
 
       - name: Open or reuse watchdog issue
         id: issue
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           ARCHIVE: ${{ needs.smoke.outputs.archive }}
         with:
@@ -212,13 +212,13 @@ jobs:
       # secrets is not allowed in step `if:`; promote presence to env first.
       HAS_CURSOR_KEY: ${{ secrets.CURSOR_API_KEY != '' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
 
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         continue-on-error: true
         with:
           name: cache-smoke-${{ needs.smoke.outputs.archive }}
@@ -248,12 +248,12 @@ jobs:
           cp "$GITHUB_WORKSPACE/.github/scripts/cursor-cache-patch.mjs" "$WORKDIR/"
           cd "$WORKDIR"
           printf '%s\n' '{"type":"module"}' > package.json
-          npm install @cursor/sdk
+          npm install @cursor/sdk@1.0.28
           node cursor-cache-patch.mjs
 
       - name: Mark issue as agent-dispatched
         if: success() && env.HAS_CURSOR_KEY == 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           ISSUE_NUMBER: ${{ needs.report.outputs.issue_number }}
         with:
