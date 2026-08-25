@@ -452,7 +452,7 @@ public class RS2Model implements ModelDefinition
 	@Nullable
 	@Override
 	public float[][] getFaceTextureVCoordinates() {
-		return faceTextureUCoordinates;
+		return faceTextureVCoordinates;
 	}
 
 	public byte[] getFaceRenderPriorities() {
