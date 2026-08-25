@@ -174,8 +174,7 @@ body {
 
 #pane-win,
 #pane-mac,
-#pane-linux,
-#no-go.pane {
+#pane-linux {
     width: 100%;
     box-sizing: border-box;
     background-color: var(--qodat-chrome);
@@ -185,9 +184,9 @@ body {
     padding: 1.75rem 1.5rem 1.6rem;
 }
 
+#no-go,
 #no-go.pane {
     display: none;
-    padding: 1.5rem 1.5rem 1.75rem;
 }
 
 .download-button {
@@ -403,8 +402,7 @@ body {
     }
 
     .pane,
-    #panes.pane,
-    #no-go.pane {
+    #panes.pane {
         align-items: center;
         background-color: transparent;
         border-radius: 0;
@@ -429,7 +427,8 @@ body {
         padding: 0.28rem 0.7rem;
     }
 
-    #no-go {
+    #no-go,
+    #no-go.pane {
         display: none;
     }
 }
@@ -453,7 +452,8 @@ body {
         display: none;
     }
 
-    #no-go {
+    #no-go,
+    #no-go.pane {
         display: flex;
     }
 }
