@@ -1,0 +1,371 @@
+/* Qodat download page — IntelliJ Darcula + app accent, not Conveyor Dracula/lime. */
+:root {
+    --qodat-chrome: #3c3f41;
+    --qodat-chrome-dark: #2b2b2b;
+    --qodat-panel: #313335;
+    --qodat-panel-deep: #2c2e2f;
+    --qodat-border: #323232;
+    --qodat-text: #d6d6d6;
+    --qodat-muted: #828282;
+    --qodat-accent: #398291;
+    --qodat-focus: #95fbf6;
+    --qodat-cyan: #64dbfb;
+    --qodat-button: #45494a;
+    --qodat-button-hover: #313234;
+    --qodat-titlebar: #2b2b2b;
+
+    --backdrop: var(--qodat-chrome-dark);
+    --foreground: var(--qodat-text);
+    --button-text: #f5f5f5;
+    --button-face: var(--qodat-accent);
+    --pane-color: var(--qodat-chrome);
+    --no-go-color: var(--qodat-panel);
+    --note-text: var(--qodat-text);
+}
+
+@media (prefers-color-scheme: light) {
+    :root {
+        --backdrop: var(--qodat-chrome-dark);
+        --foreground: var(--qodat-text);
+        --button-text: #f5f5f5;
+        --button-face: var(--qodat-accent);
+        --pane-color: var(--qodat-chrome);
+        --no-go-color: var(--qodat-panel);
+        --note-text: var(--qodat-text);
+    }
+}
+
+html {
+    color-scheme: dark;
+    background: var(--qodat-chrome-dark);
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.45;
+    background:
+        linear-gradient(180deg, #2b2b2b 0%, #313335 48%, #2b2b2b 100%);
+    color: var(--qodat-text);
+}
+
+.container {
+    box-sizing: border-box;
+    padding: 2.5rem 1.25rem 3rem;
+}
+
+.container > div {
+    min-width: 0 !important;
+    width: min(42rem, 100%);
+    margin: 0 auto;
+}
+
+#logo {
+    padding: 1.75rem 1rem 0.35rem;
+}
+
+#logo img {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    box-shadow:
+        0 0 0 1px var(--qodat-border),
+        0 0 0 4px rgba(57, 130, 145, 0.22),
+        0 8px 28px rgba(0, 0, 0, 0.45);
+}
+
+#title {
+    margin: 0.35rem 0 0;
+    font-size: 1.7rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--qodat-text);
+}
+
+.qodat-tagline {
+    margin: 0.55rem auto 0;
+    max-width: 22rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--qodat-text);
+}
+
+#version {
+    margin: 0.45rem 0 1.4rem;
+    font-size: 0.75rem;
+    color: var(--qodat-muted);
+    letter-spacing: 0.04em;
+}
+
+.pane {
+    position: relative;
+    align-items: center;
+    background-color: var(--qodat-chrome);
+    border: 1px solid var(--qodat-border);
+    border-radius: 8px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.04) inset,
+        0 18px 40px rgba(0, 0, 0, 0.38);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    padding: 0 2rem 2rem;
+    margin: 0;
+    overflow: hidden;
+}
+
+#panes.pane::before,
+#no-go.pane::before {
+    content: "";
+    display: block;
+    width: calc(100% + 4rem);
+    height: 38px;
+    margin: 0 -2rem 0.75rem;
+    background-color: var(--qodat-titlebar);
+    background-image:
+        radial-gradient(circle at 18px 19px, #ff5f57 5px, transparent 5.5px),
+        radial-gradient(circle at 38px 19px, #febc2e 5px, transparent 5.5px),
+        radial-gradient(circle at 58px 19px, #28c840 5px, transparent 5.5px);
+    border-bottom: 1px solid var(--qodat-border);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+}
+
+.download-button {
+    align-items: center;
+    background-color: var(--qodat-accent) !important;
+    border: 1px solid #2f6d79;
+    border-radius: 4px !important;
+    box-sizing: border-box;
+    color: var(--button-text) !important;
+    cursor: pointer;
+    display: inline-flex;
+    font-size: 0.85rem;
+    font-weight: 600;
+    justify-content: center;
+    letter-spacing: 0.04em;
+    padding: 0.85rem 1.5rem !important;
+    text-decoration: none;
+    text-transform: uppercase;
+    white-space: nowrap;
+    width: min(22rem, 100%) !important;
+    transition: background-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.download-button > svg {
+    padding-right: 0.7em;
+    width: 1.35em;
+    height: 1.35em;
+}
+
+.download-button > svg > g > path {
+    fill: currentColor;
+}
+
+.download-button:hover {
+    filter: none;
+    background-color: var(--qodat-focus) !important;
+    border-color: #6ed8d3;
+    color: var(--qodat-chrome-dark) !important;
+    box-shadow: 0 0 0 1px rgba(149, 251, 246, 0.35);
+}
+
+.download-button:focus-visible {
+    outline: 2px solid var(--qodat-focus);
+    outline-offset: 3px;
+}
+
+.alternative-downloads,
+.alternative-downloads a {
+    padding-top: 0;
+}
+
+.alternative-downloads {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem 0.55rem;
+    margin-top: 1.5rem;
+    padding: 0.35rem 0.45rem;
+    background: rgba(44, 46, 47, 0.92);
+    border: 1px solid var(--qodat-border);
+    border-radius: 4px;
+}
+
+.alternative-downloads span {
+    color: var(--qodat-muted);
+    font-size: 0.75rem;
+}
+
+.alternative-downloads a {
+    padding: 0.28rem 0.7rem;
+    border-radius: 4px;
+    color: var(--qodat-text) !important;
+    text-decoration: none;
+    font-size: 0.75rem;
+}
+
+.alternative-downloads a:hover {
+    background: var(--qodat-button-hover);
+    color: var(--qodat-focus) !important;
+}
+
+.smaller-fonts,
+.smaller-fonts a {
+    font-size: 0.8rem;
+    color: var(--qodat-muted);
+}
+
+.smaller-fonts a {
+    color: var(--qodat-cyan);
+    text-decoration: none;
+}
+
+.smaller-fonts a:hover {
+    color: var(--qodat-focus);
+    text-decoration: underline;
+}
+
+.note {
+    line-height: 1.55;
+    text-align: left;
+    display: block;
+    color: var(--qodat-text);
+    font-size: 0.82rem;
+    margin-top: 1.4rem;
+    padding: 1rem 1.1rem;
+    background: var(--qodat-panel);
+    border: 1px solid var(--qodat-border);
+    border-radius: 4px;
+}
+
+.note a {
+    color: var(--qodat-cyan);
+}
+
+.note a:hover {
+    color: var(--qodat-focus);
+}
+
+.help-pane {
+    text-align: left;
+    width: min(36rem, 100%);
+}
+
+.help-pane ol {
+    padding-left: 1.2rem;
+}
+
+.terminal {
+    background-color: var(--qodat-chrome-dark);
+    border: 1px solid var(--qodat-border);
+    border-radius: 4px;
+    box-shadow: inset 0 0 0 1px rgba(57, 130, 145, 0.28);
+    color: var(--qodat-cyan);
+    font-family: Menlo, Monaco, ui-monospace, "SF Mono", Consolas, monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 0.85rem 1rem;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.terminal a {
+    color: var(--qodat-focus);
+}
+
+.copy-button {
+    padding-left: 1rem;
+}
+
+.copy-button path {
+    fill: var(--qodat-text);
+}
+
+.tooltip {
+    border-bottom-color: var(--qodat-muted);
+}
+
+#no-go {
+    display: none;
+    padding: 1.25rem 1.5rem 1.75rem;
+}
+
+#conveyor-logo {
+    opacity: 0.72;
+    filter: grayscale(0.15);
+}
+
+#conveyor-logo:hover {
+    opacity: 1;
+}
+
+@media only screen and (min-device-width: 768px) {
+    .download-button {
+        align-items: center;
+        background-color: var(--qodat-accent);
+        border-radius: 4px;
+        color: var(--button-text) !important;
+        cursor: pointer;
+        display: inline-flex;
+        font-weight: 600;
+        justify-content: center;
+        letter-spacing: 0.04em;
+        padding: 0.85rem 1.5rem;
+        text-decoration: none;
+        text-transform: uppercase;
+        white-space: nowrap;
+        width: min(22rem, 100%);
+    }
+
+    .pane {
+        align-items: center;
+        background-color: var(--qodat-chrome);
+        border-radius: 8px;
+        box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.04) inset,
+            0 18px 40px rgba(0, 0, 0, 0.38);
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        padding: 0 2rem 2rem;
+        margin: 0;
+    }
+
+    #version {
+        color: var(--qodat-muted);
+    }
+
+    .alternative-downloads,
+    .alternative-downloads a {
+        padding-top: 0;
+    }
+
+    .alternative-downloads a {
+        padding: 0.28rem 0.7rem;
+    }
+
+    #no-go {
+        display: none;
+    }
+}
+
+@media only screen and (max-device-width: 768px) {
+    body {
+        font-size: 17px;
+    }
+
+    .container {
+        font-size: 1rem;
+        padding: 1.25rem;
+    }
+
+    #panes,
+    #conveyor-logo {
+        display: none;
+    }
+
+    #no-go {
+        display: flex;
+    }
+}
