@@ -44,6 +44,11 @@ allprojects {
         jar {
             duplicatesStrategy = DuplicatesStrategy.EXCLUDE
         }
+
+        withType<Test>().configureEach {
+            // Separate JVMs; JavaFX tests that start JFXPanel stay isolated.
+            maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
+        }
     }
 }
 
@@ -119,7 +124,6 @@ dependencies {
     implementation(libs.tornadofx) {
         exclude(group = "org.openjfx")
     }
-    implementation(libs.xmlutil.serialization)
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.runelite.cache) {
         exclude(group = "com.google.guava")
