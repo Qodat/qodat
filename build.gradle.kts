@@ -124,6 +124,7 @@ dependencies {
     implementation(libs.tornadofx) {
         exclude(group = "org.openjfx")
     }
+    implementation(libs.conveyor.control)
     testImplementation(kotlin("test-junit"))
     testImplementation(libs.runelite.cache) {
         exclude(group = "com.google.guava")

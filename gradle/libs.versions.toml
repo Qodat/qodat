@@ -21,6 +21,7 @@ joml = "1.10.9"
 jomlPrimitives = "1.10.0"
 tornadofx = "2.1.0"
 runeliteCache = "1.12.36"
+conveyorControl = "1.1"
 
 [libraries]
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
@@ -42,6 +43,7 @@ joml = { module = "org.joml:joml", version.ref = "joml" }
 joml-primitives = { module = "org.joml:joml-primitives", version.ref = "jomlPrimitives" }
 tornadofx = { module = "com.googlecode.blaisemath.tornado:tornadofx-fx21k19", version.ref = "tornadofx" }
 runelite-cache = { module = "net.runelite:cache", version.ref = "runeliteCache" }
+conveyor-control = { module = "dev.hydraulic.conveyor:conveyor-control", version.ref = "conveyorControl" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }

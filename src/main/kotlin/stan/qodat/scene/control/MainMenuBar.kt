@@ -30,6 +30,7 @@ object MainMenuBar {
         val undo: () -> Unit,
         val redo: () -> Unit,
         val clearScene: () -> Unit,
+        val checkForUpdates: () -> Unit,
         val showAbout: () -> Unit
     )
 
@@ -121,6 +122,7 @@ object MainMenuBar {
     private fun helpMenu(actions: Actions) = Menu("_Help").apply {
         isMnemonicParsing = true
         items.setAll(
+            item("Check for Updates…", MenuIcons.updates(), actions.checkForUpdates),
             item("About Qodat", MenuIcons.info(), actions.showAbout)
         )
     }

@@ -73,6 +73,19 @@ class MainMenuBarTest {
     }
 
     @Test
+    fun helpMenuWiresCheckForUpdatesAndAbout() {
+        val invoked = mutableListOf<String>()
+        val help = MainMenuBar.buildMenus(recordingActions(invoked), viewToggles())[3]
+        assertEquals(listOf("Check for Updates…", "About Qodat"), help.items.map { it.text })
+        help.items.filterIsInstance<MenuItem>().forEach { item ->
+            assertNotNull(item.graphic, "${item.text} should have an icon")
+        }
+        fire(help, "Check for Updates…")
+        fire(help, "About Qodat")
+        assertEquals(listOf("updates", "about"), invoked)
+    }
+
+    @Test
     fun fileAndEditMenusUseStandardAccelerators() {
         val menus = MainMenuBar.buildMenus(recordingActions(), viewToggles())
         val file = menus[0]
@@ -133,6 +146,7 @@ class MainMenuBarTest {
             undo = { invoked += "undo" },
             redo = { invoked += "redo" },
             clearScene = { invoked += "clear" },
+            checkForUpdates = { invoked += "updates" },
             showAbout = { invoked += "about" }
         )
 

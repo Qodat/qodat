@@ -18,6 +18,7 @@ import qodat.cache.event.CacheReloadEvent
 import stan.qodat.Properties
 import stan.qodat.Qodat
 import stan.qodat.cache.impl.displee.DispleeCache
+import stan.qodat.desktop.SoftwareUpdates
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.MacAppMenu
@@ -374,6 +375,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
             undo = ActionCache::undoLast,
             redo = ActionCache::redoLast,
             clearScene = ::clearModels,
+            checkForUpdates = ::checkForUpdates,
             showAbout = ::showAbout
         )
         MainMenuBar.install(menuBar, actions, MainMenuBar.ViewToggles.fromProperties())
@@ -582,6 +584,70 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
                 aboutDialog.attachTo(Qodat.stage)
             }
             aboutDialog.present()
+        }
+    }
+
+    fun checkForUpdates() {
+        FxDialogs.runAfterCurrentEvent {
+            BackgroundTasks.launch(addProgressIndicator = true, title = "Checking for updates") { handle ->
+                handle.message("Contacting the update site…")
+                val result = withContext(Dispatchers.IO) {
+                    SoftwareUpdates.check()
+                }
+                withContext(Dispatchers.JavaFx) {
+                    presentUpdateCheck(result)
+                }
+            }
+        }
+    }
+
+    private fun presentUpdateCheck(result: SoftwareUpdates.Result) {
+        when (result) {
+            SoftwareUpdates.Result.NotPackaged -> showUpdateAlert(
+                Alert.AlertType.INFORMATION,
+                "This copy of Qodat was launched from a development build, so it cannot auto-update. " +
+                    "Install the desktop package from https://qodat.github.io/qodat/download.html"
+            )
+            is SoftwareUpdates.Result.UpToDate -> showUpdateAlert(
+                Alert.AlertType.INFORMATION,
+                "Qodat ${result.current} is up to date."
+            )
+            is SoftwareUpdates.Result.Available -> {
+                val apply = Alert(
+                    Alert.AlertType.CONFIRMATION,
+                    "Qodat ${result.latest} is available (you have ${result.current}). Update and restart now?",
+                    ButtonType.OK,
+                    ButtonType.CANCEL
+                ).also { attachUpdateAlert(it) }.showAndWait()
+                if (apply.orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    runCatching { SoftwareUpdates.trigger() }.onFailure { error ->
+                        showUpdateAlert(
+                            Alert.AlertType.ERROR,
+                            error.message ?: "Could not start the updater."
+                        )
+                    }
+                }
+            }
+            is SoftwareUpdates.Result.Unavailable -> showUpdateAlert(
+                Alert.AlertType.INFORMATION,
+                result.message
+            )
+            is SoftwareUpdates.Result.Failed -> showUpdateAlert(
+                Alert.AlertType.ERROR,
+                result.message
+            )
+        }
+    }
+
+    private fun showUpdateAlert(type: Alert.AlertType, message: String) {
+        Alert(type, message, ButtonType.OK).also { attachUpdateAlert(it) }.showAndWait()
+    }
+
+    private fun attachUpdateAlert(alert: Alert) {
+        alert.title = "Check for Updates"
+        alert.headerText = null
+        if (Qodat.isStageInitialized()) {
+            FxDialogs.attachTo(alert, Qodat.stage)
         }
     }
 
