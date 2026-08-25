@@ -1,25 +1,26 @@
 name: Release
 
-# Package a desktop build with Hydraulic Conveyor.
+# Package a desktop build with Hydraulic Conveyor 22.
 # Triggers: tag v*, GitHub Release published, or workflow_dispatch.
 # Does not run on ordinary branch pushes.
 #
-# Signing stays local by default. Conveyor on this machine uses the macOS
-# keychain (app.signing-key = keyring in
-# ~/Library/Preferences/Hydraulic/Conveyor/defaults.conf). CI does not ask
-# for a key upload.
-#
-# If CONVEYOR_SIGNING_KEY is already set on the repo or org, the signed
-# path uses it as hydraulic-software/conveyor/actions/build signing_key
-# (and may `make copied-site` when publish is requested).
-# Otherwise workflow_dispatch (and any trigger without that secret) builds
-# unsigned site artifacts only (`-Kapp.sign=false`); GitHub Releases and
-# gh-pages are not updated.
-#
-# How to release a signed build (local, no GitHub secret):
+# How 0.4.1 / 0.4.2 (and later) actually ship:
 #   conveyor make copied-site
-# How to package in CI without a GitHub key:
-#   Actions → Release → Run workflow (leave publish unchecked).
+# on the machine that already has the macOS keychain signing key
+# (app.signing-key = keyring in
+# ~/Library/Preferences/Hydraulic/Conveyor/defaults.conf).
+# Do not put CONVEYOR_SIGNING_KEY in this repo.
+#
+# CI paths:
+#   - Signed + publish: CONVEYOR_SIGNING_KEY is already set, and the trigger
+#     is a tag, a GitHub Release, or workflow_dispatch with publish=true.
+#     Command: make copied-site.
+#   - Signed, no publish: key present, workflow_dispatch with publish unchecked.
+#     Command: make site.
+#   - Unsigned package: no key, and publish was not requested.
+#     Command: make site -Kapp.sign=false.
+#   - Publish requested without a key: the job fails. It does not upload
+#     unsigned artifacts as if they were a release.
 
 on:
   workflow_dispatch:
@@ -45,6 +46,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 60
     permissions:
       contents: write
     env:
@@ -54,6 +56,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           submodules: true
 
       - uses: actions/setup-java@v6
@@ -64,16 +67,15 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Build JARs
-        run: ./gradlew jar -x :qodat-bench:compileKotlin
+        run: ./gradlew jar
 
-      - name: Unsigned package (no GitHub signing key)
-        if: env.HAS_SIGNING_KEY != 'true'
+      - name: Fail if publish cannot happen
+        if: env.WANT_PUBLISH == 'true' && env.HAS_SIGNING_KEY != 'true'
         run: |
-          echo "CONVEYOR_SIGNING_KEY is not set; building unsigned site artifacts."
-          echo "Signed publishes stay on the machine that already has Conveyor keys."
-          if [ "$WANT_PUBLISH" = "true" ]; then
-            echo "::notice::publish skipped because CONVEYOR_SIGNING_KEY is not configured"
-          fi
+          echo "::error::Publish was requested (tag, GitHub Release, or publish=true) but CONVEYOR_SIGNING_KEY is not set."
+          echo "Signed 0.4.x releases ship from a local machine: conveyor make copied-site"
+          echo "For an unsigned CI package, use workflow_dispatch and leave publish unchecked."
+          exit 1
 
       - name: Package with Conveyor (signed)
         if: env.HAS_SIGNING_KEY == 'true'

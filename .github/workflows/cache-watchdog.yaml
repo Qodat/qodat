@@ -54,6 +54,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           submodules: true
 
       - uses: actions/setup-java@v6
@@ -213,6 +214,8 @@ jobs:
       HAS_CURSOR_KEY: ${{ secrets.CURSOR_API_KEY != '' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v7
         with:

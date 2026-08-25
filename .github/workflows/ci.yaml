@@ -8,6 +8,10 @@ on:
 
 # Fork PRs get contents:read only. Cache download and the Cursor agent
 # live in cache-watchdog.yaml and never run on pull_request.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -18,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          persist-credentials: false
           # includeBuild("qodat-cache") substitutes com.displee:rs-cache-library.
           # Without the submodule the directory is empty and Gradle reports
           # "No matching variant of project :qodat-cache".
@@ -27,14 +32,16 @@ jobs:
         with:
           distribution: temurin
           java-version: "25"
+          # Do not set cache: gradle — setup-gradle owns ~/.gradle.
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+        # Default cache: write on master, read-only on PRs/other refs.
 
       - name: Unit tests
         # xvfb: JavaFXExecutorTest starts a JFXPanel.
-        # :qodat-bench is skipped unless a bench* task is requested.
-        run: xvfb-run --auto-servernum ./gradlew test -x :qodat-bench:compileKotlin
+        # :qodat-bench is not included unless a bench* task is requested.
+        run: xvfb-run --auto-servernum ./gradlew test
 
       - name: Upload test reports
         if: failure()
