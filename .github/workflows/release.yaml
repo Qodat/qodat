@@ -84,7 +84,7 @@ jobs:
           command: ${{ env.WANT_PUBLISH == 'true' && 'make copied-site' || 'make site' }}
           signing_key: ${{ secrets.CONVEYOR_SIGNING_KEY }}
           agree_to_license: "1"
-          conveyor_version: "16.0"
+          conveyor_version: "22.1"
           extra_flags: >-
             --parallelism=2
             --cache-limit=4
@@ -101,7 +101,7 @@ jobs:
           # Action requires a non-empty signing_key; unused because app.sign=false.
           signing_key: ci-unsigned-unused
           agree_to_license: "1"
-          conveyor_version: "16.0"
+          conveyor_version: "22.1"
           extra_flags: >-
             --parallelism=2
             --cache-limit=4
