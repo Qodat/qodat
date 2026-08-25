@@ -16,12 +16,12 @@ datetime = "0.8.0"
 poly2tri = "0.1.2"
 logback = "1.6.3"
 rsCacheLibrary = "7.3.0"
-disio = "2.2"
+disio = "2.3"
 joml = "1.10.9"
 jomlPrimitives = "1.10.0"
 tornadofx = "2.1.0"
-xmlutil = "1.0.1"
-runeliteCache = "1.12.30"
+xmlutil = "1.0.2"
+runeliteCache = "1.12.36"
 
 [libraries]
 gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
