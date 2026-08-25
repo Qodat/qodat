@@ -4,7 +4,6 @@ import javafx.fxml.FXMLLoader
 import javafx.scene.control.ButtonType
 import javafx.scene.control.Dialog
 import javafx.scene.layout.VBox
-import javafx.stage.Modality
 import javafx.stage.Window
 import stan.qodat.Qodat
 import stan.qodat.util.runCatchingWithDialog
@@ -35,9 +34,6 @@ class SettingsDialog : Dialog<ButtonType>() {
     }
 
     fun attachTo(window: Window) {
-        if (owner == null) {
-            initOwner(window)
-            initModality(Modality.WINDOW_MODAL)
-        }
+        FxDialogs.attachTo(this, window)
     }
 }

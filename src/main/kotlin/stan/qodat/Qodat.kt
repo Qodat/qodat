@@ -16,6 +16,7 @@ import org.slf4j.LoggerFactory
 import stan.qodat.cache.impl.displee.DispleeCache
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.javafx.JavaFXTrayIcon
+import stan.qodat.javafx.NativeWindowTheme
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.dialog.CacheChooserDialog
 import stan.qodat.scene.controller.MainController
@@ -68,6 +69,7 @@ class Qodat : Application() {
                 JavaFXTrayIcon.addAppToTray(this, icon)
             }
             scene = Scene(root, Properties.sceneInitialWidth.get(), Properties.sceneInitialHeight.get()).apply {
+                NativeWindowTheme.applyTo(this)
                 Properties.sceneInitialWidth.bind(widthProperty())
                 Properties.sceneInitialHeight.bind(heightProperty())
                 setOnKeyPressed {
@@ -164,6 +166,7 @@ class Qodat : Application() {
          */
         @JvmStatic
         fun main(args: Array<String>) {
+            NativeWindowTheme.applyEarly()
             launch(Qodat::class.java, *args)
         }
 

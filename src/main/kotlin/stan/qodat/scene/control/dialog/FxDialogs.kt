@@ -5,6 +5,7 @@ import javafx.scene.control.Dialog
 import javafx.stage.Modality
 import javafx.stage.Window
 import stan.qodat.Qodat
+import stan.qodat.javafx.NativeWindowTheme
 
 /**
  * Helpers for showing JavaFX dialogs without aborting the macOS nested run loop.
@@ -29,5 +30,6 @@ object FxDialogs {
         if (dialog.owner != null) return
         dialog.initOwner(window)
         dialog.initModality(Modality.WINDOW_MODAL)
+        NativeWindowTheme.applyTo(dialog)
     }
 }
