@@ -149,8 +149,7 @@ body {
 
 /* Download cards — not a window frame. Kill any leftover title-bar chrome. */
 .pane,
-#panes.pane,
-#no-go.pane {
+#panes.pane {
     position: relative;
     align-items: center;
     background-color: transparent;
