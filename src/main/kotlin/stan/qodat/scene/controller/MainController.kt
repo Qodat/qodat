@@ -581,7 +581,7 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
             if (Qodat.isStageInitialized()) {
                 aboutDialog.attachTo(Qodat.stage)
             }
-            aboutDialog.showAndWait()
+            aboutDialog.present()
         }
     }
 

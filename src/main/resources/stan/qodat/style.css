@@ -148,15 +148,46 @@
     -fx-background-color: #3C3F41;
 }
 
-.myDialog{
-     -fx-background-color: #3C3F41;
- }
-.myDialog > *.button-bar > *.container{
+.myDialog,
+.myDialog > .header-panel,
+.myDialog > .content,
+.about-dialog,
+.about-root {
+    -fx-background-color: #3C3F41;
+}
+.myDialog > *.button-bar > *.container {
     -fx-background-color: #525657;
 }
-.myDialog > *.label.content{
-    -fx-font-size: 14px;
+.myDialog > *.label.content,
+.myDialog .label,
+.about-dialog .label {
+    -fx-text-fill: rgb(214, 214, 214);
+}
+.myDialog .button {
+    -fx-background-color: rgb(69, 73, 74);
+    -fx-text-fill: rgb(214, 214, 214);
+    -fx-background-radius: 0;
+}
+.myDialog .button:hover {
+    -fx-background-color: rgb(49, 52, 54);
+}
+.about-root {
+    -fx-padding: 8 8 4 8;
+    -fx-alignment: CENTER;
+}
+.about-title {
+    -fx-font-size: 18px;
     -fx-font-weight: bold;
+    -fx-text-fill: rgb(214, 214, 214);
+}
+.about-version {
+    -fx-font-size: 12px;
+    -fx-text-fill: #828282;
+}
+.about-copy {
+    -fx-font-size: 13px;
+    -fx-text-alignment: CENTER;
+    -fx-text-fill: rgb(214, 214, 214);
 }
 
 .list-view {
