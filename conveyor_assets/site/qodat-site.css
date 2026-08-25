@@ -1,4 +1,4 @@
-/* Qodat download page — IntelliJ Darcula + app accent, not Conveyor Dracula/lime. */
+/* Qodat download page — Darcula/teal site chrome, not a fake desktop window. */
 :root {
     --qodat-chrome: #3c3f41;
     --qodat-chrome-dark: #2b2b2b;
@@ -12,7 +12,6 @@
     --qodat-cyan: #64dbfb;
     --qodat-button: #45494a;
     --qodat-button-hover: #313234;
-    --qodat-titlebar: #2b2b2b;
 
     --backdrop: var(--qodat-chrome-dark);
     --foreground: var(--qodat-text);
@@ -38,96 +37,157 @@
 html {
     color-scheme: dark;
     background: var(--qodat-chrome-dark);
+    height: auto;
 }
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     font-size: 16px;
     line-height: 1.45;
-    background:
-        linear-gradient(180deg, #2b2b2b 0%, #313335 48%, #2b2b2b 100%);
+    min-height: 100vh;
+    margin: 0;
+    background: var(--qodat-chrome-dark);
     color: var(--qodat-text);
 }
 
+/* Conveyor centers an “app window”; treat the page as a normal document. */
 .container {
     box-sizing: border-box;
-    padding: 2.5rem 1.25rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    text-align: center;
+    width: 100%;
+    min-height: 100vh;
+    height: auto;
+    padding: 0;
 }
 
 .container > div {
     min-width: 0 !important;
+    min-height: 0 !important;
+    width: 100%;
+    margin: 0;
+}
+
+.qodat-header {
+    box-sizing: border-box;
+    width: 100%;
+    background: var(--qodat-chrome);
+    border-bottom: 1px solid var(--qodat-border);
+    padding: 0.9rem 1.5rem;
+}
+
+.qodat-brand {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.85rem;
     width: min(42rem, 100%);
     margin: 0 auto;
+    text-align: left;
+}
+
+.qodat-brand-text {
+    min-width: 0;
+}
+
+.qodat-main {
+    box-sizing: border-box;
+    width: min(42rem, calc(100% - 2.5rem));
+    margin: 0 auto;
+    padding: 2rem 0 2.5rem;
+    flex: 1 1 auto;
+}
+
+.qodat-footer {
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: auto;
+    padding: 1.15rem 1.5rem 1.35rem;
+    border-top: 1px solid var(--qodat-border);
+    background: var(--qodat-panel-deep);
 }
 
 #logo {
-    padding: 1.75rem 1rem 0.35rem;
+    padding: 0;
+    flex: 0 0 auto;
 }
 
 #logo img {
-    width: 96px;
-    height: 96px;
-    border-radius: 50%;
-    box-shadow:
-        0 0 0 1px var(--qodat-border),
-        0 0 0 4px rgba(57, 130, 145, 0.22),
-        0 8px 28px rgba(0, 0, 0, 0.45);
+    display: block;
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    box-shadow: 0 0 0 1px var(--qodat-border);
 }
 
 #title {
-    margin: 0.35rem 0 0;
-    font-size: 1.7rem;
+    margin: 0;
+    font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: 0.01em;
     color: var(--qodat-text);
 }
 
 .qodat-tagline {
-    margin: 0.55rem auto 0;
-    max-width: 22rem;
-    font-size: 0.82rem;
-    line-height: 1.45;
-    color: var(--qodat-text);
+    margin: 0.15rem 0 0;
+    max-width: none;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--qodat-muted);
 }
 
 #version {
-    margin: 0.45rem 0 1.4rem;
+    display: block;
+    margin: 0 0 1.15rem;
     font-size: 0.75rem;
     color: var(--qodat-muted);
     letter-spacing: 0.04em;
 }
 
-.pane {
+/* Download cards — not a window frame. Kill any leftover title-bar chrome. */
+.pane,
+#panes.pane,
+#no-go.pane {
     position: relative;
     align-items: center;
-    background-color: var(--qodat-chrome);
-    border: 1px solid var(--qodat-border);
-    border-radius: 8px;
-    box-shadow:
-        0 1px 0 rgba(255, 255, 255, 0.04) inset,
-        0 18px 40px rgba(0, 0, 0, 0.38);
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
     box-sizing: border-box;
     display: flex;
     flex-direction: column;
-    padding: 0 2rem 2rem;
+    padding: 0;
     margin: 0;
-    overflow: hidden;
+    overflow: visible;
 }
 
 #panes.pane::before,
-#no-go.pane::before {
-    content: "";
-    display: block;
-    width: calc(100% + 4rem);
-    height: 38px;
-    margin: 0 -2rem 0.75rem;
-    background-color: var(--qodat-titlebar);
-    background-image:
-        radial-gradient(circle at 18px 19px, #ff5f57 5px, transparent 5.5px),
-        radial-gradient(circle at 38px 19px, #febc2e 5px, transparent 5.5px),
-        radial-gradient(circle at 58px 19px, #28c840 5px, transparent 5.5px);
-    border-bottom: 1px solid var(--qodat-border);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset;
+#no-go.pane::before,
+.pane::before {
+    content: none !important;
+    display: none !important;
+}
+
+#pane-win,
+#pane-mac,
+#pane-linux,
+#no-go.pane {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: var(--qodat-chrome);
+    border: 1px solid var(--qodat-border);
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+    padding: 1.75rem 1.5rem 1.6rem;
+}
+
+#no-go.pane {
+    display: none;
+    padding: 1.5rem 1.5rem 1.75rem;
 }
 
 .download-button {
@@ -286,18 +346,42 @@ body {
     border-bottom-color: var(--qodat-muted);
 }
 
-#no-go {
-    display: none;
-    padding: 1.25rem 1.5rem 1.75rem;
-}
-
 #conveyor-logo {
+    display: flex;
+    justify-content: center;
     opacity: 0.72;
     filter: grayscale(0.15);
+    margin: 0 !important;
+    text-align: center !important;
 }
 
 #conveyor-logo:hover {
     opacity: 1;
+}
+
+/* CSS-only fallback if extra-header JS has not run yet (logo/title still in #panes). */
+#panes.pane > #logo,
+#panes.pane > #title,
+#panes.pane > .qodat-tagline {
+    align-self: center;
+}
+
+#panes.pane > #logo {
+    margin-bottom: 0.45rem;
+}
+
+#panes.pane > #logo img {
+    width: 56px;
+    height: 56px;
+}
+
+#panes.pane > #title {
+    font-size: 1.55rem;
+}
+
+#panes.pane > .qodat-tagline {
+    margin: 0.4rem auto 0.15rem;
+    max-width: 24rem;
 }
 
 @media only screen and (min-device-width: 768px) {
@@ -318,17 +402,17 @@ body {
         width: min(22rem, 100%);
     }
 
-    .pane {
+    .pane,
+    #panes.pane,
+    #no-go.pane {
         align-items: center;
-        background-color: var(--qodat-chrome);
-        border-radius: 8px;
-        box-shadow:
-            0 1px 0 rgba(255, 255, 255, 0.04) inset,
-            0 18px 40px rgba(0, 0, 0, 0.38);
+        background-color: transparent;
+        border-radius: 0;
+        box-shadow: none;
         box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        padding: 0 2rem 2rem;
+        padding: 0;
         margin: 0;
     }
 
@@ -355,9 +439,13 @@ body {
         font-size: 17px;
     }
 
-    .container {
-        font-size: 1rem;
-        padding: 1.25rem;
+    .qodat-header {
+        padding: 0.85rem 1rem;
+    }
+
+    .qodat-main {
+        width: min(42rem, calc(100% - 2rem));
+        padding: 1.25rem 0 2rem;
     }
 
     #panes,
@@ -368,4 +456,30 @@ body {
     #no-go {
         display: flex;
     }
+}
+
+/* No JS yet: keep a readable stacked hero inside Conveyor’s generated tree. */
+body:not(.qodat-site) #logo {
+    padding: 1.25rem 1rem 0.35rem;
+}
+
+body:not(.qodat-site) #logo img {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto;
+    border-radius: 8px;
+}
+
+body:not(.qodat-site) #title {
+    margin: 0.35rem 0 0;
+    font-size: 1.7rem;
+}
+
+body:not(.qodat-site) .qodat-tagline {
+    margin: 0.55rem auto 0;
+    max-width: 22rem;
+}
+
+body:not(.qodat-site) #panes.pane > #version {
+    margin-top: 0.55rem;
 }
