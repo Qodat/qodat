@@ -63,6 +63,8 @@ class NpcManager(private val cacheLibrary: CacheLibrary) {
                 override fun getOptionalId() = OptionalInt.of(npc.id)
                 override val name = npc.name.ifBlank { NpcDefinition.NULL_NAME }
                 override val modelIds = CacheIdStrings.of(models)
+                override val widthScale = npc.widthScale
+                override val heightScale = npc.heightScale
                 override val primaryAnimationIds by lazy { NpcPrimaryAnimations.ids(npc) }
                 override val animationRoleLabels by lazy { NpcPrimaryAnimations.labels(npc) }
                 override val animationIds by lazy {

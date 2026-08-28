@@ -32,9 +32,9 @@ class ObjectDefinition(val id: Int) : ObjectDefinition {
     var category = 0
     var isRotated = false
     var shadow = true
-    var modelSizeX = 128
-    var modelSizeHeight = 128
-    var modelSizeY = 128
+    override var modelSizeX = 128
+    override var modelSizeHeight = 128
+    override var modelSizeY = 128
     var mapSceneID = -1
     var blockingMask = 0
     var offsetX = 0

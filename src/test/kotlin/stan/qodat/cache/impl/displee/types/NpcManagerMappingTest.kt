@@ -3,6 +3,7 @@ package stan.qodat.cache.impl.displee.types
 import stan.qodat.cache.impl.oldschool.definition.NpcDefinition
 import stan.qodat.cache.impl.displee.types.NpcManager.Companion.extraAnimationIds
 import stan.qodat.cache.impl.displee.types.NpcManager.Companion.mapNpc
+import stan.qodat.scene.control.export.blender.GltfEntityScale
 import java.util.OptionalInt
 import kotlin.io.path.createTempDirectory
 import kotlin.test.Test
@@ -30,6 +31,8 @@ class NpcManagerMappingTest {
             recolorToReplace = shortArrayOf(0x2222)
             standingAnimation = 20
             walkingAnimation = 21
+            widthScale = 48
+            heightScale = 48
         }
 
         val mapped = mapNpc(npc)!!
@@ -40,6 +43,9 @@ class NpcManagerMappingTest {
         assertTrue(mapped.replaceColor.contentEquals(shortArrayOf(0x2222)))
         assertTrue(mapped.primaryAnimationIds.contentEquals(arrayOf("20", "21")))
         assertTrue(mapped.animationIds.contentEquals(arrayOf("20", "21")))
+        assertEquals(48, mapped.widthScale)
+        assertEquals(48, mapped.heightScale)
+        assertEquals(GltfEntityScale(48, 48, 48), GltfEntityScale.from(mapped))
     }
 
     @Test

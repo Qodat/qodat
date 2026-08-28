@@ -37,8 +37,8 @@ class NpcDefinition(val id: Int) : NPCDefinition {
     var conditionalSubOps: List<NpcConditionalSubOp> = emptyList()
     var isMinimapVisible = true
     var combatLevel = -1
-    var widthScale = 128
-    var heightScale = 128
+    override var widthScale = 128
+    override var heightScale = 128
     var renderPriority = 0
     var ambient = 0
     var contrast = 0

@@ -64,9 +64,9 @@ class ItemDefinition226(private val id: Int) : ItemDefinition {
     var countObj: IntArray? = null
     var countCo: IntArray? = null
 
-    var resizeX = 128
-    var resizeY = 128
-    var resizeZ = 128
+    override var resizeX = 128
+    override var resizeY = 128
+    override var resizeZ = 128
 
     var ambient = 0
     var contrast = 0

@@ -19,12 +19,13 @@ import kotlin.math.roundToInt
  * glTF 2.0 interchange matching modelkit's writer.
  *
  * Coordinate space is qodat WaveFront: (x, -y, -z), then scaled so **one RS
- * tile (128 scene units) is one metre**. That matches the client
- * (`Perspective.LOCAL_TILE_SIZE`, `RSModelData` resize `* n / 128`). Vertex
- * skins become a one-weight-per-vert armature (`vskin_N`). Idle / walk clips
- * bake as joint TRS (STEP, 20 ms client ticks). Face textures become PNG
- * `images` plus a primitive per id; HSL / priorities / alphas / texture
- * tables ride in `extras.rs` for a lossless round-trip.
+ * tile (128 scene units) is one metre**. NPC / object / item / spot resize
+ * (`RSModelData.resize`, `* n / 128`) is applied on top so pets like Angela
+ * (`widthScale` 48) match in-game size. Vertex skins become a one-weight-per-
+ * vert armature (`vskin_N`). Idle / walk clips bake as joint TRS (STEP, 20 ms
+ * client ticks). Face textures become PNG `images` plus a primitive per id;
+ * HSL / priorities / alphas / texture tables ride in `extras.rs` for a
+ * lossless round-trip.
  */
 object GltfCodec {
 
@@ -49,8 +50,9 @@ object GltfCodec {
         name: String,
         clips: List<GltfAnimationClip> = emptyList(),
         textures: GltfTextureSource = GltfTextureSource.NONE,
+        entityScale: GltfEntityScale = GltfEntityScale.IDENTITY,
     ) {
-        val built = build(definition, name, clips, textures)
+        val built = build(definition, name, clips, textures, entityScale)
         Files.createDirectories(destination.parent)
         Files.write(destination, built)
     }
@@ -69,6 +71,7 @@ object GltfCodec {
         name: String,
         clips: List<GltfAnimationClip> = emptyList(),
         textures: GltfTextureSource = GltfTextureSource.NONE,
+        entityScale: GltfEntityScale = GltfEntityScale.IDENTITY,
     ): ByteArray {
         definition.computeTextureUVCoordinates()
         val nVert = definition.getVertexCount()
@@ -93,10 +96,10 @@ object GltfCodec {
 
         val pts = FloatArray(nVert * 3)
         for (i in 0 until nVert) {
-            writeBlenderPosition(pts, i, vx[i], vy[i], vz[i])
+            writeBlenderPosition(pts, i, vx[i], vy[i], vz[i], entityScale)
         }
         val unique = skins.distinct().sorted()
-        val baked = bakeBoneClips(definition, clips, unique, skins, pts)
+        val baked = bakeBoneClips(definition, clips, unique, skins, pts, entityScale)
         val vertRgb = FloatArray(nVert * 3)
         val hits = IntArray(nVert)
         for (f in 0 until nFace) {
@@ -250,6 +253,9 @@ object GltfCodec {
                 addProperty("rsUnitsPerTile", RS_UNITS_PER_TILE)
                 addProperty("metersPerTile", METERS_PER_TILE)
                 addProperty("unitScale", UNIT_SCALE)
+                addProperty("resizeX", entityScale.x)
+                addProperty("resizeY", entityScale.y)
+                addProperty("resizeZ", entityScale.z)
                 addProperty("frameRate", CLIENT_FPS)
                 addProperty("clientTickMs", CLIENT_TICK_MS)
                 addProperty("animation", "armature")
@@ -509,13 +515,19 @@ object GltfCodec {
         val ptsB = readF32(doc, blob, attrs.get("POSITION").asInt, 3)
         val nVert = ptsB.size / 3
         val scale = extras?.get("unitScale")?.asFloat ?: 1f
+        val resizeX = (extras?.get("resizeX")?.asFloat ?: GltfEntityScale.IDENTITY_AXIS.toFloat()) /
+            GltfEntityScale.IDENTITY_AXIS
+        val resizeY = (extras?.get("resizeY")?.asFloat ?: GltfEntityScale.IDENTITY_AXIS.toFloat()) /
+            GltfEntityScale.IDENTITY_AXIS
+        val resizeZ = (extras?.get("resizeZ")?.asFloat ?: GltfEntityScale.IDENTITY_AXIS.toFloat()) /
+            GltfEntityScale.IDENTITY_AXIS
         val vx = IntArray(nVert)
         val vy = IntArray(nVert)
         val vz = IntArray(nVert)
         for (i in 0 until nVert) {
-            vx[i] = (ptsB[i * 3] / scale).roundToInt()
-            vy[i] = (-ptsB[i * 3 + 1] / scale).roundToInt()
-            vz[i] = (-ptsB[i * 3 + 2] / scale).roundToInt()
+            vx[i] = (ptsB[i * 3] / (scale * resizeX)).roundToInt()
+            vy[i] = (-ptsB[i * 3 + 1] / (scale * resizeY)).roundToInt()
+            vz[i] = (-ptsB[i * 3 + 2] / (scale * resizeZ)).roundToInt()
         }
         val idx = if (prim.has("indices")) readIndices(doc, blob, prim.get("indices").asInt) else IntArray(0)
         require(idx.size % 3 == 0) { "index count not divisible by 3" }
@@ -630,10 +642,17 @@ object GltfCodec {
         )
     }
 
-    private fun writeBlenderPosition(pts: FloatArray, vertex: Int, x: Int, y: Int, z: Int) {
-        pts[vertex * 3] = x * UNIT_SCALE
-        pts[vertex * 3 + 1] = -y * UNIT_SCALE
-        pts[vertex * 3 + 2] = -z * UNIT_SCALE
+    private fun writeBlenderPosition(
+        pts: FloatArray,
+        vertex: Int,
+        x: Int,
+        y: Int,
+        z: Int,
+        entityScale: GltfEntityScale,
+    ) {
+        pts[vertex * 3] = x * entityScale.factorX() * UNIT_SCALE
+        pts[vertex * 3 + 1] = -y * entityScale.factorY() * UNIT_SCALE
+        pts[vertex * 3 + 2] = -z * entityScale.factorZ() * UNIT_SCALE
     }
 
     private data class BoneClip(
@@ -649,6 +668,7 @@ object GltfCodec {
         unique: List<Int>,
         skins: IntArray,
         bind: FloatArray,
+        entityScale: GltfEntityScale,
     ): List<BoneClip> {
         if (clips.isEmpty() || unique.isEmpty()) return emptyList()
         val nVert = definition.getVertexCount()
@@ -665,7 +685,7 @@ object GltfCodec {
             frames.forEachIndexed { index, frame ->
                 poser.animate(frame)
                 for (i in 0 until nVert) {
-                    writeBlenderPosition(posed, i, poser.getX(i), poser.getY(i), poser.getZ(i))
+                    writeBlenderPosition(posed, i, poser.getX(i), poser.getY(i), poser.getZ(i), entityScale)
                 }
                 writeJointKeys(unique, skins, nVert, bind, posed, translations, rotations, index)
                 times.add(t)

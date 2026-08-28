@@ -59,6 +59,55 @@ class GltfCodecTest {
     }
 
     @Test
+    fun appliesNpcResizeOnTopOfTileMetreScale() {
+        val dir = Files.createTempDirectory("gltf-resize")
+        try {
+            val file = dir.resolve("angela.glb")
+            val scale = GltfEntityScale(x = 48, y = 48, z = 48)
+            GltfCodec.write(humanDefinition(), file, "angela", entityScale = scale)
+
+            val doc = GltfCodec.readDocument(file)
+            val rs = doc.getAsJsonObject("extras").getAsJsonObject("rs")
+            assertEquals(48, rs.get("resizeX").asInt)
+            assertEquals(48, rs.get("resizeY").asInt)
+            assertEquals(48, rs.get("resizeZ").asInt)
+
+            val acc = doc.getAsJsonArray("accessors")[0].asJsonObject
+            val max = acc.getAsJsonArray("max")
+            assertEquals(48.0 / 128.0, max[0].asFloat.toDouble(), 1e-5)
+            assertEquals(0.0, max[1].asFloat.toDouble(), 1e-5)
+            assertEquals(0.0, max[2].asFloat.toDouble(), 1e-5)
+            val min = acc.getAsJsonArray("min")
+            assertEquals(0.0, min[0].asFloat.toDouble(), 1e-5)
+            assertEquals(-180.0 * 48.0 / 128.0 / 128.0, min[1].asFloat.toDouble(), 1e-5)
+            assertEquals(-48.0 / 128.0, min[2].asFloat.toDouble(), 1e-5)
+
+            val read = GltfCodec.read(file)
+            assertEquals(listOf(0, 128, 0, 0), read.getVertexPositionsX().toList())
+            assertEquals(listOf(0, 0, 180, 0), read.getVertexPositionsY().toList())
+            assertEquals(listOf(0, 0, 0, 128), read.getVertexPositionsZ().toList())
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
+    fun identityResizeLeavesTileMetrePositionsUnchanged() {
+        val dir = Files.createTempDirectory("gltf-identity-resize")
+        try {
+            val file = dir.resolve("human.glb")
+            GltfCodec.write(humanDefinition(), file, "human", entityScale = GltfEntityScale.IDENTITY)
+            val doc = GltfCodec.readDocument(file)
+            val rs = doc.getAsJsonObject("extras").getAsJsonObject("rs")
+            assertEquals(128, rs.get("resizeX").asInt)
+            val max = doc.getAsJsonArray("accessors")[0].asJsonObject.getAsJsonArray("max")
+            assertEquals(1.0, max[0].asFloat.toDouble(), 1e-5)
+        } finally {
+            dir.toFile().deleteRecursively()
+        }
+    }
+
+    @Test
     fun bakesIdleAndWalkAsArmatureActions() {
         val dir = Files.createTempDirectory("gltf-clips")
         try {

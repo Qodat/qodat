@@ -7,8 +7,8 @@ class SpotAnimDefinition(val id: Int) : SpotAnimationDefinition {
 
     var modelId = 0
     var animationId = -1
-    var resizeX = 128
-    var resizeY = 128
+    override var resizeX = 128
+    override var resizeY = 128
     var rotation = 0
     var ambient = 0
     var contrast = 0

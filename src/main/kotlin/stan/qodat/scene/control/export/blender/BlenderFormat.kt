@@ -21,8 +21,9 @@ import java.nio.file.Path
 
 /**
  * Export the current model as a Blender-ready .glb: vertex skins, tile-metre
- * scale (128 RS units = 1 m), plus idle / walk armature actions and cache
- * textures when the entity carries those. Import is [Model.fromFile] on .glb / .gltf.
+ * scale (128 RS units = 1 m), NPC/object/item resize, plus idle / walk
+ * armature actions and cache textures when the entity carries those. Import
+ * is [Model.fromFile] on .glb / .gltf.
  */
 class BlenderFormat(
     override val lastSaveDestinationProperty: ObjectProperty<Path?> =
@@ -81,6 +82,8 @@ class BlenderFormat(
                         name,
                         clips,
                         GltfTextureSource.from(Properties.viewerCache.get()),
+                        if (exportable is Entity<*>) GltfEntityScale.from(exportable.definition)
+                        else GltfEntityScale.IDENTITY,
                     )
                     return ExportTaskResult.Success(file)
                 }

@@ -6,4 +6,9 @@ package qodat.cache.definition
  * @author  Stan van der Bend (https://www.rune-server.ee/members/StanDev/)
  * @since   28/01/2021
  */
-interface ItemDefinition : EntityDefinition
+interface ItemDefinition : EntityDefinition {
+
+    val resizeX: Int get() = 128
+    val resizeY: Int get() = 128
+    val resizeZ: Int get() = 128
+}
