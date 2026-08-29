@@ -4,6 +4,7 @@ import javafx.beans.property.SimpleObjectProperty
 import javafx.scene.AmbientLight
 import javafx.scene.DepthTest
 import javafx.scene.Group
+import javafx.scene.Node
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.Box
@@ -98,6 +99,45 @@ class TransformGizmo : Group() {
         return best
     }
 
+    /**
+     * Screen-space handle pick. Independent of SubScene vs Scene ray math so
+     * a click on a visible shaft / ring still wins over the camera orbit.
+     */
+    fun pickScreen(parent: Node, screenX: Double, screenY: Double): Pair<Mode, GizmoAxisType>? {
+        val scale = screenScale.x
+        val origin = parent.localToScreen(translateX, translateY, translateZ) ?: return null
+        var best: Pair<Mode, GizmoAxisType>? = null
+        var bestDist = SCREEN_PICK_PIXELS
+        val mode = modeProperty.get() ?: Mode.BOTH
+        if (mode == Mode.BOTH || mode == Mode.TRANSLATE) {
+            for (axis in GizmoAxisType.entries) {
+                val v = GizmoMath.axisVector(axis)
+                val tip = parent.localToScreen(
+                    translateX + v.x * AXIS_LENGTH * scale,
+                    translateY + v.y * AXIS_LENGTH * scale,
+                    translateZ + v.z * AXIS_LENGTH * scale
+                ) ?: continue
+                val dist = GizmoMath.pointToSegment2D(
+                    screenX, screenY, origin.x, origin.y, tip.x, tip.y
+                )
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = Mode.TRANSLATE to axis
+                }
+            }
+        }
+        if (mode == Mode.BOTH || mode == Mode.ROTATE) {
+            for (axis in GizmoAxisType.entries) {
+                val dist = ringScreenDistance(parent, axis, scale, screenX, screenY)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = Mode.ROTATE to axis
+                }
+            }
+        }
+        return best
+    }
+
     fun setWorldPosition(x: Double, y: Double, z: Double) {
         translateX = x
         translateY = y
@@ -168,6 +208,46 @@ class TransformGizmo : Group() {
         val dy = if (axis == GizmoAxisType.Y) GizmoMath.rsToDegrees(rs) else 0f
         val dz = if (axis == GizmoAxisType.Z) GizmoMath.rsToDegrees(rs) else 0f
         onRotate?.invoke(dx, dy, dz)
+    }
+
+    private fun ringScreenDistance(
+        parent: Node,
+        axis: GizmoAxisType,
+        scale: Double,
+        screenX: Double,
+        screenY: Double
+    ): Double {
+        val n = GizmoMath.axisVector(axis)
+        val u = when (axis) {
+            GizmoAxisType.X -> Vector3f(0f, 1f, 0f)
+            GizmoAxisType.Y -> Vector3f(1f, 0f, 0f)
+            GizmoAxisType.Z -> Vector3f(1f, 0f, 0f)
+        }
+        val v = Vector3f(n).cross(u).normalize()
+        val radius = RING_RADIUS * scale
+        var prev: javafx.geometry.Point2D? = null
+        var best = Double.POSITIVE_INFINITY
+        val steps = 24
+        for (i in 0..steps) {
+            val a = i * Math.PI * 2.0 / steps
+            val cos = kotlin.math.cos(a).toFloat()
+            val sin = kotlin.math.sin(a).toFloat()
+            val point = parent.localToScreen(
+                translateX + (u.x * cos + v.x * sin) * radius,
+                translateY + (u.y * cos + v.y * sin) * radius,
+                translateZ + (u.z * cos + v.z * sin) * radius
+            ) ?: continue
+            val last = prev
+            if (last != null) {
+                val dist = GizmoMath.pointToSegment2D(
+                    screenX, screenY, last.x, last.y, point.x, point.y
+                )
+                if (dist < best)
+                    best = dist
+            }
+            prev = point
+        }
+        return best
     }
 
     private fun handleGroup(mode: Mode, axis: GizmoAxisType, vararg shapes: Shape3D): Group {
@@ -289,6 +369,7 @@ class TransformGizmo : Group() {
         private const val RING_TUBE = 1.4f
         private const val CENTER = 5.0
         private const val SCREEN_SCALE_DISTANCE = 800.0
+        private const val SCREEN_PICK_PIXELS = 16.0
 
         fun axisColor(axis: GizmoAxisType): Color = when (axis) {
             GizmoAxisType.X -> Color.web("#E74C3C")

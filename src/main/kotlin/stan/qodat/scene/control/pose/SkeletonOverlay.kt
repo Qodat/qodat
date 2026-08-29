@@ -1,5 +1,6 @@
 package stan.qodat.scene.control.pose
 
+import javafx.geometry.Point3D
 import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.paint.Color
@@ -136,14 +137,13 @@ class SkeletonOverlay(
 
         internal fun rotationFromYAxis(x: Double, y: Double, z: Double): Rotate {
             val axisX = z
-            val axisY = 0.0
             val axisZ = -x
             val axisLength = sqrt(axisX * axisX + axisZ * axisZ)
             val angle = Math.toDegrees(acos(y.coerceIn(-1.0, 1.0)))
             return if (axisLength < 1e-6)
                 Rotate(if (y >= 0.0) 0.0 else 180.0, Rotate.X_AXIS)
             else
-                Rotate(angle, axisX / axisLength, axisY, axisZ / axisLength)
+                Rotate(angle, Point3D(axisX / axisLength, 0.0, axisZ / axisLength))
         }
     }
 }

@@ -3,6 +3,7 @@ package stan.qodat.scene.control.gizmo
 import org.joml.Vector3f
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 
 /**
@@ -125,6 +126,23 @@ object GizmoMath {
     fun rayCircleDistance(ray: Ray, origin: Vector3f, axis: Vector3f, radius: Float): Float {
         val hit = intersectRayPlane(ray, origin, axis) ?: return Float.POSITIVE_INFINITY
         return abs(Vector3f(hit).sub(origin).length() - radius)
+    }
+
+    /** Shortest distance from [px],[py] to the segment [ax,ay]→[bx,by]. */
+    fun pointToSegment2D(
+        px: Double,
+        py: Double,
+        ax: Double,
+        ay: Double,
+        bx: Double,
+        by: Double
+    ): Double {
+        val abx = bx - ax
+        val aby = by - ay
+        val abLen2 = abx * abx + aby * aby
+        val t = if (abLen2 < 1e-12) 0.0 else ((px - ax) * abx + (py - ay) * aby) / abLen2
+        val u = t.coerceIn(0.0, 1.0)
+        return hypot(px - (ax + abx * u), py - (ay + aby * u))
     }
 
     private fun projectOnPlane(v: Vector3f, unitNormal: Vector3f): Vector3f =

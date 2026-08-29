@@ -32,4 +32,11 @@ class SkeletonOverlayTest {
         assertEquals(90.0, rotate.angle, 1e-6)
         assertTrue(abs(rotate.axis.z) > 0.99)
     }
+
+    @Test
+    fun alignedWithPositiveZRotatesAroundX() {
+        val rotate = SkeletonOverlay.rotationFromYAxis(0.0, 0.0, 1.0)
+        assertEquals(90.0, rotate.angle, 1e-6)
+        assertTrue(abs(rotate.axis.x) > 0.99, "axis=${rotate.axis}")
+    }
 }

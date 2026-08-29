@@ -4,22 +4,34 @@ import com.sun.javafx.scene.CameraHelper
 import javafx.geometry.Point3D
 import javafx.scene.Camera
 import javafx.scene.Node
+import javafx.scene.SubScene
 import javafx.scene.input.MouseEvent
 import org.joml.Vector3f
+import stan.qodat.scene.SubScene3D
 
 /**
- * Scene-space pick ray from a JavaFX [Camera], then optionally mapped into a
- * node's local space so gizmo math matches translated / gridded entities.
+ * Pick ray from a JavaFX [Camera] in the 3D viewport.
+ *
+ * Qodat renders into a [SubScene], so the click must be converted from the
+ * parent Scene into SubScene-local pixels. [CameraHelper.pickProjectPlane]
+ * treats those as the camera viewport — passing [MouseEvent.sceneX] aims
+ * the ray at the window chrome instead of the model.
  */
 object GizmoPick {
 
-    fun sceneRay(camera: Camera, event: MouseEvent): Pair<Point3D, Point3D> =
-        sceneRay(camera, event.sceneX, event.sceneY)
+    fun sceneRay(camera: Camera, event: MouseEvent): Pair<Point3D, Point3D> {
+        val subScene = (event.source as? SubScene) ?: SubScene3D.subSceneProperty.get()
+        return if (subScene != null) {
+            val local = subScene.sceneToLocal(event.sceneX, event.sceneY)
+            sceneRay(camera, local.x, local.y)
+        } else {
+            sceneRay(camera, event.x, event.y)
+        }
+    }
 
-    fun sceneRay(camera: Camera, sceneX: Double, sceneY: Double): Pair<Point3D, Point3D> {
-        val transform = camera.localToSceneTransform
-        val origin = Point3D(transform.tx, transform.ty, transform.tz)
-        val onPlane = CameraHelper.pickProjectPlane(camera, sceneX, sceneY)
+    fun sceneRay(camera: Camera, viewX: Double, viewY: Double): Pair<Point3D, Point3D> {
+        val origin = camera.localToScene(Point3D.ZERO)
+        val onPlane = CameraHelper.pickProjectPlane(camera, viewX, viewY)
         return origin to onPlane.subtract(origin)
     }
 

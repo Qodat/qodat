@@ -44,6 +44,12 @@ class GizmoMathTest {
     }
 
     @Test
+    fun pointToSegment2DIsZeroOnTheSegment() {
+        assertEquals(0.0, GizmoMath.pointToSegment2D(5.0, 0.0, 0.0, 0.0, 10.0, 0.0), 1e-6)
+        assertEquals(3.0, GizmoMath.pointToSegment2D(5.0, 3.0, 0.0, 0.0, 10.0, 0.0), 1e-6)
+    }
+
+    @Test
     fun raySegmentDistanceIsZeroOnTheSegment() {
         val ray = GizmoMath.Ray(Vector3f(5f, 10f, 0f), Vector3f(0f, -1f, 0f))
         val dist = GizmoMath.raySegmentDistance(ray, Vector3f(0f, 0f, 0f), Vector3f(10f, 0f, 0f))

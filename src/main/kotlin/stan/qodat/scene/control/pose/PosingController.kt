@@ -14,7 +14,7 @@ import stan.qodat.scene.control.gizmo.GizmoPick
 import stan.qodat.scene.control.gizmo.TransformGizmo
 import stan.qodat.scene.runescape.model.Model
 import java.util.IdentityHashMap
-import kotlin.math.sqrt
+import kotlin.math.hypot
 
 /**
  * Posing mode: stick skeleton on scene models, click a joint, drag the gizmo
@@ -148,41 +148,36 @@ object PosingController {
         val parent = gizmo.parent ?: return null
         if (selectedModel == null || selectedGroup == null)
             return null
+        gizmo.pickScreen(parent, event.screenX, event.screenY)?.let { return it }
         val camera = SubScene3D.cameraHandler.camera
         val (origin, direction) = GizmoPick.sceneRay(camera, event)
         return gizmo.pick(GizmoPick.toLocal(parent, origin, direction))
     }
 
     private fun pickJoint(event: MouseEvent): Pair<Model, Int>? {
-        val camera = SubScene3D.cameraHandler.camera
-        val (origin, direction) = GizmoPick.sceneRay(camera, event)
         var best: Pair<Model, Int>? = null
-        var bestDist = 14.0
+        var bestDist = JOINT_PICK_PIXELS
         for ((model, overlay) in overlays) {
             val parent = overlay.parent ?: model.getSceneNode()
-            val ray = GizmoPick.toLocal(parent, origin, direction)
-            val dirLen = sqrt(
-                (ray.direction.x * ray.direction.x +
-                    ray.direction.y * ray.direction.y +
-                    ray.direction.z * ray.direction.z).toDouble()
-            )
-            if (dirLen < 1e-8)
-                continue
+            val positions = HashMap<Int, Triple<Double, Double, Double>>()
             for (bone in overlay.skeleton.bones) {
                 val joint = PoseSkeletons.jointPosition(model, overlay.skeleton, bone.groupIndex) ?: continue
-                val vx = joint.first - ray.origin.x
-                val vy = joint.second - ray.origin.y
-                val vz = joint.third - ray.origin.z
-                val t = (vx * ray.direction.x + vy * ray.direction.y + vz * ray.direction.z) / (dirLen * dirLen)
-                if (t < 0)
-                    continue
-                val px = ray.origin.x + ray.direction.x * t
-                val py = ray.origin.y + ray.direction.y * t
-                val pz = ray.origin.z + ray.direction.z * t
-                val dist = sqrt(
-                    (px - joint.first) * (px - joint.first) +
-                        (py - joint.second) * (py - joint.second) +
-                        (pz - joint.third) * (pz - joint.third)
+                positions[bone.groupIndex] = joint
+                val screen = parent.localToScreen(joint.first, joint.second, joint.third) ?: continue
+                val dist = hypot(screen.x - event.screenX, screen.y - event.screenY)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = model to bone.groupIndex
+                }
+            }
+            for (bone in overlay.skeleton.bones) {
+                val parentGroup = bone.parentGroupIndex ?: continue
+                val from = positions[parentGroup] ?: continue
+                val to = positions[bone.groupIndex] ?: continue
+                val a = parent.localToScreen(from.first, from.second, from.third) ?: continue
+                val b = parent.localToScreen(to.first, to.second, to.third) ?: continue
+                val dist = GizmoMath.pointToSegment2D(
+                    event.screenX, event.screenY, a.x, a.y, b.x, b.y
                 )
                 if (dist < bestDist) {
                     bestDist = dist
@@ -320,4 +315,6 @@ object PosingController {
         val context = SubScene3D.contextProperty.get() ?: return emptyList()
         return context.getModels().filter { it.getVertexGroups().any { group -> group.isNotEmpty() } }
     }
+
+    private const val JOINT_PICK_PIXELS = 18.0
 }
