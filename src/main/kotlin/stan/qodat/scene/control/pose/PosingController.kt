@@ -6,6 +6,7 @@ import javafx.scene.Group
 import javafx.scene.Node
 import javafx.scene.input.MouseEvent
 import stan.qodat.Properties
+import stan.qodat.Qodat
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.gizmo.GizmoAxisType
@@ -32,6 +33,16 @@ object PosingController {
     private var selectedGroup: Int? = null
     private var sceneChildrenListener: ListChangeListener<Node>? = null
     private val mouseHandler = EventHandler<MouseEvent> { event ->
+        if (gizmo.isDragging()) {
+            when (event.eventType) {
+                MouseEvent.MOUSE_DRAGGED -> onDragged(event)
+                MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED -> onReleased(event)
+                else -> event.consume()
+            }
+            if (!event.isConsumed)
+                event.consume()
+            return@EventHandler
+        }
         when (event.eventType) {
             MouseEvent.MOUSE_PRESSED -> onPressed(event)
             MouseEvent.MOUSE_DRAGGED -> onDragged(event)
@@ -106,6 +117,7 @@ object PosingController {
             return
         val hit = pickGizmo(event)
         if (hit != null) {
+            pausePlayback()
             gizmo.beginDrag(hit.first, hit.second)
             event.consume()
             return
@@ -281,6 +293,17 @@ object PosingController {
         gizmo.updateScreenScale(
             GizmoPick.cameraDistance(camera, parent, gizmo.translateX, gizmo.translateY, gizmo.translateZ)
         )
+    }
+
+    private fun pausePlayback() {
+        val player = SubScene3D.contextProperty.get()?.animationPlayer ?: return
+        if (!player.isPlaying())
+            return
+        player.pause()
+        try {
+            Qodat.mainController.playBtn.isSelected = false
+        } catch (_: Exception) {
+        }
     }
 
     private fun installMouseListener() {

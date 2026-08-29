@@ -6,6 +6,7 @@ import javafx.collections.ObservableList
 import javafx.collections.transformation.FilteredList
 import javafx.fxml.FXML
 import javafx.fxml.Initializable
+import javafx.scene.control.Button
 import javafx.scene.control.ListCell
 import javafx.scene.control.ListView
 import javafx.scene.control.TextField
@@ -14,7 +15,9 @@ import javafx.scene.layout.VBox
 import javafx.util.Callback
 import qodat.cache.definition.AnimatedEntityDefinition
 import stan.qodat.Properties
+import stan.qodat.Qodat
 import stan.qodat.javafx.onChange
+import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.AnimationRoleLabel
 import stan.qodat.scene.runescape.animation.Animation
 import stan.qodat.scene.runescape.animation.AnimationLegacy
@@ -43,6 +46,8 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
      * This is used to set the predicate of [filteredAnimations].
      */
     @FXML lateinit var searchTextField: TextField
+
+    @FXML lateinit var newPoseButton: Button
 
     /**
      * A [FilteredList] of [animations][AnimationLegacy]. This list is backed by [animations].
@@ -93,7 +98,42 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
                 filteredAnimations.setPredicate { matchesSearch(it, query) }
             }
         }
+        newPoseButton.apply {
+            visibleProperty().bind(Properties.posingMode)
+            managedProperty().bind(Properties.posingMode)
+            disableProperty().setAndBind(Properties.disableAnimationsView)
+            setOnAction { createPoseAnimation() }
+        }
     }
+
+    fun createPoseAnimation(): AnimationLegacy {
+        val clip = AnimationLegacy.createPoseClip(nextPoseName())
+        animations.add(0, clip)
+        animationsListView.selectionModel.select(clip)
+        animationsListView.scrollTo(clip)
+        Platform.runLater {
+            val player = SubScene3D.contextProperty.get()?.animationPlayer
+            player?.pause()
+            try {
+                Qodat.mainController.playBtn.isSelected = false
+            } catch (_: Exception) {
+            }
+        }
+        return clip
+    }
+
+    internal fun nextPoseName(): String {
+        val used = animations.map { it.getName() }.toHashSet()
+        if ("Pose" !in used)
+            return "Pose"
+        var index = 2
+        while ("Pose $index" in used)
+            index++
+        return "Pose $index"
+    }
+
+    private fun userPoseClips(): List<Animation> =
+        animations.filter { it.isUserPoseClip() }
 
     fun clearAnimationCache(){
         roleLabels = emptyMap()
@@ -115,17 +155,20 @@ class AnimationController : Initializable, (AnimatedEntityDefinition) -> Array<A
 
     fun showCatalog() {
         roleLabels = emptyMap()
-        if (catalog.isEmpty())
+        val poseClips = userPoseClips()
+        if (catalog.isEmpty() && poseClips.isEmpty())
             return
-        animations.setAll(catalog)
+        animations.setAll(poseClips + catalog)
         animationsListView.refresh()
     }
 
     fun showForEntity(entity: AnimatedEntity<*>) {
         roleLabels = entity.definition.animationRoleLabels
+        val poseClips = userPoseClips()
         val primary = entity.getPrimaryAnimations()
         val extras = entity.getAnimations().filter { it !in primary }
-        animations.setAll(primary.toList() + extras)
+        val live = primary.toList() + extras
+        animations.setAll(poseClips.filter { clip -> live.none { it === clip } } + live)
         animationsListView.refresh()
     }
 

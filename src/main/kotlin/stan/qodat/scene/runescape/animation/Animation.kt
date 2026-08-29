@@ -101,6 +101,9 @@ abstract class Animation(
 
     abstract fun copy(): AnimationLegacy
 
+    /** User-created pose clip (no cache definition). */
+    fun isUserPoseClip(): Boolean = definition == null
+
     override fun getViewNode(): Node {
         if (!this::viewBox.isInitialized) {
             viewBox = LabeledHBox(labelProperty, labelPrefix = "animation").apply {

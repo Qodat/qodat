@@ -90,8 +90,9 @@ class TransformGroupTreeItem(
             }
             if (!gizmo.isDragging())
                 return@EventHandler
-            val parent = gizmo.parent ?: return@EventHandler
-            gizmo.dragScreen(parent, event.screenX, event.screenY)
+            val parent = gizmo.parent
+            if (parent != null)
+                gizmo.dragScreen(parent, event.screenX, event.screenY)
             event.consume()
         })
         if (!getSelectionMesh().children.contains(gizmo))

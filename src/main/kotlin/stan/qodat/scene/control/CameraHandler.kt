@@ -74,6 +74,17 @@ class CameraHandler(
         if (!navigationEnabled)
             return@EventHandler
 
+        if (it.eventType == MouseEvent.MOUSE_PRESSED) {
+            mouseX = it.sceneX
+            mouseY = it.sceneY
+            lastMouseX = mouseX
+            lastMouseY = mouseY
+            firstEvent = false
+            return@EventHandler
+        }
+        if (it.eventType != MouseEvent.MOUSE_DRAGGED)
+            return@EventHandler
+
         lastMouseX = if (firstEvent) it.sceneX else mouseX
         lastMouseY = if (firstEvent) it.sceneY else mouseY
         mouseX = it.sceneX

@@ -78,6 +78,14 @@ class AnimationLegacy(
 
     override fun copy() = AnimationLegacy(getName(), definition, cache, numericId())
 
+    companion object {
+        fun createPoseClip(name: String): AnimationLegacy {
+            val clip = AnimationLegacy(name)
+            clip.getFrameList().add(AnimationFrameLegacy("frame[0]", definition = null, duration = 20))
+            return clip
+        }
+    }
+
     override fun exportAsMp4() {
         BackgroundTasks.submit(
             addProgressIndicator = true,

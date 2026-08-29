@@ -36,7 +36,9 @@ import stan.qodat.scene.control.tree.ModelTreeItem
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
+import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.pose.ModelPose
+import stan.qodat.scene.control.pose.PosePlayback
 import stan.qodat.scene.control.pose.PoseSkeleton
 import stan.qodat.scene.control.pose.PoseSkeletons
 import stan.qodat.scene.control.pose.SkeletonOverlay
@@ -469,7 +471,12 @@ class Model(label: String,
     override fun animate(frame: AnimationFrame) {
         lastAnimatedFrame = frame
         super.animate(frame)
-        applyPose(pose, poseSkeleton())
+        if (PosePlayback.shouldApplyLivePose(
+                Properties.selectedAnimation.get(),
+                SubScene3D.contextProperty.get()?.animationPlayer?.isPlaying() == true
+            )
+        )
+            applyPose(pose, poseSkeleton())
         getModelSkin().updatePoints(this)
         if (pullAlphaChanged())
             applyViewModeColors()
