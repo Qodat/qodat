@@ -21,6 +21,7 @@ class SettingsController : Initializable {
 
     @FXML lateinit var root: VBox
     @FXML lateinit var showAxisCheckBox: CheckBox
+    @FXML lateinit var posingModeCheckBox: CheckBox
     @FXML lateinit var msaaCheckBox: CheckBox
     @FXML lateinit var fpsCheckBox: CheckBox
     @FXML lateinit var showNullNamesCheckBox: CheckBox
@@ -37,6 +38,7 @@ class SettingsController : Initializable {
             )
         }
         showAxisCheckBox.selectedProperty().setAndBind(Properties.showAxis, true)
+        posingModeCheckBox.selectedProperty().setAndBind(Properties.posingMode, true)
         fpsCheckBox.selectedProperty().setAndBind(Properties.showFPS, true)
         showNullNamesCheckBox.selectedProperty().setAndBind(Properties.showNullNamedEntities, true)
         invertCameraCheckBox.selectedProperty().setAndBind(Properties.cameraInvert, true)

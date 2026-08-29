@@ -11,20 +11,20 @@ import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.CullFace
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
-import org.joml.Vector3f
-import stan.qodat.scene.control.gizmo.GizmoStackoverflow
+import stan.qodat.Properties
 import stan.qodat.javafx.label
 import stan.qodat.javafx.onExpanded
 import stan.qodat.javafx.onTreeSelected
 import stan.qodat.javafx.text
 import stan.qodat.scene.SubScene3D
-import stan.qodat.scene.control.gizmo.toRay
+import stan.qodat.scene.control.gizmo.GizmoMath
+import stan.qodat.scene.control.gizmo.GizmoPick
+import stan.qodat.scene.control.gizmo.TransformGizmo
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.model.Model
-import stan.qodat.util.setAndBind
 import kotlin.math.abs
 
 class TransformGroupTreeItem(
@@ -62,52 +62,44 @@ class TransformGroupTreeItem(
     private lateinit var selectionMesh: Group
 
     val gizmo by lazy {
-        val gizmo = GizmoStackoverflow.Gizmo()
-
-        val controller = gizmo.controller
-
-        childTransformations.forEach {
-            when (it.getType()) {
-                TransformationType.TRANSLATE -> {
-                    controller.translateSliderX.valueProperty().setAndBind(it.deltaXProperty, true)
-                    controller.translateSliderY.valueProperty().setAndBind(it.deltaYProperty, true)
-                    controller.translateSliderZ.valueProperty().setAndBind(it.deltaZProperty, true)
+        TransformGizmo().also { widget ->
+            widget.onTranslate = { dx, dy, dz ->
+                childTransformations.find { it.getType() == TransformationType.TRANSLATE }?.let { transform ->
+                    transform.deltaXProperty.set(transform.getDeltaX() + dx.toInt())
+                    transform.deltaYProperty.set(transform.getDeltaY() + dy.toInt())
+                    transform.deltaZProperty.set(transform.getDeltaZ() + dz.toInt())
                 }
-                TransformationType.ROTATE -> {
-                    controller.rotateSliderX.valueProperty().setAndBind(it.deltaXProperty, true)
-                    controller.rotateSliderY.valueProperty().setAndBind(it.deltaYProperty, true)
-                    controller.rotateSliderZ.valueProperty().setAndBind(it.deltaZProperty, true)
+            }
+            widget.onRotate = { degX, degY, degZ ->
+                childTransformations.find { it.getType() == TransformationType.ROTATE }?.let { transform ->
+                    transform.deltaXProperty.set(transform.getDeltaX() + GizmoMath.degreesToRs(degX))
+                    transform.deltaYProperty.set(transform.getDeltaY() + GizmoMath.degreesToRs(degY))
+                    transform.deltaZProperty.set(transform.getDeltaZ() + GizmoMath.degreesToRs(degZ))
                 }
-                else -> {}
             }
         }
-        gizmo
     }
 
     fun selectGizmo(){
-        SubScene3D.mouseListener.set(EventHandler {
-            if (gizmo.selectedAxis.get() != null) {
-                val line3D = GizmoStackoverflow.getPickRay(SubScene3D.cameraHandler.camera, it)
-                gizmo.controller.position =
-                    Vector3f(gizmo.translateX.toFloat(), gizmo.translateY.toFloat(), gizmo.translateZ.toFloat())
-                when(gizmo.transformMode) {
-                    GizmoStackoverflow.TransformMode.TRANSLATE -> {
-                        gizmo.controller.manipulateTranslateGizmo(line3D.toRay())
-                    }
-                    GizmoStackoverflow.TransformMode.ROTATE -> {
-                        gizmo.controller.manipulateRotateGizmo(line3D.toRay())
-                    }
-                }
-                it.consume()
-            }
+        if (Properties.posingMode.get())
+            return
+        SubScene3D.mouseListener.set(EventHandler { event ->
+            if (!gizmo.isDragging())
+                return@EventHandler
+            val parent = gizmo.parent ?: return@EventHandler
+            val camera = SubScene3D.cameraHandler.camera
+            val (origin, direction) = GizmoPick.sceneRay(camera, event)
+            gizmo.drag(GizmoPick.toLocal(parent, origin, direction), GizmoPick.cameraForwardLocal(camera, parent))
+            event.consume()
         })
         if (!getSelectionMesh().children.contains(gizmo))
             getSelectionMesh().children.add(gizmo)
-
     }
 
     fun unselectGizmo(){
-        SubScene3D.mouseListener.set(null)
+        if (SubScene3D.mouseListener.get() != null && !Properties.posingMode.get())
+            SubScene3D.mouseListener.set(null)
+        gizmo.endDrag()
         getSelectionMesh().children.remove(gizmo)
     }
 

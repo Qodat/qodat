@@ -18,6 +18,7 @@
         <VBox spacing="8.0">
             <children>
                 <CheckBox fx:id="showAxisCheckBox" mnemonicParsing="false" text="Show axis" />
+                <CheckBox fx:id="posingModeCheckBox" mnemonicParsing="false" text="Posing mode" />
                 <CheckBox fx:id="fpsCheckBox" mnemonicParsing="false" text="Show FPS" />
                 <CheckBox fx:id="showNullNamesCheckBox" mnemonicParsing="false" text="Show unnamed entities" />
                 <CheckBox fx:id="renderTexturesCheckBox" mnemonicParsing="false" text="Render textures" />

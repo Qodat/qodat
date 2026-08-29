@@ -97,6 +97,15 @@ class MainMenuBarTest {
         val edit = menus[1]
         assertEquals(combo(KeyCode.Z), item(edit, "Undo").accelerator)
         assertEquals(combo(KeyCode.Z, shift = true), item(edit, "Redo").accelerator)
+        assertEquals("Reset Pose", item(edit, "Reset Pose").text)
+    }
+
+    @Test
+    fun editMenuWiresResetPose() {
+        val invoked = mutableListOf<String>()
+        val edit = MainMenuBar.buildMenus(recordingActions(invoked), viewToggles())[1]
+        fire(edit, "Reset Pose")
+        assertEquals(listOf("reset-pose"), invoked)
     }
 
     @Test
@@ -116,6 +125,18 @@ class MainMenuBarTest {
     }
 
     @Test
+    fun viewMenuIncludesPosingMode() {
+        val posingMode = SimpleBooleanProperty(false)
+        val menus = MainMenuBar.buildMenus(recordingActions(), viewToggles(posingMode = posingMode))
+        val item = menus[2].items
+            .filterIsInstance<CheckMenuItem>()
+            .first { it.text == "Posing Mode" }
+        assertFalse(item.isSelected)
+        item.isSelected = true
+        assertTrue(posingMode.get())
+    }
+
+    @Test
     fun menuIconsAreSizedForTheMenuBar() {
         val icon = MenuIcons.settings()
         assertEquals(14.0, icon.prefWidth)
@@ -125,14 +146,16 @@ class MainMenuBarTest {
     }
 
     private fun viewToggles(
-        showAxis: SimpleBooleanProperty = SimpleBooleanProperty(true)
+        showAxis: SimpleBooleanProperty = SimpleBooleanProperty(true),
+        posingMode: SimpleBooleanProperty = SimpleBooleanProperty(false)
     ) = MainMenuBar.ViewToggles(
         showAxis = showAxis,
         showFps = SimpleBooleanProperty(true),
         showUnnamedEntities = SimpleBooleanProperty(true),
         renderTextures = SimpleBooleanProperty(false),
         antialiasing = SimpleObjectProperty(SceneAntialiasing.BALANCED),
-        invertCamera = SimpleBooleanProperty(true)
+        invertCamera = SimpleBooleanProperty(true),
+        posingMode = posingMode
     )
 
     private fun recordingActions(invoked: MutableList<String> = mutableListOf()) =
@@ -147,7 +170,8 @@ class MainMenuBarTest {
             redo = { invoked += "redo" },
             clearScene = { invoked += "clear" },
             checkForUpdates = { invoked += "updates" },
-            showAbout = { invoked += "about" }
+            showAbout = { invoked += "about" },
+            resetPose = { invoked += "reset-pose" }
         )
 
     private fun fire(menu: Menu, text: String) {

@@ -23,6 +23,7 @@ import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.MacAppMenu
 import stan.qodat.scene.control.MainMenuBar
+import stan.qodat.scene.control.pose.PosingController
 import stan.qodat.scene.control.SplitSceneDividerDragRegion
 import stan.qodat.scene.control.dialog.AboutDialog
 import stan.qodat.scene.control.dialog.CacheChooserDialog
@@ -376,7 +377,8 @@ class MainController : SceneController("main-scene"), ViewStateRestorable<AppVie
             redo = ActionCache::redoLast,
             clearScene = ::clearModels,
             checkForUpdates = ::checkForUpdates,
-            showAbout = ::showAbout
+            showAbout = ::showAbout,
+            resetPose = PosingController::resetPose
         )
         MainMenuBar.install(menuBar, actions, MainMenuBar.ViewToggles.fromProperties())
         MacAppMenu.install(actions)

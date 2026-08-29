@@ -63,6 +63,7 @@ class ModelTreeItem(
                     checkBox("shading", model.shadingProperty, biDirectional = true)
                     checkBox("show priorities", model.displayFacePriorityLabelsProperty, biDirectional = true)
                     checkBox("show vertex groups", model.displayVertexGroupsProperty, biDirectional = true)
+                    checkBox("posing mode", Properties.posingMode, biDirectional = true)
                     checkBox("visible", model.visibleProperty, biDirectional = true)
                     comboBox("Select view mode", ModelViewMode.values(), model.viewModeProperty, biDirectional = true)
                 }

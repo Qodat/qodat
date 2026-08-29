@@ -9,6 +9,8 @@ import qodat.cache.models.VertexNormal
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.AnimationFrameLegacy
 import stan.qodat.scene.runescape.animation.AnimationFrameMaya
+import stan.qodat.scene.control.pose.ModelPose
+import stan.qodat.scene.control.pose.PoseBone
 import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.transform.Transformable
 import stan.qodat.util.COSINE
@@ -45,15 +47,7 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     @Transient private var alphaChangedThisFrame = false
 
     override fun animate(frame: AnimationFrame) {
-
-        if (!this::vertexPositionsX.isInitialized){
-            vertexPositionsX = modelDefinition.getVertexPositionsX().copyOf()
-            vertexPositionsY = modelDefinition.getVertexPositionsY().copyOf()
-            vertexPositionsZ = modelDefinition.getVertexPositionsZ().copyOf()
-            originalVertexXValues = vertexPositionsX.copyOf()
-            originalVertexYValues = vertexPositionsY.copyOf()
-            originalVertexZValues = vertexPositionsZ.copyOf()
-        }
+        ensureScratchBuffers()
 
         // Initialises the vertexGroups / faceGroups arrays
         getVertexGroups()
@@ -354,6 +348,51 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
             originalFaceAlphas = faceAlphas.copyOf()
         }
         return faceAlphas
+    }
+
+    fun ensureScratchBuffers() {
+        if (!this::vertexPositionsX.isInitialized) {
+            vertexPositionsX = modelDefinition.getVertexPositionsX().copyOf()
+            vertexPositionsY = modelDefinition.getVertexPositionsY().copyOf()
+            vertexPositionsZ = modelDefinition.getVertexPositionsZ().copyOf()
+            originalVertexXValues = vertexPositionsX.copyOf()
+            originalVertexYValues = vertexPositionsY.copyOf()
+            originalVertexZValues = vertexPositionsZ.copyOf()
+        }
+        getVertexGroups()
+    }
+
+    /**
+     * Pivot at [bone]'s current centroid, then rotate / translate that group
+     * plus descendants. Used by posing mode after bind pose or an animation frame.
+     */
+    fun applyBonePose(bone: PoseBone, delta: ModelPose.BoneDelta) {
+        ensureScratchBuffers()
+        val x = vertexPositionsX
+        val y = vertexPositionsY
+        val z = vertexPositionsZ
+        val self = intArrayOf(bone.groupIndex)
+        offset(self, 0, 0, 0, x, y, z)
+        if (delta.rx != 0 || delta.ry != 0 || delta.rz != 0)
+            rotate(bone.descendantGroups, delta.rx, delta.ry, delta.rz, x, y, z)
+        if (delta.tx != 0 || delta.ty != 0 || delta.tz != 0)
+            translate(bone.descendantGroups, delta.tx, delta.ty, delta.tz, x, y, z)
+    }
+
+    fun groupCentroid(groupIndex: Int): Triple<Double, Double, Double>? {
+        val vertices = getVertexGroups().getOrNull(groupIndex) ?: return null
+        if (vertices.isEmpty())
+            return null
+        var sumX = 0L
+        var sumY = 0L
+        var sumZ = 0L
+        for (vertex in vertices) {
+            sumX += getX(vertex)
+            sumY += getY(vertex)
+            sumZ += getZ(vertex)
+        }
+        val n = vertices.size.toDouble()
+        return Triple(sumX / n, sumY / n, sumZ / n)
     }
 
     private fun resetPointOffset() {

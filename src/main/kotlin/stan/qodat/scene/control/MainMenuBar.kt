@@ -31,7 +31,8 @@ object MainMenuBar {
         val redo: () -> Unit,
         val clearScene: () -> Unit,
         val checkForUpdates: () -> Unit,
-        val showAbout: () -> Unit
+        val showAbout: () -> Unit,
+        val resetPose: () -> Unit
     )
 
     data class ViewToggles(
@@ -40,7 +41,8 @@ object MainMenuBar {
         val showUnnamedEntities: BooleanProperty,
         val renderTextures: BooleanProperty,
         val antialiasing: ObjectProperty<SceneAntialiasing>,
-        val invertCamera: BooleanProperty
+        val invertCamera: BooleanProperty,
+        val posingMode: BooleanProperty
     ) {
         companion object {
             fun fromProperties() = ViewToggles(
@@ -49,7 +51,8 @@ object MainMenuBar {
                 showUnnamedEntities = Properties.showNullNamedEntities,
                 renderTextures = Properties.alwaysRenderUsingAtlas,
                 antialiasing = Properties.antialiasing,
-                invertCamera = Properties.cameraInvert
+                invertCamera = Properties.cameraInvert,
+                posingMode = Properties.posingMode
             )
         }
     }
@@ -91,7 +94,9 @@ object MainMenuBar {
             item("Undo", MenuIcons.undo(), actions.undo, key(KeyCode.Z)),
             item("Redo", MenuIcons.redo(), actions.redo, key(KeyCode.Z, shift = true)),
             SeparatorMenuItem(),
-            item("Clear Scene", MenuIcons.clear(), actions.clearScene)
+            item("Clear Scene", MenuIcons.clear(), actions.clearScene),
+            SeparatorMenuItem(),
+            item("Reset Pose", MenuIcons.clear(), actions.resetPose)
         )
     }
 
@@ -115,6 +120,7 @@ object MainMenuBar {
                 }
             },
             SeparatorMenuItem(),
+            check("Posing Mode", viewToggles.posingMode),
             check("Invert Camera", viewToggles.invertCamera)
         )
     }

@@ -10,6 +10,7 @@ import javafx.scene.input.DragEvent
 import javafx.scene.input.MouseEvent
 import stan.qodat.Properties
 import stan.qodat.scene.control.CameraHandler
+import stan.qodat.scene.control.pose.PosingController
 import stan.qodat.scene.runescape.animation.AnimationPlayer
 import stan.qodat.scene.presentation.PlanarView
 import stan.qodat.scene.shape.AxisView
@@ -75,6 +76,7 @@ object SubScene3D : AbstractSubScene() {
         rebuildSubScene()
         rebuildAxis()
         wirePlanarCamera()
+        PosingController.install()
     }
 
     private fun wirePlanarCamera() {

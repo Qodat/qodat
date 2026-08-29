@@ -36,7 +36,13 @@ import stan.qodat.scene.control.tree.ModelTreeItem
 import stan.qodat.scene.provider.SceneNodeProvider
 import stan.qodat.scene.provider.TreeItemProvider
 import stan.qodat.scene.provider.ViewNodeProvider
+import stan.qodat.scene.control.pose.ModelPose
+import stan.qodat.scene.control.pose.PoseSkeleton
+import stan.qodat.scene.control.pose.PoseSkeletons
+import stan.qodat.scene.control.pose.SkeletonOverlay
+import stan.qodat.scene.control.pose.applyPose
 import stan.qodat.scene.runescape.animation.AnimationFrame
+import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.util.PerfTrace
 import stan.qodat.util.onInvalidation
 import stan.qodat.util.setAndBind
@@ -70,6 +76,27 @@ class Model(label: String,
     private lateinit var selectionHighlights: Group
     private val highlightRefCount = HashMap<Int, Int>()
     private val highlightSpheresByGroup = HashMap<Int, List<Node>>()
+    private var lastAnimatedFrame: AnimationFrame? = null
+
+    val pose = ModelPose()
+    internal var skeletonOverlay: SkeletonOverlay? = null
+    private var cachedPoseSkeleton: PoseSkeleton? = null
+    private var cachedPoseSkeletonToken: Any? = UNSET_SKELETON
+
+    fun poseSkeleton(): PoseSkeleton {
+        val token = Properties.selectedAnimation.get()
+            ?: (Properties.selectedEntity.get() as? AnimatedEntity<*>)?.selectedAnimation?.get()
+        if (cachedPoseSkeleton == null || cachedPoseSkeletonToken !== token) {
+            cachedPoseSkeleton = PoseSkeletons.resolve(this)
+            cachedPoseSkeletonToken = token
+        }
+        return cachedPoseSkeleton!!
+    }
+
+    fun invalidatePoseSkeleton() {
+        cachedPoseSkeleton = null
+        cachedPoseSkeletonToken = UNSET_SKELETON
+    }
 
     private val overlayHoverHandler = EventHandler<MouseEvent> { event ->
         val node = event.source as? Node ?: return@EventHandler
@@ -365,6 +392,23 @@ class Model(label: String,
                 child.translateZ = getZ(vertex).toDouble()
             }
         }
+        skeletonOverlay?.syncPositions()
+    }
+
+    /**
+     * Re-applies bind pose or the last animation frame, then the current [pose].
+     */
+    fun applyPoseAndRefresh() {
+        val frame = lastAnimatedFrame
+        if (frame != null) {
+            animate(frame)
+            return
+        }
+        ensureScratchBuffers()
+        copyOriginalVertexValues()
+        applyPose(pose, poseSkeleton())
+        getModelSkin().updatePoints(this)
+        updateOverlayPositions()
     }
 
     fun collectMeshes() : Collection<ModelMesh> {
@@ -417,7 +461,9 @@ class Model(label: String,
     }
 
     override fun animate(frame: AnimationFrame) {
+        lastAnimatedFrame = frame
         super.animate(frame)
+        applyPose(pose, poseSkeleton())
         getModelSkin().updatePoints(this)
         if (pullAlphaChanged())
             applyViewModeColors()
@@ -471,6 +517,7 @@ class Model(label: String,
             priorityLabels.children.clear()
         if (this::selectionHighlights.isInitialized)
             selectionHighlights.children.clear()
+        skeletonOverlay = null
     }
 
     private fun getModelSkin() : ModelSkin {
@@ -514,6 +561,7 @@ class Model(label: String,
         // One marker per vertex/face, so keep the sphere tessellation far below
         // the JavaFX default of 64 divisions.
         private const val OVERLAY_MARKER_DIVISIONS = 6
+        private val UNSET_SKELETON = Any()
 
         val supportedExtensions = arrayOf("model", "dat", "json", "mqo", "glb")
 

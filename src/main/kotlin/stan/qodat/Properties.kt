@@ -53,6 +53,7 @@ object Properties {
     val showFPS = SimpleBooleanProperty(true)
     val showPriorityLabels = SimpleBooleanProperty(false)
     val showVertexGroups = SimpleBooleanProperty(false)
+    val posingMode = SimpleBooleanProperty(false)
     val shading = SimpleBooleanProperty(true)
     val showFramesTab = SimpleBooleanProperty(false)
 
@@ -239,6 +240,7 @@ object Properties {
         logSelectionPerf.addListener { _, _, value -> stan.qodat.util.PerfTrace.enabled = value }
         stan.qodat.util.PerfTrace.enabled = logSelectionPerf.get()
         sessionManager.bindBoolean("show-vertex-groups", showVertexGroups)
+        sessionManager.bindBoolean("posing-mode", posingMode)
         sessionManager.bindBoolean("shading", shading)
         sessionManager.bindEnum("view-mode", viewMode)
     }
