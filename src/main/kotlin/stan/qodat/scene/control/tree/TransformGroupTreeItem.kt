@@ -83,17 +83,29 @@ class TransformGroupTreeItem(
         if (Properties.posingMode.get())
             return
         SubScene3D.mouseListener.set(EventHandler { event ->
-            if (event.eventType == javafx.scene.input.MouseEvent.MOUSE_RELEASED && gizmo.isDragging()) {
-                gizmo.endDrag()
-                event.consume()
-                return@EventHandler
-            }
-            if (!gizmo.isDragging())
-                return@EventHandler
             val parent = gizmo.parent
-            if (parent != null)
-                gizmo.dragScreen(parent, event.screenX, event.screenY)
-            event.consume()
+            when (event.eventType) {
+                javafx.scene.input.MouseEvent.MOUSE_PRESSED -> {
+                    if (parent == null)
+                        return@EventHandler
+                    val hit = gizmo.pickScreen(parent, event.screenX, event.screenY) ?: return@EventHandler
+                    gizmo.beginDrag(hit.first, hit.second)
+                    event.consume()
+                }
+                javafx.scene.input.MouseEvent.MOUSE_DRAGGED -> {
+                    if (!gizmo.isDragging() || parent == null)
+                        return@EventHandler
+                    gizmo.dragFromMouse(parent, SubScene3D.cameraHandler.camera, event)
+                    event.consume()
+                }
+                javafx.scene.input.MouseEvent.MOUSE_RELEASED,
+                javafx.scene.input.MouseEvent.MOUSE_CLICKED -> {
+                    if (!gizmo.isDragging())
+                        return@EventHandler
+                    gizmo.endDrag()
+                    event.consume()
+                }
+            }
         })
         if (!getSelectionMesh().children.contains(gizmo))
             getSelectionMesh().children.add(gizmo)

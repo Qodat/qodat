@@ -56,6 +56,32 @@ class GizmoMathTest {
     }
 
     @Test
+    fun foreshortenedScreenAxisDeltaExplodes() {
+        val delta = GizmoMath.screenAxisDelta(0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 0.5, 0.0)
+        assertTrue(delta > 10.0, "delta=$delta")
+    }
+
+    @Test
+    fun segmentParamIsHalfAtTheMidpoint() {
+        assertEquals(0.5, GizmoMath.segmentParam2D(5.0, 0.0, 0.0, 0.0, 10.0, 0.0), 1e-6)
+        assertTrue(GizmoMath.segmentParam2D(1.0, 0.0, 0.0, 0.0, 10.0, 0.0) < 0.2)
+    }
+
+    @Test
+    fun clampStepMatchesTheProvenRotateCap() {
+        assertEquals(3f, GizmoMath.clampStep(40f, ROTATION_SPEED.toFloat()))
+        assertEquals(-3f, GizmoMath.clampStep(-40f, ROTATION_SPEED.toFloat()))
+        assertEquals(1.5f, GizmoMath.clampStep(1.5f, ROTATION_SPEED.toFloat()))
+    }
+
+    @Test
+    fun worldTranslateDeltaIsOneToOneOnTheAxis() {
+        val previous = Vector3f(0f, 0f, 0f)
+        val current = Vector3f(8f, 3f, -1f)
+        assertEquals(8f, GizmoMath.translateDelta(previous, current, Vector3f(1f, 0f, 0f)))
+    }
+
+    @Test
     fun screenRotateDeltaIsNinetyClockwise() {
         val degrees = GizmoMath.screenRotateDeltaDegrees(10.0, 0.0, 0.0, 10.0, 0.0, 0.0)
         assertEquals(90.0, degrees, 1e-6)

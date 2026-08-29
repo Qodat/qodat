@@ -1,11 +1,12 @@
 package stan.qodat.scene.control.gizmo
 
 import javafx.beans.property.SimpleObjectProperty
-import javafx.geometry.Point3D
 import javafx.scene.AmbientLight
+import javafx.scene.Camera
 import javafx.scene.DepthTest
 import javafx.scene.Group
 import javafx.scene.Node
+import javafx.scene.input.MouseEvent
 import javafx.scene.paint.Color
 import javafx.scene.paint.PhongMaterial
 import javafx.scene.shape.Box
@@ -17,7 +18,6 @@ import javafx.scene.shape.TriangleMesh
 import javafx.scene.transform.Rotate
 import javafx.scene.transform.Scale
 import org.joml.Vector3f
-import stan.qodat.scene.SubScene3D
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -37,10 +37,9 @@ class TransformGizmo : Group() {
     var onRotate: ((degX: Float, degY: Float, degZ: Float) -> Unit)? = null
 
     private val screenScale = Scale(1.0, 1.0, 1.0)
+    private val dragOrigin = Vector3f()
     private val previousHit = Vector3f()
     private var hasPreviousHit = false
-    private var previousScreenX = 0.0
-    private var previousScreenY = 0.0
     private val translateAcc = FloatArray(3)
     private val rotateAcc = FloatArray(3)
 
@@ -66,48 +65,20 @@ class TransformGizmo : Group() {
         selectedMode.set(mode)
         selectedAxis.set(axis)
         hasPreviousHit = false
+        dragOrigin.set(translateX.toFloat(), translateY.toFloat(), translateZ.toFloat())
     }
 
     /**
-     * Drag using screen pixels. Does not need a 3D pick ray, so posing stays
-     * usable when SubScene projection internals are not exported.
+     * Proven path: pick ray ∩ interaction plane, then only the selected axis.
+     * Pivot is frozen at [beginDrag] so applying the pose cannot feed back
+     * into the next delta (that is what made unused handles look live).
      */
-    fun dragScreen(parent: Node, screenX: Double, screenY: Double) {
-        val axis = selectedAxis.get() ?: return
-        val mode = selectedMode.get() ?: return
-        val origin = parent.localToScreen(translateX, translateY, translateZ) ?: return
-        if (!hasPreviousHit) {
-            previousScreenX = screenX
-            previousScreenY = screenY
-            hasPreviousHit = true
-            return
-        }
-        when (mode) {
-            Mode.TRANSLATE -> {
-                val v = GizmoMath.axisVector(axis)
-                val tip = parent.localToScreen(
-                    translateX + v.x,
-                    translateY + v.y,
-                    translateZ + v.z
-                ) ?: return
-                val delta = GizmoMath.screenAxisDelta(
-                    previousScreenX, previousScreenY, screenX, screenY,
-                    origin.x, origin.y, tip.x, tip.y
-                )
-                emitTranslate(axis, delta.toFloat())
-            }
-            Mode.ROTATE -> {
-                val degrees = GizmoMath.screenRotateDeltaDegrees(
-                    previousScreenX, previousScreenY, screenX, screenY,
-                    origin.x, origin.y
-                )
-                val signed = if (axisFacesCamera(parent, axis)) -degrees else degrees
-                emitRotate(axis, signed.toFloat())
-            }
-            Mode.BOTH -> Unit
-        }
-        previousScreenX = screenX
-        previousScreenY = screenY
+    fun dragFromMouse(parent: Node, camera: Camera, event: MouseEvent) {
+        val (origin, direction) = GizmoPick.sceneRay(camera, event)
+        drag(
+            GizmoPick.toLocal(parent, origin, direction),
+            GizmoPick.cameraForwardLocal(camera, parent)
+        )
     }
 
     /**
@@ -163,6 +134,11 @@ class TransformGizmo : Group() {
                     translateY + v.y * AXIS_LENGTH * scale,
                     translateZ + v.z * AXIS_LENGTH * scale
                 ) ?: continue
+                val t = GizmoMath.segmentParam2D(
+                    screenX, screenY, origin.x, origin.y, tip.x, tip.y
+                )
+                if (t < SHAFT_PICK_MIN_T || t > 1.05)
+                    continue
                 val dist = GizmoMath.pointToSegment2D(
                     screenX, screenY, origin.x, origin.y, tip.x, tip.y
                 )
@@ -201,21 +177,35 @@ class TransformGizmo : Group() {
         val axis = selectedAxis.get() ?: return
         val mode = selectedMode.get() ?: return
         val axisVec = GizmoMath.axisVector(axis)
-        val origin = Vector3f(translateX.toFloat(), translateY.toFloat(), translateZ.toFloat())
+        val origin = Vector3f(dragOrigin)
         val planeNormal = when (mode) {
             Mode.TRANSLATE -> GizmoMath.translatePlaneNormal(axisVec, cameraForward)
-            Mode.ROTATE -> axisVec
+            Mode.ROTATE -> rotatePlaneNormal(axisVec, cameraForward, localRay)
             Mode.BOTH -> return
         }
         val hit = GizmoMath.intersectRayPlane(localRay, origin, planeNormal) ?: return
+        if (mode == Mode.ROTATE && Vector3f(hit).sub(origin).length() < RING_RADIUS * 0.25f)
+            return
         if (!hasPreviousHit) {
             previousHit.set(hit)
             hasPreviousHit = true
             return
         }
         when (mode) {
-            Mode.TRANSLATE -> emitTranslate(axis, GizmoMath.translateDelta(previousHit, hit, axisVec))
-            Mode.ROTATE -> emitRotate(axis, GizmoMath.rotateDeltaDegrees(previousHit, hit, origin, axisVec))
+            Mode.TRANSLATE -> emitTranslate(
+                axis,
+                GizmoMath.clampStep(
+                    GizmoMath.translateDelta(previousHit, hit, axisVec),
+                    MAX_TRANSLATE_STEP
+                )
+            )
+            Mode.ROTATE -> emitRotate(
+                axis,
+                GizmoMath.clampStep(
+                    GizmoMath.rotateDeltaDegrees(previousHit, hit, origin, axisVec),
+                    ROTATION_SPEED.toFloat()
+                )
+            )
             Mode.BOTH -> Unit
         }
         previousHit.set(hit)
@@ -230,12 +220,29 @@ class TransformGizmo : Group() {
         restoreHandleColors()
     }
 
-    private fun axisFacesCamera(parent: Node, axis: GizmoAxisType): Boolean {
-        val v = GizmoMath.axisVector(axis)
-        val origin = parent.localToScene(translateX, translateY, translateZ)
-        val tip = parent.localToScene(translateX + v.x, translateY + v.y, translateZ + v.z)
-        val cam = SubScene3D.cameraHandler.camera.localToScene(Point3D.ZERO)
-        return cam.subtract(origin).dotProduct(tip.subtract(origin)) > 0.0
+    /**
+     * Ring plane when the ray can hit it; otherwise the view plane, same
+     * fallback as the FXyz / GizmoController gizmo.
+     */
+    private fun rotatePlaneNormal(
+        axisVec: Vector3f,
+        cameraForward: Vector3f,
+        ray: GizmoMath.Ray
+    ): Vector3f {
+        val ring = Vector3f(axisVec)
+        if (ring.lengthSquared() < 1e-8f)
+            return Vector3f(cameraForward)
+        ring.normalize()
+        val dir = Vector3f(ray.direction)
+        if (dir.lengthSquared() > 1e-8f) {
+            dir.normalize()
+            if (kotlin.math.abs(dir.dot(ring)) > 0.15f)
+                return ring
+        }
+        val view = Vector3f(cameraForward)
+        if (view.lengthSquared() < 1e-8f)
+            return ring
+        return view.normalize()
     }
 
     private fun emitTranslate(axis: GizmoAxisType, delta: Float) {
@@ -306,27 +313,9 @@ class TransformGizmo : Group() {
 
     private fun handleGroup(mode: Mode, axis: GizmoAxisType, vararg shapes: Shape3D): Group {
         val group = Group(*shapes)
-        val idle = axisColor(axis)
-        group.setOnMousePressed { event ->
-            beginDrag(mode, axis)
-            tint(shapes, idle.darker())
-            event.consume()
-        }
-        group.setOnMouseReleased { event ->
-            // Drag ends on the SubScene mouse-up so leaving the thin handle
-            // mid-stroke does not cancel the pose.
-            event.consume()
-        }
-        group.setOnMouseEntered { event ->
-            if (selectedAxis.get() == null)
-                tint(shapes, idle.brighter())
-            event.consume()
-        }
-        group.setOnMouseExited { event ->
-            if (selectedAxis.get() != axis)
-                tint(shapes, idle)
-            event.consume()
-        }
+        group.isMouseTransparent = true
+        group.userData = mode
+        group.properties[AXIS_KEY] = axis
         return group
     }
 
@@ -423,7 +412,9 @@ class TransformGizmo : Group() {
         private const val RING_TUBE = 1.4f
         private const val CENTER = 5.0
         private const val SCREEN_SCALE_DISTANCE = 800.0
-        private const val SCREEN_PICK_PIXELS = 16.0
+        private const val SCREEN_PICK_PIXELS = 10.0
+        private const val SHAFT_PICK_MIN_T = 0.2
+        private const val MAX_TRANSLATE_STEP = 32f
 
         fun axisColor(axis: GizmoAxisType): Color = when (axis) {
             GizmoAxisType.X -> Color.web("#E74C3C")

@@ -128,6 +128,28 @@ object GizmoMath {
         return abs(Vector3f(hit).sub(origin).length() - radius)
     }
 
+    /**
+     * Param of [px],[py] along [ax,ay]→[bx,by]. 0 is [a], 1 is [b].
+     */
+    fun segmentParam2D(
+        px: Double,
+        py: Double,
+        ax: Double,
+        ay: Double,
+        bx: Double,
+        by: Double
+    ): Double {
+        val abx = bx - ax
+        val aby = by - ay
+        val abLen2 = abx * abx + aby * aby
+        if (abLen2 < 1e-12)
+            return 0.0
+        return ((px - ax) * abx + (py - ay) * aby) / abLen2
+    }
+
+    fun clampStep(value: Float, maxAbs: Float): Float =
+        value.coerceIn(-maxAbs, maxAbs)
+
     /** Shortest distance from [px],[py] to the segment [ax,ay]→[bx,by]. */
     fun pointToSegment2D(
         px: Double,

@@ -147,7 +147,7 @@ object PosingController {
         gizmo.updateScreenScale(
             GizmoPick.cameraDistance(camera, parent, gizmo.translateX, gizmo.translateY, gizmo.translateZ)
         )
-        gizmo.dragScreen(parent, event.screenX, event.screenY)
+        gizmo.dragFromMouse(parent, camera, event)
         event.consume()
     }
 
@@ -155,6 +155,7 @@ object PosingController {
         if (!gizmo.isDragging())
             return
         gizmo.endDrag()
+        placeGizmo()
         event.consume()
     }
 
@@ -265,7 +266,8 @@ object PosingController {
         val group = selectedGroup ?: return
         mutate(model, group)
         model.applyPoseAndRefresh()
-        placeGizmo()
+        if (!gizmo.isDragging())
+            placeGizmo()
     }
 
     private fun attachGizmo(model: Model) {
@@ -285,6 +287,8 @@ object PosingController {
     }
 
     private fun placeGizmo() {
+        if (gizmo.isDragging())
+            return
         val model = selectedModel ?: return
         val group = selectedGroup ?: return
         val overlay = overlays[model]
