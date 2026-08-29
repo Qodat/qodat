@@ -16,7 +16,7 @@ import kotlin.math.sqrt
 
 /**
  * Stick skeleton: a joint sphere per vertex group and a bone cylinder from
- * parent centroid to child. Click a joint to select it for the pose gizmo.
+ * parent joint to child. Click a joint to select it for the pose gizmo.
  */
 class SkeletonOverlay(
     private val model: Model,
@@ -54,8 +54,13 @@ class SkeletonOverlay(
     }
 
     fun syncPositions() {
+        val positions = HashMap<Int, Triple<Double, Double, Double>>()
+        for (bone in skeleton.bones) {
+            val joint = PoseSkeletons.jointPosition(model, skeleton, bone.groupIndex) ?: continue
+            positions[bone.groupIndex] = joint
+        }
         for ((group, sphere) in joints) {
-            val (x, y, z) = model.groupCentroid(group) ?: continue
+            val (x, y, z) = positions[group] ?: continue
             sphere.translateX = x
             sphere.translateY = y
             sphere.translateZ = z
@@ -63,8 +68,8 @@ class SkeletonOverlay(
         for (bone in skeleton.bones) {
             val parent = bone.parentGroupIndex ?: continue
             val shaft = bones[bone.groupIndex] ?: continue
-            val from = model.groupCentroid(parent) ?: continue
-            val to = model.groupCentroid(bone.groupIndex) ?: continue
+            val from = positions[parent] ?: continue
+            val to = positions[bone.groupIndex] ?: continue
             alignBone(shaft, from, to)
         }
     }
@@ -104,9 +109,9 @@ class SkeletonOverlay(
         }
 
     companion object {
-        private const val JOINT_RADIUS = 4.0
-        private const val SELECTED_JOINT_RADIUS = 6.0
-        private const val BONE_RADIUS = 1.15
+        private const val JOINT_RADIUS = 7.0
+        private const val SELECTED_JOINT_RADIUS = 10.0
+        private const val BONE_RADIUS = 2.4
 
         internal fun alignBone(
             cylinder: Cylinder,

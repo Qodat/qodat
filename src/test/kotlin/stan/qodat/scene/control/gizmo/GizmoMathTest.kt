@@ -44,6 +44,13 @@ class GizmoMathTest {
     }
 
     @Test
+    fun raySegmentDistanceIsZeroOnTheSegment() {
+        val ray = GizmoMath.Ray(Vector3f(5f, 10f, 0f), Vector3f(0f, -1f, 0f))
+        val dist = GizmoMath.raySegmentDistance(ray, Vector3f(0f, 0f, 0f), Vector3f(10f, 0f, 0f))
+        assertTrue(dist < 1e-4f, "dist=$dist")
+    }
+
+    @Test
     fun rsUnitsMapToFullTurns() {
         assertEquals(64, GizmoMath.degreesToRs(90f))
         assertEquals(256, GizmoMath.degreesToRs(360f))

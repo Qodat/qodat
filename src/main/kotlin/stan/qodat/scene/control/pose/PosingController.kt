@@ -8,15 +8,21 @@ import javafx.scene.input.MouseEvent
 import stan.qodat.Properties
 import stan.qodat.scene.SceneContext
 import stan.qodat.scene.SubScene3D
+import stan.qodat.scene.control.gizmo.GizmoAxisType
 import stan.qodat.scene.control.gizmo.GizmoMath
 import stan.qodat.scene.control.gizmo.GizmoPick
 import stan.qodat.scene.control.gizmo.TransformGizmo
 import stan.qodat.scene.runescape.model.Model
 import java.util.IdentityHashMap
+import kotlin.math.sqrt
 
 /**
  * Posing mode: stick skeleton on scene models, click a joint, drag the gizmo
  * to rotate / translate that bone (FK to descendants).
+ *
+ * All press / drag / release goes through the SubScene mouse listener so a
+ * thin handle cannot cancel the stroke when the cursor leaves it, and so
+ * the mesh does not steal the pick from the gizmo.
  */
 object PosingController {
 
@@ -26,18 +32,11 @@ object PosingController {
     private var selectedGroup: Int? = null
     private var sceneChildrenListener: ListChangeListener<Node>? = null
     private val mouseHandler = EventHandler<MouseEvent> { event ->
-        if (!gizmo.isDragging() || gizmo.parent == null)
-            return@EventHandler
-        val camera = SubScene3D.cameraHandler.camera
-        val parent = gizmo.parent
-        val (origin, direction) = GizmoPick.sceneRay(camera, event)
-        val localRay = GizmoPick.toLocal(parent, origin, direction)
-        val forward = GizmoPick.cameraForwardLocal(camera, parent)
-        gizmo.updateScreenScale(
-            GizmoPick.cameraDistance(camera, parent, gizmo.translateX, gizmo.translateY, gizmo.translateZ)
-        )
-        gizmo.drag(localRay, forward)
-        event.consume()
+        when (event.eventType) {
+            MouseEvent.MOUSE_PRESSED -> onPressed(event)
+            MouseEvent.MOUSE_DRAGGED -> onDragged(event)
+            MouseEvent.MOUSE_RELEASED -> onReleased(event)
+        }
     }
 
     init {
@@ -102,6 +101,98 @@ object PosingController {
         return model to group
     }
 
+    private fun onPressed(event: MouseEvent) {
+        if (!event.isPrimaryButtonDown)
+            return
+        val hit = pickGizmo(event)
+        if (hit != null) {
+            gizmo.beginDrag(hit.first, hit.second)
+            event.consume()
+            return
+        }
+        if (gizmo.isDragging()) {
+            event.consume()
+            return
+        }
+        val joint = pickJoint(event)
+        if (joint != null) {
+            selectBone(joint.first, joint.second)
+            event.consume()
+        }
+    }
+
+    private fun onDragged(event: MouseEvent) {
+        if (!gizmo.isDragging() || gizmo.parent == null)
+            return
+        val camera = SubScene3D.cameraHandler.camera
+        val parent = gizmo.parent
+        val (origin, direction) = GizmoPick.sceneRay(camera, event)
+        gizmo.updateScreenScale(
+            GizmoPick.cameraDistance(camera, parent, gizmo.translateX, gizmo.translateY, gizmo.translateZ)
+        )
+        gizmo.drag(
+            GizmoPick.toLocal(parent, origin, direction),
+            GizmoPick.cameraForwardLocal(camera, parent)
+        )
+        event.consume()
+    }
+
+    private fun onReleased(event: MouseEvent) {
+        if (!gizmo.isDragging())
+            return
+        gizmo.endDrag()
+        event.consume()
+    }
+
+    private fun pickGizmo(event: MouseEvent): Pair<TransformGizmo.Mode, GizmoAxisType>? {
+        val parent = gizmo.parent ?: return null
+        if (selectedModel == null || selectedGroup == null)
+            return null
+        val camera = SubScene3D.cameraHandler.camera
+        val (origin, direction) = GizmoPick.sceneRay(camera, event)
+        return gizmo.pick(GizmoPick.toLocal(parent, origin, direction))
+    }
+
+    private fun pickJoint(event: MouseEvent): Pair<Model, Int>? {
+        val camera = SubScene3D.cameraHandler.camera
+        val (origin, direction) = GizmoPick.sceneRay(camera, event)
+        var best: Pair<Model, Int>? = null
+        var bestDist = 14.0
+        for ((model, overlay) in overlays) {
+            val parent = overlay.parent ?: model.getSceneNode()
+            val ray = GizmoPick.toLocal(parent, origin, direction)
+            val dirLen = sqrt(
+                (ray.direction.x * ray.direction.x +
+                    ray.direction.y * ray.direction.y +
+                    ray.direction.z * ray.direction.z).toDouble()
+            )
+            if (dirLen < 1e-8)
+                continue
+            for (bone in overlay.skeleton.bones) {
+                val joint = PoseSkeletons.jointPosition(model, overlay.skeleton, bone.groupIndex) ?: continue
+                val vx = joint.first - ray.origin.x
+                val vy = joint.second - ray.origin.y
+                val vz = joint.third - ray.origin.z
+                val t = (vx * ray.direction.x + vy * ray.direction.y + vz * ray.direction.z) / (dirLen * dirLen)
+                if (t < 0)
+                    continue
+                val px = ray.origin.x + ray.direction.x * t
+                val py = ray.origin.y + ray.direction.y * t
+                val pz = ray.origin.z + ray.direction.z * t
+                val dist = sqrt(
+                    (px - joint.first) * (px - joint.first) +
+                        (py - joint.second) * (py - joint.second) +
+                        (pz - joint.third) * (pz - joint.third)
+                )
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = model to bone.groupIndex
+                }
+            }
+        }
+        return best
+    }
+
     private fun enable() {
         refreshOverlays()
         installMouseListener()
@@ -112,6 +203,7 @@ object PosingController {
         selectedModel = null
         selectedGroup = null
         for ((model, overlay) in overlays) {
+            model.setMeshPickable(true)
             model.getSceneNode().children.remove(overlay)
             model.skeletonOverlay = null
         }
@@ -125,6 +217,7 @@ object PosingController {
         val stale = overlays.keys.filter { it !in live }
         for (model in stale) {
             val overlay = overlays.remove(model) ?: continue
+            model.setMeshPickable(true)
             model.getSceneNode().children.remove(overlay)
             model.skeletonOverlay = null
             if (selectedModel === model) {
@@ -134,6 +227,7 @@ object PosingController {
             }
         }
         for (model in live) {
+            model.setMeshPickable(false)
             val overlay = overlays.getOrPut(model) {
                 SkeletonOverlay(model) { group -> selectBone(model, group) }.also {
                     model.skeletonOverlay = it
@@ -156,6 +250,7 @@ object PosingController {
         } else {
             placeGizmo()
         }
+        installMouseListener()
     }
 
     private fun applyDelta(mutate: (Model, Int) -> Unit) {
@@ -185,8 +280,14 @@ object PosingController {
     private fun placeGizmo() {
         val model = selectedModel ?: return
         val group = selectedGroup ?: return
-        val centroid = model.groupCentroid(group) ?: return
-        gizmo.setWorldPosition(centroid.first, centroid.second, centroid.third)
+        val overlay = overlays[model]
+        val joint = if (overlay != null)
+            PoseSkeletons.jointPosition(model, overlay.skeleton, group)
+        else
+            model.groupCentroid(group)
+        if (joint == null)
+            return
+        gizmo.setWorldPosition(joint.first, joint.second, joint.third)
         val parent = gizmo.parent ?: return
         val camera = SubScene3D.cameraHandler.camera
         gizmo.updateScreenScale(
@@ -195,8 +296,7 @@ object PosingController {
     }
 
     private fun installMouseListener() {
-        if (SubScene3D.mouseListener.get() !== mouseHandler)
-            SubScene3D.mouseListener.set(mouseHandler)
+        SubScene3D.mouseListener.set(mouseHandler)
     }
 
     private fun watch(context: SceneContext?) {

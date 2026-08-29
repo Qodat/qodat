@@ -7,6 +7,7 @@ import stan.qodat.scene.runescape.animation.TransformationType
 import stan.qodat.scene.runescape.model.ModelSkeleton
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 class ModelPoseTest {
 
@@ -80,6 +81,17 @@ class ModelPoseTest {
         assertEquals(listOf(10, 0, 0), skeleton.xyz(0))
         assertEquals(listOf(42, 4, 0), skeleton.xyz(2))
         assertEquals(listOf(0, 0, 64), skeleton.xyz(4))
+    }
+
+    @Test
+    fun rotatingAChildGroupDoesNotThrowOnASmallSkin() {
+        val skeleton = ModelSkeleton(limbModel())
+        val pose = ModelPose()
+        pose.addRotate(1, 0, 64, 0)
+        skeleton.ensureScratchBuffers()
+        skeleton.applyPose(pose, parentChildSkeleton())
+        assertEquals(listOf(0, 0, 0), skeleton.xyz(0))
+        assertTrue(skeleton.xyz(2) != listOf(32, 0, 0))
     }
 
     @Test

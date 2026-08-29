@@ -84,6 +84,11 @@ class TransformGroupTreeItem(
         if (Properties.posingMode.get())
             return
         SubScene3D.mouseListener.set(EventHandler { event ->
+            if (event.eventType == javafx.scene.input.MouseEvent.MOUSE_RELEASED && gizmo.isDragging()) {
+                gizmo.endDrag()
+                event.consume()
+                return@EventHandler
+            }
             if (!gizmo.isDragging())
                 return@EventHandler
             val parent = gizmo.parent ?: return@EventHandler

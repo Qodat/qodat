@@ -98,6 +98,12 @@ class Model(label: String,
         cachedPoseSkeletonToken = UNSET_SKELETON
     }
 
+    fun setMeshPickable(pickable: Boolean) {
+        if (sceneNode == null)
+            getSceneNode()
+        sceneNode?.isMouseTransparent = !pickable
+    }
+
     private val overlayHoverHandler = EventHandler<MouseEvent> { event ->
         val node = event.source as? Node ?: return@EventHandler
         when (event.eventType) {

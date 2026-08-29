@@ -76,8 +76,8 @@ data class PoseSkeleton(val bones: List<PoseBone>) {
 }
 
 /**
- * Applies [pose] parent-first: each non-identity bone uses its own centroid as
- * pivot, then rotates / translates that group plus descendants.
+ * Applies [pose] parent-first: each non-identity bone pivots at its proximal
+ * joint, then rotates / translates that group plus descendants.
  */
 fun ModelSkeleton.applyPose(pose: ModelPose, skeleton: PoseSkeleton) {
     if (pose.isEmpty() || skeleton.bones.isEmpty())
@@ -86,6 +86,6 @@ fun ModelSkeleton.applyPose(pose: ModelPose, skeleton: PoseSkeleton) {
         val delta = pose.deltaOrNull(bone.groupIndex) ?: continue
         if (delta.isIdentity())
             continue
-        applyBonePose(bone, delta)
+        applyBonePose(bone, delta, PoseSkeletons.jointPosition(this, skeleton, bone.groupIndex))
     }
 }

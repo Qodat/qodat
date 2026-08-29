@@ -363,16 +363,25 @@ open class ModelSkeleton(internal val modelDefinition: ModelDefinition)
     }
 
     /**
-     * Pivot at [bone]'s current centroid, then rotate / translate that group
-     * plus descendants. Used by posing mode after bind pose or an animation frame.
+     * Pivot at [pivot] (proximal joint) or the group's centroid, then rotate /
+     * translate that group plus descendants.
      */
-    fun applyBonePose(bone: PoseBone, delta: ModelPose.BoneDelta) {
+    fun applyBonePose(
+        bone: PoseBone,
+        delta: ModelPose.BoneDelta,
+        pivot: Triple<Double, Double, Double>? = null
+    ) {
         ensureScratchBuffers()
         val x = vertexPositionsX
         val y = vertexPositionsY
         val z = vertexPositionsZ
-        val self = intArrayOf(bone.groupIndex)
-        offset(self, 0, 0, 0, x, y, z)
+        if (pivot != null) {
+            pointXOffset = pivot.first.toInt()
+            pointYOffset = pivot.second.toInt()
+            pointZOffset = pivot.third.toInt()
+        } else {
+            offset(intArrayOf(bone.groupIndex), 0, 0, 0, x, y, z)
+        }
         if (delta.rx != 0 || delta.ry != 0 || delta.rz != 0)
             rotate(bone.descendantGroups, delta.rx, delta.ry, delta.rz, x, y, z)
         if (delta.tx != 0 || delta.ty != 0 || delta.tz != 0)

@@ -98,6 +98,35 @@ object GizmoMath {
     fun rsToDegrees(rs: Int): Float =
         (rs and 255) * 360f / RS_UNITS_PER_TURN
 
+    /** Shortest distance from [ray] to the segment [a]→[b]. */
+    fun raySegmentDistance(ray: Ray, a: Vector3f, b: Vector3f): Float {
+        val dir = Vector3f(ray.direction)
+        if (dir.lengthSquared() < TINY)
+            return Float.POSITIVE_INFINITY
+        dir.normalize()
+        val ab = Vector3f(b).sub(a)
+        val ao = Vector3f(a).sub(ray.origin)
+        val abLen2 = ab.lengthSquared()
+        if (abLen2 < TINY)
+            return Vector3f(ao).cross(dir).length()
+        val d = dir.dot(ab)
+        val denom = abLen2 - d * d
+        val t = if (abs(denom) < TINY)
+            0f
+        else
+            ((ao.dot(dir) * d - ao.dot(ab)) / denom).coerceIn(0f, 1f)
+        val closest = Vector3f(a).add(Vector3f(ab).mul(t))
+        val toClosest = Vector3f(closest).sub(ray.origin)
+        val along = toClosest.dot(dir).coerceAtLeast(0f)
+        return Vector3f(ray.origin).add(Vector3f(dir).mul(along)).sub(closest).length()
+    }
+
+    /** Distance from the ray-plane hit to a circle of [radius] around [origin]. */
+    fun rayCircleDistance(ray: Ray, origin: Vector3f, axis: Vector3f, radius: Float): Float {
+        val hit = intersectRayPlane(ray, origin, axis) ?: return Float.POSITIVE_INFINITY
+        return abs(Vector3f(hit).sub(origin).length() - radius)
+    }
+
     private fun projectOnPlane(v: Vector3f, unitNormal: Vector3f): Vector3f =
         v.sub(Vector3f(unitNormal).mul(v.dot(unitNormal)))
 

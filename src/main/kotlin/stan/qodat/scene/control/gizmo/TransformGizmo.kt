@@ -57,6 +57,47 @@ class TransformGizmo : Group() {
 
     fun isDragging(): Boolean = selectedAxis.get() != null
 
+    fun beginDrag(mode: Mode, axis: GizmoAxisType) {
+        selectedMode.set(mode)
+        selectedAxis.set(axis)
+        hasPreviousHit = false
+    }
+
+    /**
+     * Ray-pick a translate shaft or rotate ring in the gizmo parent's space.
+     * Used so posing does not depend on JavaFX 3D mesh picking.
+     */
+    fun pick(localRay: GizmoMath.Ray): Pair<Mode, GizmoAxisType>? {
+        val origin = Vector3f(translateX.toFloat(), translateY.toFloat(), translateZ.toFloat())
+        val scale = screenScale.x.toFloat().coerceAtLeast(0.01f)
+        val shaft = (AXIS_LENGTH * scale).toFloat()
+        val ring = RING_RADIUS * scale
+        val pickR = (8f * scale).coerceAtLeast(10f)
+        var best: Pair<Mode, GizmoAxisType>? = null
+        var bestDist = pickR
+        val mode = modeProperty.get() ?: Mode.BOTH
+        if (mode == Mode.BOTH || mode == Mode.TRANSLATE) {
+            for (axis in GizmoAxisType.entries) {
+                val tip = Vector3f(origin).add(GizmoMath.axisVector(axis).mul(shaft))
+                val dist = GizmoMath.raySegmentDistance(localRay, origin, tip)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = Mode.TRANSLATE to axis
+                }
+            }
+        }
+        if (mode == Mode.BOTH || mode == Mode.ROTATE) {
+            for (axis in GizmoAxisType.entries) {
+                val dist = GizmoMath.rayCircleDistance(localRay, origin, GizmoMath.axisVector(axis), ring)
+                if (dist < bestDist) {
+                    bestDist = dist
+                    best = Mode.ROTATE to axis
+                }
+            }
+        }
+        return best
+    }
+
     fun setWorldPosition(x: Double, y: Double, z: Double) {
         translateX = x
         translateY = y
@@ -133,14 +174,13 @@ class TransformGizmo : Group() {
         val group = Group(*shapes)
         val idle = axisColor(axis)
         group.setOnMousePressed { event ->
-            selectedMode.set(mode)
-            selectedAxis.set(axis)
-            hasPreviousHit = false
+            beginDrag(mode, axis)
             tint(shapes, idle.darker())
             event.consume()
         }
         group.setOnMouseReleased { event ->
-            endDrag()
+            // Drag ends on the SubScene mouse-up so leaving the thin handle
+            // mid-stroke does not cancel the pose.
             event.consume()
         }
         group.setOnMouseEntered { event ->
