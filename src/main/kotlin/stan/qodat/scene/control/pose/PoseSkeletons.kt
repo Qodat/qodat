@@ -10,7 +10,6 @@ import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.animation.AnimationSkeleton
 import stan.qodat.scene.runescape.entity.AnimatedEntity
 import stan.qodat.scene.runescape.model.ModelSkeleton
-import kotlin.math.sqrt
 
 object PoseSkeletons {
 
@@ -128,9 +127,8 @@ object PoseSkeletons {
             for (child in live) {
                 if (child in assigned)
                     continue
-                val childC = centroids.getValue(child)
                 for (parent in assigned) {
-                    val dist = distance(childC, centroids.getValue(parent))
+                    val dist = closestPairDistance(model, child, parent)
                     if (dist < bestDist) {
                         bestDist = dist
                         bestChild = child
@@ -151,8 +149,8 @@ object PoseSkeletons {
     }
 
     /**
-     * Modelkit `proximal_joints`: sit the joint on the parent-facing edge of
-     * the skin, not the volume centroid (which hides inside the mesh).
+     * Modelkit `proximal_joints`: sit the joint on the child vertices closest
+     * to the parent skin, not the volume centroid (which hides inside the mesh).
      */
     fun jointPosition(model: ModelSkeleton, skeleton: PoseSkeleton, groupIndex: Int): Triple<Double, Double, Double>? {
         val bone = skeleton.bone(groupIndex) ?: return model.groupCentroid(groupIndex)
@@ -162,6 +160,9 @@ object PoseSkeletons {
         val parent = bone.parentGroupIndex
         if (parent == null)
             return model.groupCentroid(groupIndex)
+        val parentVertices = model.getVertexGroups().getOrNull(parent)
+        if (parentVertices != null && parentVertices.isNotEmpty())
+            return proximalMeanToSkin(model, vertices, parentVertices)
         val parentJoint = jointPosition(model, skeleton, parent) ?: return model.groupCentroid(groupIndex)
         return proximalMean(model, vertices, parentJoint)
     }
@@ -194,6 +195,64 @@ object PoseSkeletons {
         )
     }
 
+    private fun closestPairDistance(model: ModelSkeleton, groupA: Int, groupB: Int): Double {
+        val aVerts = model.getVertexGroups().getOrNull(groupA) ?: return Double.POSITIVE_INFINITY
+        val bVerts = model.getVertexGroups().getOrNull(groupB) ?: return Double.POSITIVE_INFINITY
+        if (aVerts.isEmpty() || bVerts.isEmpty())
+            return Double.POSITIVE_INFINITY
+        var best = Double.POSITIVE_INFINITY
+        for (a in aVerts) {
+            val ax = model.getX(a).toDouble()
+            val ay = model.getY(a).toDouble()
+            val az = model.getZ(a).toDouble()
+            for (b in bVerts) {
+                val dx = ax - model.getX(b)
+                val dy = ay - model.getY(b)
+                val dz = az - model.getZ(b)
+                val dist = dx * dx + dy * dy + dz * dz
+                if (dist < best)
+                    best = dist
+            }
+        }
+        return best
+    }
+
+    private fun proximalMeanToSkin(
+        model: ModelSkeleton,
+        childVertices: IntArray,
+        parentVertices: IntArray
+    ): Triple<Double, Double, Double> {
+        val keep = minOf(childVertices.size, maxOf(3, childVertices.size / 10))
+        val nearest = childVertices
+            .map { vertex ->
+                val x = model.getX(vertex).toDouble()
+                val y = model.getY(vertex).toDouble()
+                val z = model.getZ(vertex).toDouble()
+                var best = Double.POSITIVE_INFINITY
+                for (parent in parentVertices) {
+                    val dx = x - model.getX(parent)
+                    val dy = y - model.getY(parent)
+                    val dz = z - model.getZ(parent)
+                    val dist = dx * dx + dy * dy + dz * dz
+                    if (dist < best)
+                        best = dist
+                }
+                best to Triple(x, y, z)
+            }
+            .sortedBy { it.first }
+            .take(keep)
+        var sx = 0.0
+        var sy = 0.0
+        var sz = 0.0
+        for ((_, point) in nearest) {
+            sx += point.first
+            sy += point.second
+            sz += point.third
+        }
+        val n = nearest.size.toDouble()
+        return Triple(sx / n, sy / n, sz / n)
+    }
+
     private fun proximalMean(
         model: ModelSkeleton,
         vertices: IntArray,
@@ -224,10 +283,4 @@ object PoseSkeletons {
         return Triple(sx / n, sy / n, sz / n)
     }
 
-    private fun distance(a: Triple<Double, Double, Double>, b: Triple<Double, Double, Double>): Double {
-        val dx = a.first - b.first
-        val dy = a.second - b.second
-        val dz = a.third - b.third
-        return sqrt(dx * dx + dy * dy + dz * dz)
-    }
 }

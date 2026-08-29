@@ -18,7 +18,6 @@ import stan.qodat.javafx.onTreeSelected
 import stan.qodat.javafx.text
 import stan.qodat.scene.SubScene3D
 import stan.qodat.scene.control.gizmo.GizmoMath
-import stan.qodat.scene.control.gizmo.GizmoPick
 import stan.qodat.scene.control.gizmo.TransformGizmo
 import stan.qodat.scene.runescape.animation.AnimationFrame
 import stan.qodat.scene.runescape.animation.Transformation
@@ -92,9 +91,7 @@ class TransformGroupTreeItem(
             if (!gizmo.isDragging())
                 return@EventHandler
             val parent = gizmo.parent ?: return@EventHandler
-            val camera = SubScene3D.cameraHandler.camera
-            val (origin, direction) = GizmoPick.sceneRay(camera, event)
-            gizmo.drag(GizmoPick.toLocal(parent, origin, direction), GizmoPick.cameraForwardLocal(camera, parent))
+            gizmo.dragScreen(parent, event.screenX, event.screenY)
             event.consume()
         })
         if (!getSelectionMesh().children.contains(gizmo))

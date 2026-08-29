@@ -50,6 +50,18 @@ class GizmoMathTest {
     }
 
     @Test
+    fun screenAxisDeltaIsOneWhenMouseTravelsTheProjectedAxis() {
+        val delta = GizmoMath.screenAxisDelta(0.0, 0.0, 10.0, 0.0, 0.0, 0.0, 10.0, 0.0)
+        assertEquals(1.0, delta, 1e-6)
+    }
+
+    @Test
+    fun screenRotateDeltaIsNinetyClockwise() {
+        val degrees = GizmoMath.screenRotateDeltaDegrees(10.0, 0.0, 0.0, 10.0, 0.0, 0.0)
+        assertEquals(90.0, degrees, 1e-6)
+    }
+
+    @Test
     fun raySegmentDistanceIsZeroOnTheSegment() {
         val ray = GizmoMath.Ray(Vector3f(5f, 10f, 0f), Vector3f(0f, -1f, 0f))
         val dist = GizmoMath.raySegmentDistance(ray, Vector3f(0f, 0f, 0f), Vector3f(10f, 0f, 0f))

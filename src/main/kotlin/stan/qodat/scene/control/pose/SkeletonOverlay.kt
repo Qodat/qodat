@@ -9,6 +9,7 @@ import javafx.scene.shape.CullFace
 import javafx.scene.shape.Cylinder
 import javafx.scene.shape.DrawMode
 import javafx.scene.shape.Sphere
+import javafx.scene.transform.Affine
 import javafx.scene.transform.Rotate
 import stan.qodat.scene.runescape.model.Model
 import stan.qodat.scene.runescape.model.distinctColor
@@ -129,10 +130,22 @@ class SkeletonOverlay(
             }
             cylinder.isVisible = true
             cylinder.height = length
-            cylinder.translateX = (from.first + to.first) / 2.0
-            cylinder.translateY = (from.second + to.second) / 2.0
-            cylinder.translateZ = (from.third + to.third) / 2.0
-            cylinder.transforms.setAll(rotationFromYAxis(dx / length, dy / length, dz / length))
+            cylinder.translateX = 0.0
+            cylinder.translateY = 0.0
+            cylinder.translateZ = 0.0
+            val rotate = rotationFromYAxis(dx / length, dy / length, dz / length)
+            val pose = Affine()
+            pose.appendTranslation(
+                (from.first + to.first) / 2.0,
+                (from.second + to.second) / 2.0,
+                (from.third + to.third) / 2.0
+            )
+            pose.appendRotation(
+                rotate.angle,
+                0.0, 0.0, 0.0,
+                rotate.axis.x, rotate.axis.y, rotate.axis.z
+            )
+            cylinder.transforms.setAll(pose)
         }
 
         internal fun rotationFromYAxis(x: Double, y: Double, z: Double): Rotate {

@@ -1,6 +1,7 @@
 package stan.qodat.scene.control.gizmo
 
 import javafx.beans.property.SimpleObjectProperty
+import javafx.geometry.Point3D
 import javafx.scene.AmbientLight
 import javafx.scene.DepthTest
 import javafx.scene.Group
@@ -16,6 +17,7 @@ import javafx.scene.shape.TriangleMesh
 import javafx.scene.transform.Rotate
 import javafx.scene.transform.Scale
 import org.joml.Vector3f
+import stan.qodat.scene.SubScene3D
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -37,6 +39,8 @@ class TransformGizmo : Group() {
     private val screenScale = Scale(1.0, 1.0, 1.0)
     private val previousHit = Vector3f()
     private var hasPreviousHit = false
+    private var previousScreenX = 0.0
+    private var previousScreenY = 0.0
     private val translateAcc = FloatArray(3)
     private val rotateAcc = FloatArray(3)
 
@@ -62,6 +66,48 @@ class TransformGizmo : Group() {
         selectedMode.set(mode)
         selectedAxis.set(axis)
         hasPreviousHit = false
+    }
+
+    /**
+     * Drag using screen pixels. Does not need a 3D pick ray, so posing stays
+     * usable when SubScene projection internals are not exported.
+     */
+    fun dragScreen(parent: Node, screenX: Double, screenY: Double) {
+        val axis = selectedAxis.get() ?: return
+        val mode = selectedMode.get() ?: return
+        val origin = parent.localToScreen(translateX, translateY, translateZ) ?: return
+        if (!hasPreviousHit) {
+            previousScreenX = screenX
+            previousScreenY = screenY
+            hasPreviousHit = true
+            return
+        }
+        when (mode) {
+            Mode.TRANSLATE -> {
+                val v = GizmoMath.axisVector(axis)
+                val tip = parent.localToScreen(
+                    translateX + v.x,
+                    translateY + v.y,
+                    translateZ + v.z
+                ) ?: return
+                val delta = GizmoMath.screenAxisDelta(
+                    previousScreenX, previousScreenY, screenX, screenY,
+                    origin.x, origin.y, tip.x, tip.y
+                )
+                emitTranslate(axis, delta.toFloat())
+            }
+            Mode.ROTATE -> {
+                val degrees = GizmoMath.screenRotateDeltaDegrees(
+                    previousScreenX, previousScreenY, screenX, screenY,
+                    origin.x, origin.y
+                )
+                val signed = if (axisFacesCamera(parent, axis)) -degrees else degrees
+                emitRotate(axis, signed.toFloat())
+            }
+            Mode.BOTH -> Unit
+        }
+        previousScreenX = screenX
+        previousScreenY = screenY
     }
 
     /**
@@ -182,6 +228,14 @@ class TransformGizmo : Group() {
         translateAcc.fill(0f)
         rotateAcc.fill(0f)
         restoreHandleColors()
+    }
+
+    private fun axisFacesCamera(parent: Node, axis: GizmoAxisType): Boolean {
+        val v = GizmoMath.axisVector(axis)
+        val origin = parent.localToScene(translateX, translateY, translateZ)
+        val tip = parent.localToScene(translateX + v.x, translateY + v.y, translateZ + v.z)
+        val cam = SubScene3D.cameraHandler.camera.localToScene(Point3D.ZERO)
+        return cam.subtract(origin).dotProduct(tip.subtract(origin)) > 0.0
     }
 
     private fun emitTranslate(axis: GizmoAxisType, delta: Float) {

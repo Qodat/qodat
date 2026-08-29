@@ -126,14 +126,10 @@ object PosingController {
             return
         val camera = SubScene3D.cameraHandler.camera
         val parent = gizmo.parent
-        val (origin, direction) = GizmoPick.sceneRay(camera, event)
         gizmo.updateScreenScale(
             GizmoPick.cameraDistance(camera, parent, gizmo.translateX, gizmo.translateY, gizmo.translateZ)
         )
-        gizmo.drag(
-            GizmoPick.toLocal(parent, origin, direction),
-            GizmoPick.cameraForwardLocal(camera, parent)
-        )
+        gizmo.dragScreen(parent, event.screenX, event.screenY)
         event.consume()
     }
 
@@ -148,10 +144,7 @@ object PosingController {
         val parent = gizmo.parent ?: return null
         if (selectedModel == null || selectedGroup == null)
             return null
-        gizmo.pickScreen(parent, event.screenX, event.screenY)?.let { return it }
-        val camera = SubScene3D.cameraHandler.camera
-        val (origin, direction) = GizmoPick.sceneRay(camera, event)
-        return gizmo.pick(GizmoPick.toLocal(parent, origin, direction))
+        return gizmo.pickScreen(parent, event.screenX, event.screenY)
     }
 
     private fun pickJoint(event: MouseEvent): Pair<Model, Int>? {

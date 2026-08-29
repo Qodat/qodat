@@ -145,6 +145,51 @@ object GizmoMath {
         return hypot(px - (ax + abx * u), py - (ay + aby * u))
     }
 
+    /**
+     * Mouse delta projected onto the screen-space axis [origin]→[tip], in
+     * units of that axis vector (1.0 = one full origin-to-tip).
+     */
+    fun screenAxisDelta(
+        previousX: Double,
+        previousY: Double,
+        currentX: Double,
+        currentY: Double,
+        originX: Double,
+        originY: Double,
+        tipX: Double,
+        tipY: Double
+    ): Double {
+        val ax = tipX - originX
+        val ay = tipY - originY
+        val len2 = ax * ax + ay * ay
+        if (len2 < 1e-12)
+            return 0.0
+        return ((currentX - previousX) * ax + (currentY - previousY) * ay) / len2
+    }
+
+    /**
+     * Signed screen-space degrees around [origin] from the previous mouse
+     * point to the current one. Screen Y is down, so a positive result is
+     * clockwise on the viewport.
+     */
+    fun screenRotateDeltaDegrees(
+        previousX: Double,
+        previousY: Double,
+        currentX: Double,
+        currentY: Double,
+        originX: Double,
+        originY: Double
+    ): Double {
+        val a0 = atan2(previousY - originY, previousX - originX)
+        val a1 = atan2(currentY - originY, currentX - originX)
+        var degrees = Math.toDegrees(a1 - a0)
+        if (degrees > 180.0)
+            degrees -= 360.0
+        if (degrees < -180.0)
+            degrees += 360.0
+        return degrees
+    }
+
     private fun projectOnPlane(v: Vector3f, unitNormal: Vector3f): Vector3f =
         v.sub(Vector3f(unitNormal).mul(v.dot(unitNormal)))
 
