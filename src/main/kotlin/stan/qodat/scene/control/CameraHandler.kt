@@ -13,6 +13,7 @@ import stan.qodat.Properties
 import stan.qodat.scene.state.CameraViewState
 import stan.qodat.scene.state.ViewStateRestorable
 import stan.qodat.util.onInvalidation
+import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 
@@ -63,6 +64,10 @@ class CameraHandler(
     }
 
     private var firstEvent = true
+    private var havePress = false
+    private var dragArmed = false
+    private var pressX = 0.0
+    private var pressY = 0.0
     private var mouseX = 0.0
     private var mouseY = 0.0
     private var lastMouseX = 0.0
@@ -74,16 +79,38 @@ class CameraHandler(
         if (!navigationEnabled)
             return@EventHandler
 
+        if (it.eventType == MouseEvent.MOUSE_RELEASED || it.eventType == MouseEvent.MOUSE_CLICKED) {
+            havePress = false
+            dragArmed = false
+            return@EventHandler
+        }
+
         if (it.eventType == MouseEvent.MOUSE_PRESSED) {
-            mouseX = it.sceneX
-            mouseY = it.sceneY
-            lastMouseX = mouseX
-            lastMouseY = mouseY
-            firstEvent = false
+            beginPress(it.sceneX, it.sceneY)
             return@EventHandler
         }
         if (it.eventType != MouseEvent.MOUSE_DRAGGED)
             return@EventHandler
+
+        if (!havePress) {
+            beginPress(it.sceneX, it.sceneY)
+            return@EventHandler
+        }
+        if (!dragArmed) {
+            if (hypot(it.sceneX - pressX, it.sceneY - pressY) < ORBIT_SLOP_PIXELS) {
+                mouseX = it.sceneX
+                mouseY = it.sceneY
+                lastMouseX = mouseX
+                lastMouseY = mouseY
+                return@EventHandler
+            }
+            dragArmed = true
+            mouseX = it.sceneX
+            mouseY = it.sceneY
+            lastMouseX = mouseX
+            lastMouseY = mouseY
+            return@EventHandler
+        }
 
         lastMouseX = if (firstEvent) it.sceneX else mouseX
         lastMouseY = if (firstEvent) it.sceneY else mouseY
@@ -181,6 +208,18 @@ class CameraHandler(
         updateZValue(state.positionZ)
     }
 
+    private fun beginPress(sceneX: Double, sceneY: Double) {
+        pressX = sceneX
+        pressY = sceneY
+        mouseX = sceneX
+        mouseY = sceneY
+        lastMouseX = sceneX
+        lastMouseY = sceneY
+        firstEvent = false
+        havePress = true
+        dragArmed = false
+    }
+
     private fun updateZValue(newZ: Double) {
         var newZ1 = newZ
         newZ1 = max(newZ1, Properties.cameraMaxZoom.get())
@@ -197,5 +236,9 @@ class CameraHandler(
         init {
             transforms.addAll(translate, xRotate, yRotate)
         }
+    }
+
+    companion object {
+        private const val ORBIT_SLOP_PIXELS = 4.0
     }
 }

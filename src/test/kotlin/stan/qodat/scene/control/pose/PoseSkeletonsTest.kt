@@ -50,7 +50,7 @@ class PoseSkeletonsTest {
 
         assertNull(skeleton.bone(0)?.parentGroupIndex)
         assertEquals(0, skeleton.bone(1)?.parentGroupIndex)
-        assertEquals(0, skeleton.bone(2)?.parentGroupIndex)
+        assertEquals(1, skeleton.bone(2)?.parentGroupIndex)
         assertTrue(skeleton.bone(0)!!.descendantGroups.toList().containsAll(listOf(0, 1, 2)))
     }
 
@@ -95,6 +95,54 @@ class PoseSkeletonsTest {
         val skeleton = PoseSkeletons.fromHierarchy(listOf(bucket))
         assertEquals(listOf(3), skeleton.bones.map { it.groupIndex })
         assertNull(skeleton.bone(3)?.parentGroupIndex)
+    }
+
+    @Test
+    fun similarSizedExclusiveGroupsStaySiblings() {
+        val left = VertexGroupNode(1, intArrayOf(2, 3, 4, 5))
+        val right = VertexGroupNode(2, intArrayOf(6, 7, 8, 9))
+        val body = VertexGroupNode(0, intArrayOf(0, 1))
+        val arms = TransformHierarchyNode(
+            1,
+            TransformationType.ROTATE,
+            listOf(1, 2),
+            listOf(left, right)
+        )
+        val root = TransformHierarchyNode(
+            0,
+            TransformationType.SET_OFFSET,
+            listOf(0, 1, 2),
+            listOf(body, arms)
+        )
+        val skeleton = PoseSkeletons.fromHierarchy(listOf(root))
+        assertEquals(0, skeleton.bone(1)?.parentGroupIndex)
+        assertEquals(0, skeleton.bone(2)?.parentGroupIndex)
+    }
+
+    @Test
+    fun spatialSkeletonParentsAlongCentroidsNotTouchingSkins() {
+        val model = ModelSkeleton(
+            QodatModelDefinition(
+                name = "touch",
+                vertexCount = 10,
+                vertexPositionsX = intArrayOf(0, 4, 8, 12, 40, 48, 80, 88, 90, 8),
+                vertexPositionsY = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 64),
+                vertexPositionsZ = intArrayOf(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+                vertexSkins = intArrayOf(0, 0, 0, 0, 1, 1, 2, 2, 3, 3),
+                faceCount = 2,
+                faceVertexIndices1 = intArrayOf(0, 4),
+                faceVertexIndices2 = intArrayOf(1, 5),
+                faceVertexIndices3 = intArrayOf(4, 6),
+                faceSkins = intArrayOf(0, 1),
+                faceAlphas = null,
+                facePriorities = null,
+                faceTypes = null,
+                faceColors = shortArrayOf(0, 0),
+            )
+        )
+        val pose = PoseSkeletons.spatialSkeleton(model)
+        assertEquals(1, pose.bone(2)?.parentGroupIndex)
+        assertTrue(pose.bone(3)?.parentGroupIndex != 2)
     }
 
     @Test

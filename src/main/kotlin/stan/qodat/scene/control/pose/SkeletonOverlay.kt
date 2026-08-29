@@ -18,11 +18,11 @@ import kotlin.math.sqrt
 
 /**
  * Stick skeleton: a joint sphere per vertex group and a bone cylinder from
- * parent joint to child. Click a joint to select it for the pose gizmo.
+ * parent joint to child. Overlay is mouse-transparent; PosingController
+ * picks joints in screen space.
  */
 class SkeletonOverlay(
-    private val model: Model,
-    private val onSelect: (Int) -> Unit
+    private val model: Model
 ) : Group() {
 
     private val joints = HashMap<Int, Sphere>()
@@ -33,7 +33,7 @@ class SkeletonOverlay(
         private set
 
     init {
-        isMouseTransparent = false
+        isMouseTransparent = true
     }
 
     fun rebuild(next: PoseSkeleton) {
@@ -96,10 +96,6 @@ class SkeletonOverlay(
             cullFace = CullFace.NONE
             drawMode = DrawMode.FILL
             userData = groupIndex
-            setOnMousePressed { event ->
-                onSelect(groupIndex)
-                event.consume()
-            }
         }
 
     private fun boneCylinder(childGroup: Int): Cylinder =
@@ -111,9 +107,9 @@ class SkeletonOverlay(
         }
 
     companion object {
-        private const val JOINT_RADIUS = 7.0
-        private const val SELECTED_JOINT_RADIUS = 10.0
-        private const val BONE_RADIUS = 2.4
+        private const val JOINT_RADIUS = 3.0
+        private const val SELECTED_JOINT_RADIUS = 4.5
+        private const val BONE_RADIUS = 1.0
 
         internal fun alignBone(
             cylinder: Cylinder,

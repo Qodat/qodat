@@ -32,15 +32,18 @@ object PosingController {
     private var selectedModel: Model? = null
     private var selectedGroup: Int? = null
     private var sceneChildrenListener: ListChangeListener<Node>? = null
+    private var captureUntilRelease = false
     private val mouseHandler = EventHandler<MouseEvent> { event ->
-        if (gizmo.isDragging()) {
+        if (gizmo.isDragging() || captureUntilRelease) {
             when (event.eventType) {
                 MouseEvent.MOUSE_DRAGGED -> onDragged(event)
-                MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED -> onReleased(event)
-                else -> event.consume()
+                MouseEvent.MOUSE_RELEASED, MouseEvent.MOUSE_CLICKED -> {
+                    captureUntilRelease = false
+                    onReleased(event)
+                }
+                else -> Unit
             }
-            if (!event.isConsumed)
-                event.consume()
+            event.consume()
             return@EventHandler
         }
         when (event.eventType) {
@@ -119,16 +122,19 @@ object PosingController {
         if (hit != null) {
             pausePlayback()
             gizmo.beginDrag(hit.first, hit.second)
+            captureUntilRelease = true
             event.consume()
             return
         }
         if (gizmo.isDragging()) {
+            captureUntilRelease = true
             event.consume()
             return
         }
         val joint = pickJoint(event)
         if (joint != null) {
             selectBone(joint.first, joint.second)
+            captureUntilRelease = true
             event.consume()
         }
     }
@@ -202,6 +208,7 @@ object PosingController {
         detachGizmo()
         selectedModel = null
         selectedGroup = null
+        captureUntilRelease = false
         for ((model, overlay) in overlays) {
             model.setMeshPickable(true)
             model.getSceneNode().children.remove(overlay)
@@ -229,7 +236,7 @@ object PosingController {
         for (model in live) {
             model.setMeshPickable(false)
             val overlay = overlays.getOrPut(model) {
-                SkeletonOverlay(model) { group -> selectBone(model, group) }.also {
+                SkeletonOverlay(model).also {
                     model.skeletonOverlay = it
                     if (!model.getSceneNode().children.contains(it))
                         model.getSceneNode().children.add(it)

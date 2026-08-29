@@ -64,12 +64,17 @@ object PoseSkeletons {
                 is TransformHierarchyNode -> {
                     val exclusive = node.children.filterIsInstance<VertexGroupNode>()
                     val nested = node.children.filter { it !is VertexGroupNode }
-                    for (group in exclusive)
-                        walk(group, parent)
-                    val nextParent = exclusive.maxByOrNull { it.vertices.size }?.index
+                    val largest = exclusive.maxByOrNull { it.vertices.size }
+                    val nextParent = largest?.index
                         ?: node.targetGroups.maxByOrNull(groupSize)
                     if (nextParent != null)
                         add(nextParent, parent)
+                    for (group in exclusive) {
+                        val nestUnderLargest = largest != null &&
+                            group.index != largest.index &&
+                            group.vertices.size * 2 <= largest.vertices.size
+                        walk(group, if (nestUnderLargest) largest.index else parent)
+                    }
                     val childParent = nextParent ?: parent
                     for (child in nested)
                         walk(child, childParent)
@@ -128,7 +133,7 @@ object PoseSkeletons {
                 if (child in assigned)
                     continue
                 for (parent in assigned) {
-                    val dist = closestPairDistance(model, child, parent)
+                    val dist = centroidDistance(centroids, child, parent)
                     if (dist < bestDist) {
                         bestDist = dist
                         bestChild = child
@@ -150,7 +155,8 @@ object PoseSkeletons {
 
     /**
      * Modelkit `proximal_joints`: sit the joint on the child vertices closest
-     * to the parent skin, not the volume centroid (which hides inside the mesh).
+     * to the parent joint, not the volume centroid (which hides inside the mesh).
+     * The root sits on the verts nearest the XZ origin, the same as modelkit.
      */
     fun jointPosition(model: ModelSkeleton, skeleton: PoseSkeleton, groupIndex: Int): Triple<Double, Double, Double>? {
         val bone = skeleton.bone(groupIndex) ?: return model.groupCentroid(groupIndex)
@@ -159,10 +165,7 @@ object PoseSkeletons {
             return null
         val parent = bone.parentGroupIndex
         if (parent == null)
-            return model.groupCentroid(groupIndex)
-        val parentVertices = model.getVertexGroups().getOrNull(parent)
-        if (parentVertices != null && parentVertices.isNotEmpty())
-            return proximalMeanToSkin(model, vertices, parentVertices)
+            return xzProximal(model, vertices)
         val parentJoint = jointPosition(model, skeleton, parent) ?: return model.groupCentroid(groupIndex)
         return proximalMean(model, vertices, parentJoint)
     }
@@ -195,49 +198,30 @@ object PoseSkeletons {
         )
     }
 
-    private fun closestPairDistance(model: ModelSkeleton, groupA: Int, groupB: Int): Double {
-        val aVerts = model.getVertexGroups().getOrNull(groupA) ?: return Double.POSITIVE_INFINITY
-        val bVerts = model.getVertexGroups().getOrNull(groupB) ?: return Double.POSITIVE_INFINITY
-        if (aVerts.isEmpty() || bVerts.isEmpty())
-            return Double.POSITIVE_INFINITY
-        var best = Double.POSITIVE_INFINITY
-        for (a in aVerts) {
-            val ax = model.getX(a).toDouble()
-            val ay = model.getY(a).toDouble()
-            val az = model.getZ(a).toDouble()
-            for (b in bVerts) {
-                val dx = ax - model.getX(b)
-                val dy = ay - model.getY(b)
-                val dz = az - model.getZ(b)
-                val dist = dx * dx + dy * dy + dz * dz
-                if (dist < best)
-                    best = dist
-            }
-        }
-        return best
+    private fun centroidDistance(
+        centroids: Map<Int, Triple<Double, Double, Double>>,
+        groupA: Int,
+        groupB: Int
+    ): Double {
+        val a = centroids[groupA] ?: return Double.POSITIVE_INFINITY
+        val b = centroids[groupB] ?: return Double.POSITIVE_INFINITY
+        val dx = a.first - b.first
+        val dy = a.second - b.second
+        val dz = a.third - b.third
+        return dx * dx + dy * dy + dz * dz
     }
 
-    private fun proximalMeanToSkin(
+    private fun xzProximal(
         model: ModelSkeleton,
-        childVertices: IntArray,
-        parentVertices: IntArray
+        vertices: IntArray
     ): Triple<Double, Double, Double> {
-        val keep = minOf(childVertices.size, maxOf(3, childVertices.size / 10))
-        val nearest = childVertices
+        val keep = minOf(vertices.size, maxOf(1, minOf(3, vertices.size)))
+        val nearest = vertices
             .map { vertex ->
                 val x = model.getX(vertex).toDouble()
                 val y = model.getY(vertex).toDouble()
                 val z = model.getZ(vertex).toDouble()
-                var best = Double.POSITIVE_INFINITY
-                for (parent in parentVertices) {
-                    val dx = x - model.getX(parent)
-                    val dy = y - model.getY(parent)
-                    val dz = z - model.getZ(parent)
-                    val dist = dx * dx + dy * dy + dz * dz
-                    if (dist < best)
-                        best = dist
-                }
-                best to Triple(x, y, z)
+                (x * x + z * z) to Triple(x, y, z)
             }
             .sortedBy { it.first }
             .take(keep)
