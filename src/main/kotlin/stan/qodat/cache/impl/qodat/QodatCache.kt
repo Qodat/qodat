@@ -1,10 +1,13 @@
 package stan.qodat.cache.impl.qodat
 
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.serializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import kotlinx.serialization.json.encodeToStream
 import mqo.MQOImporter
+import org.slf4j.LoggerFactory
 import qodat.cache.Cache
 import qodat.cache.EncodeResult
 import qodat.cache.definition.*
@@ -33,7 +36,7 @@ object QodatCache : Cache("qodat") {
     private val items: MutableList<QodatItemDefinition> = mutableListOf()
     private val objects: MutableList<QodatObjectDefinition> = mutableListOf()
     private val animations: MutableMap<String, QodatAnimationDefinition> = mutableMapOf()
-    private val animationSkeletons: MutableList<QodatAnimationDefinition> = mutableListOf()
+    private val animationSkeletons: MutableList<QodatAnimationTransformationGroup> = mutableListOf()
     private val animationFrames: MutableMap<Int, List<QodatAnimationFrameDefinition>> = mutableMapOf()
     private val models: MutableMap<String, QodatModelDefinition> = mutableMapOf()
 
@@ -59,14 +62,18 @@ object QodatCache : Cache("qodat") {
                 .associateBy { it.id }
         )
         animationSkeletons.clear()
-        animationSkeletons.addAll(qodatCacheDir.loadDefinitions("animation_skeletons"))
+        animationSkeletons.addAll(
+            qodatCacheDir.loadDefinitions<QodatAnimationTransformationGroup>("animation_skeletons")
+        )
         animationFrames.clear()
         qodatCacheDir
             .resolve("animation_frames")
             .listFiles()
-            ?.associate {
-                it.nameWithoutExtension.toInt() to it.loadDefinitions<QodatAnimationFrameDefinition>("animation_frames")
+            ?.mapNotNull { archive ->
+                val archiveId = archive.nameWithoutExtension.toIntOrNull() ?: return@mapNotNull null
+                archiveId to archive.loadDefinitions<QodatAnimationFrameDefinition>("animation_frames")
             }
+            ?.toMap()
             ?.let(animationFrames::putAll)
         models.clear()
         models.putAll(qodatCacheDir.loadModels("models"))
@@ -275,19 +282,8 @@ object QodatCache : Cache("qodat") {
         TODO("Not yet implemented")
     }
 
-    private inline fun<reified T> File.loadDefinitions(directoryName: String): MutableList<T> {
-        val files = resolve(directoryName)
-            .listFiles()
-            ?.filter { it.extension == "json" }
-            ?: return mutableListOf()
-        if (files.size < 32) {
-            return files.map { json.decodeFromStream<T>(it.inputStream()) }.toMutableList()
-        }
-        return files.toList().parallelStream()
-            .map { json.decodeFromStream<T>(it.inputStream()) }
-            .toList()
-            .toMutableList()
-    }
+    private inline fun<reified T> File.loadDefinitions(directoryName: String): MutableList<T> =
+        loadQodatDefinitionDirectory(resolve(directoryName), json, serializer(), directoryName)
 
     private fun File.loadModels(directoryName: String) = resolve(directoryName)
         .listFiles()
@@ -303,6 +299,47 @@ object QodatCache : Cache("qodat") {
         ?.associateBy { it.getName() }
         ?.toMutableMap()
         ?: mutableMapOf()
+}
+
+private val qodatDefinitionLogger = LoggerFactory.getLogger("stan.qodat.cache.impl.qodat.QodatCache")
+
+/**
+ * Reads one JSON definition per file. A file that does not match [T] is skipped so one
+ * old or misplaced file cannot abort [QodatCache] initialization.
+ *
+ * Skeleton files are [QodatAnimationTransformationGroup] (numeric id).
+ * Animation files are [QodatAnimationDefinition] (string id).
+ */
+@OptIn(ExperimentalSerializationApi::class)
+internal fun <T> loadQodatDefinitionDirectory(
+    directory: File,
+    json: Json,
+    deserializer: DeserializationStrategy<T>,
+    directoryName: String = directory.name,
+): MutableList<T> {
+    val files = directory
+        .listFiles()
+        ?.filter { it.isFile && it.extension.equals("json", ignoreCase = true) }
+        ?: return mutableListOf()
+    fun decode(file: File): T? = try {
+        file.inputStream().use { json.decodeFromStream(deserializer, it) }
+    } catch (e: Exception) {
+        qodatDefinitionLogger.warn(
+            "Skipping {} in {}: {}",
+            file.name,
+            directoryName,
+            e.message,
+        )
+        null
+    }
+    if (files.size < 32) {
+        return files.mapNotNull(::decode).toMutableList()
+    }
+    return files.parallelStream()
+        .map { decode(it) }
+        .toList()
+        .filterNotNull()
+        .toMutableList()
 }
 
 internal fun qodatPopulatedKinds(

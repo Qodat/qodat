@@ -1,9 +1,11 @@
 package stan.qodat.cache.impl.qodat
 
+import kotlinx.serialization.json.Json
 import qodat.cache.definition.InterfaceDefinition
 import qodat.cache.definition.SpotAnimationDefinition
 import qodat.cache.definition.SpriteDefinition
 import stan.qodat.cache.impl.displee.CacheIdPackingTest
+import java.nio.file.Files
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -41,6 +43,37 @@ class QodatCacheEmptyAndPackingTest {
             val hex = Integer.toHexString(hash)
             assertEquals(frameArchiveId, CacheIdPackingTest.getFileId(hex))
             assertEquals(index, CacheIdPackingTest.getFrameId(hex))
+        }
+    }
+
+    @Test
+    fun skeletonDirectoryKeepsNumericIdsAndSkipsMismatchedFiles() {
+        val directory = Files.createTempDirectory("qodat-skeletons").toFile()
+        try {
+            directory.resolve("53320.json").writeText(
+                """
+                {
+                  "id": 53320,
+                  "transformationTypes": [0, 3],
+                  "targetVertexGroupsIndices": [[1], [2, 4]]
+                }
+                """.trimIndent()
+            )
+            directory.resolve("not-a-skeleton.json").writeText(
+                """
+                { "id": "walk", "frameHashes": [1], "frameLengths": [5], "loopOffset": 0, "leftHandItem": -1, "rightHandItem": -1 }
+                """.trimIndent()
+            )
+            val loaded = loadQodatDefinitionDirectory(
+                directory,
+                Json { ignoreUnknownKeys = true },
+                QodatAnimationTransformationGroup.serializer(),
+            )
+            assertEquals(1, loaded.size)
+            assertEquals(53320, loaded.single().id)
+            assertTrue(loaded.single().transformationTypes.contentEquals(intArrayOf(0, 3)))
+        } finally {
+            directory.deleteRecursively()
         }
     }
 
