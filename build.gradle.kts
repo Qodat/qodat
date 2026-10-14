@@ -17,7 +17,7 @@ repositories {
     mavenCentral()
 }
 
-version = "0.4.3"
+version = "0.4.4"
 
 val javaVersion = libs.versions.java.get()
 
