@@ -19,7 +19,6 @@ import stan.qodat.scene.runescape.animation.AnimationLegacy
 import stan.qodat.scene.runescape.entity.NPC
 import stan.qodat.scene.runescape.model.Model
 import java.io.File
-import java.io.UnsupportedEncodingException
 import kotlin.io.path.deleteIfExists
 import kotlin.io.path.exists
 import kotlin.io.path.outputStream
@@ -64,6 +63,10 @@ object QodatCache : Cache("qodat") {
         animationSkeletons.clear()
         animationSkeletons.addAll(
             qodatCacheDir.loadDefinitions<QodatAnimationTransformationGroup>("animation_skeletons")
+        )
+        animationSkeletons.addAll(
+            qodatCacheDir.resolve("animation_skeletons")
+                .loadDefinitions<QodatAnimationTransformationGroup>("json")
         )
         animationFrames.clear()
         qodatCacheDir
@@ -285,20 +288,28 @@ object QodatCache : Cache("qodat") {
     private inline fun<reified T> File.loadDefinitions(directoryName: String): MutableList<T> =
         loadQodatDefinitionDirectory(resolve(directoryName), json, serializer(), directoryName)
 
-    private fun File.loadModels(directoryName: String) = resolve(directoryName)
-        .listFiles()
-        ?.filterNotNull()
-        ?.map {
-            when (it.extension) {
-                "json" -> json.decodeFromStream(it.inputStream())
-                "model", "dat" -> QodatModelDefinition.create(RSModelLoader().load(it.name, it.readBytes()))
-                "mqo" -> QodatModelDefinition.create(MQOImporter().load(it))
-                else -> throw UnsupportedEncodingException("Can only read .json, .model, .dat files.")
+    private fun File.loadModels(directoryName: String): MutableMap<String, QodatModelDefinition> {
+        val files = resolve(directoryName).listFiles() ?: return mutableMapOf()
+        val loaded = ArrayList<QodatModelDefinition>()
+        for (file in files) {
+            if (!file.isFile) continue
+            val definition = try {
+                when (file.extension.lowercase()) {
+                    "json" -> file.inputStream().use {
+                        json.decodeFromStream(QodatModelDefinitionSerializer, it)
+                    }
+                    "model", "dat" -> QodatModelDefinition.create(RSModelLoader().load(file.name, file.readBytes()))
+                    "mqo" -> QodatModelDefinition.create(MQOImporter().load(file))
+                    else -> continue
+                }
+            } catch (e: Exception) {
+                qodatDefinitionLogger.warn("Skipping model {}: {}", file.name, e.message)
+                continue
             }
+            loaded.add(definition)
         }
-        ?.associateBy { it.getName() }
-        ?.toMutableMap()
-        ?: mutableMapOf()
+        return loaded.associateBy { it.getName() }.toMutableMap()
+    }
 }
 
 private val qodatDefinitionLogger = LoggerFactory.getLogger("stan.qodat.cache.impl.qodat.QodatCache")

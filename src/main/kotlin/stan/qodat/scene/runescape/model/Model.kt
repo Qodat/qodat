@@ -30,6 +30,7 @@ import qodat.cache.models.RSModelLoader
 import stan.qodat.Properties
 import stan.qodat.cache.impl.qodat.QodatCache
 import stan.qodat.cache.impl.qodat.QodatModelDefinition
+import stan.qodat.cache.impl.qodat.QodatModelDefinitionSerializer
 import stan.qodat.scene.control.LabeledHBox
 import stan.qodat.scene.control.export.Exportable
 import stan.qodat.scene.control.tree.ModelTreeItem
@@ -582,7 +583,9 @@ class Model(label: String,
         fun fromFile(file: File) : Model {
             val definition = when (file.extension.lowercase()) {
                 "json" -> {
-                    QodatCache.json.decodeFromStream<QodatModelDefinition>(file.inputStream())
+                    file.inputStream().use {
+                        QodatCache.json.decodeFromStream(QodatModelDefinitionSerializer, it)
+                    }
                 }
                 "mqo" -> {
                     MQOImporter().load(file)

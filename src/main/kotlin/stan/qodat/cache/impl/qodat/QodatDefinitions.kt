@@ -1,7 +1,19 @@
 package stan.qodat.cache.impl.qodat
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.Transient
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
 import qodat.cache.definition.*
 import qodat.cache.models.FaceNormal
 import qodat.cache.models.VertexNormal
@@ -34,12 +46,13 @@ data class QodatItemDefinition(
 
 @Serializable
 data class QodatAnimationDefinition(
+    @Serializable(with = FlexibleJsonStringSerializer::class)
     override val id: String,
     override val frameHashes: IntArray,
     override val frameLengths: IntArray,
-    override val loopOffset: Int,
-    override val leftHandItem: Int,
-    override val rightHandItem: Int
+    override val loopOffset: Int = -1,
+    override val leftHandItem: Int = -1,
+    override val rightHandItem: Int = -1,
 ) : AnimationDefinition
 
 @Serializable
@@ -67,15 +80,15 @@ data class QodatModelDefinition(
     private val vertexPositionsX: IntArray,
     private val vertexPositionsY: IntArray,
     private val vertexPositionsZ: IntArray,
-    private val vertexSkins: IntArray?,
+    private val vertexSkins: IntArray? = null,
     private val faceCount: Int,
     private val faceVertexIndices1: IntArray,
     private val faceVertexIndices2: IntArray,
     private val faceVertexIndices3: IntArray,
-    private val faceSkins: IntArray?,
-    private val faceAlphas: ByteArray?,
-    private val facePriorities: ByteArray?,
-    private val faceTypes: ByteArray?,
+    private val faceSkins: IntArray? = null,
+    private val faceAlphas: ByteArray? = null,
+    private val facePriorities: ByteArray? = null,
+    private val faceTypes: ByteArray? = null,
     private val priority: Byte = 10.toByte(),
     private val faceColors: ShortArray,
     private var faceTextures: ShortArray? = null,
@@ -367,5 +380,33 @@ data class QodatModelDefinition(
             textureTriangleVertexIndices2 = modelDefinition.getTextureTriangleVertexIndices2(),
             textureTriangleVertexIndices3 = modelDefinition.getTextureTriangleVertexIndices3()
         )
+    }
+}
+
+/** Older caches wrote animation ids as JSON numbers. New files write strings. */
+internal object FlexibleJsonStringSerializer : KSerializer<String> {
+    override val descriptor = PrimitiveSerialDescriptor("FlexibleJsonString", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: String) = encoder.encodeString(value)
+
+    override fun deserialize(decoder: Decoder): String {
+        val jsonDecoder = decoder as? JsonDecoder ?: return decoder.decodeString()
+        val element = jsonDecoder.decodeJsonElement()
+        val primitive = element as? JsonPrimitive
+            ?: throw SerializationException("Expected a string or number")
+        return primitive.content
+    }
+}
+
+/** Models saved before faceColors existed used the key faceColor. */
+@OptIn(ExperimentalSerializationApi::class)
+internal object QodatModelDefinitionSerializer :
+    JsonTransformingSerializer<QodatModelDefinition>(QodatModelDefinition.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement {
+        val obj = element as? JsonObject ?: return element
+        if ("faceColors" in obj || "faceColor" !in obj) return obj
+        return JsonObject(obj.toMutableMap().apply {
+            put("faceColors", obj.getValue("faceColor"))
+        })
     }
 }

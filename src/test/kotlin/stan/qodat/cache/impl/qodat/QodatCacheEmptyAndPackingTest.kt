@@ -78,6 +78,49 @@ class QodatCacheEmptyAndPackingTest {
     }
 
     @Test
+    fun oldAnimationJsonAcceptsNumericIdAndMissingHandFields() {
+        val json = Json { ignoreUnknownKeys = true }
+        val anim = json.decodeFromString(
+            QodatAnimationDefinition.serializer(),
+            """
+            { "id": 9, "frameHashes": [1], "frameLengths": [5] }
+            """.trimIndent(),
+        )
+        assertEquals("9", anim.id)
+        assertEquals(-1, anim.loopOffset)
+        assertEquals(-1, anim.leftHandItem)
+        assertEquals(-1, anim.rightHandItem)
+        val encoded = json.encodeToString(QodatAnimationDefinition.serializer(), anim)
+        assertTrue(encoded.contains("\"id\":\"9\"") || encoded.contains("\"id\": \"9\""))
+    }
+
+    @Test
+    fun oldModelJsonAcceptsFaceColorKey() {
+        val json = Json { ignoreUnknownKeys = true }
+        val model = json.decodeFromString(
+            QodatModelDefinitionSerializer,
+            """
+            {
+              "name": "old",
+              "vertexCount": 0,
+              "vertexPositionsX": [],
+              "vertexPositionsY": [],
+              "vertexPositionsZ": [],
+              "vertexSkins": [],
+              "faceCount": 0,
+              "faceVertexIndices1": [],
+              "faceVertexIndices2": [],
+              "faceVertexIndices3": [],
+              "faceSkins": null,
+              "faceColor": [1, 2]
+            }
+            """.trimIndent(),
+        )
+        assertEquals("old", model.getName())
+        assertTrue(model.getFaceColors().contentEquals(shortArrayOf(1, 2)))
+    }
+
+    @Test
     fun qodatDefinitionsHoldMappedIdentity() {
         val npc = QodatNpcDefinition("Guard", arrayOf("100"), arrayOf("20"))
         val item = QodatItemDefinition("Whip", arrayOf("321"))
